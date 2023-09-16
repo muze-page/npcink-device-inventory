@@ -2,6 +2,7 @@
  * 表格 - 数据展示
  */
 //颜色 表头 表数据
+//添加hover效果
 
 //表头
 import { TableData } from "@/store/interface";

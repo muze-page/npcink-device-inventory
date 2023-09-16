@@ -29,6 +29,46 @@ const tableData = [
     type: "AMD",
     sum: 0,
   },
+  {
+    type: "华硕",
+    sum: 0,
+  },
+  {
+    type: "Apple",
+    sum: 0,
+  },
+  {
+    type: "微星",
+    sum: 0,
+  },
+  {
+    type: "ROG玩家国度",
+    sum: 0,
+  },
+  {
+    type: "七彩虹",
+    sum: 0,
+  },
+  {
+    type: "华擎",
+    sum: 0,
+  },
+  {
+    type: "技嘉",
+    sum: 0,
+  },
+  {
+    type: "铭瑄",
+    sum: 0,
+  },
+  {
+    type: "昂达",
+    sum: 0,
+  },
+  {
+    type: "梅捷",
+    sum: 0,
+  },
 ];
 const App: React.FC = () => {
   return (
