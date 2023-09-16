@@ -1,11 +1,7 @@
-
-
 import "./App.css";
-import Tab from "@/components/page/tab";
+import Tab from "@/components/page/tab/index";
 
 function App() {
-
-
   return (
     <>
       <Tab />

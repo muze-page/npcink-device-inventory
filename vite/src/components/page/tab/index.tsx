@@ -82,7 +82,7 @@ const App: React.FC = () => {
         <div className="flex items-center mt-3">
           {items.map((tab, index) => (
             <div
-              className="w-calc-1/4 first:ml-0 ml-4 cursor-pointer relative h-[5em] rounded px-5 py-4  bg-gradient-to-br from-blue-100 to-blue-400"
+              className="w-calc-1/4 first:ml-0 ml-4 cursor-pointer relative h-[6em] rounded px-5 py-4  bg-gradient-to-br from-blue-100 to-blue-400"
               key={index}
               onClick={() => handleTabClick(index)}
             >
