@@ -3,12 +3,14 @@
  */
 
 import TabList from "@/components/block/tabList";
-import { sum_brand } from "@/store/tool";
+import { sum_brand, replaceType } from "@/store/tool";
 
 //表头
 const thData = ["型号", "数量（个）"];
 
 //数据
+/**
+ 
 const tableData = [
   {
     type: "Intel",
@@ -71,16 +73,23 @@ const tableData = [
     sum: 0,
   },
 ];
-
+* 
+ */
 interface Props {
   data: any;
 }
 const App: React.FC<Props> = ({ data }) => {
+  //替换列表
+  const replacements = {
+    "Colorful Technology": "七彩虹",
+    Dell: "戴尔",
+    // 其他需要替换的字符串
+  };
   const arr = sum_brand(data, "manufacturer");
+  const arrData = replaceType(arr, replacements);
   return (
     <>
-      <TabList thData={thData} tableData={arr} />
-      <TabList thData={thData} tableData={tableData} />
+      <TabList thData={thData} tableData={arrData} />
     </>
   );
 };
