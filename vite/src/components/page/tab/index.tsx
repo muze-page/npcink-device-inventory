@@ -23,7 +23,7 @@ function sumData(arr: any[], type: string) {
 }
 
 //获取指定设备的数据数组
-const deviceArrData = (dataArrays, key) => {
+const deviceArrData = (dataArrays: any[], key: string) => {
   const cpuArray = dataArrays.flatMap((obj) => obj[key]);
   return cpuArray;
 };
@@ -36,11 +36,13 @@ const App: React.FC = () => {
   const combinedData = combineData(
     objData.map((obj: { dataNew: any }) => JSON.parse(obj.dataNew))
   );
+  console.log(combinedData);
+
   //获取CPU数组
   const cpuArrData = deviceArrData(combinedData, "cpu");
 
-  console.log(combinedData);
-  console.log(cpuArrData);
+  //获取硬盘数组
+  const diskArrData = deviceArrData(combinedData, "diskLayout");
   const items = [
     {
       key: "1",
@@ -52,7 +54,7 @@ const App: React.FC = () => {
       key: "2",
       label: `硬盘（块）`,
       sum: sumData(combinedData, "diskLayout"),
-      children: <Disk />,
+      children: <Disk data={diskArrData}/>,
     },
     {
       key: "3",
