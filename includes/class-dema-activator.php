@@ -52,8 +52,9 @@ class Dema_Activator
 			$sql = "CREATE TABLE $table_name (
             id INT(11) NOT NULL AUTO_INCREMENT,
             uuid VARCHAR(36) NOT NULL,
-            stylename VARCHAR(255) NOT NULL,
-            notes VARCHAR(255),
+            name VARCHAR(255) NOT NULL,
+			styleNumber INT(11) NOT NULL,
+            styleName VARCHAR(255),
             dataNew JSON,
             dataOld JSON,
             PRIMARY KEY (id)

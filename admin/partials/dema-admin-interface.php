@@ -58,10 +58,9 @@ if (!class_exists('DEMA_Admin_Interface')) {
                     $wpdb->insert(
                         $table_name,
                         array(
-                            'uuid' => $uuid_hardware,
-                            'stylename' => $name,
-                            'notes' => '', // 可根据需要设置其他默认值
-                            'dataNew' => $datas,
+                            'uuid' => $uuid_hardware, //唯一编号
+                            'name' => $name, //上传的名称
+                            'dataNew' => $datas, //配置信息
                         ),
                         array('%s', '%s', '%s', '%s')
                     );
@@ -75,12 +74,12 @@ if (!class_exists('DEMA_Admin_Interface')) {
 
                     $existing_data = json_decode($result[0]['dataNew'], true);
 
-                    if ($result[0]['stylename'] !== $name) {
+                    if ($result[0]['name'] !== $name) {
                         // 如果名称有变化，更新现有数据
                         $wpdb->update(
                             $table_name,
                             array(
-                                'stylename' => $name,
+                                'name' => $name,
                                 'dataOld' => $result[0]['dataNew'],
                                 'dataNew' => $datas
                             ),

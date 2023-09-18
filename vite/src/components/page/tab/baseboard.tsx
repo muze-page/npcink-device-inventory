@@ -71,6 +71,7 @@ const tableData = [
     sum: 0,
   },
 ];
+
 interface Props {
   data: any;
 }
@@ -79,6 +80,7 @@ const App: React.FC<Props> = ({ data }) => {
   return (
     <>
       <TabList thData={thData} tableData={arr} />
+      <TabList thData={thData} tableData={tableData} />
     </>
   );
 };
