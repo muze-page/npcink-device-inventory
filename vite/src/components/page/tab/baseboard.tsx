@@ -3,6 +3,7 @@
  */
 
 import TabList from "@/components/block/tabList";
+import { sum_brand } from "@/store/tool";
 
 //表头
 const thData = ["型号", "数量（个）"];
@@ -70,10 +71,14 @@ const tableData = [
     sum: 0,
   },
 ];
-const App: React.FC = () => {
+interface Props {
+  data: any;
+}
+const App: React.FC<Props> = ({ data }) => {
+  const arr = sum_brand(data, "manufacturer");
   return (
     <>
-      <TabList thData={thData} tableData={tableData} />
+      <TabList thData={thData} tableData={arr} />
     </>
   );
 };

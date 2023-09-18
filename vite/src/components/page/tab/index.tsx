@@ -46,6 +46,10 @@ const App: React.FC = () => {
 
   //获取内存数组
   const memoryArrData = deviceArrData(combinedData, "memLayout");
+
+  //获取主板数组
+  const baseboardArrData = deviceArrData(combinedData, "baseboard");
+
   const items = [
     {
       key: "1",
@@ -69,7 +73,7 @@ const App: React.FC = () => {
       key: "4",
       label: `主板（个）`,
       sum: combinedData.length,
-      children: <Baseboard />,
+      children: <Baseboard data={baseboardArrData} />,
     },
   ];
 
