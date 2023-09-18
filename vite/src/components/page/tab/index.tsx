@@ -7,12 +7,11 @@ import Memory from "@/components/page/tab/memory";
 
 const combineData = (dataArrays: any) => {
   // 使用 Array.concat() 将多个数组合并为一个
-
   const combined = [].concat(...dataArrays);
   return combined;
 };
 
-//查硬盘
+//查指定数据的个数
 function sumData(arr: any[], type: string) {
   var sum = 0;
 
@@ -23,6 +22,12 @@ function sumData(arr: any[], type: string) {
   return sum;
 }
 
+//获取指定设备的数据数组
+const deviceArrData = (dataArrays, key) => {
+  const cpuArray = dataArrays.flatMap((obj) => obj[key]);
+  return cpuArray;
+};
+
 const App: React.FC = () => {
   //拿到数据
   const objData = useContext(DataContext);
@@ -31,15 +36,17 @@ const App: React.FC = () => {
   const combinedData = combineData(
     objData.map((obj: { dataNew: any }) => JSON.parse(obj.dataNew))
   );
-  //查硬盘数量
+  //获取CPU数组
+  const cpuArrData = deviceArrData(combinedData, "cpu");
 
   console.log(combinedData);
+  console.log(cpuArrData);
   const items = [
     {
       key: "1",
       label: `CPU（个）`,
       sum: combinedData.length,
-      children: <Cpu />,
+      children: <Cpu data={cpuArrData} />,
     },
     {
       key: "2",
