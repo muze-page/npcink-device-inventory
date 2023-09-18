@@ -43,6 +43,9 @@ const App: React.FC = () => {
 
   //获取硬盘数组
   const diskArrData = deviceArrData(combinedData, "diskLayout");
+
+  //获取内存数组
+  const memoryArrData = deviceArrData(combinedData, "memLayout");
   const items = [
     {
       key: "1",
@@ -54,13 +57,13 @@ const App: React.FC = () => {
       key: "2",
       label: `硬盘（块）`,
       sum: sumData(combinedData, "diskLayout"),
-      children: <Disk data={diskArrData}/>,
+      children: <Disk data={diskArrData} />,
     },
     {
       key: "3",
       label: `内存（条）`,
       sum: sumData(combinedData, "memLayout"),
-      children: <Memory />,
+      children: <Memory data={memoryArrData} />,
     },
     {
       key: "4",

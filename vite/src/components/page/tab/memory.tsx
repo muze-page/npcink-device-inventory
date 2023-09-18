@@ -3,37 +3,29 @@
  */
 
 import TabList from "@/components/block/tabList";
+import { sum_order } from "@/store/tool";
 
 //表头
 const thData = ["型号", "数量（条）"];
 
-//数据
-const tableData = [
-  {
-    type: "2G",
-    sum: 0,
-  },
-  {
-    type: "4G",
-    sum: 0,
-  },
-  {
-    type: "8G",
-    sum: 0,
-  },
-  {
-    type: "16G",
-    sum: 0,
-  },
-  {
-    type: "32G",
-    sum: 0,
-  },
-];
-const App: React.FC = () => {
+interface Props {
+  data: any;
+}
+const App: React.FC<Props> = ({ data }) => {
+  console.log(data);
+  const thresholds = {
+    "2G": 2,
+    "4G": 4,
+    "8G": 8,
+    "16G": 16,
+    "32G": 32,
+  };
+
+  const arr = sum_order(data, thresholds);
+
   return (
     <>
-      <TabList thData={thData} tableData={tableData} />
+      <TabList thData={thData} tableData={arr} />
     </>
   );
 };
