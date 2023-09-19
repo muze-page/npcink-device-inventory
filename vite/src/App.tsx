@@ -1,10 +1,10 @@
 import "./App.css";
-import Tab from "@/components/page/tab/index";
+import Index from "@/components/page/index";
 
 function App() {
   return (
     <>
-      <Tab />
+      <Index />
     </>
   );
 }

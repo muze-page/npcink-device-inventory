@@ -1,3 +1,6 @@
+/**
+ * 资产盘点
+ */
 import { useState, useContext } from "react";
 import DataContext from "@/store/dataContext";
 import Baseboard from "@/components/page/tab/baseboard";
