@@ -126,6 +126,8 @@ const App: React.FC = () => {
             <div className="content">{items[activeTab].children}</div>
           </div>
         </div>
+        {/**广告内容 */}
+        <div className="w-[calc(100%-48px)] absolute left-6 bottom-6 h-[76px] px-6 py-4 flex items-center justify-between mt-6 bg-orange-50">666</div>
       </div>
       {/**
        * </div>
