@@ -3,7 +3,17 @@
  */
 import Mac from "@/assets/mac.png";
 import User from "@/assets/user.svg";
-const App: React.FC = () => {
+
+interface Props {
+  data: {
+    ostype: string;
+    cpu: string;
+    model: string;
+    memory: string;
+    disk: string;
+  };
+}
+const App: React.FC<Props> = ({ data }) => {
   return (
     <>
       {/**开始循环 */}
@@ -19,7 +29,7 @@ const App: React.FC = () => {
             大大怪
           </p>
           {/*设备型号*/}
-          <p className="mt-3">Macmini9,1</p>
+          <p className="mt-3">{data.meat.model}</p>
           {/*配置信息*/}
           <p className="mt-2">intel / 8 GB / 251 GB</p>
           {/*昵称*/}

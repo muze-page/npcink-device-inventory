@@ -44,8 +44,8 @@ const App: React.FC = () => {
           ostype: ostype,
           cpu: cpu,
           model: model,
-          memory: Math.floor(memory),//GB 取整
-          disk: Math.floor(disk),//GB 取整
+          memory: Math.floor(memory), //GB 取整
+          disk: Math.floor(disk), //GB 取整
         };
         //内存总容量
         //获取内存数组
@@ -75,12 +75,6 @@ const App: React.FC = () => {
    * 备注名
    */
 
-  const rtElements = [];
-
-  for (let i = 0; i < 6; i++) {
-    rtElements.push(<DetailsList key={i} />);
-  }
-
   const [open, setOpen] = useState(false);
   const [placement, setPlacement] = useState<DrawerProps["placement"]>("right");
 
@@ -99,7 +93,9 @@ const App: React.FC = () => {
         onClick={showDrawer}
       >
         {/**开始循环 */}
-        {rtElements}
+        {updatedDataArray.map((tab: any, index: any) => (
+          <DetailsList key={index} data={tab} />
+        ))}
       </div>
 
       <Drawer
