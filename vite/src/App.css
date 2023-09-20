@@ -11,6 +11,24 @@
   .svg {
     @apply w-[1em] h-[1em] mr-1 text-sm;
   }
+  /*反转颜色*/
+  .svgReversal {
+    @apply filter invert-[1] sepia-[1] hue-rotate-[180deg];
+  }
+}
+
+/*设备详情*/
+.Mac_icon_background_color {
+  background: linear-gradient(141deg, #454545 0, #000 100%);
+}
+.Mac_content_background_color {
+  background: linear-gradient(
+    140deg,
+    #454545 0,
+    rgba(70, 70, 70, 0.86) 33%,
+    #474747 100%
+  );
+  box-shadow: 0 8px 30px 0 rgba(0, 0, 0, 0.2);
 }
 
 #root {
