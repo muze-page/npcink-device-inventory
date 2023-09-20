@@ -15,6 +15,13 @@
   .svgReversal {
     @apply filter invert-[1] sepia-[1] hue-rotate-[180deg];
   }
+  /*设备详情 - 蓝色*/
+  .bg_blue {
+    @apply from-[rgba(250,251,254,0.66)] to-[#f2f5fb]   border-blue-400 border-opacity-25;
+  }
+  .bg_yellow {
+    @apply border-gray-300  from-[#fcfcfc] to-[#f7f7f7];
+  }
 }
 
 /*设备详情*/

@@ -44,7 +44,7 @@ const App: React.FC = () => {
         key={placement}
         width={"60%"}
       >
-        <DetailsShow />
+       
         <Property />
       </Drawer>
     </>
