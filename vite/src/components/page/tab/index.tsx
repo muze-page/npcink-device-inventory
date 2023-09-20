@@ -59,6 +59,7 @@ const App: React.FC = () => {
       label: `CPU（个）`,
       sum: combinedData.length,
       color: "from-blue-100 to-blue-200",
+      activeColor: "bg-blue-400",
       children: <Cpu data={cpuArrData} />,
     },
     {
@@ -66,6 +67,7 @@ const App: React.FC = () => {
       label: `硬盘（块）`,
       sum: sumData(combinedData, "diskLayout"),
       color: "from-orange-100 to-orange-200",
+      activeColor: "bg-orange-400",
       children: <Disk data={diskArrData} />,
     },
     {
@@ -73,6 +75,7 @@ const App: React.FC = () => {
       label: `内存（条）`,
       sum: sumData(combinedData, "memLayout"),
       color: "from-red-100 to-red-200",
+      activeColor: "bg-red-400",
       children: <Memory data={memoryArrData} />,
     },
     {
@@ -80,6 +83,7 @@ const App: React.FC = () => {
       label: `主板（个）`,
       sum: combinedData.length,
       color: "from-green-100 to-green-200",
+      activeColor: "bg-green-400",
       children: <Baseboard data={baseboardArrData} />,
     },
   ];
@@ -116,6 +120,12 @@ const App: React.FC = () => {
               <div className="text-2xl font-normal text-zinc-900">
                 {tab.sum}
               </div>
+              {/*下横线*/}
+              {index === activeTab && (
+                <div
+                  className={`w-full h-[2px] rounded-sm  absolute bottom-0 left-0 z-10 ${tab.activeColor}`}
+                ></div>
+              )}
             </div>
           ))}
         </div>
