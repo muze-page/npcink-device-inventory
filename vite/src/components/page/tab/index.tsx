@@ -58,24 +58,28 @@ const App: React.FC = () => {
       key: "1",
       label: `CPU（个）`,
       sum: combinedData.length,
+      clor: "from-blue-100 to-blue-400",
       children: <Cpu data={cpuArrData} />,
     },
     {
       key: "2",
       label: `硬盘（块）`,
       sum: sumData(combinedData, "diskLayout"),
+      clor: "from-orange-100 to-orange-200",
       children: <Disk data={diskArrData} />,
     },
     {
       key: "3",
       label: `内存（条）`,
       sum: sumData(combinedData, "memLayout"),
+      clor: "from-red-100 to-red-200",
       children: <Memory data={memoryArrData} />,
     },
     {
       key: "4",
       label: `主板（个）`,
       sum: combinedData.length,
+      clor: "from-green-100 to-green-200",
       children: <Baseboard data={baseboardArrData} />,
     },
   ];
@@ -90,7 +94,7 @@ const App: React.FC = () => {
 
   return (
     <>
-      <div className="h-[625px] relative bg-white py-6 px-5 rounded-r border-rose-600">
+      <div className="h-[625px] relative bg-white py-6 px-5 rounded-r border-rose-600 max-w-3xl">
         {/**标题 */}
         <div className="flex justify-between items-center">
           <div className="text-base font-black flex items-center text-zinc-900">
@@ -101,7 +105,7 @@ const App: React.FC = () => {
         <div className="flex items-center mt-3">
           {items.map((tab, index) => (
             <div
-              className="w-calc-1/4 first:ml-0 ml-4 cursor-pointer relative h-[6em] rounded px-5 py-4  bg-gradient-to-br from-blue-100 to-blue-400"
+              className={`w-calc-1/4 first:ml-0 ml-4 cursor-pointer relative h-[6em] rounded px-5 py-4  bg-gradient-to-br   w-full ${tab.clor}`}
               key={index}
               onClick={() => handleTabClick(index)}
             >
@@ -127,7 +131,21 @@ const App: React.FC = () => {
           </div>
         </div>
         {/**广告内容 */}
-        <div className="w-[calc(100%-48px)] absolute left-6 bottom-6 h-[76px] px-6 py-4 flex items-center justify-between mt-6 bg-orange-50">666</div>
+        <div className="w-[calc(100%-48px)] absolute left-6 bottom-6 h-[76px] px-6 py-4 flex items-center justify-between mt-6 bg-orange-50">
+          {/**第一部分 */}
+          <div>
+            <div className="text-sm font-normal leading-[22px] text-amber-950">
+              专业上门运维
+            </div>
+            <div className="text-xs font-normal leading-[22px] text-amber-950">
+              360与生态伙伴旗下的专业安全与运维专家，为您提供远程支持或上门服务
+            </div>
+          </div>
+          {/**第二部分 */}
+          <div className="w-[104px] h-8 leading-8 rounded-sm bg-orange-300 text-xs font-normal text-center text-amber-950 cursor-pointer ">
+            选择专业服务
+          </div>
+        </div>
       </div>
       {/**
        * </div>
