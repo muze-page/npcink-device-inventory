@@ -1,12 +1,28 @@
 /**
  * 详情
  */
-import { useState } from "react";
+import { useState, useContext } from "react";
 import type { DrawerProps } from "antd";
 import { Drawer } from "antd";
+import DataContext from "@/store/dataContext";
 import DetailsList from "@/components/block/detailsList";
 import Property from "@/components/page/details/property";
 const App: React.FC = () => {
+  //拿到数据
+  const data = useContext(DataContext);
+  console.log(data);
+  const newArray = data.map((item:any) => {
+    return { os: item.os.distro };
+  });
+  console.log(newArray);
+  //整理，需要，设备类型，Apple 还是Windows，
+  /**
+   * 昵称
+   * 系统的 system model
+   * 芯片品牌 内存大小 硬盘大小
+   * 备注名
+   */
+
   const rtElements = [];
 
   for (let i = 0; i < 6; i++) {
@@ -43,7 +59,6 @@ const App: React.FC = () => {
         key={placement}
         width={"60%"}
       >
-       
         <Property />
       </Drawer>
     </>

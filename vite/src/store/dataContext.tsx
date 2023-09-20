@@ -5,9 +5,8 @@ import data from "@/store/defaultVar";
 //开发环境状态
 const state: boolean = import.meta.env.VITE_STATE;
 
-
 //输出选项值
-function getDataLocal():any {
+function getDataLocal(): any {
   if (state) {
     //开发
     return data;
@@ -23,15 +22,27 @@ function getDataLocal():any {
 const dataObject: any = getDataLocal();
 
 //处理成数组
+// 使用 Array.concat() 将多个数组合并为一个
 const combineData = (dataArrays: any) => {
-  // 使用 Array.concat() 将多个数组合并为一个
-  const combined = [].concat(...dataArrays);
+  const combined = dataArrays.map((obj: { dataNew: any; dataOld: any }) => {
+    const processedDataNew = processData(obj.dataNew);
+    const processedDataOld = processData(obj.dataOld);
+    return { ...obj, dataNew: processedDataNew, dataOld: processedDataOld };
+  });
   return combined;
 };
-const combinedData = combineData(
-  dataObject.map((obj: { dataNew: any }) => JSON.parse(obj.dataNew))
-);
+
+// 假设有一个函数 processData 对数据进行处理
+const processData = (data: any) => {
+  // 在这里进行对 data 的处理
+  // 返回处理后的值
+  return JSON.parse(data);
+};
+
+const combinedData = combineData(dataObject);
 
 const DataContext = createContext(combinedData);
+
+
 
 export default DataContext;

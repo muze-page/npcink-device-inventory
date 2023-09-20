@@ -8,8 +8,6 @@ import Cpu from "@/components/page/tab/cpu";
 import Disk from "@/components/page/tab/disk";
 import Memory from "@/components/page/tab/memory";
 
-
-
 //查指定数据的个数
 function sumData(arr: any[], type: string) {
   var sum = 0;
@@ -29,10 +27,16 @@ const deviceArrData = (dataArrays: any[], key: string) => {
 
 const App: React.FC = () => {
   //拿到数据
-  const combinedData = useContext(DataContext);
+  const data = useContext(DataContext);
 
+  //收集指定数据并输出
+  const collectDataNew = (dataArrays: any) => {
+    const newData = dataArrays.map((obj: { dataNew: any }) => obj.dataNew);
+    return newData;
+  };
 
-
+  //处理数据
+  const combinedData = collectDataNew(data);
 
   //获取CPU数组
   const cpuArrData = deviceArrData(combinedData, "cpu");
