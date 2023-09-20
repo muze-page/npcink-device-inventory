@@ -1,9 +1,37 @@
 /**
  * 设备详情 - 展开
  */
+import { Tabs } from "antd";
+import { CodepenOutlined, ApartmentOutlined  } from "@ant-design/icons";
+import type { TabsProps } from "antd";
+import Info from "@/components/page/details/block/info";
+import Change from "@/components/page/details/block/change";
 import MacOs from "@/assets/macos.png";
 import User from "@/assets/user.svg";
+
 const App: React.FC = () => {
+  const items: TabsProps["items"] = [
+    {
+      key: "1",
+      label: (
+        <span>
+          <CodepenOutlined />
+          硬件信息
+        </span>
+      ),
+      children: <Info />,
+    },
+    {
+      key: "2",
+      label: (
+        <span>
+          <ApartmentOutlined />
+          变更记录
+        </span>
+      ),
+      children: <Change />,
+    },
+  ];
   return (
     <>
       {/**品牌标志 */}
@@ -31,6 +59,7 @@ const App: React.FC = () => {
           </div>
         </div>
       </div>
+      <Tabs defaultActiveKey="1" items={items} />
     </>
   );
 };

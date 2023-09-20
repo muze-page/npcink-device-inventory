@@ -42,7 +42,7 @@ const App: React.FC = () => {
         onClose={onClose}
         open={open}
         key={placement}
-        size={"large"}
+        width={"60%"}
       >
         <DetailsShow />
         <Property />
