@@ -22,6 +22,16 @@ function getDataLocal():any {
 //传值
 const dataObject: any = getDataLocal();
 
-const DataContext = createContext(dataObject);
+//处理成数组
+const combineData = (dataArrays: any) => {
+  // 使用 Array.concat() 将多个数组合并为一个
+  const combined = [].concat(...dataArrays);
+  return combined;
+};
+const combinedData = combineData(
+  dataObject.map((obj: { dataNew: any }) => JSON.parse(obj.dataNew))
+);
+
+const DataContext = createContext(combinedData);
 
 export default DataContext;

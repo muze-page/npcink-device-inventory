@@ -8,11 +8,7 @@ import Cpu from "@/components/page/tab/cpu";
 import Disk from "@/components/page/tab/disk";
 import Memory from "@/components/page/tab/memory";
 
-const combineData = (dataArrays: any) => {
-  // 使用 Array.concat() 将多个数组合并为一个
-  const combined = [].concat(...dataArrays);
-  return combined;
-};
+
 
 //查指定数据的个数
 function sumData(arr: any[], type: string) {
@@ -33,13 +29,10 @@ const deviceArrData = (dataArrays: any[], key: string) => {
 
 const App: React.FC = () => {
   //拿到数据
-  const objData = useContext(DataContext);
+  const combinedData = useContext(DataContext);
 
-  //整理数据
-  const combinedData = combineData(
-    objData.map((obj: { dataNew: any }) => JSON.parse(obj.dataNew))
-  );
-  console.log(combinedData);
+
+
 
   //获取CPU数组
   const cpuArrData = deviceArrData(combinedData, "cpu");

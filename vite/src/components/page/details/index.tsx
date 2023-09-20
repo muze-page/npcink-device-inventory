@@ -5,7 +5,6 @@ import { useState } from "react";
 import type { DrawerProps } from "antd";
 import { Drawer } from "antd";
 import DetailsList from "@/components/block/detailsList";
-import DetailsShow from "@/components/block/detailsShow";
 import Property from "@/components/page/details/property";
 const App: React.FC = () => {
   const rtElements = [];
