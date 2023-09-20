@@ -8,10 +8,13 @@
 import { TableData } from "@/store/interface";
 
 interface Props {
-  thData: string[];
+  meat: {
+    thData: string[];//表头
+    bgColor: string;//颜色
+  };
   tableData: TableData[];
 }
-const App: React.FC<Props> = ({ thData, tableData }) => {
+const App: React.FC<Props> = ({ meat, tableData }) => {
   return (
     <>
       <div className="h-full relative box-border">
@@ -22,10 +25,10 @@ const App: React.FC<Props> = ({ thData, tableData }) => {
               <table className="w-full min-w-full m-0 border-separate border-spacing-0 table-fixed">
                 <thead>
                   <tr>
-                    {thData.map((tab, index) => (
+                    {meat.thData.map((tab, index) => (
                       <th
                         key={index}
-                        className="text-sm text-zinc-900 h-12 bg-orange-50 relative box-border text-left"
+                        className={`text-sm text-zinc-900 h-12  relative box-border text-left ${meat.bgColor}`}
                       >
                         <span className="py-3 px-4 flex items-center">
                           <span>{tab}</span>

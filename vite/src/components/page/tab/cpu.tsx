@@ -4,19 +4,21 @@
 
 import TabList from "@/components/block/tabList";
 import { sum_brand } from "@/store/tool";
-//表头
-const thData = ["品牌", "数量（个）"];
+const meat = {
+  thData: ["品牌", "数量（个）"], //表头
+  bgColor: "from-blue-100 to-blue-200 bg-blue-50", //颜色
+};
 
 interface Props {
   data: any;
 }
 const App: React.FC<Props> = ({ data }) => {
   //分析CPU的品牌
-  const typeData = sum_brand(data, "manufacturer");
+  const tableData = sum_brand(data, "manufacturer");
 
   return (
     <>
-      <TabList thData={thData} tableData={typeData} />
+      <TabList meat={meat} tableData={tableData} />
     </>
   );
 };

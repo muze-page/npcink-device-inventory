@@ -5,8 +5,10 @@
 import TabList from "@/components/block/tabList";
 import { sum_brand, replaceType } from "@/store/tool";
 
-//表头
-const thData = ["型号", "数量（个）"];
+const meat = {
+  thData: ["型号", "数量（个）"], //表头
+  bgColor: "from-green-100 to-green-200 bg-green-50", //颜色
+};
 
 //数据
 /**
@@ -86,10 +88,10 @@ const App: React.FC<Props> = ({ data }) => {
     // 其他需要替换的字符串
   };
   const arr = sum_brand(data, "manufacturer");
-  const arrData = replaceType(arr, replacements);
+  const tableData = replaceType(arr, replacements);
   return (
     <>
-      <TabList thData={thData} tableData={arrData} />
+      <TabList meat={meat} tableData={tableData} />
     </>
   );
 };

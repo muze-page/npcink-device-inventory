@@ -5,8 +5,10 @@
 import TabList from "@/components/block/tabList";
 import { sum_order } from "@/store/tool";
 
-//表头
-const thData = ["型号", "数量（条）"];
+const meat = {
+  thData: ["型号", "数量（条）"], //表头
+  bgColor: "from-red-100 to-red-200 bg-red-50", //颜色
+};
 
 interface Props {
   data: any;
@@ -21,11 +23,11 @@ const App: React.FC<Props> = ({ data }) => {
     "32G": 32,
   };
 
-  const arr = sum_order(data, thresholds);
+  const tableData = sum_order(data, thresholds);
 
   return (
     <>
-      <TabList thData={thData} tableData={arr} />
+      <TabList meat={meat} tableData={tableData} />
     </>
   );
 };

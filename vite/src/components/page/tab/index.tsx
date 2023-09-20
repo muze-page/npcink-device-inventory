@@ -58,28 +58,28 @@ const App: React.FC = () => {
       key: "1",
       label: `CPU（个）`,
       sum: combinedData.length,
-      clor: "from-blue-100 to-blue-400",
+      color: "from-blue-100 to-blue-200",
       children: <Cpu data={cpuArrData} />,
     },
     {
       key: "2",
       label: `硬盘（块）`,
       sum: sumData(combinedData, "diskLayout"),
-      clor: "from-orange-100 to-orange-200",
+      color: "from-orange-100 to-orange-200",
       children: <Disk data={diskArrData} />,
     },
     {
       key: "3",
       label: `内存（条）`,
       sum: sumData(combinedData, "memLayout"),
-      clor: "from-red-100 to-red-200",
+      color: "from-red-100 to-red-200",
       children: <Memory data={memoryArrData} />,
     },
     {
       key: "4",
       label: `主板（个）`,
       sum: combinedData.length,
-      clor: "from-green-100 to-green-200",
+      color: "from-green-100 to-green-200",
       children: <Baseboard data={baseboardArrData} />,
     },
   ];
@@ -105,7 +105,7 @@ const App: React.FC = () => {
         <div className="flex items-center mt-3">
           {items.map((tab, index) => (
             <div
-              className={`w-calc-1/4 first:ml-0 ml-4 cursor-pointer relative h-[6em] rounded px-5 py-4  bg-gradient-to-br   w-full ${tab.clor}`}
+              className={`w-calc-1/4 first:ml-0 ml-4 cursor-pointer relative h-[6em] rounded px-5 py-4  bg-gradient-to-br   w-full ${tab.color}`}
               key={index}
               onClick={() => handleTabClick(index)}
             >
@@ -135,15 +135,22 @@ const App: React.FC = () => {
           {/**第一部分 */}
           <div>
             <div className="text-sm font-normal leading-[22px] text-amber-950">
-              专业上门运维
+              专业定制
             </div>
             <div className="text-xs font-normal leading-[22px] text-amber-950">
-              360与生态伙伴旗下的专业安全与运维专家，为您提供远程支持或上门服务
+              为您添加个性化数据大盘，针对性提升运维效率。
             </div>
           </div>
           {/**第二部分 */}
           <div className="w-[104px] h-8 leading-8 rounded-sm bg-orange-300 text-xs font-normal text-center text-amber-950 cursor-pointer ">
-            选择专业服务
+            <a
+              href="https://www.npc.ink/"
+              target="_blank"
+              className="text-amber-950"
+            >
+              {" "}
+              选择专业
+            </a>
           </div>
         </div>
       </div>
