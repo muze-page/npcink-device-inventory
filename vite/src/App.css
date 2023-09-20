@@ -2,11 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  /*设备详情 mac*/
+  .mac {
+    @apply border border-gray-300 bg-gradient-to-r from-[#fcfcfc] to-[#f7f7f7];
+  }
+  /*SVG 图标*/
+  .svg {
+    @apply w-[1em] h-[1em] mr-1 text-sm;
+  }
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
-  
 }
 
 .logo {
