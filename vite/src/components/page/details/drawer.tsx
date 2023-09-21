@@ -19,15 +19,18 @@ const App: React.FC = () => {
 
   return (
     <>
-      <Drawer
-        title="资产详细信息"
-        placement={"right"}
-        onClose={onClose}
-        open={state.drawer}
-        width={"50%"}
-      >
-        <Property data={state.data} />
-      </Drawer>
+     
+        <Drawer
+          title="资产详细信息"
+          placement={"right"}
+          onClose={onClose}
+          open={state.drawer}
+          width={"50%"}
+          className="pt-9"
+        >
+          <Property data={state.data} />
+        </Drawer>
+     
     </>
   );
 };
