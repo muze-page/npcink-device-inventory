@@ -1,19 +1,16 @@
 /**
  * 详情
  */
-import { useContext } from "react";
+import { useContext, useState } from "react";
 
 import DataContext from "@/store/dataContext";
+import { StateContext } from "@/store/dataContext";
 import DetailsList from "@/components/block/detailsList";
 import Drawer from "@/components/page/details/drawer";
-
-
 
 const App: React.FC = () => {
   //拿到数据
   const data = useContext(DataContext);
-
-
 
   //收集指定数据
   const calculateTotalSize = (dataArrays: any) => {
@@ -80,10 +77,26 @@ const App: React.FC = () => {
    * 备注名
    */
 
-
-
+  /**
+   * 状态管理
+   */
+  //状态管理
+ 
+    const [state, setState] = useState({
+      drawer: false,
+      id: 0,
+    });
+  
+    const updateState = (key: any, value: any) => {
+      setState(prevState => ({
+        ...prevState,
+        [key]: value,
+      }));
+    };
+  
   return (
     <>
+     <StateContext.Provider value={{ state, updateState }}>
       <div className="mt-1 flex content-start items-center flex-wrap w-[728px]">
         {/**开始循环 */}
         {updatedDataArray.map((tab: any, _index: any) => (
@@ -92,6 +105,7 @@ const App: React.FC = () => {
       </div>
       {/**弹窗 */}
       <Drawer />
+      </StateContext.Provider>
     </>
   );
 };

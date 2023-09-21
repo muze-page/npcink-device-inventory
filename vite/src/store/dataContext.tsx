@@ -43,14 +43,6 @@ const combinedData = combineData(dataObject);
 
 const DataContext = createContext(combinedData);
 
-//状态管理
-const stateData = {
-  drawer: false,
-  id: 0,
-};
-
-// 创建一个新的上下文对象，包含状态和更新状态的函数
-
-export const StateData = createContext(stateData);
+export const StateContext = createContext({} as any);
 
 export default DataContext;
