@@ -29,7 +29,7 @@ const App: React.FC<Props> = ({ data }) => {
   //点击打开弹窗
   const showDrawer = () => {
     updateState("drawer", true); //打开弹窗
-    updateState("id", data.id); //传递唯一ID
+    updateState("data", data); //传递配置信息
   };
 
   return (

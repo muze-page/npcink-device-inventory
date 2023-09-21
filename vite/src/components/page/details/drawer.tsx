@@ -1,5 +1,5 @@
 /**
- * 设备详情 - 弹窗
+ * 弹窗
  */
 import { useContext } from "react";
 import { StateContext } from "@/store/dataContext";
@@ -15,13 +15,10 @@ const App: React.FC = () => {
   //关闭
   const onClose = () => {
     updateState("drawer", false); //打开弹窗
-   
   };
 
   return (
     <>
-      <h2> {state.drawer ? "有值" : "无值"}</h2>
-      <h2> {state.id}</h2>
       <Drawer
         title="资产详细信息"
         placement={"right"}
@@ -31,9 +28,8 @@ const App: React.FC = () => {
         key={"right"}
         width={"60%"}
       >
-        666
-        {state.drawer ? "有值" : "无值"}
-        <Property />
+       
+        <Property data={state.data}/>
       </Drawer>
     </>
   );

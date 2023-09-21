@@ -2,14 +2,18 @@
  * 设备详情 - 展开
  */
 import { Tabs } from "antd";
-import { CodepenOutlined, ApartmentOutlined  } from "@ant-design/icons";
+import { CodepenOutlined, ApartmentOutlined } from "@ant-design/icons";
 import type { TabsProps } from "antd";
 import Info from "@/components/page/details/block/info";
 import Change from "@/components/page/details/block/change";
 import MacOs from "@/assets/macos.png";
+import Win from "@/assets/windows_s.png";
 import User from "@/assets/user.svg";
 
-const App: React.FC = () => {
+interface Props {
+  data: any;
+}
+const App: React.FC<Props> = ({ data }) => {
   const items: TabsProps["items"] = [
     {
       key: "1",
@@ -37,11 +41,29 @@ const App: React.FC = () => {
       {/**品牌标志 */}
       <div className="flex">
         {/**LOGO */}
-        <div className="rounded-l-[4px] py-[22px] px-[10px] Mac_icon_background_color">
-          <img src={MacOs} className="w-[110px] h-[110px]" />
-        </div>
+        {/**顶部标志 */}
+        {data.meat.ostype.includes("mac") && (
+          <div className="rounded-l-[4px] py-[22px] px-[10px] Mac_icon_background_color">
+            <img src={MacOs} className="w-[110px] h-[110px]" />
+          </div>
+        )}
+
+        {data.meat.ostype.includes("Windows") && (
+          <div className="rounded-l-[4px] py-[22px] px-[10px] bg-[#356dee]">
+            <img src={Win} className="w-[110px] h-[110px]" />
+          </div>
+        )}
+
         {/**详细内容 */}
-        <div className="pt-6 pr-[17px] pb-6 pl-[23px] text-white text-sm flex-1 Mac_content_background_color">
+        <div
+          className={`pt-6 pr-[17px] pb-6 pl-[23px] text-white text-sm flex-1 
+        ${data.meat.ostype.includes("mac") && "Mac_content_background_color"}
+        ${
+          data.meat.ostype.includes("Windows") &&
+          "Windows_content_background_color"
+        }
+        `}
+        >
           {/**备注 */}
           <div className="flex justify-between">
             <p className="flex items-center text-lg">Npcink</p>

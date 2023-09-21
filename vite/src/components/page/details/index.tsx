@@ -5,7 +5,7 @@ import { useContext, useState } from "react";
 
 import DataContext from "@/store/dataContext";
 import { StateContext } from "@/store/dataContext";
-import DetailsList from "@/components/block/detailsList";
+import DetailsList from "@/components/page/details/detailsList";
 import Drawer from "@/components/page/details/drawer";
 
 const App: React.FC = () => {
@@ -68,7 +68,6 @@ const App: React.FC = () => {
   //处理后的数据
   const updatedDataArray = updateOSType(data);
 
-
   //整理，需要，设备类型，Apple 还是Windows，
   /**
    * 昵称
@@ -81,30 +80,31 @@ const App: React.FC = () => {
    * 状态管理
    */
   //状态管理
- 
-    const [state, setState] = useState({
-      drawer: false,
-      id: 0,
-    });
-  
-    const updateState = (key: any, value: any) => {
-      setState(prevState => ({
-        ...prevState,
-        [key]: value,
-      }));
-    };
-  
+
+  const [state, setState] = useState({
+    drawer: false,
+    data: [],
+  });
+
+  //更改值
+  const updateState = (key: any, value: any) => {
+    setState((prevState) => ({
+      ...prevState,
+      [key]: value,
+    }));
+  };
+
   return (
     <>
-     <StateContext.Provider value={{ state, updateState }}>
-      <div className="mt-1 flex content-start items-center flex-wrap w-[728px]">
-        {/**开始循环 */}
-        {updatedDataArray.map((tab: any, _index: any) => (
-          <DetailsList key={tab.id} data={tab} />
-        ))}
-      </div>
-      {/**弹窗 */}
-      <Drawer />
+      <StateContext.Provider value={{ state, updateState }}>
+        <div className="mt-1 flex content-start items-center flex-wrap w-[728px]">
+          {/**开始循环 */}
+          {updatedDataArray.map((tab: any, _index: any) => (
+            <DetailsList key={tab.id} data={tab} />
+          ))}
+        </div>
+        {/**弹窗 */}
+        <Drawer />
       </StateContext.Provider>
     </>
   );
