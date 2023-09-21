@@ -58,7 +58,7 @@ const App: React.FC<Props> = ({ data }) => {
           <p className="text-sm font-bold text-zinc-800 leading-5 m-0">
             {data.styleName ?? "暂无"}
           </p>
-          {/*设备型号*/}
+          {/*操作系统*/}
           <p className="mt-3">{data.meat.model}</p>
           {/*配置信息*/}
           <p className="mt-2">

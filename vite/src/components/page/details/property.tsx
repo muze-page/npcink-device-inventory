@@ -73,17 +73,21 @@ const App: React.FC<Props> = ({ data }) => {
         >
           {/**备注 */}
           <div className="flex justify-between">
-            <p className="flex items-center text-lg">Npcink</p>
+            <p className="flex items-center text-lg">
+              {data.styleName ?? "暂无"}
+            </p>
           </div>
           {/**操作系统 */}
-          <p className="mt-2">Macmini9,1</p>
-          {/**大概配置 */}
-          <p> intel / 8 GB / 251 GB </p>
+          <p className="mt-2">{data.meat.model}</p>
+          {/*大概配置信息 */}
+          <p>
+            {data.meat.cpu} / {data.meat.memory}GB / {data.meat.disk}GB
+          </p>
           {/**昵称 */}
           <div className="mt-5 flex items-center">
             <p className="flex items-center">
               <img src={User} className="svg svgReversal" />
-              <span>大大怪</span>
+              <span>{data.name ?? "暂无"}</span>
             </p>
           </div>
         </div>
