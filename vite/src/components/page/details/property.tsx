@@ -36,32 +36,39 @@ const App: React.FC<Props> = ({ data }) => {
       children: <Change />,
     },
   ];
+
+  //找状态
+  const stateWinOs = data.meat.ostype.includes("Windows");
+  const stateMacOs = data.meat.ostype.includes("mac");
   return (
     <>
       {/**品牌标志 */}
       <div className="flex">
         {/**LOGO */}
         {/**顶部标志 */}
-        {data.meat.ostype.includes("mac") && (
-          <div className="rounded-l-[4px] py-[22px] px-[10px] Mac_icon_background_color">
-            <img src={MacOs} className="w-[110px] h-[110px]" />
-          </div>
-        )}
 
-        {data.meat.ostype.includes("Windows") && (
-          <div className="rounded-l-[4px] py-[22px] px-[10px] bg-[#356dee]">
-            <img src={Win} className="w-[110px] h-[110px]" />
-          </div>
-        )}
+        <div
+          className={`rounded-l-[4px] py-[22px] px-[10px] 
+          ${
+            (stateWinOs && "bg-[#356dee]") ||
+            (stateMacOs && "Mac_icon_background_color")
+          }
+          `}
+        >
+          <img
+            src={(stateWinOs && Win) || (stateMacOs && MacOs)}
+            className="w-[110px] h-[110px]"
+          />
+        </div>
 
         {/**详细内容 */}
         <div
           className={`pt-6 pr-[17px] pb-6 pl-[23px] text-white text-sm flex-1 
-        ${data.meat.ostype.includes("mac") && "Mac_content_background_color"}
         ${
-          data.meat.ostype.includes("Windows") &&
-          "Windows_content_background_color"
+          (stateWinOs && "Windows_content_background_color") ||
+          (stateMacOs && "Mac_content_background_color")
         }
+       
         `}
         >
           {/**备注 */}
