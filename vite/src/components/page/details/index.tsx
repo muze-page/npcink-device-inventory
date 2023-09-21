@@ -68,7 +68,7 @@ const App: React.FC = () => {
   //处理后的数据
   const updatedDataArray = updateOSType(data);
 
-  console.log(updatedDataArray);
+
   //整理，需要，设备类型，Apple 还是Windows，
   /**
    * 昵称

@@ -1,7 +1,7 @@
 /**
  * 设备详情
  */
-import {  useContext } from "react";
+import { useContext } from "react";
 import { StateContext } from "@/store/dataContext";
 import Mac from "@/assets/mac.png";
 import Win from "@/assets/windows_ico.png";
@@ -24,16 +24,12 @@ interface Props {
 }
 const App: React.FC<Props> = ({ data }) => {
   //拿到数据跟方法
-  const { state, updateState } = useContext(StateContext);
+  const { updateState } = useContext(StateContext);
 
   //点击打开弹窗
   const showDrawer = () => {
-    updateState('drawer', true); //打开弹窗
-    updateState('id', data.id);//传递唯一ID
-
-    //state.drawer = true;
-    //state.id = data.id; 
-    console.log(state);
+    updateState("drawer", true); //打开弹窗
+    updateState("id", data.id); //传递唯一ID
   };
 
   return (

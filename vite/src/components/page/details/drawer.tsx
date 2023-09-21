@@ -15,8 +15,7 @@ const App: React.FC = () => {
   //关闭
   const onClose = () => {
     updateState("drawer", false); //打开弹窗
-    console.log("触发关闭");
-    console.log(state);
+   
   };
 
   return (
