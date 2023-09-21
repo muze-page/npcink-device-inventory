@@ -57,6 +57,8 @@ class Dema_Activator
             styleName VARCHAR(255),
             dataNew JSON,
             dataOld JSON,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id)
         );";
 

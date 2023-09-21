@@ -21,13 +21,12 @@ const App: React.FC = () => {
     <>
       <Drawer
         title="资产详细信息"
-        placement={"left"}
+        placement={"right"}
         onClose={onClose}
         open={state.drawer}
         width={"50%"}
       >
-       
-        <Property data={state.data}/>
+        <Property data={state.data} />
       </Drawer>
     </>
   );

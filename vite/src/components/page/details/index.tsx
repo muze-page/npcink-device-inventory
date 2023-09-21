@@ -97,7 +97,7 @@ const App: React.FC = () => {
   return (
     <>
       <StateContext.Provider value={{ state, updateState }}>
-        <div className="mt-1 flex content-start items-center flex-wrap w-[728px]">
+        <div className="mt-1 flex content-start items-center flex-wrap w-full">
           {/**开始循环 */}
           {updatedDataArray.map((tab: any, _index: any) => (
             <DetailsList key={tab.id} data={tab} />
