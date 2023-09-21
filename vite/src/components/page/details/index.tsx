@@ -1,23 +1,19 @@
 /**
  * 详情
  */
-import { useState, useContext } from "react";
-import type { DrawerProps } from "antd";
-import { Drawer } from "antd";
+import { useContext } from "react";
+
 import DataContext from "@/store/dataContext";
 import DetailsList from "@/components/block/detailsList";
-import Property from "@/components/page/details/property";
-
-
-
-
-
+import Drawer from "@/components/page/details/drawer";
 
 
 
 const App: React.FC = () => {
   //拿到数据
   const data = useContext(DataContext);
+
+
 
   //收集指定数据
   const calculateTotalSize = (dataArrays: any) => {
@@ -39,10 +35,8 @@ const App: React.FC = () => {
       (obj: { dataNew: any; ostype?: any }) => {
         const parsedData = obj.dataNew;
         const ostype = parsedData.os.distro; //系统版本
-      
 
-        const model = parsedData.system.model; //型号 
-      
+        const model = parsedData.system.model; //型号
 
         const cpu = parsedData.cpu.manufacturer; //CPU
         const memoryData = parsedData.memLayout; //内存数组
@@ -86,40 +80,18 @@ const App: React.FC = () => {
    * 备注名
    */
 
-  const [open, setOpen] = useState(false);
-  const [placement, setPlacement] = useState<DrawerProps["placement"]>("right");
 
-  const showDrawer = () => {
-    setOpen(true);
-  };
-
-  const onClose = () => {
-    setOpen(false);
-  };
 
   return (
     <>
-      <div
-        className="mt-1 flex content-start items-center flex-wrap w-[728px]"
-        onClick={showDrawer}
-      >
+      <div className="mt-1 flex content-start items-center flex-wrap w-[728px]">
         {/**开始循环 */}
-        {updatedDataArray.map((tab: any, index: any) => (
-          <DetailsList key={index} data={tab} />
+        {updatedDataArray.map((tab: any, _index: any) => (
+          <DetailsList key={tab.id} data={tab} />
         ))}
       </div>
-
-      <Drawer
-        title="资产详细信息"
-        placement={placement}
-        closable={false}
-        onClose={onClose}
-        open={open}
-        key={placement}
-        width={"60%"}
-      >
-        <Property />
-      </Drawer>
+      {/**弹窗 */}
+      <Drawer />
     </>
   );
 };

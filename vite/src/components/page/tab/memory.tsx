@@ -23,11 +23,9 @@ interface Props {
   data: any;
 }
 const App: React.FC<Props> = ({ data }) => {
-  console.log(data);
 
-
+  //进行处理
   const tableData = sum_order(data, thresholds);
-  console.log(tableData);
 
   return (
     <>
