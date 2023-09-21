@@ -39,7 +39,6 @@ if (!class_exists('DEMA_Admin_Menu')) {
         {
 ?>
             <div class="wrap">
-
                 <!--标题-->
                 <h2><?php echo esc_html(get_admin_page_title()); ?></h2>
                 <div id='root'>666</div>
@@ -70,6 +69,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
 
 
             $pf_api_translation_array = array(
+
                 'data' => self::get_custom_table_data(), //传递选项
             );
             wp_localize_script($name, 'dataLocal', $pf_api_translation_array); //传给vite项目
