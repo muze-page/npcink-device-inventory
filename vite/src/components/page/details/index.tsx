@@ -7,6 +7,14 @@ import { Drawer } from "antd";
 import DataContext from "@/store/dataContext";
 import DetailsList from "@/components/block/detailsList";
 import Property from "@/components/page/details/property";
+
+
+
+
+
+
+
+
 const App: React.FC = () => {
   //拿到数据
   const data = useContext(DataContext);
@@ -31,7 +39,10 @@ const App: React.FC = () => {
       (obj: { dataNew: any; ostype?: any }) => {
         const parsedData = obj.dataNew;
         const ostype = parsedData.os.distro; //系统版本
-        const model = parsedData.system.model; //型号
+      
+
+        const model = parsedData.system.model; //型号 
+      
 
         const cpu = parsedData.cpu.manufacturer; //CPU
         const memoryData = parsedData.memLayout; //内存数组

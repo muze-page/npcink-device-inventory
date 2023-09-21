@@ -2,6 +2,7 @@
  * 设备详情
  */
 import Mac from "@/assets/mac.png";
+import Win from "@/assets/windows_ico.png";
 import User from "@/assets/user.svg";
 
 interface Props {
@@ -19,9 +20,15 @@ const App: React.FC<Props> = ({ data }) => {
       {/**开始循环 */}
       <div className="cursor-pointer p-[10px] rounded mr-[1.7%] mt-4 w-[30.7%] h-[272px] mac">
         {/**顶部标志 */}
-        <div className="mt-2 mb-3 ml-4">
+
+        <div className="mt-2 mb-3 ml-3">
           <img src={Mac} className="h-10" />
         </div>
+
+        <div className="mt-2 mb-3 ml-3">
+          <img src={Win} className="h-10" />
+        </div>
+
         {/**底部数据 */}
         <div className="p-4 text-xs text-zinc-500  bg-white rounded whitespace-nowrap">
           {/*备注名*/}
