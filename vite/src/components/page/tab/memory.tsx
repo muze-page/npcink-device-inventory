@@ -10,20 +10,24 @@ const meat = {
   bgColor: "from-red-100 to-red-200 bg-red-50", //颜色
 };
 
+//替换列表
+const thresholds = {
+  "2G": 2,
+  "4G": 4,
+  "8G": 8,
+  "16G": 16,
+  "32G": 32,
+};
+
 interface Props {
   data: any;
 }
 const App: React.FC<Props> = ({ data }) => {
   console.log(data);
-  const thresholds = {
-    "2G": 2,
-    "4G": 4,
-    "8G": 8,
-    "16G": 16,
-    "32G": 32,
-  };
+
 
   const tableData = sum_order(data, thresholds);
+  console.log(tableData);
 
   return (
     <>

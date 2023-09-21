@@ -7,11 +7,17 @@ import User from "@/assets/user.svg";
 
 interface Props {
   data: {
-    ostype: string;
-    cpu: string;
-    model: string;
-    memory: string;
-    disk: string;
+    id: number;
+    name: string;
+    styleName: string;
+    styleNumber: string;
+    meat: {
+      ostype: string;
+      cpu: string;
+      model: string;
+      memory: string;
+      disk: string;
+    };
   };
 }
 const App: React.FC<Props> = ({ data }) => {
@@ -20,29 +26,37 @@ const App: React.FC<Props> = ({ data }) => {
       {/**开始循环 */}
       <div className="cursor-pointer p-[10px] rounded mr-[1.7%] mt-4 w-[30.7%] h-[272px] mac">
         {/**顶部标志 */}
+        {data.meat.ostype.includes("mac") && (
+          <div className="mt-2 mb-3 ml-3">
+            <img src={Mac} className="h-10" />
+          </div>
+        )}
 
-        <div className="mt-2 mb-3 ml-3">
-          <img src={Mac} className="h-10" />
-        </div>
-
-        <div className="mt-2 mb-3 ml-3">
-          <img src={Win} className="h-10" />
-        </div>
+        {data.meat.ostype.includes("Windows") && (
+          <div className="mt-2 mb-3 ml-3">
+            <img src={Win} className="h-10" />
+          </div>
+        )}
 
         {/**底部数据 */}
         <div className="p-4 text-xs text-zinc-500  bg-white rounded whitespace-nowrap">
           {/*备注名*/}
           <p className="text-sm font-bold text-zinc-800 leading-5 m-0">
-            大大怪
+            {data.styleName ?? "暂无"}
           </p>
           {/*设备型号*/}
           <p className="mt-3">{data.meat.model}</p>
           {/*配置信息*/}
-          <p className="mt-2">intel / 8 GB / 251 GB</p>
+          <p className="mt-2">
+            {data.meat.cpu} / {data.meat.memory}GB / {data.meat.disk}GB
+            
+           
+            
+            </p>
           {/*昵称*/}
           <p className="flex items-center mt-4">
             <img src={User} className="svg" />
-            <span>Npcink</span>
+            <span>{data.name ?? "暂无"}</span>
           </p>
           {/*昵称*/}
         </div>

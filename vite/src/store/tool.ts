@@ -41,10 +41,10 @@ export const sum_order = (
   const arr: { type: string; sum: number }[] = [];
 
   data.forEach((obj: { size: number }) => {
-    const sizeInGB = obj.size / (1024 * 1024 * 1024); // 将 size 从字节转换为 GB
-
+   
+    const sizeInGB = obj.size / (1024 ** 3); // 将 size 从字节转换为 GB
     for (const type in thresholds) {
-      if (sizeInGB < thresholds[type]) {
+      if (sizeInGB <= thresholds[type]) {
         const index = arr.findIndex((item) => item.type === type);
         if (index !== -1) {
           arr[index].sum += 1;
