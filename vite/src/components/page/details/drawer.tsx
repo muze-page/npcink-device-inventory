@@ -14,19 +14,17 @@ const App: React.FC = () => {
 
   //关闭
   const onClose = () => {
-    updateState("drawer", false); //打开弹窗
+    updateState("drawer", false); //关闭弹窗
   };
 
   return (
     <>
       <Drawer
         title="资产详细信息"
-        placement={"right"}
-        closable={false}
+        placement={"left"}
         onClose={onClose}
         open={state.drawer}
-        key={"right"}
-        width={"60%"}
+        width={"50%"}
       >
        
         <Property data={state.data}/>

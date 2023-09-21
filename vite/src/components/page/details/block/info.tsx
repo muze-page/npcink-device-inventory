@@ -36,12 +36,14 @@ const App: React.FC<Props> = ({ data }) => {
     },
     {
       title: "内存",
-      data:
-        data.memLayout[0].manufacturer +
-        data.memLayout[0].clockSpeed +
-        "MHZ" +
-        data.memLayout[0].size / 1024 ** 3 +
-        "GB",
+      data: `
+        ${data.memLayout[0].manufacturer} 
+        
+        ${data.memLayout[0].clockSpeed + " MHZ"}  
+       
+        ${data.memLayout[0].size / 1024 ** 3}  GB
+        
+      `,
     },
     {
       title: "网卡",
@@ -50,7 +52,11 @@ const App: React.FC<Props> = ({ data }) => {
     {
       title: "显示器",
       data: displayData.model,
-      plug: `分辨率：${displayData.currentResX}x${displayData.currentResY} 刷新率：${displayData.currentRefreshRate}`,
+      plug: `
+      (${displayData.currentResX}x${displayData.currentResY}
+        ${displayData.currentRefreshRate}
+        ) 
+     `,
     },
   ];
 
@@ -61,7 +67,7 @@ const App: React.FC<Props> = ({ data }) => {
         {handleData.map((item: any, index: number) => (
           <div
             className={`
-            mb-2 w-[49.6%] h-[70px] py-4 px-5 rounded border bg-gradient-to-r
+            mb-2 w-[49.6%] h-24 py-4 px-5 rounded border bg-gradient-to-r
             ${
               index % 4 === 0 || index % 4 === 3 || index % 4 === 4
                 ? "bg_blue"
@@ -73,7 +79,7 @@ const App: React.FC<Props> = ({ data }) => {
             <p className="text-sm text-zinc-600">{item.title}</p>
             <p className="mt-1 text-base text-zinc-600">
               {item.data}
-              <small>{item.plug}</small>
+              {item.plug}
             </p>
           </div>
         ))}
