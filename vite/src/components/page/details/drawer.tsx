@@ -25,7 +25,7 @@ const App: React.FC = () => {
           placement={"right"}
           onClose={onClose}
           open={state.drawer}
-          width={"50%"}
+          width={"60%"}
           className="pt-9"
         >
           <Property data={state.data} />
