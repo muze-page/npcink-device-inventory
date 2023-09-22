@@ -3,7 +3,7 @@
  */
 import { Table, Empty } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { findDifferentKeys,  } from "@/store/tool";
+import { findDifferentKeys } from "@/store/tool";
 
 interface DataType {
   key: string;
@@ -36,7 +36,6 @@ const columns: ColumnsType<DataType> = [
   },
 ];
 
-
 //替换列表
 const replacements = {
   "os.distro": "系统版本",
@@ -57,12 +56,10 @@ const App: React.FC<Props> = ({ data }) => {
   const differences = findDifferentKeys(dataOld, dataNew);
 
   //替换关键词
-  function replaceType(difference, replacements) {
-    difference.change = replacements[difference.change];
-  }
   differences.forEach((difference) => {
-    //注释此行可停止替换
-    replaceType(difference, replacements);
+    if (replacements.hasOwnProperty(difference.change)) {
+      difference.change = replacements[difference.change];
+    }
   });
 
   console.log(differences);
