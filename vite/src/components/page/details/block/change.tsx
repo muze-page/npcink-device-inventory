@@ -3,7 +3,7 @@
  */
 import { Table, Empty } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { findDifferentKeys, replaceType } from "@/store/tool";
+import { findDifferentKeys,  } from "@/store/tool";
 
 interface DataType {
   key: string;
@@ -36,29 +36,6 @@ const columns: ColumnsType<DataType> = [
   },
 ];
 
-const dataTable: DataType[] = [
-  {
-    key: "1",
-    time: "2023-09-20 17:30:46",
-    change: "网卡",
-    old: "Realtek(R) PCI(e) Ethernet Controller;Realtek 8822CE Wireless LAN 802.11ac PCI-E NIC",
-    new: "Realtek PCIe GbE Family Controller;Realtek 8822CE Wireless LAN 802.11ac PCI-E NIC",
-  },
-  {
-    key: "2",
-    time: "Jim Green",
-    change: "42",
-    old: "London No. 1 Lake Park",
-    new: "loser",
-  },
-  {
-    key: "3",
-    time: "Joe Black",
-    change: "32",
-    old: "Sydney No. 1 Lake Park",
-    new: "cool",
-  },
-];
 
 //替换列表
 const replacements = {
@@ -83,15 +60,15 @@ const App: React.FC<Props> = ({ data }) => {
   function replaceType(difference, replacements) {
     difference.change = replacements[difference.change];
   }
-  differences.forEach(difference => {
+  differences.forEach((difference) => {
+    //注释此行可停止替换
     replaceType(difference, replacements);
   });
 
-
-  
   console.log(differences);
   //添加若干参数
   addUniqueIdAndTime(differences);
+  const dataTable = differences as DataType[];
   console.log(differences);
 
   /**
@@ -133,7 +110,7 @@ const App: React.FC<Props> = ({ data }) => {
           {differences.length === 0 ? (
             <Empty />
           ) : (
-            <Table size="small" columns={columns} dataSource={differences} />
+            <Table size="small" columns={columns} dataSource={dataTable} />
           )}
         </div>
         {/**下载按钮 */}

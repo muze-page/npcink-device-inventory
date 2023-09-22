@@ -41,8 +41,7 @@ export const sum_order = (
   const arr: { type: string; sum: number }[] = [];
 
   data.forEach((obj: { size: number }) => {
-   
-    const sizeInGB = obj.size / (1024 ** 3); // 将 size 从字节转换为 GB
+    const sizeInGB = obj.size / 1024 ** 3; // 将 size 从字节转换为 GB
     for (const type in thresholds) {
       if (sizeInGB <= thresholds[type]) {
         const index = arr.findIndex((item) => item.type === type);
@@ -67,13 +66,14 @@ export const sum_order = (
  */
 export const replaceType = (
   data: any[],
-  replacements: { [x: string]: any }
+  replacements: { [x: string]: any },
+  type = "type"
 ) => {
   for (let i = 0; i < data.length; i++) {
     let obj = data[i];
     for (let key in replacements) {
-      if (obj.type.includes(key)) {
-        obj.type = replacements[key];
+      if (obj[type].includes(key)) {
+        obj[type] = replacements[key];
       }
     }
   }
@@ -83,12 +83,14 @@ export const replaceType = (
 /**
  * 从对象中找出不同值，组成数组并输出
  */
-export const findDifferentKeys = (dataOld:any, dataNew:any) => {
-  const result: { change: string; new: any; old: any; }[] = [];
+export const findDifferentKeys = (dataOld: any, dataNew: any) => {
+  const result: { change: string; new: any; old: any }[] = [];
 
-  if (isNull(dataOld) || typeof dataOld !== 'object' || Object.keys(dataOld).length === 0) {
-    
-
+  if (
+    isNull(dataOld) ||
+    typeof dataOld !== "object" ||
+    Object.keys(dataOld).length === 0
+  ) {
     return result;
   }
 
@@ -100,7 +102,10 @@ export const findDifferentKeys = (dataOld:any, dataNew:any) => {
   keys.forEach((key) => {
     if (!isNull(dataOld[key]) && !isNull(dataNew[key])) {
       if (!deepEqual(dataOld[key], dataNew[key])) {
-        if (typeof dataOld[key] !== 'object' || typeof dataNew[key] !== 'object') {
+        if (
+          typeof dataOld[key] !== "object" ||
+          typeof dataNew[key] !== "object"
+        ) {
           result.push({
             change: key,
             new: dataNew[key],
@@ -130,8 +135,8 @@ export const findDifferentKeys = (dataOld:any, dataNew:any) => {
 };
 
 // 获取最底层的键名和键值
-function getLowestValue(obj: { [x: string]: any; }) {
-  if (typeof obj !== 'object') {
+function getLowestValue(obj: { [x: string]: any }) {
+  if (typeof obj !== "object") {
     return obj;
   }
 
@@ -146,7 +151,7 @@ function getLowestValue(obj: { [x: string]: any; }) {
 
 // 检查是否为 null、undefined、空字符串的函数
 function isNull(value: string | null) {
-  return value === null || typeof value === 'undefined' || value === '';
+  return value === null || typeof value === "undefined" || value === "";
 }
 
 // 深度比较两个值是否相等的函数
@@ -165,7 +170,7 @@ function deepEqual(value1: string | any[], value2: string | any[]): boolean {
     return true;
   }
 
-  if (typeof value1 === 'object' && typeof value2 === 'object') {
+  if (typeof value1 === "object" && typeof value2 === "object") {
     const keys1 = Object.keys(value1);
     const keys2 = Object.keys(value2);
 
@@ -174,8 +179,16 @@ function deepEqual(value1: string | any[], value2: string | any[]): boolean {
     }
 
     for (const key of keys1) {
-      if (!isNull(value1[key as keyof typeof value1]) && !isNull(value2[key as keyof typeof value2])) {
-        if (!deepEqual(value1[key as keyof typeof value1], value2[key as keyof typeof value2])) {
+      if (
+        !isNull(value1[key as keyof typeof value1]) &&
+        !isNull(value2[key as keyof typeof value2])
+      ) {
+        if (
+          !deepEqual(
+            value1[key as keyof typeof value1],
+            value2[key as keyof typeof value2]
+          )
+        ) {
           return false;
         }
       }
