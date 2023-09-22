@@ -150,7 +150,7 @@ function isNull(value: string | null) {
 }
 
 // 深度比较两个值是否相等的函数
-function deepEqual(value1: string | any[], value2: string | any[]) {
+function deepEqual(value1: string | any[], value2: string | any[]): boolean {
   if (Array.isArray(value1) && Array.isArray(value2)) {
     if (value1.length !== value2.length) {
       return false;
@@ -174,8 +174,8 @@ function deepEqual(value1: string | any[], value2: string | any[]) {
     }
 
     for (const key of keys1) {
-      if (!isNull(value1[key]) && !isNull(value2[key])) {
-        if (!deepEqual(value1[key], value2[key])) {
+      if (!isNull(value1[key as keyof typeof value1]) && !isNull(value2[key as keyof typeof value2])) {
+        if (!deepEqual(value1[key as keyof typeof value1], value2[key as keyof typeof value2])) {
           return false;
         }
       }
