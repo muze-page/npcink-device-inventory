@@ -83,59 +83,54 @@ export const replaceType = (
 /**
  * 从对象中找出不同值，组成数组并输出
  */
-export const findDifferentKeys=(dataOld, dataNew)=> {
-  const result = [];
+export const findDifferentKeys = (dataOld:any, dataNew:any) => {
+  const result: { change: string; new: any; old: any; }[] = [];
 
-  if (isNull(dataOld) || typeof dataOld !== 'object') {
-    // 如果 dataOld 为空或不是对象，则返回 dataNew 中的所有键值对
-    Object.keys(dataNew).forEach(key => {
-      result.push({
-        change: key,
-        new: getLowestValue(dataNew[key]),
-        old: undefined
-      });
-    });
+  if (isNull(dataOld) || typeof dataOld !== 'object' || Object.keys(dataOld).length === 0) {
+    
 
     return result;
   }
 
-  const keys1 = isNull(dataOld) ? [] : Object.keys(dataOld);
-  const keys2 = isNull(dataNew) ? [] : Object.keys(dataNew);
+  const keys1 = Object.keys(dataOld);
+  const keys2 = Object.keys(dataNew);
 
   const keys = [...new Set([...keys1, ...keys2])];
 
-  keys.forEach(key => {
+  keys.forEach((key) => {
     if (!isNull(dataOld[key]) && !isNull(dataNew[key])) {
       if (!deepEqual(dataOld[key], dataNew[key])) {
         if (typeof dataOld[key] !== 'object' || typeof dataNew[key] !== 'object') {
           result.push({
             change: key,
             new: dataNew[key],
-            old: dataOld[key]
+            old: dataOld[key],
           });
         } else {
           const subDifferences = findDifferentKeys(dataOld[key], dataNew[key]);
-          result.push(...subDifferences.map(subDifference => ({
-            change: `${key}.${subDifference.change}`,
-            new: subDifference.new,
-            old: subDifference.old
-          })));
+          result.push(
+            ...subDifferences.map((subDifference) => ({
+              change: `${key}.${subDifference.change}`,
+              new: subDifference.new,
+              old: subDifference.old,
+            }))
+          );
         }
       }
     } else if (!isNull(dataNew[key])) {
       result.push({
         change: key,
         new: getLowestValue(dataNew[key]),
-        old: undefined
+        old: undefined,
       });
     }
   });
 
   return result;
-}
+};
 
 // 获取最底层的键名和键值
-function getLowestValue(obj) {
+function getLowestValue(obj: { [x: string]: any; }) {
   if (typeof obj !== 'object') {
     return obj;
   }
@@ -150,12 +145,12 @@ function getLowestValue(obj) {
 }
 
 // 检查是否为 null、undefined、空字符串的函数
-function isNull(value) {
+function isNull(value: string | null) {
   return value === null || typeof value === 'undefined' || value === '';
 }
 
 // 深度比较两个值是否相等的函数
-function deepEqual(value1, value2) {
+function deepEqual(value1: string | any[], value2: string | any[]) {
   if (Array.isArray(value1) && Array.isArray(value2)) {
     if (value1.length !== value2.length) {
       return false;
