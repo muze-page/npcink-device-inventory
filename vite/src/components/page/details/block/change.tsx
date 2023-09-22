@@ -3,6 +3,7 @@
  */
 import { Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import {findDifferentKeys} from "@/store/tool"
 
 interface DataType {
   key: string;
@@ -68,117 +69,42 @@ const App: React.FC<Props> = ({ data }) => {
   const dataNew = data.dataNew;
   const dataOld = data.dataOld;
 
-  function findDifferentKeys(dataOld, dataNew) {
-    const result = [];
+  //进行处理
+  const differences = findDifferentKeys(dataOld, dataNew);
+
   
-    if (isNull(dataOld) || typeof dataOld !== 'object') {
-      // 如果 dataOld 为空或不是对象，则返回 dataNew 中的所有键值对
-      Object.keys(dataNew).forEach(key => {
-        result.push({
-          type: key,
-          new: getLowestValue(dataNew[key]),
-          old: undefined
-        });
-      });
-  
-      return result;
-    }
-  
-    const keys1 = isNull(dataOld) ? [] : Object.keys(dataOld);
-    const keys2 = isNull(dataNew) ? [] : Object.keys(dataNew);
-  
-    const keys = [...new Set([...keys1, ...keys2])];
-  
-    keys.forEach(key => {
-      if (!isNull(dataOld[key]) && !isNull(dataNew[key])) {
-        if (!deepEqual(dataOld[key], dataNew[key])) {
-          if (typeof dataOld[key] !== 'object' || typeof dataNew[key] !== 'object') {
-            result.push({
-              type: key,
-              new: dataNew[key],
-              old: dataOld[key]
-            });
-          } else {
-            const subDifferences = findDifferentKeys(dataOld[key], dataNew[key]);
-            result.push(...subDifferences.map(subDifference => ({
-              type: `${key}.${subDifference.type}`,
-              new: subDifference.new,
-              old: subDifference.old
-            })));
-          }
-        }
-      } else if (!isNull(dataNew[key])) {
-        result.push({
-          type: key,
-          new: getLowestValue(dataNew[key]),
-          old: undefined
-        });
-      }
+
+  addUniqueIdAndTime(differences);
+  console.log(differences);
+
+  /**
+   * 临时用
+   */
+  function addUniqueIdAndTime(array) {
+    array.forEach((obj, index) => {
+      obj.key = generateUniqueId();
+      obj.time = generateRandomDate();
     });
-  
-    return result;
   }
   
-  // 获取最底层的键名和键值
-  function getLowestValue(obj) {
-    if (typeof obj !== 'object') {
-      return obj;
-    }
-  
-    const keys = Object.keys(obj);
-    if (keys.length === 0) {
-      return undefined;
-    }
-  
-    const key = keys[0];
-    return getLowestValue(obj[key]);
+  function generateUniqueId() {
+    return Math.random().toString(36).substr(2, 9);
   }
   
-  // 检查是否为 null、undefined、空字符串的函数
-  function isNull(value) {
-    return value === null || typeof value === 'undefined' || value === '';
-  }
+  function generateRandomDate() {
+    const startDate = new Date(2000, 0, 1); // 开始日期为2000年1月1日
+    const endDate = new Date(); // 结束日期为当前日期
   
-  // 深度比较两个值是否相等的函数
-  function deepEqual(value1, value2) {
-    if (Array.isArray(value1) && Array.isArray(value2)) {
-      if (value1.length !== value2.length) {
-        return false;
-      }
+    const randomTimestamp = Math.floor(Math.random() * (endDate - startDate) + startDate.getTime());
+    const randomDate = new Date(randomTimestamp);
   
-      for (let i = 0; i < value1.length; i++) {
-        if (!deepEqual(value1[i], value2[i])) {
-          return false;
-        }
-      }
+    const year = randomDate.getFullYear();
+    const month = String(randomDate.getMonth() + 1).padStart(2, '0');
+    const day = String(randomDate.getDate()).padStart(2, '0');
   
-      return true;
-    }
-  
-    if (typeof value1 === 'object' && typeof value2 === 'object') {
-      const keys1 = Object.keys(value1);
-      const keys2 = Object.keys(value2);
-  
-      if (keys1.length !== keys2.length) {
-        return false;
-      }
-  
-      for (const key of keys1) {
-        if (!isNull(value1[key]) && !isNull(value2[key])) {
-          if (!deepEqual(value1[key], value2[key])) {
-            return false;
-          }
-        }
-      }
-  
-      return true;
-    }
-  
-    return value1 === value2;
+    return `${year}-${month}-${day}`;
   }
 
-  const differences = findDifferentKeys(dataOld, dataNew);
-  console.log(differences);
 
   return (
     <>
@@ -186,7 +112,7 @@ const App: React.FC<Props> = ({ data }) => {
         {/**列表 */}
         <div className="mt-1">
           <p className="mb-4 text-base font-bold text-[#333]">硬件信息变更</p>
-          <Table size="small" columns={columns} dataSource={dataTable} />
+          <Table size="small" columns={columns} dataSource={differences} />
         </div>
         {/**下载按钮 */}
       </div>

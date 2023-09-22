@@ -79,3 +79,115 @@ export const replaceType = (
   }
   return data;
 };
+
+/**
+ * 从对象中找出不同值，组成数组并输出
+ */
+export const findDifferentKeys=(dataOld, dataNew)=> {
+  const result = [];
+
+  if (isNull(dataOld) || typeof dataOld !== 'object') {
+    // 如果 dataOld 为空或不是对象，则返回 dataNew 中的所有键值对
+    Object.keys(dataNew).forEach(key => {
+      result.push({
+        change: key,
+        new: getLowestValue(dataNew[key]),
+        old: undefined
+      });
+    });
+
+    return result;
+  }
+
+  const keys1 = isNull(dataOld) ? [] : Object.keys(dataOld);
+  const keys2 = isNull(dataNew) ? [] : Object.keys(dataNew);
+
+  const keys = [...new Set([...keys1, ...keys2])];
+
+  keys.forEach(key => {
+    if (!isNull(dataOld[key]) && !isNull(dataNew[key])) {
+      if (!deepEqual(dataOld[key], dataNew[key])) {
+        if (typeof dataOld[key] !== 'object' || typeof dataNew[key] !== 'object') {
+          result.push({
+            change: key,
+            new: dataNew[key],
+            old: dataOld[key]
+          });
+        } else {
+          const subDifferences = findDifferentKeys(dataOld[key], dataNew[key]);
+          result.push(...subDifferences.map(subDifference => ({
+            change: `${key}.${subDifference.change}`,
+            new: subDifference.new,
+            old: subDifference.old
+          })));
+        }
+      }
+    } else if (!isNull(dataNew[key])) {
+      result.push({
+        change: key,
+        new: getLowestValue(dataNew[key]),
+        old: undefined
+      });
+    }
+  });
+
+  return result;
+}
+
+// 获取最底层的键名和键值
+function getLowestValue(obj) {
+  if (typeof obj !== 'object') {
+    return obj;
+  }
+
+  const keys = Object.keys(obj);
+  if (keys.length === 0) {
+    return undefined;
+  }
+
+  const key = keys[0];
+  return getLowestValue(obj[key]);
+}
+
+// 检查是否为 null、undefined、空字符串的函数
+function isNull(value) {
+  return value === null || typeof value === 'undefined' || value === '';
+}
+
+// 深度比较两个值是否相等的函数
+function deepEqual(value1, value2) {
+  if (Array.isArray(value1) && Array.isArray(value2)) {
+    if (value1.length !== value2.length) {
+      return false;
+    }
+
+    for (let i = 0; i < value1.length; i++) {
+      if (!deepEqual(value1[i], value2[i])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  if (typeof value1 === 'object' && typeof value2 === 'object') {
+    const keys1 = Object.keys(value1);
+    const keys2 = Object.keys(value2);
+
+    if (keys1.length !== keys2.length) {
+      return false;
+    }
+
+    for (const key of keys1) {
+      if (!isNull(value1[key]) && !isNull(value2[key])) {
+        if (!deepEqual(value1[key], value2[key])) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  return value1 === value2;
+}
