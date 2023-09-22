@@ -65,68 +65,90 @@ interface Props {
 const App: React.FC<Props> = ({ data }) => {
   console.log(data);
   //准备变化后的数组
-  const b = data.dataNew;
-  const a = data.dataOld;
+  const dataNew = data.dataNew;
+  const dataOld = data.dataOld;
 
-  const changes: { type: string; old: any; new: any }[] = [];
-  if (a && a.length > 0) {
-    // 进行比较操作
-    a.forEach(itemA => {
-      const itemB = b.find(itemB => itemB.id === itemA.id);
-  
-      Object.keys(itemA).forEach(key => {
-        const valueA = itemA[key];
-        const valueB = itemB ? itemB[key] : undefined;
-  
-        if (typeof valueA === 'object' && typeof valueB === 'object') {
-          compareObjects(valueA, valueB, changes, key);
-        } else if (valueA !== valueB) {
-          changes.push({ type: key, old: valueA, new: valueB });
-        }
+  function findDifferentKeys(dataOld, dataNew) {
+    const result = [];
+
+    if (isNull(dataOld) || typeof dataOld !== "object") {
+      // 如果 dataOld 为空或不是对象，则返回 dataNew 中的所有键值对
+      Object.keys(dataNew).forEach((key) => {
+        result.push({
+          type: key,
+          old: undefined,
+          new: dataNew[key],
+        });
       });
-    });
-  
-    b.forEach(itemB => {
-      const itemA = a.find(itemA => itemA.id === itemB.id);
-  
-      if (!itemA) {
-        changes.push({ type: 'add', object: itemB });
-      }
-    });
-  }
-  
-  console.log(changes);
-  
-  function compareObjects(objA, objB, changes, key) {
-    if (Array.isArray(objA)) {
-      objA.forEach((valueA, index) => {
-        const valueB = objB[index];
-  
-        if (typeof valueA === 'object' && typeof valueB === 'object') {
-          compareObjects(valueA, valueB, changes, `${key}[${index}]`);
-        } else if (valueA !== valueB) {
-          changes.push({
-            type: `${key}[${index}]`,
-            old: valueA,
-            new: valueB
+
+      return result;
+    }
+
+    const keys1 = isNull(dataOld) ? [] : Object.keys(dataOld);
+    const keys2 = isNull(dataNew) ? [] : Object.keys(dataNew);
+
+    const keys = [...new Set([...keys1, ...keys2])];
+
+    keys.forEach((key) => {
+      if (!isNull(dataOld[key]) && !isNull(dataNew[key])) {
+        if (!deepEqual(dataOld[key], dataNew[key])) {
+          result.push({
+            type: key,
+            old: dataOld[key],
+            new: dataNew[key],
           });
         }
-      });
-    } else {
-      Object.keys(objA).forEach(innerKey => {
-        const valueA = objA[innerKey];
-        const valueB = objB ? objB[innerKey] : undefined;
-        const newKey = `${key}.${innerKey}`;
-  
-        if (typeof valueA === 'object' && typeof valueB === 'object') {
-          compareObjects(valueA, valueB, changes, newKey);
-        } else if (valueA !== valueB) {
-          changes.push({ type: newKey, old: valueA, new: valueB });
-        }
-      });
-    }
+      }
+    });
+
+    return result;
   }
- 
+
+  // 检查是否为 null、undefined、空字符串的函数
+  function isNull(value) {
+    return value === null || typeof value === "undefined" || value === "";
+  }
+
+  // 深度比较两个值是否相等的函数
+  function deepEqual(value1, value2) {
+    if (Array.isArray(value1) && Array.isArray(value2)) {
+      if (value1.length !== value2.length) {
+        return false;
+      }
+
+      for (let i = 0; i < value1.length; i++) {
+        if (!deepEqual(value1[i], value2[i])) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    if (typeof value1 === "object" && typeof value2 === "object") {
+      const keys1 = Object.keys(value1);
+      const keys2 = Object.keys(value2);
+
+      if (keys1.length !== keys2.length) {
+        return false;
+      }
+
+      for (const key of keys1) {
+        if (!isNull(value1[key]) && !isNull(value2[key])) {
+          if (!deepEqual(value1[key], value2[key])) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    }
+
+    return value1 === value2;
+  }
+
+  const differences = findDifferentKeys(dataOld, dataNew);
+  console.log(differences);
 
   return (
     <>
