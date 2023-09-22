@@ -47,33 +47,4 @@ export const StateContext = createContext({} as any);
 
 export default DataContext;
 
-const dataNew = {
-  os: {
-    arch: "ia32",
-    distro: "Microsoft Windows 11 家庭版",
-    codename: "",
-  },
-};
-const dataOld = {
-  os: {
-    arch: "ia32",
-    distro: "Microsoft Windows 12 家庭版",
-    codename: "",
-  },
-};
 
-const arr = [
-  {
-    type: "distro",
-    new: "Microsoft Windows 11 家庭版",
-    old: "Microsoft Windows 12 家庭版",
-  },
-];
-
-const arrs = [
-  {
-    type: "os",
-    new: "ia32",
-    old: "ia32",
-  },
-];
