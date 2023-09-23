@@ -33,7 +33,7 @@ class Dema_Activator
 	public static function run()
 	{
 		//主数据表
-		//self::device_manage_create_table();
+		self::device_manage_create_table();
 		//数据变更表
 		self::device_manage_create_change();
 	}
@@ -85,12 +85,12 @@ class Dema_Activator
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
             id INT NOT NULL AUTO_INCREMENT,
-            obj_id INT NOT NULL,
-            obj_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            obj_new TEXT,
-            obj_old TEXT,
-            PRIMARY KEY (id),
-            UNIQUE KEY (obj_id)
+    uuid INT NOT NULL,
+    time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    new TEXT,
+    old TEXT,
+    PRIMARY KEY (id),
+    UNIQUE KEY (uuid)
         );";
 
 			// 执行 SQL 语句
