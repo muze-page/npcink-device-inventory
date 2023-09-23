@@ -30,4 +30,7 @@ export default defineConfig({
 
   //媒体资源打包前缀
   base: site + "vite/dist/",
+
+
+
 });

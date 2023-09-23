@@ -5,6 +5,9 @@ import { Table, Empty } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { findDifferentKeys } from "@/store/tool";
 
+import axios from "axios";
+import { dataAjaxurl } from "@/store/dataContext";
+
 interface DataType {
   key: string;
   time: string;
@@ -93,7 +96,8 @@ const App: React.FC<Props> = ({ data }) => {
     const endDate = new Date(); // 结束日期为当前日期
 
     const randomTimestamp = Math.floor(
-      Math.random() * (endDate.getTime() - startDate.getTime()) + startDate.getTime()
+      Math.random() * (endDate.getTime() - startDate.getTime()) +
+        startDate.getTime()
     );
     const randomDate = new Date(randomTimestamp);
 
@@ -104,6 +108,23 @@ const App: React.FC<Props> = ({ data }) => {
     return `${year}-${month}-${day}`;
   }
 
+  //发出请求获取数据
+  const getData = () => {
+    const params = new URLSearchParams();
+    params.append("action", "search_change_data_callback");
+    params.append("uuid", JSON.stringify("8588"));
+
+    axios
+      .post(dataAjaxurl, params)
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((error) => {
+        // 请求失败，处理错误信息
+        console.error(error);
+      });
+  };
+
   return (
     <>
       <div className="pl-5 relative">
@@ -113,7 +134,10 @@ const App: React.FC<Props> = ({ data }) => {
           {differences.length === 0 ? (
             <Empty />
           ) : (
-            <Table size="small" columns={columns} dataSource={dataTable} />
+            <>
+              <Table size="small" columns={columns} dataSource={dataTable} />
+              <button onClick={() => getData()}>获取数据</button>
+            </>
           )}
         </div>
         {/**下载按钮 */}

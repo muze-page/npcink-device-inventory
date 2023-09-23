@@ -1,13 +1,26 @@
 <?php
-//接口
+
+/**
+ * 接口 接收传来的数据
+ */
 //http://localhost:10048/wp-json/custom/v1/submit-data
 if (!class_exists('DEMA_Admin_Interface')) {
     class DEMA_Admin_Interface
     {
         public static function run()
         {
+            //添加接收数据api接口
             add_action('rest_api_init', array(__CLASS__, 'create_custom_endpoint'));
+
+            //添加查询变更接口
+            // 添加Ajax请求处理函数
+            add_action('wp_ajax_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
+            add_action('wp_ajax_nopriv_search_change_data_callback',  array(__CLASS__,'search_change_data_callback'));
         }
+
+        /**
+         * 接收数据
+         */
         public static function create_custom_endpoint()
         {
             register_rest_route('custom/v1', '/submit-data', array(
@@ -169,5 +182,29 @@ if (!class_exists('DEMA_Admin_Interface')) {
                 $wpdb->insert($table_name, $data);
             }
         }
-    }
+        /**
+         * 创建查询接口，
+         */
+        public static function search_change_data_callback()
+        {
+            $object_data = $_POST['uuid'];
+            //拿到uuid
+            $uuid = json_decode(stripslashes($object_data));
+
+            //数据库中查找
+            // 处理请求，并生成响应数据
+            $response = array(
+                'status' => 'success',
+                'message' => '处理下：Received data1=' . $object ,
+            );
+
+            // 设置跨域访问标头
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST');
+            header('Access-Control-Allow-Headers: Content-Type');
+
+            // 返回响应数据
+            wp_send_json($response);
+        }
+    } //end
 }

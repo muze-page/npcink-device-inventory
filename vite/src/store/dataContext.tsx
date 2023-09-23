@@ -45,6 +45,19 @@ const DataContext = createContext(combinedData);
 
 export const StateContext = createContext({} as any);
 
+//输出接口地址
+function getAjaxurl(): any {
+  if (state) {
+    //开发
+    return "http://localhost:10048/wp-admin/admin-ajax.php";
+  } else {
+    //打包
+    return (window as any).ajaxurl !== ""
+      ? (window as any).ajaxurl
+      : {};
+  }
+}
+//传值
+export const dataAjaxurl: any = getAjaxurl();
+
 export default DataContext;
-
-
