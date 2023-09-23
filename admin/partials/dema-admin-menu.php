@@ -35,18 +35,18 @@ if (!class_exists('DEMA_Admin_Menu')) {
             );
         }
 
-       
+
 
 
         public static function menu_displays()
         {
-            
+
 
 
 ?>
             <div class="wrap">
                 <!--标题-->
-              
+
                 <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
                 <div id='root'>666</div>
             </div>
@@ -77,7 +77,8 @@ if (!class_exists('DEMA_Admin_Menu')) {
 
             $pf_api_translation_array = array(
 
-                'data' => self::get_custom_table_data(), //传递选项
+                'data' => self::get_custom_table_data(), //传递变量
+                'change' => self::get_custom_table_change(), //传递变化值
             );
             wp_localize_script($name, 'dataLocal', $pf_api_translation_array); //传给vite项目
         }
@@ -101,6 +102,18 @@ if (!class_exists('DEMA_Admin_Menu')) {
         {
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_table';
+
+            // 获取所有数据
+            $result = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);
+
+            return $result;
+        }
+
+        //获取变更数据
+        public static function get_custom_table_change()
+        {
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'custom_change';
 
             // 获取所有数据
             $result = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);
