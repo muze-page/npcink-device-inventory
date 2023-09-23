@@ -1,11 +1,21 @@
 //替换列表
+interface Replacements {
+  [key: string]: string;
+}
+
+/**
+ * 主板品牌
+ */
+export const replaceBaseboard: Replacements = {
+  "Apple Inc.":"Apple",
+  "Colorful Technology": "七彩虹",
+  Dell: "戴尔",
+  // 其他需要替换的字符串
+};
 
 /**
  * 硬件变更替换表
  */
-interface Replacements {
-  [key: string]: string;
-}
 
 export const replacements: Replacements = {
   "os.distro": "系统版本",

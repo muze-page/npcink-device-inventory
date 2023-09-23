@@ -4,12 +4,30 @@
 
 import TabList from "@/components/block/tabList";
 import { sum_brand, replaceType } from "@/store/tool";
+import { replaceBaseboard } from "@/store/dataReplace";
 
 const meat = {
   thData: ["型号", "数量（个）"], //表头
   bgColor: "from-green-100 to-green-200 bg-green-50", //颜色
 };
 
+interface Props {
+  data: any;
+}
+const App: React.FC<Props> = ({ data }) => {
+  //替换列表
+  console.log(data);
+
+  const arr = sum_brand(data, "manufacturer");
+  const tableData = replaceType(arr, replaceBaseboard);
+  return (
+    <>
+      <TabList meat={meat} tableData={tableData} />
+    </>
+  );
+};
+
+export default App;
 //数据
 /**
  
@@ -77,23 +95,3 @@ const tableData = [
 ];
 * 
  */
-interface Props {
-  data: any;
-}
-const App: React.FC<Props> = ({ data }) => {
-  //替换列表
-  const replacements = {
-    "Colorful Technology": "七彩虹",
-    Dell: "戴尔",
-    // 其他需要替换的字符串
-  };
-  const arr = sum_brand(data, "manufacturer");
-  const tableData = replaceType(arr, replacements);
-  return (
-    <>
-      <TabList meat={meat} tableData={tableData} />
-    </>
-  );
-};
-
-export default App;

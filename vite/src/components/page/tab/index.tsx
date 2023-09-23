@@ -3,6 +3,7 @@
  */
 import { useState, useContext } from "react";
 import DataContext from "@/store/dataContext";
+import { Computer } from "@/store/interface";
 import Baseboard from "@/components/page/tab/baseboard";
 import Cpu from "@/components/page/tab/cpu";
 import Disk from "@/components/page/tab/disk";
@@ -10,12 +11,10 @@ import Memory from "@/components/page/tab/memory";
 
 //查指定数据的个数
 function sumData(arr: any[], type: string) {
-  var sum = 0;
-
-  for (var i = 0; i < arr.length; i++) {
+  let sum = 0;
+  for (let i = 0; i < arr.length; i++) {
     sum += arr[i][type].length;
   }
-
   return sum;
 }
 
@@ -29,14 +28,20 @@ const App: React.FC = () => {
   //拿到数据
   const data = useContext(DataContext);
 
-  //收集指定数据并输出
-  const collectDataNew = (dataArrays: any) => {
-    const newData = dataArrays.map((obj: { dataNew: any }) => obj.dataNew);
+  //收集最新数据并输出数组
+  interface DataArray {
+    dataNew: Computer;
+  }
+  const collectDataNew = (dataArrays:DataArray[]): Computer[] => {
+    const newData = dataArrays.map(
+      (obj: { dataNew:Computer }) => obj.dataNew
+    );
     return newData;
   };
 
   //处理数据
   const combinedData = collectDataNew(data);
+  console.log(combinedData);
 
   //获取CPU数组
   const cpuArrData = deviceArrData(combinedData, "cpu");
@@ -138,7 +143,7 @@ interface Props {
   items: {
     key: string;
     label: string;
-    sum: string;
+    sum: number;
     color: string;
     activeColor: string;
     children: React.ReactElement;
