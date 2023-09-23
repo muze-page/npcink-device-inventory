@@ -9,19 +9,11 @@ import Cpu from "@/components/page/tab/cpu";
 import Disk from "@/components/page/tab/disk";
 import Memory from "@/components/page/tab/memory";
 
-//查指定数据的个数
-function sumData(arr: any[], type: string) {
-  let sum = 0;
-  for (let i = 0; i < arr.length; i++) {
-    sum += arr[i][type].length;
-  }
-  return sum;
-}
 
-//获取指定设备的数据数组
-const deviceArrData = (dataArrays: any[], key: string) => {
+//将数组对象中对象的指定的键值取出，组成新数组
+const deviceArrData = (dataArrays: Computer[], key: keyof Computer) => {
   const cpuArray = dataArrays.flatMap((obj) => obj[key]);
-  return cpuArray;
+  return cpuArray as object[];
 };
 
 const App: React.FC = () => {
@@ -32,22 +24,21 @@ const App: React.FC = () => {
   interface DataArray {
     dataNew: Computer;
   }
-  const collectDataNew = (dataArrays:DataArray[]): Computer[] => {
-    const newData = dataArrays.map(
-      (obj: { dataNew:Computer }) => obj.dataNew
-    );
+  const collectDataNew = (dataArrays: DataArray[]): Computer[] => {
+    const newData = dataArrays.map((obj: { dataNew: Computer }) => obj.dataNew);
     return newData;
   };
 
   //处理数据
   const combinedData = collectDataNew(data);
-  console.log(combinedData);
+ 
 
   //获取CPU数组
   const cpuArrData = deviceArrData(combinedData, "cpu");
 
   //获取硬盘数组
   const diskArrData = deviceArrData(combinedData, "diskLayout");
+  
 
   //获取内存数组
   const memoryArrData = deviceArrData(combinedData, "memLayout");
@@ -67,7 +58,7 @@ const App: React.FC = () => {
     {
       key: "2",
       label: `硬盘（块）`,
-      sum: sumData(combinedData, "diskLayout"),
+      sum: diskArrData.length,
       color: "from-orange-100 to-orange-200",
       activeColor: "bg-orange-400",
       children: <Disk data={diskArrData} />,
@@ -75,7 +66,7 @@ const App: React.FC = () => {
     {
       key: "3",
       label: `内存（条）`,
-      sum: sumData(combinedData, "memLayout"),
+      sum: memoryArrData.length,
       color: "from-red-100 to-red-200",
       activeColor: "bg-red-400",
       children: <Memory data={memoryArrData} />,

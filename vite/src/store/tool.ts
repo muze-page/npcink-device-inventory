@@ -1,10 +1,13 @@
 //公共方法
 
 /**
- *统计指定词汇出现次数
+ *拿到指定键的值并统计该键的出现次数
  * @param dataArrays 待检测数组对象
  * @param type 键名
- * @returns 数组对象
+ * @returns 数组对象[{
+ * type:键
+ * sum:次数
+ * }]
  */
 export const sum_brand = (dataArrays: any[], type: string) => {
   const counts: { [key: string]: number } = {};
@@ -79,4 +82,3 @@ export const replaceType = (
   }
   return data;
 };
-
