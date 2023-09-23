@@ -18,7 +18,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
         }
 
         /**
-         * 验证
+         * 验证密码是否正确 是否允许传输数据
          */
         public static function password_verification($data)
         {
@@ -27,102 +27,105 @@ if (!class_exists('DEMA_Admin_Interface')) {
             return $password === 8577;
         }
 
+        /**
+         * 处理传来的数据
+         */
         public static function submit_data_callback($request)
         {
-            header('Access-Control-Allow-Origin: http://localhost:5173');
+            
+            header('Access-Control-Allow-Origin: *');
             $data = $request->get_params();
 
-            if (self::password_verification($data)) {
-                // 密码验证通过，继续处理数据
-
-                $name = $data['name'];
-                $datas = json_encode($data['data']);
-
-                $uuid_hardware = $data['data']['uuid']['hardware'];
-
-                global $wpdb;
-                $table_name = $wpdb->prefix . 'custom_table';
-
-                // 查询是否已经存在相同的 uuid_hardware 的数据
-                $result = $wpdb->get_results(
-                    $wpdb->prepare(
-                        "SELECT * FROM $table_name WHERE uuid = %s;",
-                        $uuid_hardware
-                    ),
-                    ARRAY_A
-                );
-
-                if (!$result) {
-                    // 数据不存在，插入新数据
-
-                    $wpdb->insert(
-                        $table_name,
-                        array(
-                            'uuid' => $uuid_hardware, //唯一编号
-                            'name' => $name, //上传的名称
-                            'dataNew' => $datas, //配置信息
-                        ),
-                        array('%s', '%s', '%s', '%s')
-                    );
-
-                    return new WP_REST_Response(array(
-                        'message' => '提交成功！',
-                        'data' => $data,
-                    ), 200);
-                } else {
-                    // 数据已经存在，更新原有数据
-
-                    $existing_data = json_decode($result[0]['dataNew'], true);
-
-                    if ($result[0]['name'] !== $name) {
-                        // 如果名称有变化，更新现有数据
-                        $wpdb->update(
-                            $table_name,
-                            array(
-                                'name' => $name,
-                                'dataOld' => $result[0]['dataNew'],
-                                'dataNew' => $datas
-                            ),
-                            array('id' => $result[0]['id']),
-                            array('%s', '%s', '%s'),
-                            array('%d')
-                        );
-
-                        return new WP_REST_Response(array(
-                            'message' => '数据已更新！',
-                            'data' => $data,
-                        ), 200);
-                    } else if ($existing_data !== $data['data']) {
-                        // 如果数据有变化，更新现有数据
-                        $wpdb->update(
-                            $table_name,
-                            array(
-                                'dataOld' => $result[0]['dataNew'],
-                                'dataNew' => $datas
-                            ),
-                            array('id' => $result[0]['id']),
-                            array('%s', '%s'),
-                            array('%d')
-                        );
-
-                        return new WP_REST_Response(array(
-                            'message' => '数据已更新！',
-                            'data' => $data,
-                        ), 200);
-                    } else {
-                        // 数据未变化
-                        return new WP_REST_Response(array(
-                            'message' => '数据未变化！',
-                            'data' => $data,
-                        ), 200);
-                    }
-                }
-            } else {
+            if (!self::password_verification($data)) {
                 // 密码验证失败，返回错误的响应
                 return new WP_REST_Response(array(
                     'error' => '密码验证失败！',
                     'data' => $data['password'],
                 ), 403);
+            }
+            // 密码验证通过，继续处理数据
+
+            $name = $data['name'];
+            $datas = json_encode($data['data']);
+
+            $uuid_hardware = $data['data']['uuid']['hardware'];
+
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'custom_table';
+
+            // 查询是否已经存在相同的 uuid_hardware 的数据
+            $result = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT * FROM $table_name WHERE uuid = %s;",
+                    $uuid_hardware
+                ),
+                ARRAY_A
+            );
+
+            if (!$result) {
+                // 数据不存在，插入新数据
+
+                $wpdb->insert(
+                    $table_name,
+                    array(
+                        'uuid' => $uuid_hardware, //唯一编号
+                        'name' => $name, //上传的名称
+                        'dataNew' => $datas, //配置信息
+                    ),
+                    array('%s', '%s', '%s', '%s')
+                );
+
+                return new WP_REST_Response(array(
+                    'message' => '提交成功！',
+                    'data' => $data,
+                ), 200);
+            } else {
+                // 数据已经存在，更新原有数据
+
+                $existing_data = json_decode($result[0]['dataNew'], true);
+
+                if ($result[0]['name'] !== $name) {
+                    // 如果名称有变化，更新现有数据
+                    $wpdb->update(
+                        $table_name,
+                        array(
+                            'name' => $name,
+                            'dataOld' => $result[0]['dataNew'],
+                            'dataNew' => $datas
+                        ),
+                        array('id' => $result[0]['id']),
+                        array('%s', '%s', '%s'),
+                        array('%d')
+                    );
+
+                    return new WP_REST_Response(array(
+                        'message' => '数据已更新！',
+                        'data' => $data,
+                    ), 200);
+                } else if ($existing_data !== $data['data']) {
+                    // 如果数据有变化，更新现有数据
+                    $wpdb->update(
+                        $table_name,
+                        array(
+                            'dataOld' => $result[0]['dataNew'],
+                            'dataNew' => $datas
+                        ),
+                        array('id' => $result[0]['id']),
+                        array('%s', '%s'),
+                        array('%d')
+                    );
+
+                    return new WP_REST_Response(array(
+                        'message' => '数据已更新！',
+                        'data' => $data,
+                    ), 200);
+                } else {
+                    // 数据未变化
+                    return new WP_REST_Response(array(
+                        'message' => '数据未变化！',
+                        'data' => $data,
+                    ), 200);
+                }
             }
         }
     }
