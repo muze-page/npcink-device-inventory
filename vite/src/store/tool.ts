@@ -1,5 +1,5 @@
 //公共方法
-import { SumBrand, Replacements } from "@/store/interface";
+import { SumBrand, Replacements, TableData } from "@/store/interface";
 
 /**
  *拿到指定键的值并统计该键的出现次数
@@ -62,8 +62,8 @@ export const sum_order = (
  * @returns
  */
 export const replaceType = (
-  arr: object[],
-  type: string,
+  arr: TableData[],
+  type: keyof TableData ,
   replacements: Replacements
 ) => {
   return arr.map((obj) => {
