@@ -14,7 +14,6 @@ function App() {
    
     <ConfigProvider locale={zhCN}>
     {data.length ===0?( <Empty />):( <Index />)}
-     
       </ConfigProvider>
     </>
   );

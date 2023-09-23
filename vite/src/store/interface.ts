@@ -1,5 +1,13 @@
 //类型
-//从数据库读取的信息
+//从数据库读取的设备信息
+export interface MysqlDevice {
+  id: string;
+  name: string;
+  styleName: string;
+  styleNumber: string;
+  dataNew: string;
+  dataOld: string;
+}
 
 //硬件基本信息
 export interface Computer {
