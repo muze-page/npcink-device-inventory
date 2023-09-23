@@ -15,7 +15,7 @@ export interface Computer {
   bios: object;
   chassis: object;
   cpu: object;
-  diskLayout: object;
+  diskLayout: ComputerDevice[];
   graphics: object;
   memLayout: object;
   net: object;
@@ -39,4 +39,14 @@ export interface SumBrand {
 export interface TableData {
   type: string;
   sum: number;
+}
+
+//硬盘
+export interface ComputerDevice {
+  device: string;
+  interfaceType: string;
+  name: string;
+  size: number;
+  type: string;
+  vendor: string;
 }

@@ -10,7 +10,7 @@ const meat = {
 };
 
 interface Props {
-  data: any;
+  data: object[];
 }
 const App: React.FC<Props> = ({ data }) => {
   //分析CPU的品牌
