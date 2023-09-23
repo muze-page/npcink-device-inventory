@@ -37,7 +37,11 @@ const columns: ColumnsType<DataType> = [
 ];
 
 //替换列表
-const replacements = {
+interface Replacements {
+  [key: string]: string;
+}
+
+const replacements: Replacements = {
   "os.distro": "系统版本",
   "diskLayout.1.size": "主硬盘大小",
   // 其他需要替换的字符串
@@ -62,6 +66,8 @@ const App: React.FC<Props> = ({ data }) => {
     }
   });
 
+  //检测new 和old 的值，大于1000000的进行处理
+
   console.log(differences);
   //添加若干参数
   addUniqueIdAndTime(differences);
@@ -71,8 +77,8 @@ const App: React.FC<Props> = ({ data }) => {
   /**
    * 临时用
    */
-  function addUniqueIdAndTime(array) {
-    array.forEach((obj, index) => {
+  function addUniqueIdAndTime(array: any) {
+    array.forEach((obj: any, _index: any) => {
       obj.key = generateUniqueId();
       obj.time = generateRandomDate();
     });
@@ -87,7 +93,7 @@ const App: React.FC<Props> = ({ data }) => {
     const endDate = new Date(); // 结束日期为当前日期
 
     const randomTimestamp = Math.floor(
-      Math.random() * (endDate - startDate) + startDate.getTime()
+      Math.random() * (endDate.getTime() - startDate.getTime()) + startDate.getTime()
     );
     const randomDate = new Date(randomTimestamp);
 
