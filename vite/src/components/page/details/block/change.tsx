@@ -132,7 +132,11 @@ const Loading = () => {
  * @param param0
  * @returns
  */
-const Error = ({ message }) => {
+interface PropsError {
+  message: string;
+}
+
+const Error: React.FC<PropsError> = ({ message }) => {
   return <p>{message}</p>;
 };
 
@@ -141,17 +145,15 @@ const Error = ({ message }) => {
  * @param param0
  * @returns
  */
-const DataList = ({ data }) => {
+interface PropsDataList {
+  data: DataType[];
+}
+const DataList: React.FC<PropsDataList> = ({ data }) => {
   if (data.length === 0) {
     return <Empty />;
   }
 
-  return (
-    
-      <Table size="small" columns={columns} dataSource={data} />
-      
-    
-  );
+  return <Table size="small" columns={columns} dataSource={data} />;
 };
 
 export default App;
