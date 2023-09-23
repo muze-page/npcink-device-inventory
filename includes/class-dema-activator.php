@@ -32,11 +32,12 @@ class Dema_Activator
 	 */
 	public static function run()
 	{
-		//register_activation_hook(__FILE__, array(__CLASS__, 'device_manage_create_table'));
-		self::device_manage_create_table();
+		//主数据表
+		//self::device_manage_create_table();
+		//数据变更表
+		self::device_manage_create_change();
 	}
 	//新建数据库表 - 存储数据用
-	// 在插件激活时创建数据库表
 	// 在插件激活时创建数据库表
 	public static function device_manage_create_table()
 	{
@@ -67,4 +68,42 @@ class Dema_Activator
 			dbDelta($sql);
 		}
 	}
+
+	/**
+	 * 创建配置信息变更表
+	 */
+	public static function device_manage_create_change()
+	{
+		// 获取全局 $wpdb 对象
+		global $wpdb;
+
+		// 定义表名
+		$table_name = $wpdb->prefix . 'custom_change';
+
+		// 检查是否已存在同名表
+		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+			// 创建表结构
+			$sql = "CREATE TABLE $table_name (
+            id INT NOT NULL AUTO_INCREMENT,
+            obj_id INT NOT NULL,
+            obj_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            obj_new TEXT,
+            obj_old TEXT,
+            PRIMARY KEY (id),
+            UNIQUE KEY (obj_id)
+        );";
+
+			// 执行 SQL 语句
+			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+			dbDelta($sql);
+		}
+	}
 }
+/**
+ * 新建表
+ * id -唯一ID
+ * obj_id - 唯一识别号
+ * obj_time 变更时间
+ * obj_new 变更后的值
+ * obj_old 变更前的值
+ */
