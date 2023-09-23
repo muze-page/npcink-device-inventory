@@ -24,7 +24,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
         {
             $password = isset($data['password']) ? $data['password'] : '';
 
-            return $password === 8577;
+            return $password == 8577;
         }
 
         /**
@@ -32,29 +32,28 @@ if (!class_exists('DEMA_Admin_Interface')) {
          */
         public static function submit_data_callback($request)
         {
-            
             header('Access-Control-Allow-Origin: *');
+
             $data = $request->get_params();
 
             if (!self::password_verification($data)) {
-                // 密码验证失败，返回错误的响应
-                return new WP_REST_Response(array(
-                    'error' => '密码验证失败！',
-                    'data' => $data['password'],
-                ), 403);
+                return new WP_REST_Response(
+                    [
+                        'error' => '密码验证失败！',
+                        'data' => $data['password'],
+                    ],
+                    403
+                );
             }
-            // 密码验证通过，继续处理数据
 
             $name = $data['name'];
             $datas = json_encode($data['data']);
-
             $uuid_hardware = $data['data']['uuid']['hardware'];
 
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_table';
 
-            // 查询是否已经存在相同的 uuid_hardware 的数据
-            $result = $wpdb->get_results(
+            $existingData = $wpdb->get_row(
                 $wpdb->prepare(
                     "SELECT * FROM $table_name WHERE uuid = %s;",
                     $uuid_hardware
@@ -62,70 +61,112 @@ if (!class_exists('DEMA_Admin_Interface')) {
                 ARRAY_A
             );
 
-            if (!$result) {
+            if (!$existingData) {
                 // 数据不存在，插入新数据
-
                 $wpdb->insert(
                     $table_name,
-                    array(
-                        'uuid' => $uuid_hardware, //唯一编号
-                        'name' => $name, //上传的名称
-                        'dataNew' => $datas, //配置信息
-                    ),
-                    array('%s', '%s', '%s', '%s')
+                    [
+                        'uuid' => $uuid_hardware,
+                        'name' => $name,
+                        'dataNew' => $datas,
+                    ],
+                    ['%s', '%s', '%s']
                 );
 
-                return new WP_REST_Response(array(
+                $response = [
                     'message' => '提交成功！',
                     'data' => $data,
-                ), 200);
+                ];
             } else {
-                // 数据已经存在，更新原有数据
+                $existingDataDecoded = json_decode($existingData['dataNew'], true);
 
-                $existing_data = json_decode($result[0]['dataNew'], true);
-
-                if ($result[0]['name'] !== $name) {
-                    // 如果名称有变化，更新现有数据
+                if ($existingData['name'] !== $name || $existingDataDecoded !== $data['data']) {
+                    // 如果名称或数据有变化，更新现有数据
                     $wpdb->update(
                         $table_name,
-                        array(
+                        [
                             'name' => $name,
-                            'dataOld' => $result[0]['dataNew'],
-                            'dataNew' => $datas
-                        ),
-                        array('id' => $result[0]['id']),
-                        array('%s', '%s', '%s'),
-                        array('%d')
+                            'dataOld' => $existingData['dataNew'],
+                            'dataNew' => $datas,
+                        ],
+                        ['id' => $existingData['id']],
+                        ['%s', '%s', '%s'],
+                        ['%d']
                     );
 
-                    return new WP_REST_Response(array(
-                        'message' => '数据已更新！',
-                        'data' => $data,
-                    ), 200);
-                } else if ($existing_data !== $data['data']) {
-                    // 如果数据有变化，更新现有数据
-                    $wpdb->update(
-                        $table_name,
-                        array(
-                            'dataOld' => $result[0]['dataNew'],
-                            'dataNew' => $datas
-                        ),
-                        array('id' => $result[0]['id']),
-                        array('%s', '%s'),
-                        array('%d')
-                    );
+                    //存储变更数据
+                    $diffs = [];
+                    $dataNew = json_decode($datas, true);
+                    $dataOld =  $existingDataDecoded;
+                    self::compare_arrays($dataNew, $dataOld, $diffs);
 
-                    return new WP_REST_Response(array(
+
+                    //添加UUID
+                    $updatedData = array_map(function ($obj) use ($dataNew) {
+                        $obj["uuid"] = $dataNew["uuid"]["hardware"];
+                        return $obj;
+                    }, $diffs);
+
+                    // 存入表中
+                    self::data_change($updatedData);
+
+                    /**
+                     * 检测数据变化
+                     * 准备变化的数据
+                     * 存入数据库
+                     */
+
+                    $response = [
                         'message' => '数据已更新！',
-                        'data' => $data,
-                    ), 200);
+                        'change' => $updatedData,
+                    ];
                 } else {
                     // 数据未变化
-                    return new WP_REST_Response(array(
+                    $response = [
                         'message' => '数据未变化！',
                         'data' => $data,
-                    ), 200);
+                    ];
                 }
+            }
+
+            return new WP_REST_Response($response, 200);
+        }
+        /**
+         * 检测数据变化
+         */
+        public static function compare_arrays($arr1, $arr2, &$diffs, $prefix = '')
+        {
+
+            foreach ($arr1 as $key => $value1) {
+                if (is_array($value1)) {
+                    self::compare_arrays($value1, $arr2[$key], $diffs, $prefix . $key . '.');
+                } else if ($arr2[$key] !== $value1) {
+                    $diff = [
+                        'type' => $prefix . $key,
+                        'new' => $value1,
+                        'old' => $arr2[$key],
+                    ];
+                    array_push($diffs, $diff);
+                }
+            }
+        }
+
+        /**
+         * 数据存入 数据变化表
+         */
+        public static function data_change($arr)
+        {
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'custom_change';
+
+            foreach ($arr as $item) {
+                $data = array(
+                    'uuid' => isset($item['uuid']) ? sanitize_text_field($item['uuid']) : '默认uuid',
+                    'type' => isset($item['type']) ? sanitize_text_field($item['type']) : '',
+                    'new' => isset($item['new']) ? sanitize_text_field($item['new']) : '',
+                    'old' => isset($item['old']) ? sanitize_text_field($item['old']) : ''
+                );
+                $wpdb->insert($table_name, $data);
             }
         }
     }

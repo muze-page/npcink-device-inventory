@@ -35,12 +35,19 @@ if (!class_exists('DEMA_Admin_Menu')) {
             );
         }
 
+       
+
+
         public static function menu_displays()
         {
+            
+
+
 ?>
             <div class="wrap">
                 <!--标题-->
-                <h2><?php echo esc_html(get_admin_page_title()); ?></h2>
+              
+                <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
                 <div id='root'>666</div>
             </div>
 <?php

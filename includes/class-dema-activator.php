@@ -85,12 +85,13 @@ class Dema_Activator
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
             id INT NOT NULL AUTO_INCREMENT,
-    uuid INT NOT NULL,
-    time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    new TEXT,
-    old TEXT,
-    PRIMARY KEY (id),
-    UNIQUE KEY (uuid)
+            uuid TEXT,
+            time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	        type TEXT,
+            new TEXT,
+            old TEXT,
+            PRIMARY KEY (id)
+            
         );";
 
 			// 执行 SQL 语句
