@@ -1,21 +1,24 @@
 /**
  * 设备详情 - 变更记录
  */
+import { useState, useEffect } from "react";
 import { Table, Empty } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { findDifferentKeys } from "@/store/tool";
 
 import axios from "axios";
 import { dataAjaxurl } from "@/store/dataContext";
+import { replacements } from "@/store/dataReplace";
 
+//准备表格数据类型
 interface DataType {
   key: string;
   time: string;
-  change: string;
+  type: string;
   old: string;
   new: string;
 }
 
+//准备表头
 const columns: ColumnsType<DataType> = [
   {
     title: "时间",
@@ -24,8 +27,8 @@ const columns: ColumnsType<DataType> = [
   },
   {
     title: "变更项目",
-    dataIndex: "change",
-    key: "change",
+    dataIndex: "type",
+    key: "type",
   },
   {
     title: "原配置",
@@ -34,114 +37,119 @@ const columns: ColumnsType<DataType> = [
   },
   {
     title: "现配置",
-    key: "new",
     dataIndex: "new",
+    key: "new",
   },
 ];
 
-//替换列表
-interface Replacements {
-  [key: string]: string;
-}
-
-const replacements: Replacements = {
-  "os.distro": "系统版本",
-  "diskLayout.1.size": "主硬盘大小",
-  // 其他需要替换的字符串
+//替换对象中type的值
+const replaceType = (data: any[]) => {
+  return data.map((obj: { type: any }) => {
+    const type = obj.type;
+    if (type && replacements[type]) {
+      return { ...obj, type: replacements[type] };
+    }
+    return obj;
+  });
 };
 
 interface Props {
-  data: any;
+  data: string;
 }
 const App: React.FC<Props> = ({ data }) => {
-  console.log(data);
-  //准备变化后的数组
-  const dataNew = data.dataNew;
-  const dataOld = data.dataOld;
-
-  //进行处理
-  const differences = findDifferentKeys(dataOld, dataNew);
-
-  //替换关键词
-  differences.forEach((difference) => {
-    if (replacements.hasOwnProperty(difference.change)) {
-      difference.change = replacements[difference.change];
-    }
-  });
-
   //检测new 和old 的值，大于1000000的进行处理
+  console.log(data);
 
-  console.log(differences);
-  //添加若干参数
-  addUniqueIdAndTime(differences);
-  const dataTable = differences as DataType[];
-  console.log(differences);
+  const [dataAxios, setDataAxios] = useState<DataType[]>([]); //待渲染的值
+  const [loading, setLoading] = useState(false); //加载中
+  const [error, setError] = useState(""); //报错
 
-  /**
-   * 临时用
-   */
-  function addUniqueIdAndTime(array: any) {
-    array.forEach((obj: any, _index: any) => {
-      obj.key = generateUniqueId();
-      obj.time = generateRandomDate();
-    });
-  }
-
-  function generateUniqueId() {
-    return Math.random().toString(36).substr(2, 9);
-  }
-
-  function generateRandomDate() {
-    const startDate = new Date(2000, 0, 1); // 开始日期为2000年1月1日
-    const endDate = new Date(); // 结束日期为当前日期
-
-    const randomTimestamp = Math.floor(
-      Math.random() * (endDate.getTime() - startDate.getTime()) +
-        startDate.getTime()
-    );
-    const randomDate = new Date(randomTimestamp);
-
-    const year = randomDate.getFullYear();
-    const month = String(randomDate.getMonth() + 1).padStart(2, "0");
-    const day = String(randomDate.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-  }
-
-  //发出请求获取数据
-  const getData = () => {
+  //发出请求获取值
+  const getData = async (uuid: string) => {
     const params = new URLSearchParams();
     params.append("action", "search_change_data_callback");
-    params.append("uuid", JSON.stringify("8588"));
+    params.append("uuid", JSON.stringify(uuid));
 
-    axios
-      .post(dataAjaxurl, params)
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((error) => {
-        // 请求失败，处理错误信息
-        console.error(error);
-      });
+    try {
+      setLoading(true);
+      const response = await axios.post(dataAjaxurl, params);
+
+      if (response.status === 200) {
+        const data = response.data.data;
+        //关键值替换
+        const updatedData = replaceType(data) as any;
+
+        //添加key
+        const updatedDatas = updatedData.map((obj: { id: any }) => {
+          return { ...obj, key: obj.id };
+        });
+
+        setDataAxios(updatedDatas);
+      } else {
+        setError("保存设置选项时出错：" + response.data);
+      }
+    } catch (error: any) {
+      setError("保存设置选项时出错：" + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    getData(data);
+  }, [data]);
 
   return (
     <>
-      <div className="pl-5 relative">
-        {/**列表 */}
-        <div className="mt-1">
-          <p className="mb-4 text-base font-bold text-[#333]">硬件信息变更</p>
-          {differences.length === 0 ? (
-            <Empty />
-          ) : (
-            <>
-              <Table size="small" columns={columns} dataSource={dataTable} />
-              <button onClick={() => getData()}>获取数据</button>
-            </>
-          )}
+      {loading ? (
+        <Loading />
+      ) : error ? (
+        <Error message={error} />
+      ) : (
+        <div className="pl-5 relative">
+          {/**列表 */}
+          <div className="mt-1">
+            <p className="mb-4 text-base font-bold text-[#333]">硬件信息变更</p>
+            <DataList data={dataAxios} />
+          </div>
+          {/**下载按钮 */}
         </div>
-        {/**下载按钮 */}
-      </div>
+      )}
+    </>
+  );
+};
+
+/**
+ * 加载中
+ * @returns
+ */
+const Loading = () => {
+  return <p>Loading...</p>;
+};
+
+/**
+ * 报错
+ * @param param0
+ * @returns
+ */
+const Error = ({ message }) => {
+  return <p>{message}</p>;
+};
+
+/**
+ * 渲染数据
+ * @param param0
+ * @returns
+ */
+const DataList = ({ data }) => {
+  if (data.length === 0) {
+    return <Empty />;
+  }
+
+  return (
+    <>
+      <Table size="small" columns={columns} dataSource={data} />
+      <span>666</span> {/* 这里的 666 是举例，根据实际需求进行修改 */}
     </>
   );
 };

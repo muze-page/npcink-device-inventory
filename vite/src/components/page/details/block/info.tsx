@@ -6,7 +6,7 @@ interface Props {
   data: any;
 }
 const App: React.FC<Props> = ({ data }) => {
-  console.log(data);
+
   //显示器
   const displayData = data.graphics.displays[0];
   const handleData = [

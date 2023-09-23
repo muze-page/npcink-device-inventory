@@ -15,7 +15,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
             //添加查询变更接口
             // 添加Ajax请求处理函数
             add_action('wp_ajax_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
-            add_action('wp_ajax_nopriv_search_change_data_callback',  array(__CLASS__,'search_change_data_callback'));
+            add_action('wp_ajax_nopriv_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
         }
 
         /**
@@ -191,11 +191,13 @@ if (!class_exists('DEMA_Admin_Interface')) {
             //拿到uuid
             $uuid = json_decode(stripslashes($object_data));
 
+            $object = self::get_custom_table_data_by_uuid($uuid);
             //数据库中查找
             // 处理请求，并生成响应数据
             $response = array(
                 'status' => 'success',
-                'message' => '处理下：Received data1=' . $object ,
+                'message' => '处理下：Received data1=' . $object,
+                'data' =>  $object,
             );
 
             // 设置跨域访问标头
@@ -205,6 +207,23 @@ if (!class_exists('DEMA_Admin_Interface')) {
 
             // 返回响应数据
             wp_send_json($response);
+        }
+
+        /**
+         * 查找功能
+         */
+        public static function get_custom_table_data_by_uuid($uuid)
+        {
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'custom_change';
+
+            // 使用预处理语句执行查询
+            $results = $wpdb->get_results(
+                $wpdb->prepare("SELECT * FROM $table_name WHERE uuid = %s", $uuid),
+                ARRAY_A
+            );
+
+            return $results;
         }
     } //end
 }
