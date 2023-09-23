@@ -26,6 +26,11 @@ export interface Computer {
   versions: object;
 }
 
+//统计信息
+export interface SumBrand {
+  type: string;
+  sum: number;
+}
 //表头
 export interface TableData {
   type: string;

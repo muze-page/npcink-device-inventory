@@ -16,13 +16,14 @@ interface Props {
 }
 const App: React.FC<Props> = ({ data }) => {
   //替换列表
-  console.log(data);
+  //console.log(data);
 
   //统计manufacturer出现次数
   const arr = sum_brand(data, "manufacturer");
   console.log(arr);
   //关键词替换
-  const tableData = replaceType(arr, replaceBaseboard);
+  const tableData = replaceType(arr, replaceBaseboard, "type");
+
   return (
     <>
       <TabList meat={meat} tableData={tableData} />

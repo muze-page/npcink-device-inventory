@@ -1,4 +1,5 @@
 //公共方法
+import { SumBrand } from "@/store/interface";
 
 /**
  *拿到指定键的值并统计该键的出现次数
@@ -9,26 +10,18 @@
  * sum:次数
  * }]
  */
-export const sum_brand = (dataArrays: any[], type: string) => {
-  const counts: { [key: string]: number } = {};
 
-  const processData = (data: string) => {
-    if (counts.hasOwnProperty(data)) {
-      counts[data]++;
+export const sum_brand = (data: any[], key: string): SumBrand[] => {
+  return data.reduce((acc, cur) => {
+    const type = cur[key];
+    const index = acc.findIndex((item: { type: any }) => item.type === type);
+    if (index !== -1) {
+      acc[index].sum++;
     } else {
-      counts[data] = 1;
+      acc.push({ type, sum: 1 });
     }
-  };
-
-  for (let i = 0; i < dataArrays.length; i++) {
-    const data = dataArrays[i][type];
-    processData(data);
-  }
-
-  //对象转为数组
-  const result = Object.entries(counts).map(([type, sum]) => ({ type, sum }));
-
-  return result;
+    return acc;
+  }, []);
 };
 /**
  * 统计数组中指定容量的出现次数
@@ -62,7 +55,7 @@ export const sum_order = (
 
 //关键词替换
 /**
- * 根据字符表将Type中出现指定关键词时，替换整个的值
+ * 根据字符表将指定键的值替换
  * @param data 待处理的数组对象
  * @param replacements 替换列表
  * @returns 替换后的数组对象
@@ -82,3 +75,45 @@ export const replaceType = (
   }
   return data;
 };
+
+
+
+/**
+ * 
+ const data =[
+    {
+        "type": "Apple Inc.",
+        "sum": 1
+    },
+    {
+        "type": "Dell Inc.",
+        "sum": 1
+    },
+    {
+        "type": "Colorful Technology And Development Co.,LTD",
+        "sum": 1
+    }
+]
+ 
+ const rep = {
+  "Apple Inc.": "Apple",
+  "Colorful Technology": "七彩虹",
+  Dell: "戴尔",
+  // 其他需要替换的字符串
+};
+
+const old=[
+    {
+        "type": "Apple",
+        "sum": 1
+    },
+    {
+        "type": "戴尔",
+        "sum": 1
+    },
+    {
+        "type": "七彩虹",
+        "sum": 1
+    }
+]
+ */

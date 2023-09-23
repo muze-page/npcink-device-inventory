@@ -7,7 +7,7 @@ interface Replacements {
  * 主板品牌
  */
 export const replaceBaseboard: Replacements = {
-  "Apple Inc.":"Apple",
+  "Apple Inc.": "Apple",
   "Colorful Technology": "七彩虹",
   Dell: "戴尔",
   // 其他需要替换的字符串
