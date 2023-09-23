@@ -26,6 +26,10 @@ export interface Computer {
   versions: object;
 }
 
+//替换列表
+export interface Replacements {
+  [key: string]: string;
+}
 //统计信息
 export interface SumBrand {
   type: string;

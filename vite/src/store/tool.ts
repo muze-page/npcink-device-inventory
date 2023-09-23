@@ -1,5 +1,5 @@
 //公共方法
-import { SumBrand } from "@/store/interface";
+import { SumBrand, Replacements } from "@/store/interface";
 
 /**
  *拿到指定键的值并统计该键的出现次数
@@ -56,27 +56,22 @@ export const sum_order = (
 //关键词替换
 /**
  * 根据字符表将指定键的值替换
- * @param data 待处理的数组对象
- * @param replacements 替换列表
- * @returns 替换后的数组对象
+ * @param arr 待处理
+ * @param type 待处理的对象键
+ * @param replacements 替换映射表
+ * @returns
  */
 export const replaceType = (
-  data: any[],
-  replacements: { [x: string]: any },
-  type = "type"
+  arr: object[],
+  type: string,
+  replacements: Replacements
 ) => {
-  for (let i = 0; i < data.length; i++) {
-    let obj = data[i];
-    for (let key in replacements) {
-      if (obj[type].includes(key)) {
-        obj[type] = replacements[key];
-      }
-    }
-  }
-  return data;
+  return arr.map((obj) => {
+    const { [type]: oldType, ...rest } = obj; // 解构出指定键对应的值和其他属性
+    const updatedType = replacements[oldType] || oldType; // 如果有对应的替换值，则使用替换值，否则保持不变
+    return { [type]: updatedType, ...rest }; // 返回更新后的对象
+  });
 };
-
-
 
 /**
  * 

@@ -1,15 +1,12 @@
-//替换列表
-interface Replacements {
-  [key: string]: string;
-}
+import { Replacements } from "@/store/interface";
 
 /**
  * 主板品牌
  */
 export const replaceBaseboard: Replacements = {
   "Apple Inc.": "Apple",
-  "Colorful Technology": "七彩虹",
-  Dell: "戴尔",
+  "Colorful Technology And Development Co.,LTD": "七彩虹",
+  "Dell Inc.": "戴尔",
   // 其他需要替换的字符串
 };
 

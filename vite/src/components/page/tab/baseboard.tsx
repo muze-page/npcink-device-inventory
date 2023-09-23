@@ -22,7 +22,9 @@ const App: React.FC<Props> = ({ data }) => {
   const arr = sum_brand(data, "manufacturer");
   console.log(arr);
   //关键词替换
-  const tableData = replaceType(arr, replaceBaseboard, "type");
+  const tableData = replaceType(arr, "type", replaceBaseboard);
+  //const tableData = arr;
+  console.log(tableData);
 
   return (
     <>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+        const data = [
+            {
+                "type": "Apple Inc.",
+                "sum": 1
+            },
+            {
+                "type": "Dell Inc.",
+                "sum": 1
+            },
+            {
+                "type": "Colorful Technology And Development Co.,LTD",
+                "sum": 1
+            }
+        ];
+
+        const rep = {
+            "Apple Inc.": "Apple",
+            "Colorful Technology And Development Co.,LTD": "七彩虹",
+            "Dell Inc.": "戴尔"
+            // 其他需要替换的字符串
+        };
+
+        const replaceTypes = (arr, type, replacements) => {
+            return arr.map((obj) => {
+                const { [type]: oldType, ...rest } = obj; // 解构出指定键对应的值和其他属性
+                const updatedType = replacements[oldType] || oldType; // 如果有对应的替换值，则使用替换值，否则保持不变
+                return { [type]: updatedType, ...rest }; // 返回更新后的对象
+            });
+        };
+
+        const old = replaceTypes(data, "type",rep,);
+        console.log(old);
+    </script>
+</body>
+
+</html>
