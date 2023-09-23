@@ -26,6 +26,7 @@ const deviceArrData = (dataArrays: any[], key: string) => {
 };
 
 const App: React.FC = () => {
+ 
   //拿到数据
   const data = useContext(DataContext);
 

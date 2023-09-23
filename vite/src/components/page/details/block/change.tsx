@@ -147,10 +147,10 @@ const DataList = ({ data }) => {
   }
 
   return (
-    <>
+    
       <Table size="small" columns={columns} dataSource={data} />
-      <span>666</span> {/* 这里的 666 是举例，根据实际需求进行修改 */}
-    </>
+      
+    
   );
 };
 
