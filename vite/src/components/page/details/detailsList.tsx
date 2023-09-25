@@ -9,7 +9,7 @@ import User from "@/assets/user.svg";
 
 interface Props {
   data: {
-    id: number;
+    id: string;
     name: string;
     styleName: string;
     styleNumber: string;
@@ -17,8 +17,8 @@ interface Props {
       ostype: string;
       cpu: string;
       model: string;
-      memory: string;
-      disk: string;
+      memory: number;
+      disk: number;
     };
   };
 }

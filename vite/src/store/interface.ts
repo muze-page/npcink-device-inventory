@@ -9,6 +9,16 @@ export interface MysqlDevice {
   dataOld: string;
 }
 
+//整理后
+export interface MysqlDeviceChange {
+  id: string;
+  name: string;
+  styleName: string;
+  styleNumber: string;
+  dataNew: Computer;
+  dataOld: Computer;
+}
+
 //硬件基本信息
 export interface Computer {
   baseboard: ComputerBaseboard;
@@ -19,8 +29,8 @@ export interface Computer {
   graphics: object;
   memLayout: ComputerRam[];
   net: object;
-  os: object;
-  system: object;
+  os: ComputerOS;
+  system: ComputerSystem;
   uuid: object;
   version: string;
   versions: object;
@@ -60,6 +70,7 @@ interface Cache {
   l3: number | null;
 }
 
+//CPU
 export interface ComputerCpu {
   brand: string;
   cache: Cache;
@@ -108,4 +119,32 @@ export interface ComputerRam {
   voltageMin: number | null;
   manufacturer: string;
   voltageConfigured: number | null;
+}
+
+//OS
+export interface ComputerOS {
+  arch: string;
+  fqdn: string;
+  uefi: boolean;
+  build: string;
+  distro: string;
+  kernel: string;
+  serial: string;
+  release: string;
+  codename: string;
+  codepage: string;
+  hostname: string;
+  logofile: string;
+  platform: string;
+  servicepack: string;
+}
+
+export interface ComputerSystem {
+  sku: string;
+  uuid: string;
+  model: string;
+  serial: string;
+  version: string;
+  virtual: boolean;
+  manufacturer: string;
 }
