@@ -27,22 +27,13 @@ const calculateTotalSize = (dataArrays: DataType[]) => {
 const updateOSType = (dataArrays: MysqlDeviceChange[]) => {
   const updatedData = dataArrays.map((obj: MysqlDeviceChange) => {
     const parsedData = obj.dataNew; //拿到对象
-
-    const ostype = parsedData.os.distro; //系统版本
-    const model = parsedData.system.model; //型号
-    const cpu = parsedData.cpu.manufacturer; //CPU
-
-    const memoryData = parsedData.memLayout; //内存数组
-    const memory = calculateTotalSize(memoryData);
-
-    const diskData = parsedData.diskLayout; //硬盘数组
-    const disk = calculateTotalSize(diskData);
-
+    const memory = calculateTotalSize(parsedData.memLayout);//内存数组
+    const disk = calculateTotalSize(parsedData.diskLayout);//硬盘数组
     //整理添加的信息
     const meat = {
-      ostype: ostype,
-      cpu: cpu,
-      model: model,
+      ostype: parsedData.os.distro,//系统版本
+      cpu: parsedData.cpu.manufacturer,//CPU
+      model: parsedData.system.model,//型号
       memory: Math.floor(memory), //GB 取整
       disk: Math.floor(disk), //GB 取整
     };
@@ -59,11 +50,10 @@ const updateOSType = (dataArrays: MysqlDeviceChange[]) => {
 const App: React.FC = () => {
   //拿到数据
   const data = useContext(DataContext);
- 
 
   //处理后的数据
   const updatedDataArray = updateOSType(data);
-  console.log(updatedDataArray);
+
   //共享状态
   const [state, setState] = useState({
     drawer: false,

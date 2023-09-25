@@ -6,24 +6,24 @@ import { StateContext } from "@/store/dataContext";
 import Mac from "@/assets/mac.png";
 import Win from "@/assets/windows_ico.png";
 import User from "@/assets/user.svg";
+import { MysqlDeviceChange } from "@/store/interface";
+
+//准备交叉类型
+type MysqlDeviceChangeWithMeat = MysqlDeviceChange & {
+  meat: {
+    ostype: string;
+    cpu: string;
+    model: string;
+    memory: number;
+    disk: number;
+  };
+};
 
 interface Props {
-  data: {
-    id: string;
-    name: string;
-    styleName: string;
-    styleNumber: string;
-    meat: {
-      ostype: string;
-      cpu: string;
-      model: string;
-      memory: number;
-      disk: number;
-    };
-  };
+  data: MysqlDeviceChangeWithMeat;
 }
 const App: React.FC<Props> = ({ data }) => {
-  //拿到数据跟方法
+  //拿到共享的数据跟方法
   const { updateState } = useContext(StateContext);
 
   //点击打开弹窗
@@ -31,6 +31,12 @@ const App: React.FC<Props> = ({ data }) => {
     updateState("drawer", true); //打开弹窗
     updateState("data", data); //传递配置信息
   };
+
+  //展示图片
+  const osTypes = [
+    { name: "mac", image: Mac },
+    { name: "Windows", image: Win },
+  ];
 
   return (
     <>
@@ -40,17 +46,13 @@ const App: React.FC<Props> = ({ data }) => {
         onClick={showDrawer}
       >
         {/**顶部标志 */}
-        {data.meat.ostype.includes("mac") && (
-          <div className="mt-2 mb-3 ml-3">
-            <img src={Mac} className="h-10" />
-          </div>
-        )}
-
-        {data.meat.ostype.includes("Windows") && (
-          <div className="mt-2 mb-3 ml-3">
-            <img src={Win} className="h-10" />
-          </div>
-        )}
+        <div className="mt-2 mb-3 ml-3">
+          {osTypes
+            .filter((osType) => data.meat.ostype.includes(osType.name))
+            .map((osType) => (
+              <img src={osType.image} className="h-10" />
+            ))}
+        </div>
 
         {/**底部数据 */}
         <div className="p-4 text-xs text-zinc-500  bg-white rounded whitespace-nowrap">
