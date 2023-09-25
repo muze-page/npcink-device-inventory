@@ -1,14 +1,16 @@
 /**
  * 设备详情 - 详细信息
  */
-
+import { Computer } from "@/store/interface";
 interface Props {
-  data: any;
+  data: Computer;
 }
 const App: React.FC<Props> = ({ data }) => {
+  console.log(data);
 
   //显示器
   const displayData = data.graphics.displays[0];
+  
   const handleData = [
     {
       title: "计算机型号",

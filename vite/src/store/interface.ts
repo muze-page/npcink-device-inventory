@@ -39,9 +39,12 @@ export interface Computer {
   chassis: object;
   cpu: ComputerCpu;
   diskLayout: ComputerDevice[];
-  graphics: object;
+  graphics: {
+    displays: ComputerDishplays[];
+    controllers: ComputerControllers[];
+  };
   memLayout: ComputerRam[];
-  net: object;
+  net: ComputerNet[];
   os: ComputerOS;
   system: ComputerSystem;
   uuid: object;
@@ -108,16 +111,6 @@ export interface ComputerCpu {
   performanceCores: number;
 }
 
-//硬盘
-export interface ComputerDevice {
-  device: string;
-  interfaceType: string;
-  name: string;
-  size: number;
-  type: string;
-  vendor: string;
-}
-
 //内存
 export interface ComputerRam {
   ecc: boolean;
@@ -152,6 +145,7 @@ export interface ComputerOS {
   servicepack: string;
 }
 
+//操作系统
 export interface ComputerSystem {
   sku: string;
   uuid: string;
@@ -160,4 +154,84 @@ export interface ComputerSystem {
   version: string;
   virtual: boolean;
   manufacturer: string;
+}
+
+//显示器
+export interface ComputerDishplays {
+  main: boolean;
+  model: string;
+  sizeX: number | null;
+  sizeY: number | null;
+  serial: string | null;
+  vendor: string;
+  builtin: boolean;
+  vendorId: string;
+  displayId: string;
+  positionX: number;
+  positionY: number;
+  connection: string | null;
+  pixelDepth: number | null;
+  currentResX: number;
+  currentResY: number;
+  resolutionX: number;
+  resolutionY: number;
+  productionYear: string;
+  currentRefreshRate: number;
+}
+//显卡
+export interface ComputerControllers {
+  bus: string;
+  vram: number | null;
+  cores: string;
+  model: string;
+  vendor: string;
+  deviceId: string;
+  external: boolean;
+  vendorId: string;
+  vramDynamic: boolean;
+  metalVersion: string;
+}
+
+//硬盘
+export interface ComputerDevice {
+  name: string;
+  size: number;
+  type: string;
+  device: string;
+  vendor: string;
+  serialNum: string;
+  totalHeads: number | null;
+  smartStatus: string;
+  temperature: number | null;
+  totalTracks: number | null;
+  totalSectors: number | null;
+  interfaceType: string;
+  bytesPerSector: number | null;
+  totalCylinders: number | null;
+  sectorsPerTrack: number | null;
+  firmwareRevision: string;
+  tracksPerCylinder: number | null;
+}
+//网口
+export interface ComputerNet {
+  ip4: string;
+  ip6: string;
+  mac: string;
+  mtu: number;
+  dhcp: boolean;
+  type: string;
+  iface: string;
+  speed: number | null;
+  duplex: string;
+  default: boolean;
+  virtual: boolean;
+  internal: boolean;
+  dnsSuffix: string;
+  ifaceName: string;
+  ip4subnet: string;
+  ip6subnet: string;
+  operstate: string;
+  ieee8021xAuth: string;
+  carrierChanges: number;
+  ieee8021xState: string;
 }
