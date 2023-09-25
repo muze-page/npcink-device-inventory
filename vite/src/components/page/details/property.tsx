@@ -12,8 +12,6 @@ import User from "@/assets/user.svg";
 
 import { MysqlDeviceChangeMeat } from "@/store/interface";
 
-
-
 interface Props {
   data: MysqlDeviceChangeMeat;
 }
@@ -61,53 +59,64 @@ const App: React.FC<Props> = ({ data }) => {
         {osTypes
           .filter((osType) => data.meat.ostype.includes(osType.name))
           .map((osType) => (
-            <div
-              key={osType.id}
-              className={`rounded-l-[4px] py-[22px] px-[10px] 
+            <>
+              <div
+                key={osType.id}
+                className={`rounded-l-[4px] py-[22px] px-[10px] 
            ${
              (osType.name === "Windows" && "bg-[#356dee]") ||
              (osType.name === "mac" && "Mac_icon_background_color")
            }
            `}
-            >
-              <img src={osType.image} className="w-[110px] h-[110px]" />
-            </div>
-          ))}
-
-        {/**详细内容 */}
-        <div
-          className={`pt-6 pr-[17px] pb-6 pl-[23px] text-white text-sm flex-1 
+              >
+                <img src={osType.image} className="w-[110px] h-[110px]" />
+              </div>
+              {/**详细内容 */}
+              <div
+                className={`pt-6 pr-[17px] pb-6 pl-[23px] text-white text-sm flex-1 
         ${
-          (stateWinOs && "Windows_content_background_color") ||
-          (stateMacOs && "Mac_content_background_color")
+          (osType.name === "Windows" && "Windows_content_background_color") ||
+          (osType.name === "mac" && "Mac_content_background_color")
         }
        
         `}
-        >
-          {/**备注 */}
-          <div className="flex justify-between">
-            <p className="flex items-center text-lg">
-              {data.styleName ?? "暂无"}
-            </p>
-          </div>
-          {/**操作系统 */}
-          <p className="mt-2">{data.meat.model}</p>
-          {/*大概配置信息 */}
-          <p>
-            {data.meat.cpu} / {data.meat.memory}GB / {data.meat.disk}GB
-          </p>
-          {/**昵称 */}
-          <div className="mt-5 flex items-center">
-            <p className="flex items-center">
-              <img src={User} className="svg svgReversal" />
-              <span>{data.name ?? "暂无"}</span>
-            </p>
-          </div>
-        </div>
+              >
+                {/**备注 */}
+                <div className="flex justify-between">
+                  <p className="flex items-center text-lg">
+                    {data.styleName ?? "暂无"}
+                  </p>
+                </div>
+                {/**操作系统 */}
+                <p className="mt-2">{data.meat.model}</p>
+                {/*大概配置信息 */}
+                <p>
+                  {data.meat.cpu} / {data.meat.memory}GB / {data.meat.disk}GB
+                </p>
+                {/**昵称 */}
+                <div className="mt-5 flex items-center">
+                  <p className="flex items-center">
+                    <img src={User} className="svg svgReversal" />
+                    <span>{data.name ?? "暂无"}</span>
+                  </p>
+                </div>
+              </div>
+            </>
+          ))}
       </div>
       <Tabs defaultActiveKey="1" items={items} />
     </>
   );
 };
+
+/**
+ * 标识
+ */
+const mark = () => {};
+const msg = () => {};
+
+/**
+ * 详细信息
+ */
 
 export default App;
