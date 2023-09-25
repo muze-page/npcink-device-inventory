@@ -11,10 +11,10 @@ export interface MysqlDevice {
 
 //硬件基本信息
 export interface Computer {
-  baseboard: object;
+  baseboard: ComputerBaseboard;
   bios: object;
   chassis: object;
-  cpu: object;
+  cpu: ComputerCpu;
   diskLayout: ComputerDevice[];
   graphics: object;
   memLayout: object;
@@ -41,6 +41,49 @@ export interface TableData {
   sum: number;
 }
 
+//主板
+export interface ComputerBaseboard {
+  assetTag: string;
+  manufacturer: string;
+  memMax: number;
+  memslots: number;
+  model: string;
+  serial: string;
+  version: string;
+}
+
+//CPU
+interface Cache {
+  l1d: number;
+  l1i: number;
+  l2: number;
+  l3: number | null;
+}
+
+export interface ComputerCpu {
+  brand: string;
+  cache: Cache;
+  cores: number;
+  flags: string;
+  model: string;
+  speed: number;
+  family: string;
+  socket: string;
+  vendor: string;
+  voltage: string;
+  governor: string;
+  revision: string;
+  speedMax: number;
+  speedMin: number;
+  stepping: string;
+  processors: number;
+  manufacturer: string;
+  physicalCores: number;
+  virtualization: boolean;
+  efficiencyCores: number;
+  performanceCores: number;
+}
+
 //硬盘
 export interface ComputerDevice {
   device: string;
@@ -49,4 +92,20 @@ export interface ComputerDevice {
   size: number;
   type: string;
   vendor: string;
+}
+
+//内存
+export interface ComputerRam {
+  ecc: boolean;
+  bank: string;
+  size: number;
+  type: string;
+  partNum: string;
+  serialNum: string;
+  clockSpeed: number;
+  formFactor: string;
+  voltageMax: number | null;
+  voltageMin: number | null;
+  manufacturer: string;
+  voltageConfigured: number | null;
 }
