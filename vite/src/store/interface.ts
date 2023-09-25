@@ -2,6 +2,7 @@
 //从数据库读取的设备信息
 export interface MysqlDevice {
   id: string;
+  uuid: string;
   name: string;
   styleName: string;
   styleNumber: string;
@@ -12,12 +13,24 @@ export interface MysqlDevice {
 //整理后
 export interface MysqlDeviceChange {
   id: string;
+  uuid: string;
   name: string;
   styleName: string;
   styleNumber: string;
   dataNew: Computer;
   dataOld: Computer;
 }
+
+//准备交叉类型
+export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
+  meat: {
+    ostype: string;
+    cpu: string;
+    model: string;
+    memory: number;
+    disk: number;
+  };
+};
 
 //硬件基本信息
 export interface Computer {

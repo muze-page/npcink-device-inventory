@@ -6,21 +6,10 @@ import { StateContext } from "@/store/dataContext";
 import Mac from "@/assets/mac.png";
 import Win from "@/assets/windows_ico.png";
 import User from "@/assets/user.svg";
-import { MysqlDeviceChange } from "@/store/interface";
-
-//准备交叉类型
-type MysqlDeviceChangeWithMeat = MysqlDeviceChange & {
-  meat: {
-    ostype: string;
-    cpu: string;
-    model: string;
-    memory: number;
-    disk: number;
-  };
-};
+import { MysqlDeviceChangeMeat } from "@/store/interface";
 
 interface Props {
-  data: MysqlDeviceChangeWithMeat;
+  data: MysqlDeviceChangeMeat;
 }
 const App: React.FC<Props> = ({ data }) => {
   //拿到共享的数据跟方法
@@ -34,8 +23,8 @@ const App: React.FC<Props> = ({ data }) => {
 
   //展示图片
   const osTypes = [
-    { name: "mac", image: Mac },
-    { name: "Windows", image: Win },
+    { id: 1, name: "mac", image: Mac },
+    { id: 2, name: "Windows", image: Win },
   ];
 
   return (
@@ -50,7 +39,7 @@ const App: React.FC<Props> = ({ data }) => {
           {osTypes
             .filter((osType) => data.meat.ostype.includes(osType.name))
             .map((osType) => (
-              <img src={osType.image} className="h-10" />
+              <img key={osType.id} src={osType.image} className="h-10" />
             ))}
         </div>
 

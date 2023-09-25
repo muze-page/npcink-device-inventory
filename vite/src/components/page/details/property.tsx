@@ -10,10 +10,15 @@ import MacOs from "@/assets/macos.png";
 import Win from "@/assets/windows_s.png";
 import User from "@/assets/user.svg";
 
+import { MysqlDeviceChangeMeat } from "@/store/interface";
+
+
+
 interface Props {
-  data: any;
+  data: MysqlDeviceChangeMeat;
 }
 const App: React.FC<Props> = ({ data }) => {
+  console.log(data);
   const items: TabsProps["items"] = [
     {
       key: "1",
@@ -23,7 +28,7 @@ const App: React.FC<Props> = ({ data }) => {
           硬件信息
         </span>
       ),
-      children: <Info data={data.dataNew}/>,
+      children: <Info data={data.dataNew} />,
     },
     {
       key: "2",
@@ -33,13 +38,19 @@ const App: React.FC<Props> = ({ data }) => {
           变更记录
         </span>
       ),
-      children: <Change data={data.uuid}/>,
+      children: <Change data={data.uuid} />,
     },
   ];
 
   //找状态
   const stateWinOs = data.meat.ostype.includes("Windows");
   const stateMacOs = data.meat.ostype.includes("mac");
+
+  const osTypes = [
+    { id: 1, name: "mac", image: MacOs },
+    { id: 2, name: "Windows", image: Win },
+  ];
+
   return (
     <>
       {/**品牌标志 */}
@@ -47,19 +58,21 @@ const App: React.FC<Props> = ({ data }) => {
         {/**LOGO */}
         {/**顶部标志 */}
 
-        <div
-          className={`rounded-l-[4px] py-[22px] px-[10px] 
-          ${
-            (stateWinOs && "bg-[#356dee]") ||
-            (stateMacOs && "Mac_icon_background_color")
-          }
-          `}
-        >
-          <img
-            src={(stateWinOs && Win) || (stateMacOs && MacOs)}
-            className="w-[110px] h-[110px]"
-          />
-        </div>
+        {osTypes
+          .filter((osType) => data.meat.ostype.includes(osType.name))
+          .map((osType) => (
+            <div
+              key={osType.id}
+              className={`rounded-l-[4px] py-[22px] px-[10px] 
+           ${
+             (osType.name === "Windows" && "bg-[#356dee]") ||
+             (osType.name === "mac" && "Mac_icon_background_color")
+           }
+           `}
+            >
+              <img src={osType.image} className="w-[110px] h-[110px]" />
+            </div>
+          ))}
 
         {/**详细内容 */}
         <div
