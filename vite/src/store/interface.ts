@@ -17,7 +17,7 @@ export interface Computer {
   cpu: ComputerCpu;
   diskLayout: ComputerDevice[];
   graphics: object;
-  memLayout: object;
+  memLayout: ComputerRam[];
   net: object;
   os: object;
   system: object;

@@ -33,28 +33,35 @@ export const sum_brand = (data: any[], key: string): SumBrand[] => {
 interface DataItem {
   size: number;
 }
-export const sum_order = (
-  data: Array<DataItem>,
-  thresholds: { [x: string]: number }
-) => {
-  const arr: { type: string; sum: number }[] = [];
 
-  data.forEach((obj: { size: number }) => {
-    const sizeInGB = obj.size / 1024 ** 3; // 将 size 从字节转换为 GB
-    for (const type in thresholds) {
-      if (sizeInGB <= thresholds[type]) {
-        const index = arr.findIndex((item) => item.type === type);
+type Thresholds = { [type: string]: number };
+
+interface ResultItem {
+  type: string;
+  sum: number;
+}
+
+export const sum_order = (data: DataItem[], thresholds: Thresholds) => {
+  const result: ResultItem[] = [];
+
+  data.forEach(({ size }) => {
+    const sizeInGB = size / (1024 ** 3);
+    for (const [type, threshold] of Object.entries(thresholds)) {
+      if (sizeInGB <= threshold) {
+        const index = result.findIndex((item) => item.type === type);
         if (index !== -1) {
-          arr[index].sum += 1;
+          result[index].sum += 1;
         } else {
-          arr.push({ type, sum: 1 });
+          result.push({ type, sum: 1 });
         }
         break;
       }
     }
   });
-  return arr;
+
+  return result;
 };
+
 
 //关键词替换TODO:改进，只要部分值出现，就整体替换，提高通用性
 /**

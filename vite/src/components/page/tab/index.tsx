@@ -3,48 +3,58 @@
  */
 import { useState, useContext } from "react";
 import DataContext from "@/store/dataContext";
-import { Computer } from "@/store/interface";
+import {
+  Computer,
+  ComputerCpu,
+  ComputerBaseboard,
+  ComputerRam,
+  ComputerDevice,
+} from "@/store/interface";
 import Baseboard from "@/components/page/tab/baseboard";
 import Cpu from "@/components/page/tab/cpu";
 import Disk from "@/components/page/tab/disk";
 import Memory from "@/components/page/tab/memory";
 
+//收集最新数据并输出数组
+interface DataArray {
+  dataNew: Computer;
+}
+const collectDataNew = (dataArrays: DataArray[]): Computer[] => {
+  return dataArrays.map((obj: { dataNew: Computer }) => obj.dataNew);
+};
 
 //将数组对象中对象的指定的键值取出，组成新数组
 const deviceArrData = (dataArrays: Computer[], key: keyof Computer) => {
-  const cpuArray = dataArrays.flatMap((obj) => obj[key]);
-  return cpuArray as object[];
+  return dataArrays.flatMap((obj) => obj[key]);
 };
 
 const App: React.FC = () => {
   //拿到数据
   const data = useContext(DataContext);
 
-  //收集最新数据并输出数组
-  interface DataArray {
-    dataNew: Computer;
-  }
-  const collectDataNew = (dataArrays: DataArray[]): Computer[] => {
-    const newData = dataArrays.map((obj: { dataNew: Computer }) => obj.dataNew);
-    return newData;
-  };
-
   //处理数据
   const combinedData = collectDataNew(data);
- 
 
   //获取CPU数组
-  const cpuArrData = deviceArrData(combinedData, "cpu");
+  const cpuArrData = deviceArrData(combinedData, "cpu") as ComputerCpu[];
 
   //获取硬盘数组
-  const diskArrData = deviceArrData(combinedData, "diskLayout");
-  
+  const diskArrData = deviceArrData(
+    combinedData,
+    "diskLayout"
+  ) as ComputerDevice[];
 
   //获取内存数组
-  const memoryArrData = deviceArrData(combinedData, "memLayout");
+  const memoryArrData = deviceArrData(
+    combinedData,
+    "memLayout"
+  ) as ComputerRam[];
 
   //获取主板数组
-  const baseboardArrData = deviceArrData(combinedData, "baseboard");
+  const baseboardArrData = deviceArrData(
+    combinedData,
+    "baseboard"
+  ) as ComputerBaseboard[];
 
   const items = [
     {
