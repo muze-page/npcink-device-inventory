@@ -8,6 +8,7 @@ import type { ColumnsType } from "antd/es/table";
 import axios from "axios";
 import { dataAjaxurl } from "@/store/dataContext";
 import { replacements } from "@/store/dataReplace";
+import { ComputerChangeReturn } from "@/store/interface";
 
 //准备表格数据类型
 interface DataType {
@@ -43,8 +44,8 @@ const columns: ColumnsType<DataType> = [
 ];
 
 //替换对象中type的值
-const replaceType = (data: any[]) => {
-  return data.map((obj: { type: any }) => {
+const replaceType = (data: ComputerChangeReturn[]) => {
+  return data.map((obj: ComputerChangeReturn) => {
     const type = obj.type;
     if (type && replacements[type]) {
       return { ...obj, type: replacements[type] };
@@ -64,6 +65,12 @@ const App: React.FC<Props> = ({ data }) => {
   const [loading, setLoading] = useState(false); //加载中
   const [error, setError] = useState(""); //报错
 
+  //返回值类型
+  type MysqlChange = {
+    data: ComputerChangeReturn[];
+    message: string;
+    status: string;
+  };
   //发出请求获取值
   const getData = async (uuid: string) => {
     const params = new URLSearchParams();
@@ -72,18 +79,19 @@ const App: React.FC<Props> = ({ data }) => {
 
     try {
       setLoading(true);
-      const response = await axios.post(dataAjaxurl, params);
+      const response = await axios.post<MysqlChange>(dataAjaxurl, params);
 
       if (response.status === 200) {
         const data = response.data.data;
+        console.log(response.data);
         //关键值替换
-        const updatedData = replaceType(data) as any;
+        const updatedData = replaceType(data);
 
         //添加key
-        const updatedDatas = updatedData.map((obj: { id: any }) => {
+        const updatedDatas = updatedData.map((obj: ComputerChangeReturn) => {
           return { ...obj, key: obj.id };
         });
-
+        //传递
         setDataAxios(updatedDatas);
       } else {
         setError("保存设置选项时出错：" + response.data);

@@ -1,5 +1,5 @@
 //公共方法
-import { SumBrand, Replacements, TableData } from "@/store/interface";
+import {  Replacements, TableData } from "@/store/interface";
 
 /**
  *拿到指定键的值并统计该键的出现次数
@@ -11,7 +11,7 @@ import { SumBrand, Replacements, TableData } from "@/store/interface";
  * }]
  */
 
-export const sum_brand = (data: any[], key: string): SumBrand[] => {
+export const sum_brand = (data: any[], key: string): TableData[] => {
   return data.reduce((acc, cur) => {
     const type = cur[key];
     const index = acc.findIndex((item: { type: any }) => item.type === type);

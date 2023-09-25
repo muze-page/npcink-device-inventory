@@ -56,15 +56,21 @@ export interface Computer {
 export interface Replacements {
   [key: string]: string;
 }
-//统计信息
-export interface SumBrand {
-  type: string;
-  sum: number;
-}
-//表头
+
+//表头 统计信息
 export interface TableData {
   type: string;
   sum: number;
+}
+
+//硬件变更返回值
+export interface ComputerChangeReturn {
+  id: string;
+  new: string;
+  old: string;
+  time: string;
+  type: string;
+  uuid: string;
 }
 
 //主板
