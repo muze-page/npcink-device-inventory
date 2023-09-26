@@ -2,12 +2,11 @@
  * 设备详情 - 详细信息
  */
 import { Computer } from "@/store/interface";
+import { title } from "process";
 interface Props {
   data: Computer;
 }
 const App: React.FC<Props> = ({ data }) => {
-  
-
   //显示器
   const displayData = data.graphics.displays[0];
 
@@ -61,12 +60,17 @@ const App: React.FC<Props> = ({ data }) => {
      `,
     },
   ];
+  interface itemType {
+    title: string;
+    data: string;
+    plug?: string;
+  }
 
   return (
     <>
       <div className="mt-1 flex justify-between items-center flex-wrap">
         {/**开始循环 */}
-        {handleData.map((item: any, index: number) => (
+        {handleData.map((item: itemType, index: number) => (
           <div
             className={`
             mb-2 w-[49.6%] h-24 py-4 px-5 rounded border bg-gradient-to-r
