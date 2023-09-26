@@ -4,11 +4,10 @@
 import { useContext, useState } from "react";
 
 import DataContext from "@/store/dataContext";
-import { StateContext } from "@/store/dataContext";
 import DetailsList from "@/components/page/details/detailsList";
 import Drawer from "@/components/page/details/drawer";
 import {
-  Computer,
+  MysqlDeviceChangeMeat,
   MysqlDeviceChange,
   ComputerRam,
   ComputerDevice,
@@ -25,7 +24,7 @@ const calculateTotalSize = (dataArrays: DataType[]) => {
   return totalSize / (1024 * 1024 * 1024); // 将字节转换为GB
 };
 
-const updateOSType = (dataArrays: MysqlDeviceChange[]) => {
+const updateOSType = (dataArrays: MysqlDeviceChange[]):MysqlDeviceChangeMeat[] => {
   const updatedData = dataArrays.map((obj: MysqlDeviceChange) => {
     const parsedData = obj.dataNew; //拿到对象
     const memory = calculateTotalSize(parsedData.memLayout); //内存数组
@@ -56,36 +55,36 @@ const App: React.FC = () => {
   const updatedDataArray = updateOSType(data);
 
   //共享状态
-  const [state, setState] = useState({
-    drawer: false,
-    data: [] as Computer[],
-  });
-
-  //更改状态值
-  type State = {
-    drawer: boolean;
-    data: Computer[]; // 这里根据你的状态对象的结构来定义具体的类型
+  const [active, setActive] = useState(false);
+  //修改状态
+  const changeActive = () => {
+    setActive(!active);
   };
 
-  const updateState = (key: keyof State, value: State[keyof State]): void => {
-    setState((prevState: State) => ({
-      ...prevState,
-      [key]: value,
-    }));
-  };
+  //共享参数
+  const [drawerData, setDrawerData] = useState({} as MysqlDeviceChangeMeat);
+
+  //修改状态
 
   return (
     <>
-      <StateContext.Provider value={{ state, updateState }}>
-        <div className="mt-1 flex content-start items-center flex-wrap w-full">
-          {/**开始循环 */}
-          {updatedDataArray.map((tab, _index) => (
-            <DetailsList key={tab.id} data={tab} />
-          ))}
-        </div>
-        {/**弹窗 */}
-        <Drawer />
-      </StateContext.Provider>
+      <div className="mt-1 flex content-start items-center flex-wrap w-full">
+        {/**开始循环 */}
+        {updatedDataArray.map((tab, _index) => (
+          <DetailsList
+            key={tab.id}
+            data={tab}
+            onActive={() => changeActive()}
+            onDrawerData={() => setDrawerData(tab)}
+          />
+        ))}
+      </div>
+      {/**弹窗 */}
+      <Drawer
+        data={drawerData}
+        active={active}
+        onActive={() => changeActive()}
+      />
     </>
   );
 };

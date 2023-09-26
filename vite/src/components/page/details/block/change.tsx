@@ -59,7 +59,7 @@ interface Props {
 }
 const App: React.FC<Props> = ({ data }) => {
   //检测new 和old 的值，大于1000000的进行处理
-  console.log(data);
+  
 
   const [dataAxios, setDataAxios] = useState<DataType[]>([]); //待渲染的值
   const [loading, setLoading] = useState(false); //加载中

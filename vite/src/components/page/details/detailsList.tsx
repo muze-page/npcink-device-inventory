@@ -1,8 +1,6 @@
 /**
  * 设备详情
  */
-import { useContext } from "react";
-import { StateContext } from "@/store/dataContext";
 import Mac from "@/assets/mac.png";
 import Win from "@/assets/windows_ico.png";
 import User from "@/assets/user.svg";
@@ -10,15 +8,14 @@ import { MysqlDeviceChangeMeat } from "@/store/interface";
 
 interface Props {
   data: MysqlDeviceChangeMeat;
+  onActive: () => void;//修改状态
+  onDrawerData: () => void;//保存值
 }
-const App: React.FC<Props> = ({ data }) => {
-  //拿到共享的数据跟方法
-  const { updateState } = useContext(StateContext);
-
+const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
   //点击打开弹窗
   const showDrawer = () => {
-    updateState("drawer", true); //打开弹窗
-    updateState("data", data); //传递配置信息
+    onActive(); //打开弹窗
+    onDrawerData(); //保存值
   };
 
   //展示图片
@@ -32,7 +29,9 @@ const App: React.FC<Props> = ({ data }) => {
       {/**开始循环 */}
       <div
         className="cursor-pointer p-[10px] rounded mr-[1.7%] mt-4 w-[30.7%] h-[272px] mac"
-        onClick={showDrawer}
+        onClick={() => {
+          showDrawer();
+        }}
       >
         {/**顶部标志 */}
         <div className="mt-2 mb-3 ml-3">

@@ -39,7 +39,6 @@ export default DataContext;
 
 
 
-export const StateContext = createContext({} as any);
 
 //输出接口地址
 const getAjaxurl = (): string => {
