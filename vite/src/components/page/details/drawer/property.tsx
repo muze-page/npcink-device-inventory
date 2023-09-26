@@ -1,8 +1,14 @@
 /**
  * 设备详情 - 展开
  */
-import { Tabs } from "antd";
-import { CodepenOutlined, ApartmentOutlined } from "@ant-design/icons";
+import { useState } from "react";
+import { Button, Input, Tabs } from "antd";
+import {
+  CodepenOutlined,
+  ApartmentOutlined,
+  EditOutlined,
+} from "@ant-design/icons";
+
 import type { TabsProps } from "antd";
 import Info from "@/components/page/details/block/info";
 import Change from "@/components/page/details/block/change";
@@ -63,6 +69,7 @@ const App: React.FC<Props> = ({ data }) => {
   );
 };
 
+export default App;
 /**
  * 标识
  */
@@ -105,7 +112,9 @@ ${
   >
     {/**备注 */}
     <div className="flex justify-between">
-      <p className="flex items-center text-lg">{data.styleName ?? "暂无"}</p>
+      <p className="flex items-center text-lg">
+        <TextEditor defaults={data.styleName} />
+      </p>
     </div>
     {/**操作系统 */}
     <p className="mt-2">{data.meat.model}</p>
@@ -117,14 +126,73 @@ ${
     <div className="mt-5 flex items-center">
       <p className="flex items-center">
         <img src={User} className="svg svgReversal" />
-        <span>{data.name ?? "暂无"}</span>
+        <span>{data.name ?? "暂无昵称"}</span>
       </p>
     </div>
   </div>
 );
 
 /**
- * 详细信息
+ * 修改值
+ * 需要：默认值、UUID、要修改的字段
+ *  {data.styleName ?? "暂无备注"}
  */
+interface PropsEditor {
+  defaults: string; //初始值
+}
+const TextEditor: React.FC<PropsEditor> = ({ defaults }) => {
+  const [editing, setEditing] = useState(false); //编辑状态
+  const [text, setText] = useState(defaults || "暂无备注"); //保存值
+  const [editedText, setEditedText] = useState(""); //保存输入框中的值
 
-export default App;
+  //开始编辑
+  const handleEditClick = () => {
+    setEditedText(text);
+    setEditing(true);
+  };
+
+  //取消编辑
+  const handleCancelClick = () => {
+    setEditing(false);
+    setEditedText("");
+  };
+
+  //保存
+  const handleSaveClick = () => {
+    setText(editedText);
+    setEditing(false);
+    setEditedText("");
+  };
+
+  //将值存入变量中
+  const handleChange = (e: any) => {
+    setEditedText(e.target.value);
+  };
+
+  return (
+    <div>
+      {editing ? (
+        <div>
+          <Input value={editedText} onChange={handleChange} />
+          <Button type="text" onClick={handleSaveClick}>
+            保存
+          </Button>
+          <Button type="text" onClick={handleCancelClick}>
+            取消
+          </Button>
+        </div>
+      ) : (
+        <div>
+          <p>
+            {text}
+            <Button
+              type="primary"
+              onClick={handleEditClick}
+              icon={<EditOutlined twoToneColor="#fff" />}
+            ></Button>
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
