@@ -17,6 +17,7 @@ import Win from "@/assets/windows_s.png";
 import User from "@/assets/user.svg";
 
 import { MysqlDeviceChangeMeat } from "@/store/interface";
+import { changeMySql } from "@/store/axios";
 
 interface Props {
   data: MysqlDeviceChangeMeat;
@@ -113,7 +114,7 @@ ${
     {/**备注 */}
     <div className="flex justify-between">
       <p className="flex items-center text-lg">
-        <TextEditor defaults={data.styleName} />
+        <TextEditor defaults={data.styleName} uuid={data.uuid} type="name" />
       </p>
     </div>
     {/**操作系统 */}
@@ -139,8 +140,10 @@ ${
  */
 interface PropsEditor {
   defaults: string; //初始值
+  uuid: string; //标识符
+  type: string; //字段名
 }
-const TextEditor: React.FC<PropsEditor> = ({ defaults }) => {
+const TextEditor: React.FC<PropsEditor> = ({ defaults, uuid, type }) => {
   const [editing, setEditing] = useState(false); //编辑状态
   const [text, setText] = useState(defaults || "暂无备注"); //保存值
   const [editedText, setEditedText] = useState(""); //保存输入框中的值
@@ -162,6 +165,7 @@ const TextEditor: React.FC<PropsEditor> = ({ defaults }) => {
     setText(editedText);
     setEditing(false);
     setEditedText("");
+    changeMySql(editedText, uuid, type); //修改值
   };
 
   //将值存入变量中

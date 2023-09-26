@@ -16,6 +16,10 @@ if (!class_exists('DEMA_Admin_Interface')) {
             // 添加Ajax请求处理函数
             add_action('wp_ajax_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
             add_action('wp_ajax_nopriv_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
+
+            // 修改数据库备注名和编号
+            add_action('wp_ajax_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
+            add_action('wp_ajax_nopriv_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
         }
 
         /**
@@ -224,6 +228,55 @@ if (!class_exists('DEMA_Admin_Interface')) {
             );
 
             return $results;
+        }
+
+        /**
+         * 修改备注名和资产编号
+         */
+        public static function update_style_name_callback()
+        {
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'custom_table';
+
+            // 获取前端传递的参数
+            $uuid = $_POST['uuid'];
+            $data = $_POST['data'];
+            $type = $_POST['type'];
+
+            // 定义字段与类型的映射关系
+            $field_map = array(
+                'name' => 'styleName',
+                'number' => 'styleNumber'
+            );
+
+            // 确定要更新的字段
+            $field_name = isset($field_map[$type]) ? $field_map[$type] : '';
+
+            try {
+                if (!empty($field_name)) {
+                    // 更新数据库中对应的数据
+                    $wpdb->update(
+                        $table_name,
+                        array($field_name => $data),
+                        array('uuid' => $uuid)
+                    );
+
+                    // 返回更新成功的响应
+                    echo json_encode(array('success' => true));
+                } else {
+                    throw new Exception('未找到对应的字段名');
+                }
+            } catch (Exception $e) {
+                // 返回更新失败的响应，包含详细的错误信息
+                echo json_encode(array('success' => false, 'error' => $e->getMessage()));
+            }
+
+            // 设置跨域访问标头
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST');
+            header('Access-Control-Allow-Headers: Content-Type');
+
+            wp_die();
         }
     } //end
 }
