@@ -269,7 +269,8 @@ if (!class_exists('DEMA_Admin_Interface')) {
                         'table_name' => $table_name,
                         'type' => $type,
                         'field_name' => $field_name,
-                        'data' => $data
+                        'data' => $data,
+                        'uuid' => $uuid
                     ));
                 } else {
                     // 未找到对应的字段名

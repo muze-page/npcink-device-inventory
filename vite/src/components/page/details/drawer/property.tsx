@@ -129,6 +129,14 @@ ${
         <img src={User} className="svg svgReversal" />
         <span>{data.name ?? "暂无昵称"}</span>
       </p>
+      <div className="flex items-center ml-8 m-0">
+        编号：
+        <TextEditor
+          defaults={data.styleNumber}
+          uuid={data.uuid}
+          type="number"
+        />
+      </div>
     </div>
   </div>
 );
@@ -177,7 +185,7 @@ const TextEditor: React.FC<PropsEditor> = ({ defaults, uuid, type }) => {
     <div>
       {editing ? (
         <>
-          <Input value={editedText} onChange={handleChange} />
+          <Input style={{ width: '50%' }} value={editedText} onChange={handleChange} />
           <Button type="text" onClick={handleSaveClick}>
             保存
           </Button>
