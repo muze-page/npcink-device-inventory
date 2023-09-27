@@ -113,9 +113,9 @@ ${
   >
     {/**备注 */}
     <div className="flex justify-between">
-      <p className="flex items-center text-lg">
+      <div className="flex items-center text-lg">
         <TextEditor defaults={data.styleName} uuid={data.uuid} type="name" />
-      </p>
+      </div>
     </div>
     {/**操作系统 */}
     <p className="mt-2">{data.meat.model}</p>
@@ -176,7 +176,7 @@ const TextEditor: React.FC<PropsEditor> = ({ defaults, uuid, type }) => {
   return (
     <div>
       {editing ? (
-        <div>
+        <>
           <Input value={editedText} onChange={handleChange} />
           <Button type="text" onClick={handleSaveClick}>
             保存
@@ -184,17 +184,15 @@ const TextEditor: React.FC<PropsEditor> = ({ defaults, uuid, type }) => {
           <Button type="text" onClick={handleCancelClick}>
             取消
           </Button>
-        </div>
+        </>
       ) : (
         <div>
-          <p>
-            {text}
-            <Button
-              type="primary"
-              onClick={handleEditClick}
-              icon={<EditOutlined twoToneColor="#fff" />}
-            ></Button>
-          </p>
+          <span>{text}</span>
+          <Button
+            type="primary"
+            onClick={handleEditClick}
+            icon={<EditOutlined twoToneColor="#fff" />}
+          ></Button>
         </div>
       )}
     </div>

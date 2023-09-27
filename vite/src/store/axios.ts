@@ -19,7 +19,7 @@ export const changeMySql = async (data: string, uuid: string, type: string) => {
   const params = new URLSearchParams();
   params.append("action", "update_style_name_callback");
   params.append("uuid", JSON.stringify(uuid));
-  params.append("data", JSON.stringify(data));
+  params.append("data", data);
   params.append("type", type);//TODO:为啥这里就不能更改类型
 
   try {

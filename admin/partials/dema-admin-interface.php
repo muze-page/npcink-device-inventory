@@ -238,10 +238,10 @@ if (!class_exists('DEMA_Admin_Interface')) {
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_table';
 
-            // 获取前端传递的参数
-            $uuid = $_POST['uuid'];
-            $data = $_POST['data'];
-            $type = $_POST['type'];
+            // 获取前端传递的参数并进行输入验证
+            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : '';
+            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : '';
+            $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : '';
 
             // 定义字段与类型的映射关系
             $field_map = array(
@@ -251,14 +251,16 @@ if (!class_exists('DEMA_Admin_Interface')) {
 
             // 确定要更新的字段
             $field_name = isset($field_map[$type]) ? $field_map[$type] : '';
-           
+
             try {
                 if (!empty($field_name)) {
-                    // 更新数据库中对应的数据
+                    // 使用预处理语句更新数据库中对应的数据
                     $wpdb->update(
                         $table_name,
                         array($field_name => $data),
-                        array('uuid' => $uuid)
+                        array('uuid' => $uuid),
+                        '%s', // 字段类型
+                        '%s'  // 条件类型
                     );
 
                     // 返回更新成功的响应
@@ -266,20 +268,22 @@ if (!class_exists('DEMA_Admin_Interface')) {
                         'success' => true,
                         'table_name' => $table_name,
                         'type' => $type,
-                        'one' => $field_name
+                        'field_name' => $field_name,
+                        'data' => $data
                     ));
                 } else {
-                    //throw new Exception('未找到对应的字段名');
+                    // 未找到对应的字段名
                     echo json_encode(array(
-                        'success' => true,
-                        'table_name' => $table_name,
-                        'type' => $type,
-                        'one' => $field_name
+                        'success' => false,
+                        'error' => '未找到对应的字段名'
                     ));
                 }
             } catch (Exception $e) {
                 // 返回更新失败的响应，包含详细的错误信息
-                echo json_encode(array('success' => false, 'error' => $e->getMessage()));
+                echo json_encode(array(
+                    'success' => false,
+                    'error' => '数据库更新失败: ' . $e->getMessage()
+                ));
             }
 
             // 设置跨域访问标头
