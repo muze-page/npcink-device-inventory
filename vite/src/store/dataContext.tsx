@@ -7,15 +7,13 @@ import { MysqlDevice, Computer } from "./interface";
 const state: boolean = import.meta.env.VITE_STATE;
 
 //输出选项值
-const getDataLocal = (type: string) => {
+const getDataLocal = () => {
   if (state) {
     //开发
-    return data[type];
+    return data;
   } else {
     //打包
-    return (window as any).dataLocal[type] !== ""
-      ? (window as any).dataLocal[type]
-      : {};
+    return (window as any).dataLocal !== "" ? (window as any).dataLocal : {};
   }
 };
 
@@ -30,25 +28,11 @@ const processObject = ({ dataNew, dataOld, ...rest }: MysqlDevice) => ({
 const combineData = (dataArrays: MysqlDevice[]) =>
   dataArrays.map(processObject);
 
-//对新旧两个值进行处理
-const combinedData = combineData(getDataLocal("data"));
-
-//传出
-const DataContext = createContext(combinedData);
-export default DataContext;
+//对新旧两个值进行处理后传出
+export const dataMySql = combineData(getDataLocal().data);
 
 //拿到选项值并传出
-export const option = getDataLocal("option");
+export const option = getDataLocal().option;
 
 //输出接口地址
-const getAjaxurl = (): string => {
-  if (state) {
-    //开发
-    return "http://localhost:10048/wp-admin/admin-ajax.php";
-  } else {
-    //打包
-    return (window as any).ajaxurl !== "" ? (window as any).ajaxurl : {};
-  }
-};
-//传值
-export const dataAjaxurl = getAjaxurl();
+export const dataAjaxurl = getDataLocal().ajaxurl;

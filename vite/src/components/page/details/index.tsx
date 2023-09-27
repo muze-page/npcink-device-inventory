@@ -1,9 +1,9 @@
 /**
  * 详情
  */
-import { useContext, useState } from "react";
+import {  useState } from "react";
 
-import DataContext from "@/store/dataContext";
+import {dataMySql} from "@/store/dataContext";
 import DetailsList from "@/components/page/details/detailsList";
 import Drawer from "@/components/page/details/drawer";
 import {
@@ -49,7 +49,7 @@ const updateOSType = (dataArrays: MysqlDeviceChange[]):MysqlDeviceChangeMeat[] =
 
 const App: React.FC = () => {
   //拿到数据
-  const data = useContext(DataContext);
+  const data = dataMySql;
 
   //处理后的数据
   const updatedDataArray = updateOSType(data);

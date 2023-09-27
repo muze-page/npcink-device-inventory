@@ -2,7 +2,7 @@
  * 资产盘点
  */
 import { useState, useContext } from "react";
-import DataContext from "@/store/dataContext";
+import {dataMySql} from "@/store/dataContext";
 import {
   Computer,
   ComputerCpu,
@@ -30,7 +30,7 @@ const deviceArrData = (dataArrays: Computer[], key: keyof Computer) => {
 
 const App: React.FC = () => {
   //拿到数据
-  const data = useContext(DataContext);
+  const data = dataMySql;
 
   //处理数据
   const combinedData = collectDataNew(data);
