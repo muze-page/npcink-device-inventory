@@ -4,18 +4,11 @@
 import axios from "axios";
 import { Button, Form, Input, message } from "antd";
 import { dataAjaxurl } from "@/store/dataContext";
+import { option } from "@/store/dataContext";
 
 type FieldType = {
   route?: string;
   password?: string;
-};
-
-//表单默认值
-const data = {
-  basic: {
-    route: "22",
-    password: "22",
-  },
 };
 
 const App: React.FC = () => {
@@ -82,7 +75,7 @@ const App: React.FC = () => {
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 16 }}
         style={{ maxWidth: 600 }}
-        initialValues={data}
+        initialValues={option} //默认选项值
         onFinish={onFinish}
         onFinishFailed={onFinishFailed}
         autoComplete="off"

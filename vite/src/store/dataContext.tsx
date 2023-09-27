@@ -1,20 +1,20 @@
 //准备初始数据
 import { createContext } from "react";
 import data from "@/store/defaultVar";
-import { MysqlDevice,  Computer } from "./interface";
+import { MysqlDevice, Computer } from "./interface";
 
 //开发环境状态
 const state: boolean = import.meta.env.VITE_STATE;
 
 //输出选项值
-const getDataLocal = () => {
+const getDataLocal = (type: string) => {
   if (state) {
     //开发
-    return data;
+    return data[type];
   } else {
     //打包
-    return (window as any).dataLocal?.data !== ""
-      ? (window as any).dataLocal?.data
+    return (window as any).dataLocal[type] !== ""
+      ? (window as any).dataLocal[type]
       : {};
   }
 };
@@ -31,14 +31,14 @@ const combineData = (dataArrays: MysqlDevice[]) =>
   dataArrays.map(processObject);
 
 //对新旧两个值进行处理
-const combinedData = combineData(getDataLocal());
+const combinedData = combineData(getDataLocal("data"));
 
 //传出
 const DataContext = createContext(combinedData);
 export default DataContext;
 
-
-
+//拿到选项值并传出
+export const option = getDataLocal("option");
 
 //输出接口地址
 const getAjaxurl = (): string => {
@@ -52,5 +52,3 @@ const getAjaxurl = (): string => {
 };
 //传值
 export const dataAjaxurl = getAjaxurl();
-
-

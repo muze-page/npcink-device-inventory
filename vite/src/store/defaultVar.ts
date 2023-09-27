@@ -1,4 +1,4 @@
-const data = [
+const dataMysql = [
   {
     id: "7",
     uuid: "C07G47L9Q6NV-2",
@@ -31,4 +31,13 @@ const data = [
     dataOld: null,
   },
 ];
+export const option = {
+  route: "11",
+  password: "22",
+};
+
+const data = {
+  data: dataMysql,
+  option: option,
+};
 export default data;
