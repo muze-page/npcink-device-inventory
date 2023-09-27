@@ -20,7 +20,7 @@ export const changeMySql = async (data: string, uuid: string, type: string) => {
   params.append("action", "update_style_name_callback");
   params.append("uuid", JSON.stringify(uuid));
   params.append("data", JSON.stringify(data));
-  params.append("type", JSON.stringify(type));
+  params.append("type", type);//TODO:为啥这里就不能更改类型
 
   try {
     const response = await axios.post<MysqlChange>(dataAjaxurl, params);
@@ -33,6 +33,6 @@ export const changeMySql = async (data: string, uuid: string, type: string) => {
   } catch (error: any) {
     console.log("保存设置选项时出错：" + error.message);
   } finally {
-    console.log(false);
+    //console.log(false);
   }
 };

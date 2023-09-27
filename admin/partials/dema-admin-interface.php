@@ -251,7 +251,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
 
             // 确定要更新的字段
             $field_name = isset($field_map[$type]) ? $field_map[$type] : '';
-
+           
             try {
                 if (!empty($field_name)) {
                     // 更新数据库中对应的数据
@@ -262,9 +262,20 @@ if (!class_exists('DEMA_Admin_Interface')) {
                     );
 
                     // 返回更新成功的响应
-                    echo json_encode(array('success' => true));
+                    echo json_encode(array(
+                        'success' => true,
+                        'table_name' => $table_name,
+                        'type' => $type,
+                        'one' => $field_name
+                    ));
                 } else {
-                    throw new Exception('未找到对应的字段名');
+                    //throw new Exception('未找到对应的字段名');
+                    echo json_encode(array(
+                        'success' => true,
+                        'table_name' => $table_name,
+                        'type' => $type,
+                        'one' => $field_name
+                    ));
                 }
             } catch (Exception $e) {
                 // 返回更新失败的响应，包含详细的错误信息
