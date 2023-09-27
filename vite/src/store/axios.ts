@@ -1,6 +1,6 @@
 //各种于数据库的交互方法
 import axios from "axios";
-import { dataAjaxurl } from "@/store/dataContext";
+import { dataAjaxurl } from "@/store";
 /**
  * 修改数据库中的自定义名字和编号
  */

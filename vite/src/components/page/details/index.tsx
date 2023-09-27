@@ -1,9 +1,9 @@
 /**
  * 详情
  */
-import {  useState } from "react";
+import { useState } from "react";
 
-import {dataMySql} from "@/store/dataContext";
+import { dataMySql } from "@/store";
 import DetailsList from "@/components/page/details/detailsList";
 import Drawer from "@/components/page/details/drawer";
 import {
@@ -24,7 +24,9 @@ const calculateTotalSize = (dataArrays: DataType[]) => {
   return totalSize / (1024 * 1024 * 1024); // 将字节转换为GB
 };
 
-const updateOSType = (dataArrays: MysqlDeviceChange[]):MysqlDeviceChangeMeat[] => {
+const updateOSType = (
+  dataArrays: MysqlDeviceChange[]
+): MysqlDeviceChangeMeat[] => {
   const updatedData = dataArrays.map((obj: MysqlDeviceChange) => {
     const parsedData = obj.dataNew; //拿到对象
     const memory = calculateTotalSize(parsedData.memLayout); //内存数组

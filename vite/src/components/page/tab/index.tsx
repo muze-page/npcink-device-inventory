@@ -2,7 +2,7 @@
  * 资产盘点
  */
 import { useState, useContext } from "react";
-import {dataMySql} from "@/store/dataContext";
+import { dataMySql } from "@/store";
 import {
   Computer,
   ComputerCpu,

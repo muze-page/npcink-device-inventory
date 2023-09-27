@@ -3,8 +3,8 @@
  */
 import axios from "axios";
 import { Button, Form, Input, message } from "antd";
-import { dataAjaxurl } from "@/store/dataContext";
-import { option } from "@/store/dataContext";
+import { dataAjaxurl } from "@/store";
+import { option } from "@/store";
 
 type FieldType = {
   route?: string;
