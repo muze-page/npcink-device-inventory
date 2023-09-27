@@ -79,7 +79,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
 
 
             $pf_api_translation_array = array(
-
+                'site' => get_home_url(), //首页网址
                 'data' => self::get_custom_table_data(), //传递变量
                 'option' => get_option(self::$option), //传递选项
             );

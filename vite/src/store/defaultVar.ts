@@ -40,5 +40,6 @@ const data = {
   data: dataMysql,
   option: option,
   ajaxurl: "http://localhost:10048/wp-admin/admin-ajax.php",
+  site: "http://localhost:10048",
 };
 export default data;

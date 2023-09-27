@@ -6,7 +6,7 @@ import { Table, Empty } from "antd";
 import type { ColumnsType } from "antd/es/table";
 
 import axios from "axios";
-import { dataAjaxurl } from "@/store";
+import { Ajaxurl } from "@/store";
 import { replacements } from "@/store/dataReplace";
 import { ComputerChangeReturn } from "@/store/interface";
 
@@ -78,7 +78,7 @@ const App: React.FC<Props> = ({ data }) => {
 
     try {
       setLoading(true);
-      const response = await axios.post<MysqlChange>(dataAjaxurl, params);
+      const response = await axios.post<MysqlChange>(Ajaxurl, params);
 
       if (response.status === 200) {
         const data = response.data.data;

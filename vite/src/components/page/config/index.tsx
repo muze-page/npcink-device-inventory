@@ -3,12 +3,16 @@
  */
 import axios from "axios";
 import { Button, Form, Input, message } from "antd";
-import { dataAjaxurl } from "@/store";
-import { option } from "@/store";
+import { option, Ajaxurl, Site } from "@/store";
 
 type FieldType = {
   route?: string;
   password?: string;
+};
+
+//拼接路由TODO:内容验证
+const routerMsg = (data: string) => {
+  return Site + data;
 };
 
 const App: React.FC = () => {
@@ -39,7 +43,7 @@ const App: React.FC = () => {
     params.append("action", "save_object_option");
     params.append("object_data", JSON.stringify(optionObj));
     try {
-      const response = await axios.post(dataAjaxurl, params);
+      const response = await axios.post(Ajaxurl, params);
 
       if (response.status === 200) {
         //保存成功
@@ -84,7 +88,12 @@ const App: React.FC = () => {
           label="路由"
           name="route"
           rules={[{ required: true, message: "客户端传输数据时的地址" }]}
-          extra={"客户端传输数据时的地址"}
+          extra={
+            <>
+              "客户端传输数据时的地址"
+              {routerMsg(option.route)}
+            </>
+          }
         >
           <Input />
         </Form.Item>

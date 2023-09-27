@@ -35,4 +35,7 @@ export const dataMySql = combineData(getDataLocal().data);
 export const option = getDataLocal().option;
 
 //输出接口地址
-export const dataAjaxurl = getDataLocal().ajaxurl;
+export const Ajaxurl = getDataLocal().ajaxurl;
+
+//输出站点网址
+export const Site = getDataLocal().site;

@@ -1,6 +1,6 @@
 //各种于数据库的交互方法
 import axios from "axios";
-import { dataAjaxurl } from "@/store";
+import { Ajaxurl } from "@/store";
 /**
  * 修改数据库中的自定义名字和编号
  */
@@ -23,7 +23,7 @@ export const changeMySql = async (data: string, uuid: string, type: string) => {
   params.append("type", type);
 
   try {
-    const response = await axios.post<MysqlChange>(dataAjaxurl, params);
+    const response = await axios.post<MysqlChange>(Ajaxurl, params);
 
     if (response.status === 200) {
       console.log(response.data);
