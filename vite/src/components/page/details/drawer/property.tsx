@@ -2,7 +2,7 @@
  * 设备详情 - 展开
  */
 import { useState } from "react";
-import { Button, Input, Tabs } from "antd";
+import {  Input, Tabs } from "antd";
 import {
   CodepenOutlined,
   ApartmentOutlined,

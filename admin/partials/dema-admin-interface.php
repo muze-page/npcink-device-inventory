@@ -7,6 +7,9 @@
 if (!class_exists('DEMA_Admin_Interface')) {
     class DEMA_Admin_Interface
     {
+        //选项
+        public static $option = "device_object_option";
+
         public static function run()
         {
             //添加接收数据api接口
@@ -20,6 +23,10 @@ if (!class_exists('DEMA_Admin_Interface')) {
             // 修改数据库备注名和编号
             add_action('wp_ajax_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
             add_action('wp_ajax_nopriv_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
+
+            // 保存设置选项接口
+            add_action('wp_ajax_save_object_option', array(__CLASS__, 'save_object_option_callback'));
+            add_action('wp_ajax_nopriv_save_object_option', array(__CLASS__, 'save_object_option_callback'));
         }
 
         /**
@@ -293,6 +300,70 @@ if (!class_exists('DEMA_Admin_Interface')) {
             header('Access-Control-Allow-Headers: Content-Type');
 
             wp_die();
+        }
+
+        /**
+         * 添加选项保存接口
+         */
+        public static  function save_object_option_callback()
+        {
+
+            // 设置跨域访问标头
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST');
+            header('Access-Control-Allow-Headers: Content-Type');
+
+            // 获取通过 Ajax POST 请求传递的对象数据
+            $object_data = $_POST['object_data'];
+
+            // 将 JSON 字符串解析为 PHP 对象
+            $object = json_decode(stripslashes($object_data));
+
+            // 保存设置选项
+            update_option(self::$option, $object);
+
+            // 发送成功响应
+            $response = array(
+                'message' => '设置选项已保存！',
+                'object' => $object,
+            );
+
+
+
+            // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义
+            wp_send_json($response, 200, JSON_UNESCAPED_UNICODE);
+        }
+        /**
+         * 提供选项
+         */
+        public static function get_seting($option)
+        {
+            //拿到选项值
+            $config = get_option(self::$option);
+            $value =  self::get_config($config, $option);
+            return $value;
+        }
+        /**
+         * 从对象中获取属性值
+         *
+         * @param object $config 对象
+         * @param string $property 从对象中获取的属性名
+         * @param string $defaultValue 默认值（可选）
+         * @return mixed 属性值或默认值
+         */
+        public static function get_config($config, $property, $defaultValue = false)
+        {
+            /**
+             * 是否是对象
+             * 对象中是否有此键名
+             * 在对象中的此值是否为空
+             */
+            if (is_object($config) && property_exists($config, $property) && !empty($config->$property)) {
+                return $config->$property;
+            } else {
+                //不存在则输出默认值
+                return $defaultValue;
+            }
         }
     } //end
 }
