@@ -185,22 +185,27 @@ const TextEditor: React.FC<PropsEditor> = ({ defaults, uuid, type }) => {
     <div>
       {editing ? (
         <>
-          <Input style={{ width: '50%' }} value={editedText} onChange={handleChange} />
-          <Button type="text" onClick={handleSaveClick}>
+          <Input
+            style={{ width: "50%" }}
+            value={editedText}
+            onChange={handleChange}
+          />
+          <button
+            onClick={handleSaveClick}
+            className="bt"
+          >
             保存
-          </Button>
-          <Button type="text" onClick={handleCancelClick}>
+          </button>
+          <button onClick={handleCancelClick} className="bt">
             取消
-          </Button>
+          </button>
         </>
       ) : (
         <div>
           <span>{text}</span>
-          <Button
-            type="primary"
-            onClick={handleEditClick}
-            icon={<EditOutlined twoToneColor="#fff" />}
-          ></Button>
+          <button onClick={handleEditClick} className="ml-2">
+            <EditOutlined twoToneColor="#fff" />
+          </button>
         </div>
       )}
     </div>
