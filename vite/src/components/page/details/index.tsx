@@ -50,6 +50,8 @@ const updateOSType = (
   return updatedData;
 };
 
+
+
 const App: React.FC = () => {
   //拿到数据
   const data = dataMySql;

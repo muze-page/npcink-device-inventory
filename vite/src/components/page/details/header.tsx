@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Space, Select, Button } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
+
 //系统数组
 const osList = [
   { value: "all", label: "操作系统" },
@@ -24,24 +25,26 @@ const memoryList = [
   { value: "32", label: "32G" },
   { value: "64", label: "64G" },
 ];
-//选择内存
-const handleChange = (value: string) => {
-  console.log(`selected ${value}`);
-};
 
 //硬盘数组
 const diskList = [
   { value: "all", label: "硬盘规格" },
   { value: "120", label: "120G" },
-  { value: "256", label: "256G" },
+  { value: "250", label: "250G" },
   { value: "512", label: "512G" },
   { value: "1024", label: "1T" },
   { value: "2048", label: "2T" },
-  { value: "top", label: "2T以上" },
+  { value: "more", label: "更大" },
 ];
-//选择内存
-const diskChange = (value: string) => {
-  console.log(`selected ${value}`);
+
+//处理硬盘
+const processA = (a: number) => {
+  if (a <= 120) return 120;
+  if (a <= 250) return 250;
+  if (a <= 512) return 512;
+  if (a <= 1024) return 1024;
+  if (a <= 2048) return 2048;
+  return a;
 };
 
 interface Props {
@@ -50,7 +53,7 @@ interface Props {
 }
 const App: React.FC<Props> = ({ data, onSet }) => {
   console.log(data);
-  
+
   //存储处理后的数组
   const [arrData, setArrData] = useState(data);
 
@@ -58,8 +61,40 @@ const App: React.FC<Props> = ({ data, onSet }) => {
   const osChange = (value: string) => {
     console.log(`selected ${value}`);
     const arr = arrData.filter((item) => item.meat.ostype.includes(value));
-    console.log(arr);
-    onSet(arr);
+    //setArrData(arr); //保存值
+    //console.log(arr);
+    onSet(arr); //传值
+  };
+
+  //选择内存
+  const handleChange = (value: string) => {
+    console.log(`selected ${value}`);
+    const arr = arrData.filter((item) =>
+      item.meat.memory.toString().includes(value)
+    );
+    //setArrData(arr); //保存值
+    //console.log(arr);
+    onSet(arr); //传值
+  };
+
+  //选择硬盘
+  const diskChange = (value: string) => {
+    if (value === "more") {
+      const newArr = arrData.filter((item) => {
+        const ostype = item.meat.disk;
+        return ostype > 2050;
+      });
+
+      onSet(newArr); //传值
+    }
+    if (value !== "more") {
+      console.log(`selected ${value}`);
+      const arr = arrData.filter((item) => {
+        const data = item.meat.disk;
+        return processA(data).toString().includes(value);
+      });
+      onSet(arr); //传值
+    }
   };
 
   return (
