@@ -57,7 +57,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           <p className="mt-2">
             {data.meat.cpu} / {data.meat.memory} G /{" "}
             {data.meat.disk > 1024
-              ? Math.floor(data.meat.disk / 1024) + " T"
+              ? (data.meat.disk / 1024).toFixed(2) + " T"
               : data.meat.disk + " G"}
           </p>
           {/*昵称*/}
