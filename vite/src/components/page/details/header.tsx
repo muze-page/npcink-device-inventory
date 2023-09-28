@@ -56,6 +56,8 @@ interface Props {
 const App: React.FC<Props> = ({ data, onSet }) => {
   console.log(data);
 
+  //以下功能做参数，由唯一函数决定输出值
+
   //共享筛选
   const [screen, setScreen] = useState(data);
 
