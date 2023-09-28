@@ -8,8 +8,8 @@ import { MysqlDeviceChangeMeat } from "@/store/interface";
 
 interface Props {
   data: MysqlDeviceChangeMeat;
-  onActive: () => void;//修改状态
-  onDrawerData: () => void;//保存值
+  onActive: () => void; //修改状态
+  onDrawerData: () => void; //保存值
 }
 const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
   //点击打开弹窗
@@ -28,7 +28,10 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
     <>
       {/**开始循环 */}
       <div
-        className="cursor-pointer p-[10px] rounded mr-[1.7%] mt-4 w-[30.7%] h-[272px] mac"
+        className="
+        cursor-pointer p-[10px] rounded mr-[1.7%] mt-4 w-[23.7%] h-[272px] mac
+        hover:border-1 hover:border-blue-400 
+        [&:nth-child(4)]:mr-0"
         onClick={() => {
           showDrawer();
         }}

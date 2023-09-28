@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { dataMySql } from "@/store";
 import DetailsList from "@/components/page/details/detailsList";
+import Header from "@/components/page/details/header";
 import Drawer from "@/components/page/details/drawer";
 import {
   MysqlDeviceChangeMeat,
@@ -70,6 +71,7 @@ const App: React.FC = () => {
 
   return (
     <>
+      <Header />
       <div className="mt-1 flex content-start items-center flex-wrap w-full">
         {/**开始循环 */}
         {updatedDataArray.map((tab, _index) => (
