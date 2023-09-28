@@ -67,14 +67,15 @@ const App: React.FC = () => {
   //共享参数
   const [drawerData, setDrawerData] = useState({} as MysqlDeviceChangeMeat);
 
-  //修改状态
+  //共享筛选参数
+  const [screenData, setScreenData] = useState(updatedDataArray);
 
   return (
     <>
-      <Header />
+      <Header data={updatedDataArray} onSet={setScreenData} />
       <div className="mt-1 flex content-start items-center flex-wrap w-full">
         {/**开始循环 */}
-        {updatedDataArray.map((tab, _index) => (
+        {screenData.map((tab, _index) => (
           <DetailsList
             key={tab.id}
             data={tab}

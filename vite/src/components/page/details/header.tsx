@@ -2,22 +2,19 @@
  * 设备详情 - 顶部筛选
  * TODO:搜索备注名或者昵称或编号
  */
+import { useState } from "react";
 import { Space, Select, Button } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
-
+import { MysqlDeviceChangeMeat } from "@/store/interface";
 //系统数组
 const osList = [
   { value: "all", label: "操作系统" },
-  { value: "w12", label: "Windows 12" },
-  { value: "w10", label: "Windows 10" },
-  { value: "apple", label: "Apple" },
+  { value: "Windows 11", label: "Windows 11" },
+  { value: "Windows 10", label: "Windows 10" },
+  { value: "mac", label: "Apple" },
   { value: "linux", label: "Linux" },
   { value: "about", label: "其他" },
 ];
-//选择系统
-const osChange = (value: string) => {
-  console.log(`selected ${value}`);
-};
 
 //内存数组
 const memoryList = [
@@ -47,7 +44,24 @@ const diskChange = (value: string) => {
   console.log(`selected ${value}`);
 };
 
-const App: React.FC = () => {
+interface Props {
+  data: MysqlDeviceChangeMeat[];
+  onSet: Function;
+}
+const App: React.FC<Props> = ({ data, onSet }) => {
+  console.log(data);
+  
+  //存储处理后的数组
+  const [arrData, setArrData] = useState(data);
+
+  //选择系统
+  const osChange = (value: string) => {
+    console.log(`selected ${value}`);
+    const arr = arrData.filter((item) => item.meat.ostype.includes(value));
+    console.log(arr);
+    onSet(arr);
+  };
+
   return (
     <>
       <div className="mt-6 flex justify-between items-center">
