@@ -55,7 +55,10 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           <p className="mt-3">{data.meat.model}</p>
           {/*配置信息*/}
           <p className="mt-2">
-            {data.meat.cpu} / {data.meat.memory}GB / {data.meat.disk}GB
+            {data.meat.cpu} / {data.meat.memory} G /{" "}
+            {data.meat.disk > 1024
+              ? Math.floor(data.meat.disk / 1024) + " T"
+              : data.meat.disk + " G"}
           </p>
           {/*昵称*/}
           <p className="flex items-center mt-4">

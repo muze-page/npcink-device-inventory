@@ -2,7 +2,7 @@
  * 设备详情 - 展开
  */
 import { useState } from "react";
-import {  Input, Tabs } from "antd";
+import { Input, Tabs } from "antd";
 import {
   CodepenOutlined,
   ApartmentOutlined,
@@ -121,7 +121,10 @@ ${
     <p className="mt-2">{data.meat.model}</p>
     {/*大概配置信息 */}
     <p>
-      {data.meat.cpu} / {data.meat.memory}GB / {data.meat.disk}GB
+      {data.meat.cpu} / {data.meat.memory} G /{" "}
+      {data.meat.disk > 1024
+        ? Math.floor(data.meat.disk / 1024) + " T"
+        : data.meat.disk + " G"}
     </p>
     {/**昵称 */}
     <div className="mt-5 flex items-center">
@@ -190,10 +193,7 @@ const TextEditor: React.FC<PropsEditor> = ({ defaults, uuid, type }) => {
             value={editedText}
             onChange={handleChange}
           />
-          <button
-            onClick={handleSaveClick}
-            className="bt"
-          >
+          <button onClick={handleSaveClick} className="bt">
             保存
           </button>
           <button onClick={handleCancelClick} className="bt">
