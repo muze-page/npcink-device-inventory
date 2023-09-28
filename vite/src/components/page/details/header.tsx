@@ -1,6 +1,6 @@
 /**
  * 设备详情 - 顶部筛选
- * TODO:搜索备注名或者昵称或编号
+ * TODO:搜索备注名或者昵称或编号，只能单次筛选
  */
 import { useState } from "react";
 import { Space, Select, Button } from "antd";
@@ -56,20 +56,31 @@ interface Props {
 const App: React.FC<Props> = ({ data, onSet }) => {
   console.log(data);
 
+  //共享筛选
+  const [screen, setScreen] = useState(data);
+
   //选择系统
   const osChange = (value: string) => {
     if (value === "all") {
       return onSet(data);
     }
+
     if (value === "more") {
-      const hasMatch = data.filter((item) => {
+      const hasMatch = screen.filter((item) => {
         return !osList.some((list) => item.meat.ostype.includes(list.value));
       });
-      console.log(hasMatch);
-      return onSet(hasMatch);
+      if (hasMatch.length !== 0) {
+        setScreen(hasMatch); //保存筛选
+      }
+      onSet(hasMatch);
+
+      return;
     }
 
-    const arr = data.filter((item) => item.meat.ostype.includes(value));
+    const arr = screen.filter((item) => item.meat.ostype.includes(value));
+    if (arr.length !== 0) {
+      setScreen(arr); //保存筛选
+    }
     onSet(arr); // 传值
   };
 
@@ -79,17 +90,23 @@ const App: React.FC<Props> = ({ data, onSet }) => {
       return onSet(data);
     }
     if (value === "more") {
-      const hasMatch = data.filter((item) => {
+      const hasMatch = screen.filter((item) => {
         return !memoryList.some(
           (list) => list.value === item.meat.memory.toString()
         );
       });
-      return onSet(hasMatch);
+      if (hasMatch.length !== 0) {
+        setScreen(hasMatch); //保存筛选
+      }
+      onSet(hasMatch);
+      return;
     }
-    const arr = data.filter((item) =>
+    const arr = screen.filter((item) =>
       item.meat.memory.toString().includes(value)
     );
-
+    if (arr.length !== 0) {
+      setScreen(arr); //保存筛选
+    }
     onSet(arr); //传值
   };
 
@@ -100,19 +117,25 @@ const App: React.FC<Props> = ({ data, onSet }) => {
     }
 
     if (value === "more") {
-      const hasMatch = data.filter((item) => {
+      const hasMatch = screen.filter((item) => {
         const datas = processA(item.meat.disk);
-        return !diskList.some(
-          (list) => list.value === datas.toString()
-        );
+        return !diskList.some((list) => list.value === datas.toString());
       });
-      return onSet(hasMatch);
+      if (hasMatch.length !== 0) {
+        setScreen(hasMatch); //保存筛选
+      }
+      onSet(hasMatch);
+      return;
     }
 
-    const arr = data.filter((item) => {
+    const arr = screen.filter((item) => {
       const data = processA(item.meat.disk);
       return data.toString().includes(value);
     });
+    if (arr.length !== 0) {
+      setScreen(arr); //保存筛选
+    }
+
     onSet(arr); //传值
   };
 
@@ -121,13 +144,15 @@ const App: React.FC<Props> = ({ data, onSet }) => {
       <div className="mt-6 flex justify-between items-center">
         <p className="text-base font-bold text-[#222] m-0">资产信息</p>
         <div className="w-fit flex items-center">
-          <Space wrap>系统：
+          <Space wrap>
+            系统：
             <Select
               defaultValue="all"
               style={{ width: 120 }}
               onChange={osChange}
               options={osList}
-            />内存：
+            />
+            内存：
             <Select
               defaultValue="all"
               style={{ width: 120 }}
