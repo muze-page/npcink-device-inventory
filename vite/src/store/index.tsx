@@ -1,5 +1,4 @@
 //准备初始数据
-import { createContext } from "react";
 import data from "@/store/defaultVar";
 import { MysqlDevice, Computer } from "./interface";
 
