@@ -10,11 +10,6 @@ type FieldType = {
   password?: string;
 };
 
-//拼接路由TODO:内容验证
-const routerMsg = (data: string) => {
-  return Site + data;
-};
-
 const App: React.FC = () => {
   //提示信息
   const [messageApi, contextHolder] = message.useMessage();
@@ -71,11 +66,19 @@ const App: React.FC = () => {
     console.log("Failed:", errorInfo);
   };
 
+  const [form] = Form.useForm<{ route: string }>();
+  const data = Form.useWatch("route", form);
+  //拼接路由TODO:内容验证
+  const routerMsg = () => {
+    return Site + "/wp-json/npcink/v1/" + data;
+  };
+
   return (
     <>
       {contextHolder}
       <Form
         name="basic"
+        form={form}
         labelCol={{ span: 8 }}
         wrapperCol={{ span: 16 }}
         style={{ maxWidth: 600 }}
@@ -91,7 +94,8 @@ const App: React.FC = () => {
           extra={
             <>
               "客户端传输数据时的地址"
-              {routerMsg(option.route)}
+            
+              <pre>{routerMsg()}</pre>
             </>
           }
         >
@@ -108,7 +112,7 @@ const App: React.FC = () => {
         </Form.Item>
 
         <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-          <Button type="primary" htmlType="submit">
+          <Button type="primary" htmlType="submit" className=" bg-[#1677ff]">
             保存
           </Button>
         </Form.Item>

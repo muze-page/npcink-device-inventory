@@ -34,7 +34,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
          */
         public static function create_custom_endpoint()
         {
-            register_rest_route('custom/v1', '/submit-data', array(
+            register_rest_route('npcink/v1', 'submit-device-data', array(
                 'methods'  => 'POST',
                 'callback' => array(__CLASS__, 'submit_data_callback'),
                 'permission_callback' => '__return_true', // 无需验权
