@@ -1,11 +1,15 @@
 # device-manage
 
 #### 介绍
+
 硬件统计前端模块 WordPress 插件
 
 #### 待完善
-- 数据库添加时间选项
 
+- 添加删除插件同时删除数据库两张表功能
+- 添加设备数据导出功能
+- 添加设备变更记录导出功能
+- 添加筛选功能
 
 #### 安装教程
 
@@ -26,10 +30,9 @@
 3.  提交代码
 4.  新建 Pull Request
 
-
 #### 特技
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
+1.  使用 Readme_XXX.md 来支持不同的语言，例如 Readme_en.md, Readme_zh.md
 2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
 3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
 4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目

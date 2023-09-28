@@ -34,7 +34,9 @@ if (!class_exists('DEMA_Admin_Interface')) {
          */
         public static function create_custom_endpoint()
         {
-            register_rest_route('npcink/v1', 'submit-device-data', array(
+            $styleRoute =  self::get_seting('route');
+
+            register_rest_route('npcink/v1', $styleRoute, array(
                 'methods'  => 'POST',
                 'callback' => array(__CLASS__, 'submit_data_callback'),
                 'permission_callback' => '__return_true', // 无需验权
@@ -46,9 +48,11 @@ if (!class_exists('DEMA_Admin_Interface')) {
          */
         public static function password_verification($data)
         {
+            $dataPassword =  self::get_seting('password');
+
             $password = isset($data['password']) ? $data['password'] : '';
 
-            return $password == 8577;
+            return $password == $dataPassword;
         }
 
         /**
@@ -322,10 +326,13 @@ if (!class_exists('DEMA_Admin_Interface')) {
             // 保存设置选项
             update_option(self::$option, $object);
 
+
+
             // 发送成功响应
             $response = array(
                 'message' => '设置选项已保存！',
                 'object' => $object,
+
             );
 
 
@@ -333,6 +340,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
             // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义
             wp_send_json($response, 200, JSON_UNESCAPED_UNICODE);
         }
+
         /**
          * 提供选项
          */
