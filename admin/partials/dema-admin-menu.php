@@ -15,7 +15,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
             self::$plugin_name = $name;
             self::$plugin_version = $version;
             //添加菜单
-            add_action('admin_menu', array(__CLASS__, 'wpcy_menu'));
+            add_action('admin_menu', array(__CLASS__, 'dema_menu'));
 
             //加载 CSS 和 JS 资源
             add_action('admin_enqueue_scripts', array(__CLASS__, 'load_admin_script'));
@@ -24,7 +24,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
             add_filter('script_loader_tag', array(__CLASS__, 'refund_type_script'), 10, 2);
         }
         //创建菜单
-        public static function wpcy_menu()
+        public static function dema_menu()
         {
             // 添加一个菜单到 WordPress 后台的“设置”菜单下
             add_submenu_page(
@@ -32,7 +32,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
                 '硬件管理',
                 '硬件',
                 'administrator',
-                'wpcy_seting',
+                'dema_seting',
                 array(__CLASS__, 'menu_displays'),
                 '200.1'
             );
@@ -64,7 +64,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
             $ver = self::$plugin_version;
             $name = self::$plugin_name;
             //是否是指定页面
-            if ('plugins_page_wpcy_seting' != $hook) {
+            if ('plugins_page_dema_seting' != $hook) {
                 return;
             }
 

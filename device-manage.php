@@ -82,3 +82,10 @@ function run_dema()
 	$plugin->run();
 }
 run_dema();
+
+
+ //设置按钮
+ add_filter('plugin_action_links_'.plugin_basename(__FILE__), function($links){
+    $links[] = '<a href="'.get_admin_url(null, 'plugins.php?page=dema_seting') . '">' . __('设置','n') . '</a>';
+    return $links;
+});
