@@ -19,6 +19,7 @@ export interface MysqlDeviceChange {
   styleNumber: string;
   dataNew: Computer;
   dataOld: Computer;
+  is_enabled: string;
 }
 
 //准备交叉类型

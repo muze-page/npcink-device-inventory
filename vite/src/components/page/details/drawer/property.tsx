@@ -126,6 +126,7 @@ ${
         ? (data.meat.disk / 1024).toFixed(2) + " T"
         : data.meat.disk + " G"}
     </p>
+
     {/**昵称 */}
     <div className="mt-5 flex items-center">
       <p className="flex items-center">
@@ -139,6 +140,9 @@ ${
           uuid={data.uuid}
           type="number"
         />
+      </div>
+      <div className="flex items-center ml-8 m-0">
+        状态：{data.is_enabled == "1" ? "正常" : "停用"}
       </div>
     </div>
   </div>

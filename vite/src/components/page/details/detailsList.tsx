@@ -1,6 +1,7 @@
 /**
  * 设备详情
  */
+import { Tooltip } from "antd";
 import Mac from "@/assets/mac.png";
 import Win from "@/assets/windows_ico.png";
 import User from "@/assets/user.svg";
@@ -65,7 +66,22 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             <img src={User} className="svg" />
             <span>{data.name ?? "暂无"}</span>
           </p>
-          {/*昵称*/}
+          {/**状态信息 */}
+          <div className="mt-4 flex items-center ">
+            {data.is_enabled == "1" ? (
+              <>
+                <Tooltip title="当前状态：正常">
+                  <div className="rounded-full w-2 h-2 bg-green-500"></div>
+                </Tooltip>
+              </>
+            ) : (
+              <>
+                <Tooltip title="当前状态：停用">
+                  <div className="rounded-full w-2 h-2 bg-neutral-300"></div>
+                </Tooltip>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </>
