@@ -75,7 +75,7 @@ const App: React.FC = () => {
   //当前点击选中的数组index
   const [arrIndex, setArrIndex] = useState(0);
 
-  //修改当前选中的设备状态
+  //修改当前选中的设备状态TODO:优化为公共，方便复用在修改编号和昵称
   const handleTypeUpdate = (newType: string) => {
     const updatedData = [...screenData];
     updatedData[arrIndex].is_enabled = newType;
