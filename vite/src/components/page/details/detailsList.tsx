@@ -50,7 +50,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         <div className="p-4 text-xs text-zinc-500  bg-white rounded whitespace-nowrap">
           {/*备注名*/}
           <p className="text-sm font-bold text-zinc-800 leading-5 m-0">
-            {data.styleName ?? "暂无"}
+            {data.styleName ?? "暂无备注"}
           </p>
           {/*操作系统*/}
           <p className="mt-3">{data.meat.model}</p>

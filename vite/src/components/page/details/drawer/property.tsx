@@ -21,8 +21,9 @@ import { changeMySql } from "@/store/axios";
 
 interface Props {
   data: MysqlDeviceChangeMeat;
+  onUpdate: (newType: string) => void;
 }
-const App: React.FC<Props> = ({ data }) => {
+const App: React.FC<Props> = ({ data, onUpdate }) => {
   const items: TabsProps["items"] = [
     {
       key: "1",
@@ -61,7 +62,7 @@ const App: React.FC<Props> = ({ data }) => {
             {/**LOGO */}
             <Mark osType={osType} />
             {/**详细内容 */}
-            <Msg osType={osType} data={data} />
+            <Msg osType={osType} data={data} onUpdataType={onUpdate} />
           </div>
         ))}
 
@@ -100,20 +101,16 @@ ${
 interface PropsMsg {
   osType: osTypeData;
   data: MysqlDeviceChangeMeat;
+  onUpdataType: (newType: string) => void;
 }
 
-const Msg: React.FC<PropsMsg> = ({ osType, data }) => {
-  const [wdata, setWdata] = useState(data); //编辑状态
-
-  //修改方法
-  const updateType = (newValue: boolean) => {
-    const newTypeValue = newValue ? 1 : 0;
-    setWdata((prevState) => ({ ...prevState, type: newTypeValue }));
-  };
-  //修改状态
+const Msg: React.FC<PropsMsg> = ({ osType, data, onUpdataType }) => {
+  //触发状态按钮
   const onChange = (checked: boolean) => {
-    console.log(`switch to ${checked}`);
-    updateType(checked);
+    const newTypeValue = checked ? "1" : "0";
+    //修改状态
+    onUpdataType(newTypeValue);
+    changeMySql(newTypeValue, data.uuid, "type");
   };
 
   return (
@@ -159,7 +156,7 @@ ${
         <div className="flex items-center ml-8 m-0">
           状态：
           <Switch
-            defaultChecked={wdata.is_enabled == "1" ? true : false}
+            defaultChecked={data.is_enabled == "1" ? true : false}
             checkedChildren="启用"
             unCheckedChildren="停用"
             onChange={onChange}

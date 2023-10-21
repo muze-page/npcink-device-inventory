@@ -257,7 +257,9 @@ if (!class_exists('DEMA_Admin_Interface')) {
             // 定义字段与类型的映射关系
             $field_map = array(
                 'name' => 'styleName',
-                'number' => 'styleNumber'
+                'number' => 'styleNumber',
+                'type' => 'is_enabled'//修改状态
+                
             );
 
             // 确定要更新的字段

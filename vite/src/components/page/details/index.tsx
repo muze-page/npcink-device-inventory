@@ -50,8 +50,6 @@ const updateOSType = (
   return updatedData;
 };
 
-
-
 const App: React.FC = () => {
   //拿到数据
   const data = dataMySql;
@@ -59,9 +57,10 @@ const App: React.FC = () => {
   //处理后的数据
   const updatedDataArray = updateOSType(data);
 
-  //共享状态
+  //共享弹窗状态
   const [active, setActive] = useState(false);
-  //修改状态
+
+  //修改弹窗状态
   const changeActive = () => {
     setActive(!active);
   };
@@ -72,20 +71,28 @@ const App: React.FC = () => {
   //共享筛选参数
   const [screenData, setScreenData] = useState(updatedDataArray);
 
+  //当前点击选中的数组index
+  const [arrIndex, setArrIndex] = useState(0);
+
   //修改当前设备的状态
-  
+  const handleTypeUpdate = (newType: string) => {
+    
+    const updatedData = [...screenData];
+    updatedData[arrIndex].is_enabled = newType;
+    setScreenData(updatedData);
+  };
 
   return (
     <>
       <Header data={updatedDataArray} onSet={setScreenData} />
       <div className="mt-1 flex content-start items-center flex-wrap w-full">
         {/**开始循环 */}
-        {screenData.map((tab, _index) => (
+        {screenData.map((tab, index) => (
           <DetailsList
             key={tab.id}
             data={tab}
             onActive={() => changeActive()}
-            onDrawerData={() => setDrawerData(tab)}
+            onDrawerData={() => (setDrawerData(tab), setArrIndex(index))}
           />
         ))}
       </div>
@@ -94,6 +101,7 @@ const App: React.FC = () => {
         data={drawerData}
         active={active}
         onActive={() => changeActive()}
+        onUpdateType={handleTypeUpdate}
       />
     </>
   );
