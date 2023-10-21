@@ -9,9 +9,9 @@ interface Props {
   data: MysqlDeviceChangeMeat;
   active: boolean;
   onActive: () => void;
-  onUpdateType: ( newType: string) => void;
+ 
 }
-const App: React.FC<Props> = ({ data, active, onActive, onUpdateType }) => {
+const App: React.FC<Props> = ({ data, active, onActive }) => {
   return (
     <>
       <Drawer
@@ -22,7 +22,7 @@ const App: React.FC<Props> = ({ data, active, onActive, onUpdateType }) => {
         width={"60%"}
         className="pt-9"
       >
-        <Property data={data} onUpdate={onUpdateType} />
+        <Property data={data}  />
       </Drawer>
     </>
   );

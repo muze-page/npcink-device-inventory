@@ -14,6 +14,7 @@ import {
   ComputerDevice,
 } from "@/store/interface";
 
+import { AppContext } from "@/store/setingContext";
 //收集指定数据
 
 type DataType = ComputerRam | ComputerDevice;
@@ -74,16 +75,22 @@ const App: React.FC = () => {
   //当前点击选中的数组index
   const [arrIndex, setArrIndex] = useState(0);
 
-  //修改当前设备的状态
+  //修改当前选中的设备状态
   const handleTypeUpdate = (newType: string) => {
-    
     const updatedData = [...screenData];
     updatedData[arrIndex].is_enabled = newType;
     setScreenData(updatedData);
   };
 
+  //删除当前选中的设备
+  const deltArrData = () => {
+    const data = [...screenData];
+    data.splice(arrIndex, 1); // 删除第二个元素
+    setScreenData(data);
+  };
+
   return (
-    <>
+    <AppContext.Provider value={{ handleTypeUpdate,deltArrData }}>
       <Header data={updatedDataArray} onSet={setScreenData} />
       <div className="mt-1 flex content-start items-center flex-wrap w-full">
         {/**开始循环 */}
@@ -101,9 +108,8 @@ const App: React.FC = () => {
         data={drawerData}
         active={active}
         onActive={() => changeActive()}
-        onUpdateType={handleTypeUpdate}
       />
-    </>
+    </AppContext.Provider>
   );
 };
 

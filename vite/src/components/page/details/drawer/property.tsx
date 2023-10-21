@@ -1,7 +1,7 @@
 /**
  * 设备详情 - 展开
  */
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Input, Tabs, Switch } from "antd";
 import {
   CodepenOutlined,
@@ -10,8 +10,10 @@ import {
 } from "@ant-design/icons";
 
 import type { TabsProps } from "antd";
+import { AppContext } from "@/store/setingContext";
 import Info from "@/components/page/details/block/info";
 import Change from "@/components/page/details/block/change";
+import Seting from "@/components/page/details/block/seting";
 import MacOs from "@/assets/macos.png";
 import Win from "@/assets/windows_s.png";
 import User from "@/assets/user.svg";
@@ -21,9 +23,9 @@ import { changeMySql } from "@/store/axios";
 
 interface Props {
   data: MysqlDeviceChangeMeat;
-  onUpdate: (newType: string) => void;
+  
 }
-const App: React.FC<Props> = ({ data, onUpdate }) => {
+const App: React.FC<Props> = ({ data}) => {
   const items: TabsProps["items"] = [
     {
       key: "1",
@@ -45,6 +47,16 @@ const App: React.FC<Props> = ({ data, onUpdate }) => {
       ),
       children: <Change data={data.uuid} />,
     },
+    {
+      key: "3",
+      label: (
+        <span>
+          
+          设置
+        </span>
+      ),
+      children: <Seting  />,
+    },
   ];
 
   const osTypes = [
@@ -62,7 +74,7 @@ const App: React.FC<Props> = ({ data, onUpdate }) => {
             {/**LOGO */}
             <Mark osType={osType} />
             {/**详细内容 */}
-            <Msg osType={osType} data={data} onUpdataType={onUpdate} />
+            <Msg osType={osType} data={data}  />
           </div>
         ))}
 
@@ -101,15 +113,17 @@ ${
 interface PropsMsg {
   osType: osTypeData;
   data: MysqlDeviceChangeMeat;
-  onUpdataType: (newType: string) => void;
+ 
 }
 
-const Msg: React.FC<PropsMsg> = ({ osType, data, onUpdataType }) => {
+const Msg: React.FC<PropsMsg> = ({ osType, data }) => {
+  const { handleTypeUpdate } = useContext(AppContext);
   //触发状态按钮
   const onChange = (checked: boolean) => {
     const newTypeValue = checked ? "1" : "0";
     //修改状态
-    onUpdataType(newTypeValue);
+    handleTypeUpdate && handleTypeUpdate(newTypeValue);
+    //更新数据
     changeMySql(newTypeValue, data.uuid, "type");
   };
 
