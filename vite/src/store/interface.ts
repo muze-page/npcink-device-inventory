@@ -8,6 +8,7 @@ export interface MysqlDevice {
   styleNumber: string;
   dataNew: string;
   dataOld: string;
+  is_enabled: string;
 }
 
 //整理后

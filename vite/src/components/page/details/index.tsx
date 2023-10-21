@@ -72,6 +72,9 @@ const App: React.FC = () => {
   //共享筛选参数
   const [screenData, setScreenData] = useState(updatedDataArray);
 
+  //修改当前设备的状态
+  
+
   return (
     <>
       <Header data={updatedDataArray} onSet={setScreenData} />

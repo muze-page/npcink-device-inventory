@@ -2,7 +2,7 @@
  * 设备详情 - 展开
  */
 import { useState } from "react";
-import { Input, Tabs } from "antd";
+import { Input, Tabs, Switch } from "antd";
 import {
   CodepenOutlined,
   ApartmentOutlined,
@@ -101,52 +101,74 @@ interface PropsMsg {
   osType: osTypeData;
   data: MysqlDeviceChangeMeat;
 }
-const Msg: React.FC<PropsMsg> = ({ osType, data }) => (
-  <div
-    className={`pt-6 pr-[17px] pb-6 pl-[23px] text-white text-sm flex-1 
+
+const Msg: React.FC<PropsMsg> = ({ osType, data }) => {
+  const [wdata, setWdata] = useState(data); //编辑状态
+
+  //修改方法
+  const updateType = (newValue: boolean) => {
+    const newTypeValue = newValue ? 1 : 0;
+    setWdata((prevState) => ({ ...prevState, type: newTypeValue }));
+  };
+  //修改状态
+  const onChange = (checked: boolean) => {
+    console.log(`switch to ${checked}`);
+    updateType(checked);
+  };
+
+  return (
+    <div
+      className={`pt-6 pr-[17px] pb-6 pl-[23px] text-white text-sm flex-1 
 ${
   (osType.name === "Windows" && "Windows_content_background_color") ||
   (osType.name === "mac" && "Mac_content_background_color")
 }
 
 `}
-  >
-    {/**备注 */}
-    <div className="flex justify-between">
-      <div className="flex items-center text-lg">
-        <TextEditor defaults={data.styleName} uuid={data.uuid} type="name" />
+    >
+      {/**备注 */}
+      <div className="flex justify-between">
+        <div className="flex items-center text-lg">
+          <TextEditor defaults={data.styleName} uuid={data.uuid} type="name" />
+        </div>
       </div>
-    </div>
-    {/**操作系统 */}
-    <p className="mt-2">{data.meat.model}</p>
-    {/*大概配置信息 */}
-    <p>
-      {data.meat.cpu} / {data.meat.memory} G /{" "}
-      {data.meat.disk > 1024
-        ? (data.meat.disk / 1024).toFixed(2) + " T"
-        : data.meat.disk + " G"}
-    </p>
-
-    {/**昵称 */}
-    <div className="mt-5 flex items-center">
-      <p className="flex items-center">
-        <img src={User} className="svg svgReversal" />
-        <span>{data.name ?? "暂无昵称"}</span>
+      {/**操作系统 */}
+      <p className="mt-2">{data.meat.model}</p>
+      {/*大概配置信息 */}
+      <p>
+        {data.meat.cpu} / {data.meat.memory} G /{" "}
+        {data.meat.disk > 1024
+          ? (data.meat.disk / 1024).toFixed(2) + " T"
+          : data.meat.disk + " G"}
       </p>
-      <div className="flex items-center ml-8 m-0">
-        编号：
-        <TextEditor
-          defaults={data.styleNumber}
-          uuid={data.uuid}
-          type="number"
-        />
-      </div>
-      <div className="flex items-center ml-8 m-0">
-        状态：{data.is_enabled == "1" ? "正常" : "停用"}
+
+      {/**昵称 */}
+      <div className="mt-5 flex items-center">
+        <p className="flex items-center">
+          <img src={User} className="svg svgReversal" />
+          <span>{data.name ?? "暂无昵称"}</span>
+        </p>
+        <div className="flex items-center ml-8 m-0">
+          编号：
+          <TextEditor
+            defaults={data.styleNumber}
+            uuid={data.uuid}
+            type="number"
+          />
+        </div>
+        <div className="flex items-center ml-8 m-0">
+          状态：
+          <Switch
+            defaultChecked={wdata.is_enabled == "1" ? true : false}
+            checkedChildren="启用"
+            unCheckedChildren="停用"
+            onChange={onChange}
+          />
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 /**
  * 修改值
