@@ -86,11 +86,12 @@ const App: React.FC = () => {
   const deltArrData = () => {
     const data = [...screenData];
     data.splice(arrIndex, 1); // 删除第二个元素
-    setScreenData(data);
+    setScreenData(data); //保存
+    changeActive(); //关闭弹窗
   };
 
   return (
-    <AppContext.Provider value={{ handleTypeUpdate,deltArrData }}>
+    <AppContext.Provider value={{ handleTypeUpdate, deltArrData }}>
       <Header data={updatedDataArray} onSet={setScreenData} />
       <div className="mt-1 flex content-start items-center flex-wrap w-full">
         {/**开始循环 */}
