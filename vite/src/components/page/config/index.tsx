@@ -2,8 +2,9 @@
  * 设置
  */
 import axios from "axios";
-import { Button, Form, Input, message } from "antd";
-import { option, Ajaxurl, Site } from "@/store";
+import { Space, Button, Form, Input, message } from "antd";
+import { dataMySql, option, Ajaxurl, Site } from "@/store";
+import { importSQLData } from "@/store/axios";
 
 type FieldType = {
   route?: string;
@@ -73,6 +74,30 @@ const App: React.FC = () => {
     return Site + "/wp-json/npcink/v1/" + data;
   };
 
+  //导入数据
+  const importData = () => {
+    const jsonData = dataMySql;
+    const jsonString = jsonData;
+    importSQLData(jsonString);
+  };
+  //导出数据
+  const downloadData = () => {
+    const jsonData = dataMySql;
+    const jsonString = JSON.stringify(jsonData);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "硬件管理数据-导出文件.json";
+    link.click();
+
+    // 等待一段时间后释放 URL 对象
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1000);
+  };
+
   return (
     <>
       {contextHolder}
@@ -94,7 +119,6 @@ const App: React.FC = () => {
           extra={
             <>
               "客户端传输数据时的地址"
-            
               <pre>{routerMsg()}</pre>
             </>
           }
@@ -109,6 +133,16 @@ const App: React.FC = () => {
           extra={"客户端传输数据时的验证码"}
         >
           <Input.Password />
+        </Form.Item>
+        <Form.Item label="数据管理" extra={"方便数据迁移操作"}>
+          <Space>
+            <Button type="text" onClick={importData}>
+              导入
+            </Button>
+            <Button type="text" onClick={downloadData}>
+              导出
+            </Button>
+          </Space>
         </Form.Item>
 
         <Form.Item wrapperCol={{ offset: 8, span: 16 }}>

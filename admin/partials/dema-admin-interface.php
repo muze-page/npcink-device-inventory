@@ -28,7 +28,10 @@ if (!class_exists('DEMA_Admin_Interface')) {
             add_action('wp_ajax_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));
             add_action('wp_ajax_nopriv_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));
 
+            //导入数据接口
 
+            add_action('wp_ajax_import_config_data_callback', array(__CLASS__, 'import_config_data_callback'));
+            add_action('wp_ajax_nopriv_import_config_data_callback', array(__CLASS__, 'import_config_data_callback'));
             // 保存设置选项接口
             add_action('wp_ajax_save_object_option', array(__CLASS__, 'save_object_option_callback'));
             add_action('wp_ajax_nopriv_save_object_option', array(__CLASS__, 'save_object_option_callback'));
@@ -341,6 +344,83 @@ if (!class_exists('DEMA_Admin_Interface')) {
             } else {
                 $response['success'] = false;
                 $response['message'] = '删除行数据时发生错误';
+            }
+
+            // 设置跨域访问标头
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST');
+            header('Access-Control-Allow-Headers: Content-Type');
+
+            // 返回JSON格式的结果
+            wp_send_json($response);
+
+            wp_die();
+        }
+
+        /**
+         * 添加数据导入接口
+         */
+        public static function import_config_data_callback()
+        {
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'custom_table';
+
+            // 获取前端传递的参数并进行输入验证
+            $text_data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : '';
+            $json_data = json_encode($text_data);
+            $data = json_decode($json_data);
+            // 循环处理每个对象
+            foreach ($data as $item) {
+                // 提取对象中的字段值
+                $is_enabled = isset($item['is_enabled']) ? $item['is_enabled'] : 1;
+                $name = isset($item['name']) ? $item['name'] : '';
+                $styleName = isset($item['styleName']) ? $item['styleName'] : null;
+                $styleNumber = isset($item['styleNumber']) ? $item['styleNumber'] : 0;
+                $uuid = isset($item['uuid']) ? $item['uuid'] : '';
+                $dataNew = isset($item['dataNew']) ? json_encode($item['dataNew']) : null;
+                $dataOld = isset($item['dataOld']) ? json_encode($item['dataOld']) : null;
+
+                // 插入数据
+                $result =  $wpdb->insert(
+                    $table_name,
+                    array(
+                        'is_enabled' => $is_enabled,
+                        'name' => $name,
+                        'styleName' => $styleName,
+                        'styleNumber' => $styleNumber,
+                        'uuid' => $uuid,
+                        'dataNew' => $dataNew,
+                        'dataOld' => $dataOld
+                    ),
+                    array(
+                        '%d',
+                        '%s',
+                        '%s',
+                        '%d',
+                        '%s',
+                        '%s',
+                        '%s'
+                    )
+                );
+            }
+
+            // 执行删除操作
+           // $result = true;
+
+            // 定义返回结果数组
+            $response = array();
+
+            if ($result !== false) {
+                $response['success'] = true;
+                $response['message'] = '已成功导入';
+                $response['text_data'] = $text_data;
+                $response['json_data'] = $json_data;
+                $response['data'] = $data;
+                
+                
+            } else {
+                $response['success'] = false;
+                $response['message'] = '导入数据时发生错误';
             }
 
             // 设置跨域访问标头

@@ -57,3 +57,24 @@ export const deltSQLData = async (uuid: string) => {
     //console.log(false);
   }
 };
+
+//导入数据
+export const importSQLData = async (data: string) => {
+  const params = new URLSearchParams();
+  params.append("action", "import_config_data_callback");
+  params.append("data", data);
+
+  try {
+    const response = await axios.post<MysqlChange>(Ajaxurl, params);
+
+    if (response.status === 200) {
+      console.log(response.data);
+    } else {
+      console.log("保存设置选项时出错：" + response.data);
+    }
+  } catch (error: any) {
+    console.log("保存设置选项时出错：" + error.message);
+  } finally {
+    //console.log(false);
+  }
+};
