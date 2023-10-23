@@ -23,9 +23,8 @@ import { changeMySql } from "@/store/axios";
 
 interface Props {
   data: MysqlDeviceChangeMeat;
-  
 }
-const App: React.FC<Props> = ({ data}) => {
+const App: React.FC<Props> = ({ data }) => {
   const items: TabsProps["items"] = [
     {
       key: "1",
@@ -49,13 +48,8 @@ const App: React.FC<Props> = ({ data}) => {
     },
     {
       key: "3",
-      label: (
-        <span>
-          
-          设置
-        </span>
-      ),
-      children: <Seting  />,
+      label: <span>设置</span>,
+      children: <Seting data={data.uuid} />,
     },
   ];
 
@@ -74,7 +68,7 @@ const App: React.FC<Props> = ({ data}) => {
             {/**LOGO */}
             <Mark osType={osType} />
             {/**详细内容 */}
-            <Msg osType={osType} data={data}  />
+            <Msg osType={osType} data={data} />
           </div>
         ))}
 
@@ -113,7 +107,6 @@ ${
 interface PropsMsg {
   osType: osTypeData;
   data: MysqlDeviceChangeMeat;
- 
 }
 
 const Msg: React.FC<PropsMsg> = ({ osType, data }) => {
@@ -122,7 +115,7 @@ const Msg: React.FC<PropsMsg> = ({ osType, data }) => {
   const onChange = (checked: boolean) => {
     const newTypeValue = checked ? "1" : "0";
     //修改状态
-    handleTypeUpdate && handleTypeUpdate('is_enabled',newTypeValue);
+    handleTypeUpdate && handleTypeUpdate("is_enabled", newTypeValue);
     //更新数据
     changeMySql(newTypeValue, data.uuid, "type");
   };
@@ -140,7 +133,11 @@ ${
       {/**备注 */}
       <div className="flex justify-between">
         <div className="flex items-center text-lg">
-          <TextEditor defaults={data.styleName} uuid={data.uuid} type="styleName" />
+          <TextEditor
+            defaults={data.styleName}
+            uuid={data.uuid}
+            type="styleName"
+          />
         </div>
       </div>
       {/**操作系统 */}
@@ -215,7 +212,7 @@ const TextEditor: React.FC<PropsEditor> = ({ defaults, uuid, type }) => {
     setText(editedText);
     setEditing(false);
     setEditedText("");
-    handleTypeUpdate && handleTypeUpdate(type,editedText);//修改当前的值
+    handleTypeUpdate && handleTypeUpdate(type, editedText); //修改当前的值
     changeMySql(editedText, uuid, type); //修改数据库的值
   };
 

@@ -36,3 +36,24 @@ export const changeMySql = async (data: string, uuid: string, type: string) => {
     //console.log(false);
   }
 };
+
+//根据指定UUID删除
+export const deltSQLData = async (uuid: string) => {
+  const params = new URLSearchParams();
+  params.append("action", "delt_sql_uuid_callback");
+  params.append("uuid", uuid);
+
+  try {
+    const response = await axios.post<MysqlChange>(Ajaxurl, params);
+
+    if (response.status === 200) {
+      console.log(response.data);
+    } else {
+      console.log("保存设置选项时出错：" + response.data);
+    }
+  } catch (error: any) {
+    console.log("保存设置选项时出错：" + error.message);
+  } finally {
+    //console.log(false);
+  }
+};

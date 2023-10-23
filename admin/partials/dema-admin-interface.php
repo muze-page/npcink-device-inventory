@@ -20,9 +20,14 @@ if (!class_exists('DEMA_Admin_Interface')) {
             add_action('wp_ajax_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
             add_action('wp_ajax_nopriv_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
 
-            // 修改数据库备注名和编号
+            // 修改设备信息接口
             add_action('wp_ajax_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
             add_action('wp_ajax_nopriv_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
+
+            // 删除设备接口
+            add_action('wp_ajax_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));
+            add_action('wp_ajax_nopriv_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));
+
 
             // 保存设置选项接口
             add_action('wp_ajax_save_object_option', array(__CLASS__, 'save_object_option_callback'));
@@ -242,7 +247,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
         }
 
         /**
-         * 修改备注名和资产编号
+         * 修改设备信息接口
          */
         public static function update_style_name_callback()
         {
@@ -258,8 +263,8 @@ if (!class_exists('DEMA_Admin_Interface')) {
             $field_map = array(
                 'styleName' => 'styleName',
                 'styleNumber' => 'styleNumber',
-                'type' => 'is_enabled'//修改状态
-                
+                'type' => 'is_enabled' //修改状态
+
             );
 
             // 确定要更新的字段
@@ -308,6 +313,47 @@ if (!class_exists('DEMA_Admin_Interface')) {
             wp_die();
         }
 
+
+        /**
+         * 添加删除设备接口
+         */
+        public static  function delt_sql_uuid_callback()
+        {
+
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'custom_table';
+
+            // 获取前端传递的参数并进行输入验证
+            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : '';
+
+            // 使用预处理语句构建SQL查询
+            $sql = $wpdb->prepare("DELETE FROM $table_name WHERE uuid = %s", $uuid);
+
+            // 执行删除操作
+            $result = $wpdb->query($sql);
+
+            // 定义返回结果数组
+            $response = array();
+
+            if ($result !== false) {
+                $response['success'] = true;
+                $response['message'] = '行数据已成功删除';
+            } else {
+                $response['success'] = false;
+                $response['message'] = '删除行数据时发生错误';
+            }
+
+            // 设置跨域访问标头
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST');
+            header('Access-Control-Allow-Headers: Content-Type');
+
+            // 返回JSON格式的结果
+            wp_send_json($response);
+
+            wp_die();
+        }
+
         /**
          * 添加选项保存接口
          */
@@ -342,6 +388,9 @@ if (!class_exists('DEMA_Admin_Interface')) {
             // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义
             wp_send_json($response, 200, JSON_UNESCAPED_UNICODE);
         }
+
+
+
 
         /**
          * 提供选项
