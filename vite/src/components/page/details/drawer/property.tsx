@@ -122,7 +122,7 @@ const Msg: React.FC<PropsMsg> = ({ osType, data }) => {
   const onChange = (checked: boolean) => {
     const newTypeValue = checked ? "1" : "0";
     //修改状态
-    handleTypeUpdate && handleTypeUpdate(newTypeValue);
+    handleTypeUpdate && handleTypeUpdate('is_enabled',newTypeValue);
     //更新数据
     changeMySql(newTypeValue, data.uuid, "type");
   };
@@ -196,6 +196,8 @@ const TextEditor: React.FC<PropsEditor> = ({ defaults, uuid, type }) => {
   const [text, setText] = useState(defaults || "暂无备注"); //保存值
   const [editedText, setEditedText] = useState(""); //保存输入框中的值
 
+  const { handleTypeUpdate } = useContext(AppContext);
+
   //开始编辑
   const handleEditClick = () => {
     setEditedText(text);
@@ -213,7 +215,8 @@ const TextEditor: React.FC<PropsEditor> = ({ defaults, uuid, type }) => {
     setText(editedText);
     setEditing(false);
     setEditedText("");
-    changeMySql(editedText, uuid, type); //修改值
+    handleTypeUpdate && handleTypeUpdate(type,editedText);//修改当前的值
+    changeMySql(editedText, uuid, type); //修改数据库的值
   };
 
   //将值存入变量中

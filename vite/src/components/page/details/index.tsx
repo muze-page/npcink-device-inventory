@@ -76,10 +76,17 @@ const App: React.FC = () => {
   const [arrIndex, setArrIndex] = useState(0);
 
   //修改当前选中的设备状态TODO:优化为公共，方便复用在修改编号和昵称
-  const handleTypeUpdate = (newType: string) => {
-    const updatedData = [...screenData];
-    updatedData[arrIndex].is_enabled = newType;
-    setScreenData(updatedData);
+  /**
+   * 
+   * @param type 修改的属性名
+   * @param newType 属性的值
+   */
+  const handleTypeUpdate = (type: string, newType: string) => {
+    setScreenData((prevData) =>
+      prevData.map((item, index) =>
+        index === arrIndex ? { ...item, [type]: newType } : item
+      )
+    );
   };
 
   //删除当前选中的设备
