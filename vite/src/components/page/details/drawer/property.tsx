@@ -140,7 +140,7 @@ ${
       {/**备注 */}
       <div className="flex justify-between">
         <div className="flex items-center text-lg">
-          <TextEditor defaults={data.styleName} uuid={data.uuid} type="name" />
+          <TextEditor defaults={data.styleName} uuid={data.uuid} type="styleName" />
         </div>
       </div>
       {/**操作系统 */}
@@ -164,7 +164,7 @@ ${
           <TextEditor
             defaults={data.styleNumber}
             uuid={data.uuid}
-            type="number"
+            type="styleNumber"
           />
         </div>
         <div className="flex items-center ml-8 m-0">
