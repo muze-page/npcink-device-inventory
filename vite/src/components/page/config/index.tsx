@@ -77,7 +77,7 @@ const App: React.FC = () => {
   //导入数据
   const importData = () => {
     const jsonData = dataMySql;
-    const jsonString = jsonData;
+    const jsonString = JSON.stringify(jsonData);
     importSQLData(jsonString);
   };
   //导出数据

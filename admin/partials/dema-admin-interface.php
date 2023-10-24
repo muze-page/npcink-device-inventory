@@ -210,6 +210,12 @@ if (!class_exists('DEMA_Admin_Interface')) {
          */
         public static function search_change_data_callback()
         {
+
+            // 设置跨域访问标头
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST');
+            header('Access-Control-Allow-Headers: Content-Type');
+
             $object_data = $_POST['uuid'];
             //拿到uuid
             $uuid = json_decode(stripslashes($object_data));
@@ -223,10 +229,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
                 'data' =>  $object,
             );
 
-            // 设置跨域访问标头
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST');
-            header('Access-Control-Allow-Headers: Content-Type');
+
 
             // 返回响应数据
             wp_send_json($response);
@@ -254,8 +257,15 @@ if (!class_exists('DEMA_Admin_Interface')) {
          */
         public static function update_style_name_callback()
         {
+
+
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_table';
+
+            // 设置跨域访问标头
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST');
+            header('Access-Control-Allow-Headers: Content-Type');
 
             // 获取前端传递的参数并进行输入验证
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : '';
@@ -308,10 +318,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
                 ));
             }
 
-            // 设置跨域访问标头
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST');
-            header('Access-Control-Allow-Headers: Content-Type');
+
 
             wp_die();
         }
@@ -323,8 +330,14 @@ if (!class_exists('DEMA_Admin_Interface')) {
         public static  function delt_sql_uuid_callback()
         {
 
+
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_table';
+
+            // 设置跨域访问标头
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST');
+            header('Access-Control-Allow-Headers: Content-Type');
 
             // 获取前端传递的参数并进行输入验证
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : '';
@@ -346,10 +359,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
                 $response['message'] = '删除行数据时发生错误';
             }
 
-            // 设置跨域访问标头
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST');
-            header('Access-Control-Allow-Headers: Content-Type');
+
 
             // 返回JSON格式的结果
             wp_send_json($response);
@@ -365,72 +375,54 @@ if (!class_exists('DEMA_Admin_Interface')) {
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_table';
 
-            // 获取前端传递的参数并进行输入验证
-            $text_data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : '';
-            $json_data = json_encode($text_data);
-            $data = json_decode($json_data);
-            // 循环处理每个对象
-            foreach ($data as $item) {
-                // 提取对象中的字段值
-                $is_enabled = isset($item['is_enabled']) ? $item['is_enabled'] : 1;
-                $name = isset($item['name']) ? $item['name'] : '';
-                $styleName = isset($item['styleName']) ? $item['styleName'] : null;
-                $styleNumber = isset($item['styleNumber']) ? $item['styleNumber'] : 0;
-                $uuid = isset($item['uuid']) ? $item['uuid'] : '';
-                $dataNew = isset($item['dataNew']) ? json_encode($item['dataNew']) : null;
-                $dataOld = isset($item['dataOld']) ? json_encode($item['dataOld']) : null;
-
-                // 插入数据
-                $result =  $wpdb->insert(
-                    $table_name,
-                    array(
-                        'is_enabled' => $is_enabled,
-                        'name' => $name,
-                        'styleName' => $styleName,
-                        'styleNumber' => $styleNumber,
-                        'uuid' => $uuid,
-                        'dataNew' => $dataNew,
-                        'dataOld' => $dataOld
-                    ),
-                    array(
-                        '%d',
-                        '%s',
-                        '%s',
-                        '%d',
-                        '%s',
-                        '%s',
-                        '%s'
-                    )
-                );
-            }
-
-            // 执行删除操作
-           // $result = true;
-
-            // 定义返回结果数组
-            $response = array();
-
-            if ($result !== false) {
-                $response['success'] = true;
-                $response['message'] = '已成功导入';
-                $response['text_data'] = $text_data;
-                $response['json_data'] = $json_data;
-                $response['data'] = $data;
-                
-                
-            } else {
-                $response['success'] = false;
-                $response['message'] = '导入数据时发生错误';
-            }
-
             // 设置跨域访问标头
             header('Access-Control-Allow-Origin: *');
             header('Access-Control-Allow-Methods: POST');
             header('Access-Control-Allow-Headers: Content-Type');
 
+            // 获取前端传递的参数并进行输入验证
+            $text_data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : '';
+            $data = json_decode($text_data, true);
+
+            if (!empty($data)) {
+                // 构建插入数据的数组
+                $insert_data = array();
+                foreach ($data as $item) {
+                    $insert_data[] = array(
+                        'is_enabled' => isset($item['is_enabled']) ? $item['is_enabled'] : 1,
+                        'name' => isset($item['name']) ? $item['name'] : '',
+                        'styleName' => isset($item['styleName']) ? $item['styleName'] : null,
+                        'styleNumber' => isset($item['styleNumber']) ? $item['styleNumber'] : 0,
+                        'uuid' => isset($item['uuid']) ? $item['uuid'] : '',
+                        'dataNew' => isset($item['dataNew']) ? json_encode($item['dataNew']) : null,
+                        'dataOld' => isset($item['dataOld']) ? json_encode($item['dataOld']) : null
+                    );
+                }
+
+                // 执行批量插入操作
+                $result = $wpdb->insert_batch($table_name, $insert_data);
+
+                // 检查插入结果
+                if ($result) {
+                    $response = array(
+                        'success' => true,
+                        'message' => '已成功导入'
+                    );
+                } else {
+                    $response = array(
+                        'success' => false,
+                        'message' => '导入数据时发生错误'
+                    );
+                }
+            } else {
+                $response = array(
+                    'success' => false,
+                    'message' => '传递的数据为空'
+                );
+            }
+
             // 返回JSON格式的结果
             wp_send_json($response);
-
             wp_die();
         }
 
