@@ -394,13 +394,24 @@ if (!class_exists('DEMA_Admin_Interface')) {
                         'styleName' => isset($item['styleName']) ? $item['styleName'] : null,
                         'styleNumber' => isset($item['styleNumber']) ? $item['styleNumber'] : 0,
                         'uuid' => isset($item['uuid']) ? $item['uuid'] : '',
-                        'dataNew' => isset($item['dataNew']) ? ($item['dataNew']) : null,
-                        'dataOld' => isset($item['dataOld']) ? ($item['dataOld']) : null
+                        'dataNew' => isset($item['dataNew']) ? json_encode($item['dataNew']) : null,
+                        'dataOld' => isset($item['dataOld']) ? json_encode($item['dataOld']) : null
                     );
                 }
 
                 // 执行批量插入操作
-                 $result = $wpdb->insert_batch($table_name, $insert_data);
+               foreach ($insert_data as $item) {
+                   $result = $wpdb->insert($table_name, $item);
+                   echo 'insert_data: ';
+                   print_r($item);
+               }
+
+                if ($result === false) {
+                    $error_message = $wpdb->last_error;
+                    echo "插入操作失败，错误信息：$error_message";
+                }
+
+                //$result = $wpdb->insert_batch($table_name, $insert_data);
 
                 // 检查插入结果
                 if ($result) {
@@ -412,7 +423,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
                     $response = array(
                         'success' => false,
                         'message' => '导入数据时发生错误',
-                        'data' => $insert_data
+                        'data' => ($insert_data[1])
                     );
                 }
             } else {
