@@ -400,18 +400,11 @@ if (!class_exists('DEMA_Admin_Interface')) {
                 }
 
                 // 执行批量插入操作
-               foreach ($insert_data as $item) {
-                   $result = $wpdb->insert($table_name, $item);
-                   echo 'insert_data: ';
-                   print_r($item);
-               }
-
-                if ($result === false) {
-                    $error_message = $wpdb->last_error;
-                    echo "插入操作失败，错误信息：$error_message";
+                foreach ($insert_data as $item) {
+                    $result = $wpdb->insert($table_name, $item);
+                    // echo 'insert_data: ';
+                    //print_r($item);
                 }
-
-                //$result = $wpdb->insert_batch($table_name, $insert_data);
 
                 // 检查插入结果
                 if ($result) {
@@ -420,6 +413,9 @@ if (!class_exists('DEMA_Admin_Interface')) {
                         'message' => '已成功导入'
                     );
                 } else {
+                    $error_message = $wpdb->last_error;
+                    echo "插入操作失败，错误信息：$error_message";
+
                     $response = array(
                         'success' => false,
                         'message' => '导入数据时发生错误',

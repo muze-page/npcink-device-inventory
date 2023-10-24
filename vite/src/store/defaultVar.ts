@@ -35,7 +35,7 @@ const dataMysql = [
   },
 ];
 
-
+//示例设置信息
 export const option = {
   route: "11",
   password: "22",
