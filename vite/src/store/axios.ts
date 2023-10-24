@@ -1,8 +1,35 @@
 //各种于数据库的交互方法
 import axios from "axios";
 import { Ajaxurl } from "@/store";
+
 /**
- * 修改数据库中的自定义名字和编号
+ * 保存选项
+ */
+export const saveSQLData = async (optionObj: object) => {
+  let state = false;
+  const params = new URLSearchParams();
+  params.append("action", "save_object_option");
+  params.append("object_data", JSON.stringify(optionObj));
+  try {
+    const response = await axios.post(Ajaxurl, params);
+
+    if (response.status === 200) {
+      //保存成功
+      console.log(response);
+      state = true;
+    } else {
+      console.error("保存设置选项时出错：" + response.data);
+    }
+  } catch (error: any) {
+    console.error("保存设置选项时出错：" + error.message);
+  } finally {
+    //console.log(false);
+  }
+  return state;
+};
+
+/**
+ * 修改数据
  */
 //返回值类型
 type MysqlChange = {

@@ -1,10 +1,9 @@
 /**
  * 设置
  */
-import axios from "axios";
 import { Space, Button, Form, Input, message } from "antd";
-import { dataMySql, option, Ajaxurl, Site } from "@/store";
-import { importSQLData } from "@/store/axios";
+import { dataMySql, option,  Site } from "@/store";
+import { saveSQLData, importSQLData } from "@/store/axios";
 import { useState } from "react";
 
 type FieldType = {
@@ -25,7 +24,7 @@ const App: React.FC = () => {
       },
     });
   };
-  
+
   //失败
   const warning = () => {
     messageApi.open({
@@ -39,24 +38,11 @@ const App: React.FC = () => {
 
   //保存选项动作
   const postData = async (optionObj: object) => {
-    const params = new URLSearchParams();
-    params.append("action", "save_object_option");
-    params.append("object_data", JSON.stringify(optionObj));
-    try {
-      const response = await axios.post(Ajaxurl, params);
-
-      if (response.status === 200) {
-        //保存成功
-        console.log(response);
-
-        success();
-      } else {
-        console.error("保存设置选项时出错：" + response.data);
-
-        warning();
-      }
-    } catch (error: any) {
-      console.error("保存设置选项时出错：" + error.message);
+    const state = saveSQLData(optionObj);
+    if (await state) {
+      success();
+    } else {
+      warning();
     }
   };
 
@@ -89,8 +75,7 @@ const App: React.FC = () => {
     reader.onload = (e: any) => {
       const content = e.target.result;
       const jsonData = JSON.parse(content);
-      setJsonContent(jsonData);//保存数据
-      
+      setJsonContent(jsonData); //保存数据
     };
     reader.readAsText(file);
   };
