@@ -384,9 +384,6 @@ if (!class_exists('DEMA_Admin_Interface')) {
             $text_data = isset($_POST['data']) ? ($_POST['data']) : '';
             $data = json_decode(stripslashes($text_data), true);
 
-            //$text = '[{"id":"7","uuid":"C07G47L9Q6NV-2","name":"Npcink","styleNumber":"0","styleName":"自定义中","is_enabled":"1","dataNew":"6666","dataOld":null}]';
-            //$data = json_decode($text, true);
-
             if (!empty($data)) {
                 // 构建插入数据的数组
                 $insert_data = array();
@@ -397,13 +394,13 @@ if (!class_exists('DEMA_Admin_Interface')) {
                         'styleName' => isset($item['styleName']) ? $item['styleName'] : null,
                         'styleNumber' => isset($item['styleNumber']) ? $item['styleNumber'] : 0,
                         'uuid' => isset($item['uuid']) ? $item['uuid'] : '',
-                        'dataNew' => isset($item['dataNew']) ? json_encode($item['dataNew']) : null,
-                        'dataOld' => isset($item['dataOld']) ? json_encode($item['dataOld']) : null
+                        'dataNew' => isset($item['dataNew']) ? ($item['dataNew']) : null,
+                        'dataOld' => isset($item['dataOld']) ? ($item['dataOld']) : null
                     );
                 }
 
                 // 执行批量插入操作
-                $result = $wpdb->insert_batch($table_name, $insert_data);
+                 $result = $wpdb->insert_batch($table_name, $insert_data);
 
                 // 检查插入结果
                 if ($result) {
@@ -414,7 +411,8 @@ if (!class_exists('DEMA_Admin_Interface')) {
                 } else {
                     $response = array(
                         'success' => false,
-                        'message' => '导入数据时发生错误'
+                        'message' => '导入数据时发生错误',
+                        'data' => $insert_data
                     );
                 }
             } else {
