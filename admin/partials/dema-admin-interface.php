@@ -381,8 +381,11 @@ if (!class_exists('DEMA_Admin_Interface')) {
             header('Access-Control-Allow-Headers: Content-Type');
 
             // 获取前端传递的参数并进行输入验证
-            $text_data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : '';
-            $data = json_decode($text_data, true);
+            $text_data = isset($_POST['data']) ? ($_POST['data']) : '';
+            $data = json_decode(stripslashes($text_data), true);
+
+            //$text = '[{"id":"7","uuid":"C07G47L9Q6NV-2","name":"Npcink","styleNumber":"0","styleName":"自定义中","is_enabled":"1","dataNew":"6666","dataOld":null}]';
+            //$data = json_decode($text, true);
 
             if (!empty($data)) {
                 // 构建插入数据的数组
