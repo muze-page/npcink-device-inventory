@@ -5,6 +5,7 @@ import axios from "axios";
 import { Space, Button, Form, Input, message } from "antd";
 import { dataMySql, option, Ajaxurl, Site } from "@/store";
 import { importSQLData } from "@/store/axios";
+import { useState } from "react";
 
 type FieldType = {
   route?: string;
@@ -14,6 +15,7 @@ type FieldType = {
 const App: React.FC = () => {
   //提示信息
   const [messageApi, contextHolder] = message.useMessage();
+  //成功
   const success = () => {
     messageApi.open({
       type: "success",
@@ -23,6 +25,8 @@ const App: React.FC = () => {
       },
     });
   };
+  
+  //失败
   const warning = () => {
     messageApi.open({
       type: "warning",
@@ -33,7 +37,7 @@ const App: React.FC = () => {
     });
   };
 
-  //提交动作
+  //保存选项动作
   const postData = async (optionObj: object) => {
     const params = new URLSearchParams();
     params.append("action", "save_object_option");
@@ -75,13 +79,29 @@ const App: React.FC = () => {
   };
 
   //导入数据
+
+  const [jsonContent, setJsonContent] = useState(null);
+  //选中数据
+  const handleFileChange = (event: any) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = (e: any) => {
+      const content = e.target.result;
+      const jsonData = JSON.parse(content);
+      setJsonContent(jsonData);//保存数据
+      
+    };
+    reader.readAsText(file);
+  };
+
+  //保存到数据库
   const importData = () => {
-    const jsonData = dataMySql;
+    const jsonData = jsonContent;
     const jsonString = JSON.stringify(jsonData);
-    console.log(jsonData);
-    console.log(jsonString);
     importSQLData(jsonString);
   };
+
   //导出数据
   const downloadData = () => {
     const jsonData = dataMySql;
@@ -138,6 +158,7 @@ const App: React.FC = () => {
         </Form.Item>
         <Form.Item label="数据管理" extra={"方便数据迁移操作"}>
           <Space>
+            <input type="file" accept=".json" onChange={handleFileChange} />
             <Button type="text" onClick={importData}>
               导入
             </Button>
