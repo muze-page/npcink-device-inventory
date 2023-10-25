@@ -1,8 +1,8 @@
 /**
  * 详情
  */
-import { useState } from "react";
-
+import { SetStateAction, useState } from "react";
+import { Pagination } from "antd";
 import { dataMySql } from "@/store";
 import DetailsList from "@/components/page/details/detailsList";
 import Header from "@/components/page/details/header";
@@ -77,7 +77,7 @@ const App: React.FC = () => {
 
   //修改当前选中的设备状态TODO:优化为公共，方便复用在修改编号和昵称
   /**
-   * 
+   *
    * @param type 修改的属性名
    * @param newType 属性的值
    */
@@ -97,12 +97,29 @@ const App: React.FC = () => {
     changeActive(); //关闭弹窗
   };
 
+  //当前页码
+  const [currentPage, setCurrentPage] = useState(1);
+
+  //每页展示数量
+  const pageSize = 8;
+
+  //设置页码
+  const handlePageChange = (page: SetStateAction<number>) => {
+    setCurrentPage(page);
+  };
+
+  //获取待渲染的数据
+  const displayData = screenData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   return (
     <AppContext.Provider value={{ handleTypeUpdate, deltArrData }}>
       <Header data={updatedDataArray} onSet={setScreenData} />
       <div className="mt-1 flex content-start items-center flex-wrap w-full">
         {/**开始循环 */}
-        {screenData.map((tab, index) => (
+        {displayData.map((tab, index) => (
           <DetailsList
             key={tab.id}
             data={tab}
@@ -110,6 +127,15 @@ const App: React.FC = () => {
             onDrawerData={() => (setDrawerData(tab), setArrIndex(index))}
           />
         ))}
+      </div>
+      <div className="mt-2">
+        {/**分页 */}
+        <Pagination
+          current={currentPage}
+          onChange={handlePageChange}
+          pageSize={pageSize}
+          total={screenData.length}
+        />
       </div>
       {/**弹窗 */}
       <Drawer
