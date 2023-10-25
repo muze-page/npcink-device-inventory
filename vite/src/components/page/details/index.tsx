@@ -26,6 +26,10 @@ const calculateTotalSize = (dataArrays: DataType[]) => {
   return totalSize / (1024 * 1024 * 1024); // 将字节转换为GB
 };
 
+
+
+
+
 const updateOSType = (
   dataArrays: MysqlDeviceChange[]
 ): MysqlDeviceChangeMeat[] => {
@@ -66,10 +70,10 @@ const App: React.FC = () => {
     setActive(!active);
   };
 
-  //共享参数
+  //当前选中弹窗的数据
   const [drawerData, setDrawerData] = useState({} as MysqlDeviceChangeMeat);
 
-  //共享筛选参数
+  //筛选后的值
   const [screenData, setScreenData] = useState(updatedDataArray);
 
   //当前点击选中的数组index

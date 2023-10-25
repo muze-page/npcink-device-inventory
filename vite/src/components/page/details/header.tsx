@@ -2,24 +2,25 @@
  * 设备详情 - 顶部筛选
  * TODO:搜索备注名或者昵称或编号，只能单次筛选
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Space, Select, Button } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
+import Demo from "@/components/page/details/demo";
 
 //系统数组
 const osList = [
-  { value: "all", label: "全部" },
+  { value: "", label: "全部" },
   { value: "Windows 11", label: "Windows 11" },
   { value: "Windows 10", label: "Windows 10" },
-  { value: "mac", label: "Apple" },
+  { value: "macOS", label: "Apple" },
   { value: "linux", label: "Linux" },
   { value: "more", label: "其他" },
 ];
 
 //内存数组
 const memoryList = [
-  { value: "all", label: "全部" },
+  { value: "", label: "全部" },
   { value: "8", label: "8G" },
   { value: "16", label: "16G" },
   { value: "32", label: "32G" },
@@ -30,7 +31,7 @@ const memoryList = [
 
 //硬盘数组
 const diskList = [
-  { value: "all", label: "全部" },
+  { value: "", label: "全部" },
   { value: "120", label: "120G" },
   { value: "250", label: "250G" },
   { value: "512", label: "512G" },
@@ -40,14 +41,14 @@ const diskList = [
 ];
 
 //处理硬盘
-const processA = (a: number) => {
-  if (a <= 120) return 120;
-  if (a <= 250) return 250;
-  if (a <= 512) return 512;
-  if (a <= 1024) return 1024;
-  if (a <= 2048) return 2048;
-  return a;
-};
+//const processA = (a: number) => {
+//  if (a <= 120) return 120;
+//  if (a <= 250) return 250;
+//  if (a <= 512) return 512;
+//  if (a <= 1024) return 1024;
+//  if (a <= 2048) return 2048;
+//  return a;
+//};
 
 interface Props {
   data: MysqlDeviceChangeMeat[];
@@ -56,93 +57,68 @@ interface Props {
 const App: React.FC<Props> = ({ data, onSet }) => {
   console.log(data);
 
+  /**
+   * 检查是否有指定字符串，有则整段替换
+   * @param dataArrays
+   * @returns
+   */
+
+  const obj = [
+    { name: "Windows 11", data: "Windows 11" },
+    { name: "Windows 10", data: "Windows 10" },
+  ];
+  const replaceString = (input: string | any[], obj: any[]) => {
+    const match = obj.find(({ name }) => input.includes(name));
+    if (match) {
+      return match.data;
+    }
+    return input;
+  };
+
   //以下功能做参数，由唯一函数决定输出值
 
-  //共享筛选
-  const [screen, setScreen] = useState(data);
+  //存储选项值
+  const [os, setOs] = useState(null);
+  const [memory, setMemory] = useState(null);
+  const [disk, setDisk] = useState(null);
 
-  //选择系统
-  const osChange = (value: string) => {
-    if (value === "all") {
-      return onSet(data);
-    }
-
-    if (value === "more") {
-      const hasMatch = screen.filter((item) => {
-        return !osList.some((list) => item.meat.ostype.includes(list.value));
-      });
-      if (hasMatch.length !== 0) {
-        setScreen(hasMatch); //保存筛选
+  //根据条件对原始数据进行筛选
+  const filteredData = data.filter((item) => {
+    let meatDisk = item.meat.disk;
+    let sizeCondition = true;
+    if (disk) {
+      if (disk === "120") {
+        sizeCondition = meatDisk <= 120;
+      } else if (disk === "250") {
+        sizeCondition = meatDisk > 120 && meatDisk <= 250;
+      } else if (disk === "512") {
+        sizeCondition = meatDisk > 512;
       }
-      onSet(hasMatch);
-
-      return;
     }
 
-    const arr = screen.filter((item) => item.meat.ostype.includes(value));
-    if (arr.length !== 0) {
-      setScreen(arr); //保存筛选
-    }
-    onSet(arr); // 传值
-  };
-
-  //选择内存
-  const handleChange = (value: string) => {
-    if (value === "all") {
-      return onSet(data);
-    }
-    if (value === "more") {
-      const hasMatch = screen.filter((item) => {
-        return !memoryList.some(
-          (list) => list.value === item.meat.memory.toString()
-        );
-      });
-      if (hasMatch.length !== 0) {
-        setScreen(hasMatch); //保存筛选
-      }
-      onSet(hasMatch);
-      return;
-    }
-    const arr = screen.filter((item) =>
-      item.meat.memory.toString().includes(value)
+    return (
+      sizeCondition &&
+      (!os ||
+        item.meat.ostype === "" ||
+        replaceString(item.meat.ostype, obj) === os) &&
+      (!memory ||
+        item.meat.memory.toString() === "" ||
+        item.meat.memory === memory)
     );
-    if (arr.length !== 0) {
-      setScreen(arr); //保存筛选
-    }
-    onSet(arr); //传值
-  };
+  });
 
-  //选择硬盘
-  const diskChange = (value: string) => {
-    if (value === "all") {
-      return onSet(data); //传值
+  //避免死循环
+  const [isUpdating, setIsUpdating] = useState(false);
+  useEffect(() => {
+    if (isUpdating) {
+      onSet(filteredData);
+      setIsUpdating(false);
     }
-
-    if (value === "more") {
-      const hasMatch = screen.filter((item) => {
-        const datas = processA(item.meat.disk);
-        return !diskList.some((list) => list.value === datas.toString());
-      });
-      if (hasMatch.length !== 0) {
-        setScreen(hasMatch); //保存筛选
-      }
-      onSet(hasMatch);
-      return;
-    }
-
-    const arr = screen.filter((item) => {
-      const data = processA(item.meat.disk);
-      return data.toString().includes(value);
-    });
-    if (arr.length !== 0) {
-      setScreen(arr); //保存筛选
-    }
-
-    onSet(arr); //传值
-  };
+  }, [filteredData, isUpdating]);
 
   return (
     <>
+      <Demo />
       <div className="mt-6 flex justify-between items-center">
         <p className="text-base font-bold text-[#222] m-0">资产信息</p>
         <div className="w-fit flex items-center">
@@ -151,21 +127,24 @@ const App: React.FC<Props> = ({ data, onSet }) => {
             <Select
               defaultValue="all"
               style={{ width: 120 }}
-              onChange={osChange}
+              onChange={(value: any) => {
+                setOs(value);
+                setIsUpdating(true);
+              }}
               options={osList}
             />
             内存：
             <Select
               defaultValue="all"
               style={{ width: 120 }}
-              onChange={handleChange}
+              onChange={(value: any) => setMemory(value)}
               options={memoryList}
             />
             硬盘：
             <Select
               defaultValue="all"
               style={{ width: 120 }}
-              onChange={diskChange}
+              onChange={(value: any) => setDisk(value)}
               options={diskList}
             />
             <Button
