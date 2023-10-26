@@ -17,8 +17,14 @@ const osList = [
   { value: "linux", label: "Linux" },
   { value: "more", label: "其他" },
 ];
-// 存储预设系统的值
-const presetOsValues = ["", "Windows 11", "Windows 10", "macOS", "linux"];
+
+//系统替换数组
+const osObj = [
+  { name: "Windows 11", data: "Windows 11" },
+  { name: "Windows 10", data: "Windows 10" },
+  { name: "linux", data: "linux" },
+  { name: "macOS", data: "macOS" },
+];
 
 //内存数组
 const memoryList = [
@@ -28,7 +34,16 @@ const memoryList = [
   { value: "32", label: "32G" },
   { value: "64", label: "64G" },
   { value: "128", label: "128G" },
-  { value: "其他", label: "其他" },
+  { value: "more", label: "其他" },
+];
+
+//内存替换数组
+const memoryObj = [
+  { name: "8", data: "8" },
+  { name: "16", data: "16" },
+  { name: "32", data: "32" },
+  { name: "64", data: "64" },
+  { name: "128", data: "128" },
 ];
 
 //硬盘数组
@@ -39,8 +54,22 @@ const diskList = [
   { value: "512", label: "512G" },
   { value: "1024", label: "1T" },
   { value: "2048", label: "2T" },
-  { value: "其他", label: "其他" },
+  { value: "more", label: "其他" },
 ];
+
+/**
+ * 检查是否有指定字符串，有则整段替换
+ * @param dataArrays
+ * @returns
+ */
+const replaceString = (input: string , obj: any[]) => {
+  const match = obj.find(({ name }) => input.includes(name));
+  if (match) {
+    return match.data;
+  }
+  //return input;
+  return "more"; //没有在上述系统数据中的，替换为more
+};
 
 interface Props {
   data: MysqlDeviceChangeMeat[];
@@ -48,28 +77,6 @@ interface Props {
 }
 const App: React.FC<Props> = ({ data, onSet }) => {
   console.log(data);
-
-  /**
-   * 检查是否有指定字符串，有则整段替换
-   * @param dataArrays
-   * @returns
-   */
-
-  //将不同的系统表示替换为统一的，方便筛选
-  const obj = [
-    { name: "Windows 11", data: "Windows 11" },
-    { name: "Windows 10", data: "Windows 10" },
-    { name: "linux", data: "linux" },
-    { name: "macOS", data: "macOS" },
-  ];
-  const replaceString = (input: string | any[], obj: any[]) => {
-    const match = obj.find(({ name }) => input.includes(name));
-    if (match) {
-      return match.data;
-    }
-    //return input;
-    return "more";
-  };
 
   //以下功能做参数，由唯一函数决定输出值
 
@@ -94,30 +101,17 @@ const App: React.FC<Props> = ({ data, onSet }) => {
         sizeCondition = meatDisk > 512 && meatDisk <= 1024;
       } else if (disk === "2048") {
         sizeCondition = meatDisk > 1024 && meatDisk <= 2048;
-      } else if (disk === "其他") {
+      } else if (disk === "more") {
         sizeCondition = meatDisk > 2048;
       }
     }
 
-    // 过滤掉预设系统，并返回剩余的系统
-    const filteredOsList = osList.filter(
-      (osItem) => !presetOsValues.includes(osItem.value)
-    );
-
-    // 存储剩余系统的值
-    const otherOsValues = filteredOsList.map((item) => item.value);
-    console.log("剩余系统");
-    console.log(otherOsValues);
-
     return (
       sizeCondition &&
-      (!os ||
-        os === "" ||
-        (os === "more" && otherOsValues.includes(item.meat.ostype)) ||
-        replaceString(item.meat.ostype, obj) === os) &&
+      (!os || os === "" || replaceString(item.meat.ostype, osObj) === os) &&
       (!memory ||
         item.meat.memory.toString() === "" ||
-        item.meat.memory.toString() === memory)
+        replaceString(item.meat.memory.toString(), memoryObj) === memory)
     );
   });
 
