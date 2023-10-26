@@ -8,72 +8,13 @@ import { ReloadOutlined } from "@ant-design/icons";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
 
 
-//系统数组
-const osList = [
-  { value: "", label: "全部" },
-  { value: "Windows 11", label: "Windows 11" },
-  { value: "Windows 10", label: "Windows 10" },
-  { value: "macOS", label: "Apple" },
-  { value: "linux", label: "Linux" },
-  { value: "more", label: "其他" },
-];
+import { osScreenList, memoryScreenList,diskScreenList } from "@/store/dataReplace";
 
-//系统替换数组
-const osObj = [
-  { name: "Windows 11", data: "Windows 11" },
-  { name: "Windows 10", data: "Windows 10" },
-  { name: "linux", data: "linux" },
-  { name: "macOS", data: "macOS" },
-];
 
-//内存数组
-const memoryList = [
-  { value: "", label: "全部" },
-  { value: "8", label: "8G" },
-  { value: "16", label: "16G" },
-  { value: "32", label: "32G" },
-  { value: "64", label: "64G" },
-  { value: "128", label: "128G" },
-  { value: "more", label: "其他" },
-];
-
-//内存替换数组
-const memoryObj = [
-  { name: "8", data: "8" },
-  { name: "16", data: "16" },
-  { name: "32", data: "32" },
-  { name: "64", data: "64" },
-  { name: "128", data: "128" },
-];
-
-//硬盘数组
-const diskList = [
-  { value: "", label: "全部" },
-  { value: "120", label: "120G" },
-  { value: "250", label: "250G" },
-  { value: "512", label: "512G" },
-  { value: "1024", label: "1T" },
-  { value: "2048", label: "2T" },
-  { value: "more", label: "其他" },
-];
-
-/**
- * 检查是否有指定字符串，有则整段替换
- * @param dataArrays
- * @returns
- */
-const replaceString = (input: string, obj: any[]) => {
-  const match = obj.find(({ name }) => input.includes(name));
-  if (match) {
-    return match.data;
-  }
-  //return input;
-  return "more"; //没有在上述系统数据中的，替换为more
-};
 
 interface Props {
-  data: MysqlDeviceChangeMeat[];
-  onSet: Function;
+  data: MysqlDeviceChangeMeat[];//筛选用数据
+  onSet: Function;//传递筛选后的数据
 }
 const App: React.FC<Props> = ({ data, onSet }) => {
   console.log(data);
@@ -108,10 +49,10 @@ const App: React.FC<Props> = ({ data, onSet }) => {
 
     return (
       sizeCondition &&
-      (!os || os === "" || replaceString(item.meat.ostype, osObj) === os) &&
+      (!os || os === "" || item.meat.ostype === os) &&
       (!memory ||
         item.meat.memory.toString() === "" ||
-        replaceString(item.meat.memory.toString(), memoryObj) === memory)
+       item.meat.memory.toString() === memory)
     );
   });
 
@@ -141,7 +82,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
                 setOs(value);
                 setIsUpdating(true);
               }}
-              options={osList}
+              options={osScreenList}
             />
             内存：
             <Select
@@ -150,7 +91,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
               onChange={(value: any) => {
                 setMemory(value), setIsUpdating(true);
               }}
-              options={memoryList}
+              options={memoryScreenList}
             />
             硬盘：
             <Select
@@ -159,7 +100,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
               onChange={(value: any) => {
                 setDisk(value), setIsUpdating(true);
               }}
-              options={diskList}
+              options={diskScreenList}
             />
             {false && (
               <Button

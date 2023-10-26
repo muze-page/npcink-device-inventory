@@ -157,7 +157,11 @@ interface PropsDataList {
 }
 const DataList: React.FC<PropsDataList> = ({ data }) => {
   if (data.length === 0) {
-    return <Empty />;
+    return <Empty description={
+      <span>
+       暂无记录
+      </span>
+    }/>;
   }
 
   return <Table size="small" columns={columns} dataSource={data} />;

@@ -7,6 +7,7 @@ import {
   CodepenOutlined,
   ApartmentOutlined,
   EditOutlined,
+  SettingOutlined 
 } from "@ant-design/icons";
 
 import type { TabsProps } from "antd";
@@ -25,6 +26,7 @@ interface Props {
   data: MysqlDeviceChangeMeat;
 }
 const App: React.FC<Props> = ({ data }) => {
+  console.log(data);
   const items: TabsProps["items"] = [
     {
       key: "1",
@@ -48,7 +50,7 @@ const App: React.FC<Props> = ({ data }) => {
     },
     {
       key: "3",
-      label: <span>设置</span>,
+      label: <span><SettingOutlined />设置</span>,
       children: <Seting data={data.uuid} />,
     },
   ];

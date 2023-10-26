@@ -14,8 +14,13 @@ import {
   ComputerDevice,
 } from "@/store/interface";
 
+//公共方法
 import { AppContext } from "@/store/setingContext";
-//收集指定数据
+
+//替换用数组
+import { osReplace, memoryReplace } from "@/store/dataReplace";
+
+//收集数组中的指定键值的总和，并转为GB单位
 
 type DataType = ComputerRam | ComputerDevice;
 
@@ -24,6 +29,20 @@ const calculateTotalSize = (dataArrays: DataType[]) => {
     return sum + obj.size;
   }, 0);
   return totalSize / (1024 * 1024 * 1024); // 将字节转换为GB
+};
+
+/**
+ * 检查是否有指定字符串，有则整段替换，没有则表示为未知
+ * @param dataArrays
+ * @returns
+ */
+const replaceString = (input: string, obj: any[]) => {
+  const match = obj.find(({ name }) => input.includes(name));
+  if (match) {
+    return match.data;
+  }
+  //return input;
+  return "unknown"; //没有在上述系统数据中的，替换为more
 };
 
 const updateOSType = (
@@ -35,10 +54,10 @@ const updateOSType = (
     const disk = calculateTotalSize(parsedData.diskLayout); //硬盘数组
     //整理添加的信息
     const meat = {
-      ostype: parsedData.os.distro, //系统版本
+      ostype: replaceString(parsedData.os.distro, osReplace), //系统版本
       cpu: parsedData.cpu.manufacturer, //CPU
       model: parsedData.system.model, //型号
-      memory: Math.floor(memory), //GB 取整
+      memory: replaceString(Math.floor(memory).toString(), memoryReplace), //GB 取整
       disk: Math.floor(disk), //GB 取整
     };
     return { ...obj, meat };
@@ -129,7 +148,7 @@ const App: React.FC = () => {
         ))}
       </div>
       {/**没有数据 */}
-      {(displayData.length === 0 && <Empty className="mt-10" />)}
+      {displayData.length === 0 && <Empty className="mt-10" />}
 
       {/**分页 */}
       {displayData.length > pageSize && (
