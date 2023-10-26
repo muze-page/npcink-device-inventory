@@ -62,7 +62,7 @@ const diskList = [
  * @param dataArrays
  * @returns
  */
-const replaceString = (input: string , obj: any[]) => {
+const replaceString = (input: string, obj: any[]) => {
   const match = obj.find(({ name }) => input.includes(name));
   if (match) {
     return match.data;
@@ -84,6 +84,15 @@ const App: React.FC<Props> = ({ data, onSet }) => {
   const [os, setOs] = useState(null);
   const [memory, setMemory] = useState(null);
   const [disk, setDisk] = useState(null);
+
+  //重置按钮
+  const btnResetting = () => {
+    const value = null;
+    setOs(value);
+    setMemory(value);
+    setDisk(value);
+    console.log("点击了");
+  };
 
   //根据条件对原始数据进行筛选
   const filteredData = data.filter((item) => {
@@ -117,12 +126,14 @@ const App: React.FC<Props> = ({ data, onSet }) => {
 
   //避免死循环
   const [isUpdating, setIsUpdating] = useState(false);
+
+  //监听，更新最新值
   useEffect(() => {
     if (isUpdating) {
       onSet(filteredData);
       setIsUpdating(false);
     }
-  }, [filteredData, isUpdating]);
+  }, [os, memory, disk,filteredData, isUpdating]);
 
   return (
     <>
@@ -164,6 +175,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
               shape="circle"
               icon={<ReloadOutlined />}
               className="bg-[#1677ff]"
+              onClick={btnResetting}
             />
           </Space>
         </div>
