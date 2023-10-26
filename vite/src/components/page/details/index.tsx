@@ -2,7 +2,7 @@
  * 详情
  */
 import { SetStateAction, useState } from "react";
-import { Pagination } from "antd";
+import { Pagination, Empty } from "antd";
 import { dataMySql } from "@/store";
 import DetailsList from "@/components/page/details/detailsList";
 import Header from "@/components/page/details/header";
@@ -25,10 +25,6 @@ const calculateTotalSize = (dataArrays: DataType[]) => {
   }, 0);
   return totalSize / (1024 * 1024 * 1024); // 将字节转换为GB
 };
-
-
-
-
 
 const updateOSType = (
   dataArrays: MysqlDeviceChange[]
@@ -132,15 +128,21 @@ const App: React.FC = () => {
           />
         ))}
       </div>
-      <div className="mt-2">
-        {/**分页 */}
-        <Pagination
-          current={currentPage}
-          onChange={handlePageChange}
-          pageSize={pageSize}
-          total={screenData.length}
-        />
-      </div>
+      {/**没有数据 */}
+      {(displayData.length === 0 && <Empty className="mt-10" />)}
+
+      {/**分页 */}
+      {displayData.length > pageSize && (
+        <div className="mt-2">
+          <Pagination
+            current={currentPage}
+            onChange={handlePageChange}
+            pageSize={pageSize}
+            total={screenData.length}
+          />
+        </div>
+      )}
+
       {/**弹窗 */}
       <Drawer
         data={drawerData}

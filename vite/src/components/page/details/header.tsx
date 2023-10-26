@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { Space, Select, Button } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
-import Demo from "@/components/page/details/demo";
+
 
 //系统数组
 const osList = [
@@ -85,15 +85,6 @@ const App: React.FC<Props> = ({ data, onSet }) => {
   const [memory, setMemory] = useState(null);
   const [disk, setDisk] = useState(null);
 
-  //重置按钮
-  const btnResetting = () => {
-    const value = null;
-    setOs(value);
-    setMemory(value);
-    setDisk(value);
-    console.log("点击了");
-  };
-
   //根据条件对原始数据进行筛选
   const filteredData = data.filter((item) => {
     let meatDisk = item.meat.disk;
@@ -133,11 +124,11 @@ const App: React.FC<Props> = ({ data, onSet }) => {
       onSet(filteredData);
       setIsUpdating(false);
     }
-  }, [os, memory, disk,filteredData, isUpdating]);
+  }, [filteredData, isUpdating]);
 
   return (
     <>
-      <Demo />
+     
       <div className="mt-6 flex justify-between items-center">
         <p className="text-base font-bold text-[#222] m-0">资产信息</p>
         <div className="w-fit flex items-center">
@@ -170,13 +161,14 @@ const App: React.FC<Props> = ({ data, onSet }) => {
               }}
               options={diskList}
             />
-            <Button
-              type="primary"
-              shape="circle"
-              icon={<ReloadOutlined />}
-              className="bg-[#1677ff]"
-              onClick={btnResetting}
-            />
+            {false && (
+              <Button
+                type="primary"
+                shape="circle"
+                icon={<ReloadOutlined />}
+                className="bg-[#1677ff]"
+              />
+            )}
           </Space>
         </div>
       </div>
