@@ -4,6 +4,9 @@
 
 硬件统计前端模块 WordPress 插件
 
+#### 参考
+- https://admin.saas.360.cn/assets/detect
+
 #### 待完善
 
 

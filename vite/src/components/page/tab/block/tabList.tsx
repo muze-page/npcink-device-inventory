@@ -8,10 +8,10 @@ import { TableData } from "@/store/interface";
 
 interface Props {
   meat: {
-    thData: string[];//表头
-    bgColor: string;//颜色
+    thData: string[]; //表头
+    bgColor: string; //颜色
   };
-  tableData: TableData[];//内容
+  tableData: TableData[]; //内容
 }
 const App: React.FC<Props> = ({ meat, tableData }) => {
   return (
@@ -45,13 +45,13 @@ const App: React.FC<Props> = ({ meat, tableData }) => {
               <table className="w-full min-w-full m-0 border-separate border-spacing-0 table-fixed">
                 <tbody>
                   {tableData.map((tab, index) => (
-                    <tr key={index}>
-                      <td className="text-sm h-14 border-b-1 border-solid  border-gray-200 text-zinc-900 text-left break-all bg-white">
+                    <tr className=" group" key={index}>
+                      <td className="text-sm h-14 border-b-1 border-solid  border-gray-200 text-zinc-900 text-left break-all bg-white group-hover:bg-[#fafafa]">
                         <span className="py-3 px-4 flex items-center">
                           <span className="block w-full">{tab.type}</span>
                         </span>
                       </td>
-                      <td className="text-sm h-14 border-b-1 border-solid  border-gray-200 text-zinc-900 text-left break-all bg-white">
+                      <td className="text-sm h-14 border-b-1 border-solid  border-gray-200 text-zinc-900 text-left break-all bg-white group-hover:bg-[#fafafa]">
                         <span className="py-3 px-4 flex items-center">
                           <span className="block w-full">{tab.sum}</span>
                         </span>
