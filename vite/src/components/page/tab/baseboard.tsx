@@ -2,10 +2,10 @@
  * 主板
  */
 
-import TabList from "@/components/block/tabList";
+import TabList from "@/components/page/tab/block/tabList";
 import { sum_brand, replaceType } from "@/store/tool";
 import { replaceBaseboard } from "@/store/dataReplace";
-import { ComputerBaseboard,TableData } from "@/store/interface";
+import { ComputerBaseboard, TableData } from "@/store/interface";
 
 const meat = {
   thData: ["型号", "数量（个）"], //表头
@@ -16,7 +16,6 @@ interface Props {
   data: ComputerBaseboard[];
 }
 const App: React.FC<Props> = ({ data }) => {
-  
   //统计manufacturer出现次数
   const arr = sum_brand(data, "manufacturer");
 

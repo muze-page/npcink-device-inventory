@@ -10,6 +10,10 @@ import {
   ComputerRam,
   ComputerDevice,
 } from "@/store/interface";
+
+import Ad from "@/components/page/tab/block/ad";
+import TabHeader from "@/components/page/tab/block/tableHeader";
+
 import Baseboard from "@/components/page/tab/baseboard";
 import Cpu from "@/components/page/tab/cpu";
 import Disk from "@/components/page/tab/disk";
@@ -29,11 +33,8 @@ const deviceArrData = (dataArrays: Computer[], key: keyof Computer) => {
 };
 
 const App: React.FC = () => {
-  //拿到数据
-  const data = dataMySql;
-
-  //处理数据
-  const combinedData = collectDataNew(data);
+  //收集最新数据组成数组
+  const combinedData = collectDataNew(dataMySql);
 
   //获取CPU数组
   const cpuArrData = deviceArrData(combinedData, "cpu") as ComputerCpu[];
@@ -56,6 +57,7 @@ const App: React.FC = () => {
     "baseboard"
   ) as ComputerBaseboard[];
 
+  //表头内容
   const items = [
     {
       key: "1",
@@ -91,10 +93,10 @@ const App: React.FC = () => {
     },
   ];
 
-  //控制切换
+  //切换表格
   const [activeTab, setActiveTab] = useState(0);
 
-  //点击切换
+  //点击切换方法
   const handleTabClick = (index: number) => {
     setActiveTab(index);
   };
@@ -122,6 +124,7 @@ const App: React.FC = () => {
              */}
 
           <div className="relative rounded-none box-border w-full min-h-0">
+            {/**表体内容 */}
             <div className="content">{items[activeTab].children}</div>
           </div>
         </div>
@@ -133,78 +136,6 @@ const App: React.FC = () => {
        * </div>
        */}
     </>
-  );
-};
-
-/**
- * 表头
- * @returns
- */
-interface Props {
-  items: {
-    key: string;
-    label: string;
-    sum: number;
-    color: string;
-    activeColor: string;
-    children: React.ReactElement;
-  }[];
-  handleTabClick: Function;
-  activeTab: number;
-}
-
-const TabHeader: React.FC<Props> = ({ items, handleTabClick, activeTab }) => {
-  return (
-    <div className="flex items-center mt-3">
-      {items.map((tab, index) => (
-        <div
-          className={`w-calc-1/4 first:ml-0 ml-4 cursor-pointer relative h-[6em] rounded px-5 py-4  bg-gradient-to-br   w-full ${tab.color}`}
-          key={index}
-          onClick={() => handleTabClick(index)}
-        >
-          {/**className={`tab ${index === activeTab ? "active" : ""}`} */}
-          <div className="text-xs font-normal text-zinc-900">{tab.label}</div>
-          <div className="text-2xl font-normal text-zinc-900">{tab.sum}</div>
-          {/*下横线*/}
-          {index === activeTab && (
-            <div
-              className={`w-full h-[2px] rounded-sm  absolute bottom-0 left-0 z-10 ${tab.activeColor}`}
-            ></div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-};
-
-/**
- * 广告内容
- * @returns
- */
-const Ad = () => {
-  return (
-    <div className="w-[calc(100%-48px)] absolute left-6 bottom-6 h-[76px] px-6 py-4 flex items-center justify-between mt-6 bg-orange-50">
-      {/**第一部分 */}
-      <div>
-        <div className="text-sm font-normal leading-[22px] text-amber-950">
-          专业定制
-        </div>
-        <div className="text-xs font-normal leading-[22px] text-amber-950">
-          为您添加个性化数据大盘，针对性提升运维效率。
-        </div>
-      </div>
-      {/**第二部分 */}
-      <div className="w-[104px] h-8 leading-8 rounded-sm bg-orange-300 text-xs font-normal text-center text-amber-950 cursor-pointer ">
-        <a
-          href="https://www.npc.ink/"
-          target="_blank"
-          className="text-amber-950"
-        >
-          {" "}
-          选择专业
-        </a>
-      </div>
-    </div>
   );
 };
 

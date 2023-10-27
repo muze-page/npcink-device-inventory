@@ -2,7 +2,6 @@
  * 表格 - 数据展示
  */
 //颜色 表头 表数据
-//添加hover效果
 
 //表头
 import { TableData } from "@/store/interface";
@@ -12,7 +11,7 @@ interface Props {
     thData: string[];//表头
     bgColor: string;//颜色
   };
-  tableData: TableData[];
+  tableData: TableData[];//内容
 }
 const App: React.FC<Props> = ({ meat, tableData }) => {
   return (
