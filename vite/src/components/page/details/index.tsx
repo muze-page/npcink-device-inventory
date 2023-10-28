@@ -4,8 +4,8 @@
 import { SetStateAction, useState } from "react";
 import { Pagination, Empty } from "antd";
 import { dataMySql } from "@/store";
-import DetailsList from "@/components/page/details/detailsList";
-import Header from "@/components/page/details/header";
+import DetailsList from "@/components/page/details/block/detailsList";
+import Header from "@/components/page/details/block/header";
 import Drawer from "@/components/page/details/drawer";
 import {
   MysqlDeviceChangeMeat,
@@ -42,9 +42,10 @@ const replaceString = (input: string, obj: any[]) => {
     return match.data;
   }
   //return input;
-  return "unknown"; //没有在上述系统数据中的，替换为more
+  return "unknown"; //没有在上述系统数据中的，替换为more（方便其他筛选）
 };
 
+//添加需要的筛选标记数据
 const updateOSType = (
   dataArrays: MysqlDeviceChange[]
 ): MysqlDeviceChangeMeat[] => {
