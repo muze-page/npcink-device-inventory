@@ -243,3 +243,10 @@ export interface ComputerNet {
   carrierChanges: number;
   ieee8021xState: string;
 }
+
+//不同的设备不同的背景色
+export interface PropBgColor {
+  id: number;
+  name: string;
+  image: string;
+}
