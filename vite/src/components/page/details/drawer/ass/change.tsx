@@ -70,7 +70,9 @@ const App: React.FC<Props> = ({ data }) => {
     message: string;
     status: string;
   };
-  //发出请求获取值
+
+
+  //发出请求获取值 TODO:抽离试试
   const getData = async (uuid: string) => {
     const params = new URLSearchParams();
     params.append("action", "search_change_data_callback");
@@ -93,14 +95,16 @@ const App: React.FC<Props> = ({ data }) => {
         //传递
         setDataAxios(updatedDatas);
       } else {
-        setError("保存设置选项时出错：" + response.data);
+        setError("获取数据时出错：" + response.data);
       }
     } catch (error: any) {
-      setError("保存设置选项时出错：" + error.message);
+      setError("获取数据时出错：" + error.message);
     } finally {
       setLoading(false);
     }
   };
+
+
 
   useEffect(() => {
     getData(data);

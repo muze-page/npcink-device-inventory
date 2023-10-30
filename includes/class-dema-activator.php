@@ -1,7 +1,7 @@
 <?php
 
 /**
- * 在插件激活期间激发
+ * 在插件激活期间激发 - 创建数据表用
  *
  * @link       https://www.npc.ink
  * @since      1.0.0
@@ -90,6 +90,8 @@ class Dema_Activator
 	        type TEXT,
             new TEXT,
             old TEXT,
+			ch_name TEXT,
+            ch_describe TEXT,
             PRIMARY KEY (id)
             
         );";
