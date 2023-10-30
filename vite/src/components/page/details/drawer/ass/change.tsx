@@ -10,17 +10,10 @@ import { Ajaxurl } from "@/store";
 import { replacements } from "@/store/dataReplace";
 import { ComputerChangeReturn } from "@/store/interface";
 
-//准备表格数据类型
-interface DataType {
-  key: string;
-  time: string;
-  type: string;
-  old: string;
-  new: string;
-}
+
 
 //准备表头
-const columns: ColumnsType<DataType> = [
+const columns: ColumnsType<ComputerChangeReturn> = [
   {
     title: "时间",
     dataIndex: "time",
@@ -37,9 +30,14 @@ const columns: ColumnsType<DataType> = [
     key: "old",
   },
   {
-    title: "现配置",
-    dataIndex: "new",
-    key: "new",
+    title: "变更人",
+    dataIndex: "ch_name",
+    key: "ch_name",
+  },
+  {
+    title: "变更说明",
+    dataIndex: "ch_describe",
+    key: "ch_describe",
   },
 ];
 
@@ -58,9 +56,8 @@ interface Props {
   data: string;
 }
 const App: React.FC<Props> = ({ data }) => {
-  //检测new 和old 的值，大于1000000的进行处理
 
-  const [dataAxios, setDataAxios] = useState<DataType[]>([]); //待渲染的值
+  const [dataAxios, setDataAxios] = useState<ComputerChangeReturn[]>([]); //待渲染的值
   const [loading, setLoading] = useState(false); //加载中
   const [error, setError] = useState(""); //报错
 
@@ -70,7 +67,6 @@ const App: React.FC<Props> = ({ data }) => {
     message: string;
     status: string;
   };
-
 
   //发出请求获取值 TODO:抽离试试
   const getData = async (uuid: string) => {
@@ -103,8 +99,6 @@ const App: React.FC<Props> = ({ data }) => {
       setLoading(false);
     }
   };
-
-
 
   useEffect(() => {
     getData(data);
@@ -157,15 +151,12 @@ const Error: React.FC<PropsError> = ({ message }) => {
  * @returns
  */
 interface PropsDataList {
-  data: DataType[];
+  data: ComputerChangeReturn[];
 }
 const DataList: React.FC<PropsDataList> = ({ data }) => {
+  console.log(data);
   if (data.length === 0) {
-    return <Empty description={
-      <span>
-       暂无记录
-      </span>
-    }/>;
+    return <Empty description={<span>暂无记录</span>} />;
   }
 
   return <Table size="small" columns={columns} dataSource={data} />;

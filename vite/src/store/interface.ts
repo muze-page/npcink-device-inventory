@@ -68,11 +68,11 @@ export interface TableData {
 //硬件变更返回值
 export interface ComputerChangeReturn {
   id: string;
-  new: string;
-  old: string;
-  time: string;
-  type: string;
-  uuid: string;
+  new: string;//变更后
+  old: string;//变更前
+  time: string;//变更时间
+  type: string;//变更类型
+  uuid: string;//变更唯一标识
   ch_name: string; //变更人
   ch_describe: string; //变更说明
 }
