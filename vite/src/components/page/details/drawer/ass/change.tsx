@@ -10,7 +10,7 @@ import { Ajaxurl } from "@/store";
 import { replacements } from "@/store/dataReplace";
 import { ComputerChangeReturn } from "@/store/interface";
 
-
+import Demo from "@/components/page/details/drawer/ass/demo"
 
 //准备表头
 const columns: ColumnsType<ComputerChangeReturn> = [
@@ -56,7 +56,6 @@ interface Props {
   data: string;
 }
 const App: React.FC<Props> = ({ data }) => {
-
   const [dataAxios, setDataAxios] = useState<ComputerChangeReturn[]>([]); //待渲染的值
   const [loading, setLoading] = useState(false); //加载中
   const [error, setError] = useState(""); //报错
@@ -115,11 +114,19 @@ const App: React.FC<Props> = ({ data }) => {
           {/**列表 */}
           <div className="mt-1">
             <p className="mb-4 text-base font-bold text-[#333]">硬件信息变更</p>
-            <DataList data={dataAxios} />
+
+            {dataAxios.length !== 0 ? (
+              //展示数据
+              <Table size="small" columns={columns} dataSource={dataAxios} />
+            ) : (
+              //没有数据
+              <Empty description={<span>暂无记录</span>} />
+            )}
           </div>
           {/**下载按钮 */}
         </div>
       )}
+      <Demo/>
     </>
   );
 };
@@ -143,23 +150,6 @@ interface PropsError {
 
 const Error: React.FC<PropsError> = ({ message }) => {
   return <p>{message}</p>;
-};
-
-/**
- * 渲染数据
- * @param param0
- * @returns
- */
-interface PropsDataList {
-  data: ComputerChangeReturn[];
-}
-const DataList: React.FC<PropsDataList> = ({ data }) => {
-  console.log(data);
-  if (data.length === 0) {
-    return <Empty description={<span>暂无记录</span>} />;
-  }
-
-  return <Table size="small" columns={columns} dataSource={data} />;
 };
 
 export default App;
