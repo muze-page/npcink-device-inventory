@@ -73,6 +73,8 @@ export interface ComputerChangeReturn {
   time: string;
   type: string;
   uuid: string;
+  ch_name: string; //变更人
+  ch_describe: string; //变更说明
 }
 
 //主板
