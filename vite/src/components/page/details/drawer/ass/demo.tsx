@@ -1,10 +1,12 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import type { InputRef } from 'antd';
-import { Button, Form, Input, Popconfirm, Table } from 'antd';
+import {  Form, Input, Popconfirm, Table } from 'antd';
 import type { FormInstance } from 'antd/es/form';
 
+//在嵌套的组件之间传递Form实例，使得表单可以进行联动
 const EditableContext = React.createContext<FormInstance<any> | null>(null);
 
+//表格属性
 interface Item {
   key: string;
   name: string;
@@ -16,6 +18,7 @@ interface EditableRowProps {
   index: number;
 }
 
+//可编辑表格的行和单元格组件
 const EditableRow: React.FC<EditableRowProps> = ({ index, ...props }) => {
   const [form] = Form.useForm();
   return (
@@ -55,11 +58,13 @@ const EditableCell: React.FC<EditableCellProps> = ({
     }
   }, [editing]);
 
+  //设定状态？
   const toggleEdit = () => {
     setEditing(!editing);
     form.setFieldsValue({ [dataIndex]: record[dataIndex] });
   };
 
+  //保存
   const save = async () => {
     try {
       const values = await form.validateFields();
@@ -73,6 +78,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
 
   let childNode = children;
 
+  //核心
   if (editable) {
     childNode = editing ? (
       <Form.Item
@@ -108,7 +114,10 @@ interface DataType {
 
 type ColumnTypes = Exclude<EditableTableProps['columns'], undefined>;
 
+//主要组件
 const App: React.FC = () => {
+
+    //基础数据
   const [dataSource, setDataSource] = useState<DataType[]>([
     {
       key: '0',
@@ -124,51 +133,45 @@ const App: React.FC = () => {
     },
   ]);
 
-  const [count, setCount] = useState(2);
+  
 
+  //删除数据
   const handleDelete = (key: React.Key) => {
     const newData = dataSource.filter((item) => item.key !== key);
     setDataSource(newData);
   };
 
+  //准备列表
   const defaultColumns: (ColumnTypes[number] & { editable?: boolean; dataIndex: string })[] = [
     {
-      title: 'name',
+      title: '姓名',
       dataIndex: 'name',
       width: '30%',
       editable: true,
     },
     {
-      title: 'age',
+      title: '年龄',
       dataIndex: 'age',
     },
     {
-      title: 'address',
+      title: '地址',
       dataIndex: 'address',
     },
     {
-      title: 'operation',
+      title: '操作',
       dataIndex: 'operation',
       render: (_, record: { key: React.Key }) =>
         dataSource.length >= 1 ? (
-          <Popconfirm title="Sure to delete?" onConfirm={() => handleDelete(record.key)}>
-            <a>Delete</a>
+          <Popconfirm title="确定删除？" onConfirm={() => handleDelete(record.key)}>
+            <a>删除</a>
           </Popconfirm>
         ) : null,
     },
   ];
 
-  const handleAdd = () => {
-    const newData: DataType = {
-      key: count,
-      name: `Edward King ${count}`,
-      age: '32',
-      address: `London, Park Lane no. ${count}`,
-    };
-    setDataSource([...dataSource, newData]);
-    setCount(count + 1);
-  };
+  
 
+  //保存
   const handleSave = (row: DataType) => {
     const newData = [...dataSource];
     const index = newData.findIndex((item) => row.key === item.key);
@@ -180,6 +183,7 @@ const App: React.FC = () => {
     setDataSource(newData);
   };
 
+  //覆盖默认的 table 元素
   const components = {
     body: {
       row: EditableRow,
@@ -187,6 +191,7 @@ const App: React.FC = () => {
     },
   };
 
+  //编辑
   const columns = defaultColumns.map((col) => {
     if (!col.editable) {
       return col;
@@ -205,9 +210,7 @@ const App: React.FC = () => {
 
   return (
     <div>
-      <Button onClick={handleAdd} type="primary" style={{ marginBottom: 16 }}>
-        Add a row
-      </Button>
+      
       <Table
         components={components}
         rowClassName={() => 'editable-row'}
