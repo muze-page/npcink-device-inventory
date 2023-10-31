@@ -24,6 +24,11 @@ if (!class_exists('DEMA_Admin_Interface')) {
             add_action('wp_ajax_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
             add_action('wp_ajax_nopriv_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
 
+            // 修改设备变更信息接口
+            add_action('wp_ajax_update_change_callback',  array(__CLASS__, 'update_change_callback'));
+            add_action('wp_ajax_nopriv_update_change_callback',  array(__CLASS__, 'update_change_callback'));
+            
+
             // 删除设备接口
             add_action('wp_ajax_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));
             add_action('wp_ajax_nopriv_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));
@@ -200,7 +205,9 @@ if (!class_exists('DEMA_Admin_Interface')) {
                     'uuid' => isset($item['uuid']) ? sanitize_text_field($item['uuid']) : '默认uuid',
                     'type' => isset($item['type']) ? sanitize_text_field($item['type']) : '',
                     'new' => isset($item['new']) ? sanitize_text_field($item['new']) : '',
-                    'old' => isset($item['old']) ? sanitize_text_field($item['old']) : ''
+                    'old' => isset($item['old']) ? sanitize_text_field($item['old']) : '',
+                    'ch_name' => "默认名",
+                    'ch_describe' => "默认描述"
                 );
                 $wpdb->insert($table_name, $data);
             }
@@ -268,9 +275,78 @@ if (!class_exists('DEMA_Admin_Interface')) {
             header('Access-Control-Allow-Headers: Content-Type');
 
             // 获取前端传递的参数并进行输入验证
-            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : '';
-            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : '';
-            $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : '';
+            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : '';//唯一标识符
+            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : '';//修改的值
+            $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : '';//字段名
+
+            // 定义字段与类型的映射关系
+            $field_map = array(
+                'styleName' => 'styleName',
+                'styleNumber' => 'styleNumber',
+                'type' => 'is_enabled' //修改状态
+
+            );
+
+            // 确定要更新的字段
+            $field_name = isset($field_map[$type]) ? $field_map[$type] : '';
+
+            try {
+                if (!empty($field_name)) {
+                    // 使用预处理语句更新数据库中对应的数据
+                    $wpdb->update(
+                        $table_name,
+                        array($field_name => $data),
+                        array('uuid' => $uuid),
+                        '%s', // 字段类型
+                        '%s'  // 条件类型
+                    );
+
+                    // 返回更新成功的响应
+                    echo json_encode(array(
+                        'success' => true,
+                        'table_name' => $table_name,
+                        'type' => $type,
+                        'field_name' => $field_name,
+                        'data' => $data,
+                        'uuid' => $uuid
+                    ));
+                } else {
+                    // 未找到对应的字段名
+                    echo json_encode(array(
+                        'success' => false,
+                        'error' => '未找到对应的字段名'
+                    ));
+                }
+            } catch (Exception $e) {
+                // 返回更新失败的响应，包含详细的错误信息
+                echo json_encode(array(
+                    'success' => false,
+                    'error' => '数据库更新失败: ' . $e->getMessage()
+                ));
+            }
+
+
+
+            wp_die();
+        }
+
+         /**
+         * 修改设备变更信息接口
+         */
+        public static function update_change_callback()
+        {
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'custom_change';
+
+            // 设置跨域访问标头
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST');
+            header('Access-Control-Allow-Headers: Content-Type');
+
+            // 获取前端传递的参数并进行输入验证
+            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : '';//唯一标识符
+            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : '';//修改的值
+            $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : '';//字段名
 
             // 定义字段与类型的映射关系
             $field_map = array(

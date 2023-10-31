@@ -1,19 +1,19 @@
 /**
  * 设备详情 - 变更记录
  */
-import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Table, Empty, Form, Input,  } from "antd";
-import type { InputRef } from 'antd';
-import type { FormInstance } from 'antd/es/form';
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { Table, Empty, Form, Input } from "antd";
+import type { InputRef } from "antd";
+import type { FormInstance } from "antd/es/form";
 
+import { changeMySqlData } from "@/store/axios";
 
 import axios from "axios";
 import { Ajaxurl } from "@/store";
 import { replacements } from "@/store/dataReplace";
 import { ComputerChangeReturn } from "@/store/interface";
 
-import Demo from "@/components/page/details/drawer/ass/demo"
-
+import Demo from "@/components/page/details/drawer/ass/demo";
 
 //在嵌套的组件之间传递Form实例，使得表单可以进行联动
 const EditableContext = React.createContext<FormInstance<any> | null>(null);
@@ -74,11 +74,8 @@ const EditableCell: React.FC<EditableCellProps> = ({
       const values = await form.validateFields();
       toggleEdit();
       handleSave({ ...record, ...values });
-      
-      console.log(values)
-     
     } catch (errInfo) {
-      console.log('Save failed:', errInfo);
+      console.log("Save failed:", errInfo);
     }
   };
 
@@ -100,7 +97,11 @@ const EditableCell: React.FC<EditableCellProps> = ({
         <Input ref={inputRef} onPressEnter={save} onBlur={save} />
       </Form.Item>
     ) : (
-      <div className="editable-cell-value-wrap" style={{ paddingRight: 24 }} onClick={toggleEdit}>
+      <div
+        className="editable-cell-value-wrap"
+        style={{ paddingRight: 24 }}
+        onClick={toggleEdit}
+      >
         {children}
       </div>
     );
@@ -111,17 +112,18 @@ const EditableCell: React.FC<EditableCellProps> = ({
 
 type EditableTableProps = Parameters<typeof Table>[0];
 
-type ColumnTypes = Exclude<EditableTableProps['columns'], undefined>;
+type ColumnTypes = Exclude<EditableTableProps["columns"], undefined>;
 
 //准备表头
 //const columns: ColumnsType<ComputerChangeReturn> = [
-  const columns: (ColumnTypes[number] & { editable?: boolean; dataIndex: string })[] = [
+const columns: (ColumnTypes[number] & {
+  editable?: boolean;
+  dataIndex: string;
+})[] = [
   {
     title: "时间",
     dataIndex: "time",
     key: "time",
-   
-    
   },
   {
     title: "变更项目",
@@ -209,9 +211,8 @@ const App: React.FC<Props> = ({ data }) => {
     getData(data);
   }, [data]);
 
-
   //保存
-  const handleSave = (row:ComputerChangeReturn) => {
+  const handleSave = (row: ComputerChangeReturn) => {
     const newData = [...dataAxios];
     const index = newData.findIndex((item) => row.id === item.id);
     const item = newData[index];
@@ -219,7 +220,8 @@ const App: React.FC<Props> = ({ data }) => {
       ...item,
       ...row,
     });
-    setDataAxios(newData);//保存选项
+    setDataAxios(newData); //保存选项
+    console.log(newData); //打印选项的值
   };
 
   //覆盖默认的 table 元素
@@ -237,7 +239,7 @@ const App: React.FC<Props> = ({ data }) => {
     }
     return {
       ...col,
-      onCell: (record:ComputerChangeReturn) => ({
+      onCell: (record: ComputerChangeReturn) => ({
         record,
         editable: col.editable,
         dataIndex: col.dataIndex,
@@ -246,8 +248,6 @@ const App: React.FC<Props> = ({ data }) => {
       }),
     };
   });
-
-
 
   return (
     <>
@@ -263,18 +263,14 @@ const App: React.FC<Props> = ({ data }) => {
 
             {dataAxios.length !== 0 ? (
               //展示数据
-              <Table 
-              components={components}
-              rowClassName={() => 'editable-row'}
-              bordered
-
-             
-              
-
-
-              size="small" 
-              columns={columnss as ColumnTypes}
-              dataSource={dataAxios} />
+              <Table
+                components={components}
+                rowClassName={() => "editable-row"}
+                bordered
+                size="small"
+                columns={columnss as ColumnTypes}
+                dataSource={dataAxios}
+              />
             ) : (
               //没有数据
               <Empty description={<span>暂无记录</span>} />
@@ -283,7 +279,7 @@ const App: React.FC<Props> = ({ data }) => {
           {/**下载按钮 */}
         </div>
       )}
-      <Demo/>
+      <Demo />
     </>
   );
 };
@@ -293,7 +289,7 @@ const App: React.FC<Props> = ({ data }) => {
  * @returns
  */
 const Loading = () => {
-  return <p>Loading...</p>;
+  return <p>加载中...</p>;
 };
 
 /**
@@ -308,7 +304,5 @@ interface PropsError {
 const Error: React.FC<PropsError> = ({ message }) => {
   return <p>{message}</p>;
 };
-
-
 
 export default App;
