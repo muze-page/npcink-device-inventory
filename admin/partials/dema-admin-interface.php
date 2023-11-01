@@ -344,15 +344,16 @@ if (!class_exists('DEMA_Admin_Interface')) {
             header('Access-Control-Allow-Headers: Content-Type');
 
             // 获取前端传递的参数并进行输入验证
-            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : '';//唯一标识符
-            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : '';//修改的值
+            $id = isset($_POST['id']) ? sanitize_text_field($_POST['id']) : '';//id
             $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : '';//字段名
+            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : '';//修改的值
+           
 
             // 定义字段与类型的映射关系
             $field_map = array(
-                'styleName' => 'styleName',
-                'styleNumber' => 'styleNumber',
-                'type' => 'is_enabled' //修改状态
+                'ch_name' => 'ch_name',//修改姓名
+                'ch_describe' => 'ch_describe',//修改描述
+               
 
             );
 
@@ -365,7 +366,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
                     $wpdb->update(
                         $table_name,
                         array($field_name => $data),
-                        array('uuid' => $uuid),
+                        array('id' => $id),
                         '%s', // 字段类型
                         '%s'  // 条件类型
                     );
@@ -377,7 +378,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
                         'type' => $type,
                         'field_name' => $field_name,
                         'data' => $data,
-                        'uuid' => $uuid
+                        'id' => $id
                     ));
                 } else {
                     // 未找到对应的字段名

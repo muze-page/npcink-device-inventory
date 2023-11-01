@@ -69,14 +69,15 @@ export const changeMySql = async (data: string, uuid: string, type: string) => {
  */
 /**
  *
- * @param uuid 唯一标识符
- * @param data 修改后的值
+ * @param id 唯一ID
  * @param type 修改的字段名
+ * @param data 修改后的值
+ * 
  */
-export const changeMySqlData = async (data: string, uuid: string, type: string) => {
+export const changeMySqlData = async ( id: string, type: string,data: string,) => {
   const params = new URLSearchParams();
   params.append("action", "update_change_callback");
-  params.append("uuid", uuid);
+  params.append("id", id);
   params.append("data", data);
   params.append("type", type);
 
@@ -84,7 +85,7 @@ export const changeMySqlData = async (data: string, uuid: string, type: string) 
     const response = await axios.post<MysqlChange>(Ajaxurl, params);
 
     if (response.status === 200) {
-      console.log(response.data);
+      //console.log(response.data);
     } else {
       console.log("保存设置选项时出错：" + response.data);
     }

@@ -161,7 +161,7 @@ const replaceType = (data: ComputerChangeReturn[]) => {
 };
 
 interface Props {
-  data: string;
+  data: string; //UUID
 }
 const App: React.FC<Props> = ({ data }) => {
   const [dataAxios, setDataAxios] = useState<ComputerChangeReturn[]>([]); //待渲染的值
@@ -221,7 +221,8 @@ const App: React.FC<Props> = ({ data }) => {
       ...row,
     });
     setDataAxios(newData); //保存选项
-    console.log(newData); //打印选项的值
+    changeMySqlData(row.id, "ch_name", row.ch_name); //更新姓名
+    changeMySqlData(row.id, "ch_describe", row.ch_describe); //更新描述
   };
 
   //覆盖默认的 table 元素
