@@ -543,14 +543,14 @@ if (!class_exists('DEMA_Admin_Interface')) {
         }
 
 
-        
+
         /**
          * 添加数据导入接口
          */
         public static function import_config_data_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . 'custom_table';
+
 
             // 设置跨域访问标头
             header('Access-Control-Allow-Origin: *');
@@ -561,20 +561,40 @@ if (!class_exists('DEMA_Admin_Interface')) {
             $text_data = isset($_POST['data']) ? ($_POST['data']) : '';
             $data = json_decode(stripslashes($text_data), true);
 
+            $name = isset($_POST['name']) ? ($_POST['name']) : '';
+
             if (!empty($data)) {
                 // 构建插入数据的数组
                 $insert_data = array();
-                foreach ($data as $item) {
-                    $insert_data[] = array(
-                        'is_enabled' => isset($item['is_enabled']) ? $item['is_enabled'] : 1,
-                        'name' => isset($item['name']) ? $item['name'] : '',
-                        'styleName' => isset($item['styleName']) ? $item['styleName'] : null,
-                        'styleNumber' => isset($item['styleNumber']) ? $item['styleNumber'] : 0,
-                        'uuid' => isset($item['uuid']) ? $item['uuid'] : '',
-                        'dataNew' => isset($item['dataNew']) ? json_encode($item['dataNew']) : null,
-                        'dataOld' => isset($item['dataOld']) ? json_encode($item['dataOld']) : null
-                    );
+                if ($name == "custom_table") {
+                    foreach ($data as $item) {
+                        $insert_data[] = array(
+                            'is_enabled' => isset($item['is_enabled']) ? $item['is_enabled'] : 1,
+                            'name' => isset($item['name']) ? $item['name'] : '',
+                            'styleName' => isset($item['styleName']) ? $item['styleName'] : null,
+                            'styleNumber' => isset($item['styleNumber']) ? $item['styleNumber'] : 0,
+                            'uuid' => isset($item['uuid']) ? $item['uuid'] : '',
+                            'dataNew' => isset($item['dataNew']) ? json_encode($item['dataNew']) : null,
+                            'dataOld' => isset($item['dataOld']) ? json_encode($item['dataOld']) : null
+                        );
+                    }
                 }
+                if ($name == "custom_change") {
+                    foreach ($data as $item) {
+                        $insert_data[] = array(
+                            'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
+                            'time' => isset($item['time']) ? $item['time'] :  0,
+                            'type' => isset($item['type']) ? $item['type'] :  null,
+                            'new' => isset($item['new']) ? $item['new'] :  null,
+                            'old' => isset($item['old']) ? $item['old'] :  null,
+                            'ch_name' => isset($item['ch_name']) ? $item['ch_name'] :  null,
+                            'ch_describe' => isset($item['ch_describe']) ? $item['ch_describe'] :  null,
+                        );
+                    }
+                }
+
+                //准备数据库表名
+                $table_name = $wpdb->prefix . $name;
 
                 // 执行批量插入操作
                 foreach ($insert_data as $item) {
@@ -587,7 +607,8 @@ if (!class_exists('DEMA_Admin_Interface')) {
                 if ($result) {
                     $response = array(
                         'success' => true,
-                        'message' => '已成功导入'
+                        'message' => '已成功导入',
+                        'msg' => $name
                     );
                 } else {
                     $error_message = $wpdb->last_error;
