@@ -47,6 +47,15 @@ interface Props {
               uuid={data.uuid}
               type="styleName"
             />
+        
+          <div className="flex items-center ml-8 m-0">
+            编号：
+            <TextEditor
+              defaults={data.styleNumber}
+              uuid={data.uuid}
+              type="styleNumber"
+            />
+          </div>
           </div>
         </div>
         {/**操作系统 */}
@@ -65,14 +74,7 @@ interface Props {
             <img src={User} className="svg svgReversal" />
             <span>{data.name ?? "暂无昵称"}</span>
           </p>
-          <div className="flex items-center ml-8 m-0">
-            编号：
-            <TextEditor
-              defaults={data.styleNumber}
-              uuid={data.uuid}
-              type="styleNumber"
-            />
-          </div>
+         
           <div className="flex items-center ml-8 m-0">
             状态：
             <Switch

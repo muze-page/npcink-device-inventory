@@ -52,7 +52,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           <p className="text-sm font-bold text-zinc-800 leading-5 m-0">
             {data.styleName ?? "暂无备注"}
           </p>
-          <span>{data.styleNumber}</span>
+          <span>编号：{data.styleNumber}</span>
           {/*操作系统*/}
           <p className="mt-3">{data.meat.model}</p>
           {/*配置信息*/}
