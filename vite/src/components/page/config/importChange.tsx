@@ -36,7 +36,7 @@ const App: React.FC<Props> = ({ name }) => {
   //导出数据
   const downloadData = async () => {
     const jsonData = await exportSQLData(name);
-    const jsonString = JSON.stringify(jsonData);
+    const jsonString = JSON.stringify(jsonData.data);
     const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 

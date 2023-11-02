@@ -35,6 +35,7 @@ export const saveSQLData = async (optionObj: object) => {
 type MysqlChange = {
   message: string;
   status: string;
+  data: string;
 };
 /**
  *

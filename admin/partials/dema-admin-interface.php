@@ -574,8 +574,8 @@ if (!class_exists('DEMA_Admin_Interface')) {
                             'styleName' => isset($item['styleName']) ? $item['styleName'] : null,
                             'styleNumber' => isset($item['styleNumber']) ? $item['styleNumber'] : 0,
                             'uuid' => isset($item['uuid']) ? $item['uuid'] : '',
-                            'dataNew' => isset($item['dataNew']) ? json_encode($item['dataNew']) : null,
-                            'dataOld' => isset($item['dataOld']) ? json_encode($item['dataOld']) : null
+                            'dataNew' => isset($item['dataNew']) ? ($item['dataNew']) : null,
+                            'dataOld' => isset($item['dataOld']) ? ($item['dataOld']) : null
                         );
                     }
                 }
