@@ -13,7 +13,7 @@ import { Ajaxurl } from "@/store";
 import { replacements } from "@/store/dataReplace";
 import { ComputerChangeReturn } from "@/store/interface";
 
-import Demo from "@/components/page/details/drawer/ass/demo";
+
 
 //在嵌套的组件之间传递Form实例，使得表单可以进行联动
 const EditableContext = React.createContext<FormInstance<any> | null>(null);
@@ -280,7 +280,7 @@ const App: React.FC<Props> = ({ data }) => {
           {/**下载按钮 */}
         </div>
       )}
-      <Demo />
+      
     </>
   );
 };

@@ -27,7 +27,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
             // 修改设备变更信息接口
             add_action('wp_ajax_update_change_callback',  array(__CLASS__, 'update_change_callback'));
             add_action('wp_ajax_nopriv_update_change_callback',  array(__CLASS__, 'update_change_callback'));
-            
+
 
             // 删除设备接口
             add_action('wp_ajax_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));
@@ -275,9 +275,9 @@ if (!class_exists('DEMA_Admin_Interface')) {
             header('Access-Control-Allow-Headers: Content-Type');
 
             // 获取前端传递的参数并进行输入验证
-            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : '';//唯一标识符
-            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : '';//修改的值
-            $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : '';//字段名
+            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : ''; //唯一标识符
+            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : ''; //修改的值
+            $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : ''; //字段名
 
             // 定义字段与类型的映射关系
             $field_map = array(
@@ -330,7 +330,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
             wp_die();
         }
 
-         /**
+        /**
          * 修改设备变更信息接口
          */
         public static function update_change_callback()
@@ -344,16 +344,16 @@ if (!class_exists('DEMA_Admin_Interface')) {
             header('Access-Control-Allow-Headers: Content-Type');
 
             // 获取前端传递的参数并进行输入验证
-            $id = isset($_POST['id']) ? sanitize_text_field($_POST['id']) : '';//id
-            $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : '';//字段名
-            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : '';//修改的值
-           
+            $id = isset($_POST['id']) ? sanitize_text_field($_POST['id']) : ''; //id
+            $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : ''; //字段名
+            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : ''; //修改的值
+
 
             // 定义字段与类型的映射关系
             $field_map = array(
-                'ch_name' => 'ch_name',//修改姓名
-                'ch_describe' => 'ch_describe',//修改描述
-               
+                'ch_name' => 'ch_name', //修改姓名
+                'ch_describe' => 'ch_describe', //修改描述
+
 
             );
 
@@ -410,6 +410,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
 
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_table';
+            $table_change = $wpdb->prefix . 'custom_change';
 
             // 设置跨域访问标头
             header('Access-Control-Allow-Origin: *');
@@ -421,27 +422,38 @@ if (!class_exists('DEMA_Admin_Interface')) {
 
             // 使用预处理语句构建SQL查询
             $sql = $wpdb->prepare("DELETE FROM $table_name WHERE uuid = %s", $uuid);
+            $sql_change = $wpdb->prepare("DELETE FROM $table_change WHERE uuid = %s", $uuid);
 
-            // 执行删除操作
-            $result = $wpdb->query($sql);
+            // 开始事务
+            $wpdb->query('START TRANSACTION');
 
-            // 定义返回结果数组
-            $response = array();
+            try {
+                // 执行删除操作
+                $result = $wpdb->query($sql);
+                $result_change = $wpdb->query($sql_change);
 
-            if ($result !== false) {
-                $response['success'] = true;
-                $response['message'] = '行数据已成功删除';
-            } else {
-                $response['success'] = false;
-                $response['message'] = '删除行数据时发生错误';
+                if ($result === false || $result_change === false) {
+                    throw new Exception('删除数据时发生错误');
+                }
+
+                // 提交事务
+                $wpdb->query('COMMIT');
+
+                wp_send_json([
+                    'success' => true,
+                    'message' => '行数据已成功删除'
+                ]);
+            } catch (Exception $e) {
+                // 回滚事务
+                $wpdb->query('ROLLBACK');
+
+                wp_send_json([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ]);
+            } finally {
+                wp_die();
             }
-
-
-
-            // 返回JSON格式的结果
-            wp_send_json($response);
-
-            wp_die();
         }
 
         /**
