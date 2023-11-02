@@ -72,9 +72,13 @@ export const changeMySql = async (data: string, uuid: string, type: string) => {
  * @param id 唯一ID
  * @param type 修改的字段名
  * @param data 修改后的值
- * 
+ *
  */
-export const changeMySqlData = async ( id: string, type: string,data: string,) => {
+export const changeMySqlData = async (
+  id: string,
+  type: string,
+  data: string
+) => {
   const params = new URLSearchParams();
   params.append("action", "update_change_callback");
   params.append("id", id);
@@ -117,10 +121,39 @@ export const deltSQLData = async (uuid: string) => {
   }
 };
 
-//导入数据
-export const importSQLData = async (data: string): Promise<MysqlChange> => {
+/**
+ * 导出数据
+ * @param name 数据库名
+ * @returns
+ */
+export const exportSQLData = async (name: string): Promise<MysqlChange> => {
+  const params = new URLSearchParams();
+  params.append("action", "export_data_callback");
+  params.append("name", name);
+
+  try {
+    const response = await axios.post<MysqlChange>(Ajaxurl, params);
+    return response.data;
+  } catch (error: any) {
+    // 将错误信息保存到全局状态中
+    console.log("传出数据时出错：" + error.message);
+    throw new Error("传出数据时出错：" + error.message);
+  }
+};
+
+/**
+ * 导入数据
+ * @param name 数据库名
+ * @param data 导入数据
+ * @returns
+ */
+export const importSQLData = async (
+  name: string,
+  data: string
+): Promise<MysqlChange> => {
   const params = new URLSearchParams();
   params.append("action", "import_config_data_callback");
+  params.append("name", name);
   params.append("data", data);
 
   try {
@@ -128,7 +161,7 @@ export const importSQLData = async (data: string): Promise<MysqlChange> => {
     return response.data;
   } catch (error: any) {
     // 将错误信息保存到全局状态中
-    console.log("保存设置选项时出错：" + error.message);
-    throw new Error("保存设置选项时出错：" + error.message);
+    console.log("保存数据时出错：" + error.message);
+    throw new Error("保存数据时出错：" + error.message);
   }
 };

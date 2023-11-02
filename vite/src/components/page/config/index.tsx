@@ -1,10 +1,12 @@
 /**
  * 设置
  */
-import { Space, Button, Form, Input, message } from "antd";
-import { dataMySql, option,  Site } from "@/store";
-import { saveSQLData, importSQLData } from "@/store/axios";
-import { useState } from "react";
+
+import {  Button, Form, Input, message } from "antd";
+import { option, Site } from "@/store";
+import { saveSQLData } from "@/store/axios";
+
+import Export from "@/components/page/config/importChange";
 
 type FieldType = {
   route?: string;
@@ -64,47 +66,6 @@ const App: React.FC = () => {
     return Site + "/wp-json/npcink/v1/" + data;
   };
 
-  //导入数据
-
-  const [jsonContent, setJsonContent] = useState(null);
-  //选中数据
-  const handleFileChange = (event: any) => {
-    const file = event.target.files[0];
-    const reader = new FileReader();
-
-    reader.onload = (e: any) => {
-      const content = e.target.result;
-      const jsonData = JSON.parse(content);
-      setJsonContent(jsonData); //保存数据
-    };
-    reader.readAsText(file);
-  };
-
-  //保存到数据库
-  const importData = () => {
-    const jsonData = jsonContent;
-    const jsonString = JSON.stringify(jsonData);
-    importSQLData(jsonString);
-  };
-
-  //导出数据
-  const downloadData = () => {
-    const jsonData = dataMySql;
-    const jsonString = JSON.stringify(jsonData);
-    const blob = new Blob([jsonString], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "硬件管理数据-导出文件.json";
-    link.click();
-
-    // 等待一段时间后释放 URL 对象
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-    }, 1000);
-  };
-
   return (
     <>
       {contextHolder}
@@ -141,16 +102,12 @@ const App: React.FC = () => {
         >
           <Input.Password />
         </Form.Item>
-        <Form.Item label="数据管理" extra={"方便数据迁移操作"}>
-          <Space>
-            <input type="file" accept=".json" onChange={handleFileChange} />
-            <Button type="text" onClick={importData}>
-              导入
-            </Button>
-            <Button type="text" onClick={downloadData}>
-              导出
-            </Button>
-          </Space>
+
+        <Form.Item label="测试 - 基础数据" extra={"方便数据迁移操作"}>
+          <Export name="custom_table" />
+        </Form.Item>
+        <Form.Item label="测试 - 变更数据" extra={"方便数据迁移操作"}>
+          <Export name="custom_change" />
         </Form.Item>
 
         <Form.Item wrapperCol={{ offset: 8, span: 16 }}>

@@ -12,11 +12,14 @@ if (!class_exists('DEMA_Admin_Interface')) {
 
         public static function run()
         {
-            //添加接收数据api接口
+            //添加接收设备数据api接口
             add_action('rest_api_init', array(__CLASS__, 'create_custom_endpoint'));
 
+            // 保存设置选项接口
+            add_action('wp_ajax_save_object_option', array(__CLASS__, 'save_object_option_callback'));
+            add_action('wp_ajax_nopriv_save_object_option', array(__CLASS__, 'save_object_option_callback'));
+
             //添加查询变更接口
-            // 添加Ajax请求处理函数
             add_action('wp_ajax_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
             add_action('wp_ajax_nopriv_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
 
@@ -33,13 +36,13 @@ if (!class_exists('DEMA_Admin_Interface')) {
             add_action('wp_ajax_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));
             add_action('wp_ajax_nopriv_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));
 
-            //导入数据接口
+            //导出数据接口
+            add_action('wp_ajax_export_data_callback', array(__CLASS__, 'export_data_callback'));
+            add_action('wp_ajax_nopriv_export_data_callback', array(__CLASS__, 'export_data_callback'));
 
+            //导入数据接口
             add_action('wp_ajax_import_config_data_callback', array(__CLASS__, 'import_config_data_callback'));
             add_action('wp_ajax_nopriv_import_config_data_callback', array(__CLASS__, 'import_config_data_callback'));
-            // 保存设置选项接口
-            add_action('wp_ajax_save_object_option', array(__CLASS__, 'save_object_option_callback'));
-            add_action('wp_ajax_nopriv_save_object_option', array(__CLASS__, 'save_object_option_callback'));
         }
 
         /**
@@ -212,6 +215,42 @@ if (!class_exists('DEMA_Admin_Interface')) {
                 $wpdb->insert($table_name, $data);
             }
         }
+
+        /**
+         * 添加选项保存接口
+         */
+        public static  function save_object_option_callback()
+        {
+
+            // 设置跨域访问标头
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST');
+            header('Access-Control-Allow-Headers: Content-Type');
+
+            // 获取通过 Ajax POST 请求传递的对象数据
+            $object_data = $_POST['object_data'];
+
+            // 将 JSON 字符串解析为 PHP 对象
+            $object = json_decode(stripslashes($object_data));
+
+            // 保存设置选项
+            update_option(self::$option, $object);
+
+
+
+            // 发送成功响应
+            $response = array(
+                'message' => '设置选项已保存！',
+                'object' => $object,
+
+            );
+
+
+
+            // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义
+            wp_send_json($response, 200, JSON_UNESCAPED_UNICODE);
+        }
+
         /**
          * 创建查询接口，
          */
@@ -457,6 +496,55 @@ if (!class_exists('DEMA_Admin_Interface')) {
         }
 
         /**
+         * 添加数据导出接口
+         */
+        public static function export_data_callback()
+        {
+            global $wpdb;
+
+
+            // 设置跨域访问标头
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: POST');
+            header('Access-Control-Allow-Headers: Content-Type');
+
+            // 获取前端传递的参数并进行输入验证
+            $name = isset($_POST['name']) ? sanitize_text_field($_POST['name']) : '';
+
+            // 检查表名是否合法
+            if (!preg_match('/^[a-zA-Z_]+$/', $name)) {
+                wp_send_json([
+                    'success' => false,
+                    'message' => '无效的表名'
+                ]);
+                return;
+            }
+
+            // 构建SQL语句
+            $table_name = $wpdb->prefix . $name;
+            $sql = "SELECT * FROM $table_name";
+
+            // 执行查询操作
+            $rows = $wpdb->get_results($sql, ARRAY_A);
+
+            if ($rows) {
+                wp_send_json([
+                    'success' => true,
+                    'data' => $rows
+                ]);
+            } else {
+                wp_send_json([
+                    'success' => false,
+                    'message' => '查询数据时发生错误'
+                ]);
+            }
+
+            wp_die();
+        }
+
+
+        
+        /**
          * 添加数据导入接口
          */
         public static function import_config_data_callback()
@@ -523,40 +611,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
             wp_die();
         }
 
-        /**
-         * 添加选项保存接口
-         */
-        public static  function save_object_option_callback()
-        {
 
-            // 设置跨域访问标头
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST');
-            header('Access-Control-Allow-Headers: Content-Type');
-
-            // 获取通过 Ajax POST 请求传递的对象数据
-            $object_data = $_POST['object_data'];
-
-            // 将 JSON 字符串解析为 PHP 对象
-            $object = json_decode(stripslashes($object_data));
-
-            // 保存设置选项
-            update_option(self::$option, $object);
-
-
-
-            // 发送成功响应
-            $response = array(
-                'message' => '设置选项已保存！',
-                'object' => $object,
-
-            );
-
-
-
-            // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义
-            wp_send_json($response, 200, JSON_UNESCAPED_UNICODE);
-        }
 
 
 
