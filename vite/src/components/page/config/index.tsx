@@ -2,7 +2,7 @@
  * 设置
  */
 
-import {  Button, Form, Input, message } from "antd";
+import { Button, Form, Input, Switch, message } from "antd";
 import { option, Site } from "@/store";
 import { saveSQLData } from "@/store/axios";
 
@@ -11,6 +11,7 @@ import Export from "@/components/page/config/importChange";
 type FieldType = {
   route?: string;
   password?: string;
+  delete_mysql?: boolean;
 };
 
 const App: React.FC = () => {
@@ -102,11 +103,18 @@ const App: React.FC = () => {
         >
           <Input.Password />
         </Form.Item>
+        <Form.Item<FieldType>
+          label="删除插件用数据库"
+          name="delete_mysql"
+          extra={"删除插件的同时删除插件用数据库"}
+        >
+          <Switch />
+        </Form.Item>
 
-        <Form.Item label="测试 - 基础数据" extra={"方便数据迁移操作"}>
+        <Form.Item label="基础数据" extra={"方便数据迁移操作"}>
           <Export name="custom_table" />
         </Form.Item>
-        <Form.Item label="测试 - 变更数据" extra={"方便数据迁移操作"}>
+        <Form.Item label="变更数据" extra={"方便数据迁移操作"}>
           <Export name="custom_change" />
         </Form.Item>
 

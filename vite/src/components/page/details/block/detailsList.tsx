@@ -65,7 +65,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           {/*昵称*/}
           <p className="flex items-center mt-4">
             <img src={User} className="svg" />
-            <span>{data.name ?? "暂无"}</span>
+            <span className="whitespace-nowrap overflow-hidden text-ellipsis">{data.name ?? "暂无"}</span>
           </p>
           {/**状态信息 */}
           <div className="mt-4 flex items-center ">

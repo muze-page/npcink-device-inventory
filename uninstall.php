@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Fired when the plugin is uninstalled.
+ * 在卸载插件时激发。
  *
  * When populating this file, consider the following flow
  * of control:

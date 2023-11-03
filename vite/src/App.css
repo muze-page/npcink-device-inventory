@@ -2,7 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-
+@layer base {
+  button,
+  [type="button"],
+  [type="reset"],
+  [type="submit"] {
+    background-color: rgba(0, 0, 0, 0.25);
+  }
+}
 
 @layer components {
   /*设备详情 mac*/

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Fired during plugin deactivation
+ * 插件停用
  *
  * @link       https://www.npc.ink
  * @since      1.0.0
