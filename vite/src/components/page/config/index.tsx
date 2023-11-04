@@ -104,9 +104,10 @@ const App: React.FC = () => {
           <Input.Password />
         </Form.Item>
         <Form.Item<FieldType>
-          label="删除插件用数据库"
+          label="删除插件数据"
           name="delete_mysql"
-          extra={"删除插件的同时删除插件用数据库"}
+          valuePropName="checked"
+          extra={"删除插件用数据库和选项值"}
         >
           <Switch />
         </Form.Item>

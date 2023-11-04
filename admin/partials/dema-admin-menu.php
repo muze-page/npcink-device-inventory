@@ -30,7 +30,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
             add_submenu_page(
                 'plugins.php',
                 '硬件管理',
-                '硬件',
+                '硬件管理',
                 'administrator',
                 'dema_seting',
                 array(__CLASS__, 'menu_displays'),
