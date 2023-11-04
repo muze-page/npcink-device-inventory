@@ -9,7 +9,7 @@ if (!class_exists('Mare_Admin_Uninstall')) {
             /**
              * 引入获取选项的方法
              */
-            require_once plugin_dir_path(dirname(__DIR__)) . 'admin/dema-admin-interface.php';
+            require plugin_dir_path(__FILE__) . 'dema-admin-interface.php';
 
             //获取选项值
             $config = DEMA_Admin_Interface::get_seting('delete_mysql');

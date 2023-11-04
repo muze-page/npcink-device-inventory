@@ -89,3 +89,5 @@ run_dema();
     $links[] = '<a href="'.get_admin_url(null, 'plugins.php?page=dema_seting') . '">' . __('设置','n') . '</a>';
     return $links;
 });
+
+
