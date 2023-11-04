@@ -26,6 +26,16 @@
  */
 
 // If uninstall not called from WordPress, then exit.
-if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+if (!defined('WP_UNINSTALL_PLUGIN')) {
 	exit;
 }
+
+
+//执行卸载插件时的动作
+require plugin_dir_path(__FILE__) . 'admin/partials/dema-admin-uninstall.php';
+function run_mare_uninstall()
+{
+	$plugin = new Mare_Admin_Uninstall();
+	$plugin->run();
+}
+run_mare_uninstall();
