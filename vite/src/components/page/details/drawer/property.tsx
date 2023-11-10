@@ -17,6 +17,8 @@ import Msg from "@/components/page/details/drawer/proHeader"
 import Info from "@/components/page/details/drawer/ass/info";
 import Change from "@/components/page/details/drawer/ass/change";
 import Seting from "@/components/page/details/drawer/ass/seting";
+import Detailed from "@/components/block/detailed/index"
+
 
 import MacOs from "@/assets/macos.png";
 import Win from "@/assets/windows_s.png";
@@ -60,6 +62,16 @@ const App: React.FC<Props> = ({ data }) => {
         </span>
       ),
       children: <Seting data={data.uuid} />,
+    },
+    {
+      key: "4",
+      label: (
+        <span>
+          <SettingOutlined />
+          详细信息
+        </span>
+      ),
+      children: <Detailed  data={data.dataNew}/>,
     },
   ];
 

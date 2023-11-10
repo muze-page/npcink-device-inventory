@@ -77,3 +77,23 @@ export const diskScreenList = [
   { value: "1024", label: "1T" },
   { value: "2048", label: "2T" },
 ];
+
+
+//硬件详细配置表头
+export const columnsTable = [
+  {
+    title: "编号",
+    dataIndex: "key",
+    key: "key",
+  },
+  {
+    title: "属性",
+    dataIndex: "label",
+    key: "label",
+  },
+  {
+    title: "值",
+    dataIndex: "value",
+    key: "value",
+  },
+];

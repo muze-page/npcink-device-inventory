@@ -70,7 +70,7 @@ const App: React.FC<Props> = ({ osType, data }) => {
 
       {/**昵称 */}
       <div className="mt-5 flex items-center">
-        <p className="flex items-center">
+        <div className="flex items-center">
           <img src={User} className="svg svgReversal" />
 
           <TextEditor
@@ -79,7 +79,7 @@ const App: React.FC<Props> = ({ osType, data }) => {
             type="name"
             default_value="未有昵称"
           />
-        </p>
+        </div>
 
         <div className="flex items-center ml-8 m-0">
           状态：

@@ -1,5 +1,5 @@
 //公共方法
-import {  Replacements, TableData } from "@/store/interface";
+import { Replacements, TableData } from "@/store/interface";
 
 /**
  *拿到指定键的值并统计该键的出现次数
@@ -45,7 +45,7 @@ export const sum_order = (data: DataItem[], thresholds: Thresholds) => {
   const result: ResultItem[] = [];
 
   data.forEach(({ size }) => {
-    const sizeInGB = size / (1024 ** 3);
+    const sizeInGB = size / 1024 ** 3;
     for (const [type, threshold] of Object.entries(thresholds)) {
       if (sizeInGB <= threshold) {
         const index = result.findIndex((item) => item.type === type);
@@ -61,7 +61,6 @@ export const sum_order = (data: DataItem[], thresholds: Thresholds) => {
 
   return result;
 };
-
 
 //关键词替换TODO:改进，只要部分值出现，就整体替换，提高通用性
 /**
@@ -83,6 +82,23 @@ export const replaceType = (
   });
 };
 
+/**
+ * 字节转mb
+ */
+export const bytesToMB = (bytes: number | null, type: string) => {
+  if (bytes === null) {
+    return "0";
+  }
+  if (type == "MB") {
+    return (bytes / (1024 * 1024)).toFixed(2) + "MB";
+  }
+  if (type == "GB") {
+    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + "GB";
+  }
+  if (type == "TB") {
+    return (bytes / (1024 * 1024 * 1024 * 1024)).toFixed(2) + "TB";
+  }
+};
 /**
  * 
  const data =[
