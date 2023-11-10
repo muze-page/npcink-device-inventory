@@ -14,6 +14,7 @@ import Baseboard from "@/components/block/detailed/show/baseboard";
 import Monitor from "@/components/block/detailed/show/monitor";
 import Disk from "@/components/block/detailed/show/disk";
 import Net from "@/components/block/detailed/show/net";
+import Bios from "@/components/block/detailed/show/bios";
 
 interface Props {
   data: Computer;
@@ -36,6 +37,7 @@ const App: React.FC<Props> = ({ data }) => {
     { key: "5", label: "主板", children: <Baseboard data={data.baseboard} /> },
     { key: "6", label: "硬盘", children: <Disk data={data.diskLayout} /> },
     { key: "7", label: "网卡", children: <Net data={data.net} /> },
+    { key: "8", label: "BIOS", children: <Bios data={data.bios} /> },
   ];
 
   return (

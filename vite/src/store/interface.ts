@@ -37,7 +37,7 @@ export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
 //硬件基本信息
 export interface Computer {
   baseboard: ComputerBaseboard;
-  bios: object;
+  bios: ComputerBios;
   chassis: object;
   cpu: ComputerCpu;
   diskLayout: ComputerDevice[];
@@ -258,6 +258,17 @@ export interface ComputerNet {
   ieee8021xAuth: string;
   carrierChanges: number;
   ieee8021xState: string;
+}
+
+//BIOS
+export interface ComputerBios {
+  vendor: string;
+  version: string;
+  releaseDate: string;
+  revision: string;
+  langage: string;
+  features: string;
+  serial: string;
 }
 
 //不同的设备不同的背景色
