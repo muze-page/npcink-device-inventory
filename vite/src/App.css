@@ -34,7 +34,7 @@
   }
   /*通用 - 按钮*/
   .bt {
-    @apply mx-2 px-2  hover:bg-white hover:bg-opacity-10 hover:rounded-lg;
+    @apply mx-2 px-2 rounded-lg  hover:bg-white hover:bg-opacity-10 ;
   }
 }
 

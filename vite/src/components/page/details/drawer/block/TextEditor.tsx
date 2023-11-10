@@ -9,13 +9,19 @@ import { EditOutlined } from "@ant-design/icons";
 import { AppContext } from "@/store/setingContext";
 import { changeMySql } from "@/store/axios";
 interface PropsEditor {
-  defaults: string; //初始值
+  default_start: string; //初始值
   uuid: string; //标识符
   type: string; //字段名
+  default_value: string; //默认值
 }
-const TextEditor: React.FC<PropsEditor> = ({ defaults, uuid, type }) => {
+const TextEditor: React.FC<PropsEditor> = ({
+  default_start,
+  uuid,
+  type,
+  default_value,
+}) => {
   const [editing, setEditing] = useState(false); //编辑状态
-  const [text, setText] = useState(defaults || "暂无备注"); //保存值
+  const [text, setText] = useState(default_start || default_value); //保存值
   const [editedText, setEditedText] = useState(""); //保存输入框中的值
 
   const { handleTypeUpdate } = useContext(AppContext);
@@ -65,7 +71,7 @@ const TextEditor: React.FC<PropsEditor> = ({ defaults, uuid, type }) => {
       ) : (
         <div>
           <span>{text}</span>
-          <button onClick={handleEditClick} className="ml-2">
+          <button onClick={handleEditClick} className="ml-2 bg-inherit">
             <EditOutlined twoToneColor="#fff" />
           </button>
         </div>

@@ -328,8 +328,8 @@ if (!class_exists('DEMA_Admin_Interface')) {
             $field_map = array(
                 'styleName' => 'styleName',
                 'styleNumber' => 'styleNumber',
-                'type' => 'is_enabled' //修改状态
-
+                'type' => 'is_enabled' ,//修改状态
+                'name' => 'name' //修改名字
             );
 
             // 确定要更新的字段
