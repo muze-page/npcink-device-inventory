@@ -90,13 +90,13 @@ export const bytesToMB = (bytes: number | null, type: string) => {
     return "0";
   }
   if (type == "MB") {
-    return (bytes / (1024 * 1024)).toFixed(2) + "MB";
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
   }
   if (type == "GB") {
-    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + "GB";
+    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
   }
   if (type == "TB") {
-    return (bytes / (1024 * 1024 * 1024 * 1024)).toFixed(2) + "TB";
+    return (bytes / (1024 * 1024 * 1024 * 1024)).toFixed(2) + " TB";
   }
 };
 /**
