@@ -9,6 +9,8 @@ interface Props {
   data: ComputerControllers[];
 }
 const App: React.FC<Props> = ({ data }) => {
+  console.log("显卡");
+  console.log(data);
   const formattedData = (item: ComputerControllers) => {
     const arr = [
       { key: "1", label: "供应商", value: item.vendor },
@@ -29,11 +31,10 @@ const App: React.FC<Props> = ({ data }) => {
     <>
       {data.map((item, index) => {
         return (
-          <Table
-            key={index}
-            dataSource={formattedData(item)}
-            columns={columnsTable}
-          />
+          <div key={index}>
+          <p className="font-black my-2 text-xl">显卡 - {index+1}</p>
+          <Table dataSource={formattedData(item)} columns={columnsTable} />
+        </div>
         );
       })}
     </>

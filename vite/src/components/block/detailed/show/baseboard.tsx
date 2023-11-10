@@ -9,24 +9,22 @@ interface Props {
   data: ComputerBaseboard;
 }
 const App: React.FC<Props> = ({ data }) => {
-  console.log("CPU");
+  console.log("主板");
   console.log(data);
   // CPU信息的数组
-  const cpuItems = [
-    {key: "1", label: "制造商", value: data.manufacturer },
-    {key: "2", label: "型号", value: data.model },
-    {key: "3", label: "版本", value: data.version },
-    {key: "4", label: "序列号", value: data.serial },
-    {key: "5", label: "资产标签", value: data.assetTag },
-    {key: "6", label: "最大内存", value: bytesToMB(data.memMax, "GB") },
-    {key: "7", label: "内存插槽", value: data.memslots },
-
-   
+  const Items = [
+    { key: "1", label: "制造商", value: data.manufacturer },
+    { key: "2", label: "型号", value: data.model },
+    { key: "3", label: "版本", value: data.version },
+    { key: "4", label: "序列号", value: data.serial },
+    { key: "5", label: "资产标签", value: data.assetTag },
+    { key: "6", label: "最大内存", value: bytesToMB(data.memMax, "GB") },
+    { key: "7", label: "内存插槽", value: data.memslots },
   ];
 
   return (
     <>
-      <Table dataSource={cpuItems} columns={columnsTable} />
+      <Table dataSource={Items} columns={columnsTable} />
     </>
   );
 };

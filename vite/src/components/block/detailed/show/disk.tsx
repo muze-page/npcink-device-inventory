@@ -9,6 +9,8 @@ interface Props {
   data: ComputerDevice[];
 }
 const App: React.FC<Props> = ({ data }) => {
+  console.log("硬盘");
+  console.log(data);
   const formattedData = (item: ComputerDevice) => {
     const arr = [
       { key: "1", label: "设备", value: item.device },

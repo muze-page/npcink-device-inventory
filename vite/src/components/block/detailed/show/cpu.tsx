@@ -3,7 +3,7 @@
  */
 import { Table } from "antd";
 import { ComputerCpu } from "@/store/interface";
-import { bytesToMB,judge_bool } from "@/store/tool";
+import { bytesToMB, judge_bool } from "@/store/tool";
 import { columnsTable } from "@/store/dataReplace";
 interface Props {
   data: ComputerCpu;
@@ -12,7 +12,7 @@ const App: React.FC<Props> = ({ data }) => {
   console.log("CPU");
   console.log(data);
   // CPU信息的数组
-  const cpuItems = [
+  const Items = [
     { key: "1", label: "制造者", value: data.manufacturer },
     { key: "2", label: "品牌", value: data.brand },
     { key: "3", label: "速度", value: data.speed },
@@ -41,7 +41,7 @@ const App: React.FC<Props> = ({ data }) => {
 
   return (
     <>
-      <Table dataSource={cpuItems} columns={columnsTable} />
+      <Table dataSource={Items} columns={columnsTable} />
     </>
   );
 };

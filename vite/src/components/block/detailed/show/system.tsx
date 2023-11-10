@@ -13,23 +13,21 @@ const App: React.FC<Props> = ({ data }) => {
   console.log("系统");
   console.log(data);
 
-  const cpuItems = [
-    { key: "1",label: "厂家", value: data.manufacturer },
-    { key: "2",label: "型号", value: data.model },
-    { key: "3",label: "版本", value: data.version },
-    { key: "4",label: "序列号", value: data.serial },
-    { key: "5",label: "货号", value: data.sku },
-    { key: "6",label: "虚拟机", value: judge_bool(data.virtual) },
-    { key: "7",label: "UUID", value: data.uuid },
-    { key: "8",label: "虚拟主机", value: judge_bool(data.virtualHost) },
-    { key: "9",label: "树莓", value: data.raspberry },
-
-   
+  const Items = [
+    { key: "1", label: "厂家", value: data.manufacturer },
+    { key: "2", label: "型号", value: data.model },
+    { key: "3", label: "版本", value: data.version },
+    { key: "4", label: "序列号", value: data.serial },
+    { key: "5", label: "货号", value: data.sku },
+    { key: "6", label: "虚拟机", value: judge_bool(data.virtual) },
+    { key: "7", label: "UUID", value: data.uuid },
+    { key: "8", label: "虚拟主机", value: judge_bool(data.virtualHost) },
+    { key: "9", label: "树莓", value: data.raspberry },
   ];
 
   return (
     <>
-      <Table dataSource={cpuItems} columns={columnsTable} />
+      <Table dataSource={Items} columns={columnsTable} />
     </>
   );
 };

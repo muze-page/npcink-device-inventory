@@ -13,7 +13,7 @@ const App: React.FC<Props> = ({ data }) => {
   console.log("OS");
   console.log(data);
 
-  const cpuItems = [
+  const Items = [
     { key: "1", label: "平台", value: data.platform },
     { key: "2", label: "发行版", value: data.distro },
     { key: "3", label: "版本号", value: data.release },
@@ -34,7 +34,7 @@ const App: React.FC<Props> = ({ data }) => {
 
   return (
     <>
-      <Table dataSource={cpuItems} columns={columnsTable} />
+      <Table dataSource={Items} columns={columnsTable} />
     </>
   );
 };

@@ -11,7 +11,7 @@ interface Props {
 const App: React.FC<Props> = ({ data }) => {
   console.log("机箱");
   console.log(data);
-  const cpuItems = [
+  const Items = [
     { key: "1", label: "厂家", value: data.manufacturer },
     { key: "2", label: "型号", value: data.model },
     { key: "3", label: "类型", value: data.type },
@@ -23,7 +23,7 @@ const App: React.FC<Props> = ({ data }) => {
 
   return (
     <>
-      <Table dataSource={cpuItems} columns={columnsTable} />
+      <Table dataSource={Items} columns={columnsTable} />
     </>
   );
 };

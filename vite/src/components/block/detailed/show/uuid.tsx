@@ -12,14 +12,14 @@ const App: React.FC<Props> = ({ data }) => {
   console.log("UUID");
   console.log(data);
 
-  const cpuItems = [
+  const Items = [
     { key: "1", label: "系统", value: data.os },
     { key: "2", label: "硬件", value: data.hardware },
   ];
 
   return (
     <>
-      <Table dataSource={cpuItems} columns={columnsTable} />
+      <Table dataSource={Items} columns={columnsTable} />
     </>
   );
 };
