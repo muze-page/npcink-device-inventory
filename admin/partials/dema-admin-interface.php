@@ -90,9 +90,11 @@ if (!class_exists('DEMA_Admin_Interface')) {
                 );
             }
 
-            $name = $data['name'];
-            $datas = json_encode($data['data']);
-            $uuid_hardware = $data['data']['uuid']['hardware'];
+            $uuid_hardware = $data['data']['uuid']['hardware'];//唯一UUID
+            $name = $data['name'];//姓名
+            $state= $data['state'];//状态
+            $datas = json_encode($data['data']);//数据
+            
 
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_table';
@@ -112,9 +114,10 @@ if (!class_exists('DEMA_Admin_Interface')) {
                     [
                         'uuid' => $uuid_hardware,
                         'name' => $name,
+                        'is_enabled'=>$state,
                         'dataNew' => $datas,
                     ],
-                    ['%s', '%s', '%s']
+                    ['%s', '%s','%s', '%s']
                 );
 
                 $response = [
@@ -130,11 +133,12 @@ if (!class_exists('DEMA_Admin_Interface')) {
                         $table_name,
                         [
                             'name' => $name,
+                            'is_enabled'=>$state,
                             'dataOld' => $existingData['dataNew'],
                             'dataNew' => $datas,
                         ],
                         ['id' => $existingData['id']],
-                        ['%s', '%s', '%s'],
+                        ['%s', '%s', '%s','%s'],
                         ['%d']
                     );
 
@@ -175,6 +179,8 @@ if (!class_exists('DEMA_Admin_Interface')) {
 
             return new WP_REST_Response($response, 200);
         }
+
+
         /**
          * 检测数据变化
          */

@@ -150,10 +150,10 @@ const App: React.FC = () => {
         ))}
       </div>
       {/**没有数据 */}
-      {displayData.length === 0 && <Empty className="mt-10" />}
+      {screenData.length === 0 && <Empty className="mt-10" />}
 
       {/**分页 */}
-      {displayData.length > pageSize && (
+      {screenData.length > pageSize && (
         <div className="mt-2">
           <Pagination
             current={currentPage}
