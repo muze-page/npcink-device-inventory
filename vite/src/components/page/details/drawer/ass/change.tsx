@@ -131,7 +131,12 @@ const columns: (ColumnTypes[number] & {
     key: "type",
   },
   {
-    title: "原配置",
+    title: "新配置",
+    dataIndex: "new",
+    key: "new",
+  },
+  {
+    title: "旧配置",
     dataIndex: "old",
     key: "old",
   },
