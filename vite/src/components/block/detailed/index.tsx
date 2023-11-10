@@ -12,6 +12,9 @@ import Memory from "@/components/block/detailed/show/memory";
 import Graphics from "@/components/block/detailed/show/graphics";
 import Baseboard from "@/components/block/detailed/show/baseboard";
 import Monitor from "@/components/block/detailed/show/monitor";
+import Disk from "@/components/block/detailed/show/disk";
+import Net from "@/components/block/detailed/show/net";
+
 interface Props {
   data: Computer;
 }
@@ -31,6 +34,8 @@ const App: React.FC<Props> = ({ data }) => {
       children: <Monitor data={data.graphics.displays} />,
     },
     { key: "5", label: "主板", children: <Baseboard data={data.baseboard} /> },
+    { key: "6", label: "硬盘", children: <Disk data={data.diskLayout} /> },
+    { key: "7", label: "网卡", children: <Net data={data.net} /> },
   ];
 
   return (

@@ -4,7 +4,7 @@
 import { Table } from "antd";
 import { ComputerRam } from "@/store/interface";
 import { columnsTable } from "@/store/dataReplace";
-import { bytesToMB } from "@/store/tool";
+import { bytesToMB,judge_bool } from "@/store/tool";
 interface Props {
   data: ComputerRam[];
 }
@@ -14,7 +14,7 @@ const App: React.FC<Props> = ({ data }) => {
       { key: "1", label: "大小", value: bytesToMB(item.size, "GB") },
       { key: "2", label: "内存库", value: item.bank },
       { key: "3", label: "内存类型", value: item.type },
-      { key: "4", label: "ECC内存", value: item.ecc },
+      { key: "4", label: "ECC内存", value: judge_bool(item.ecc) },
       { key: "5", label: "时钟速度", value: item.clockSpeed },
       { key: "6", label: "外形尺寸", value: item.formFactor },
       { key: "7", label: "制造者", value: item.manufacturer },
@@ -31,11 +31,12 @@ const App: React.FC<Props> = ({ data }) => {
     <>
       {data.map((item, index) => {
         return (
-          <Table
-            key={index}
-            dataSource={formattedData(item)}
-            columns={columnsTable}
-          />
+          <>
+            <div key={index}>
+              <p className="font-black my-2 text-xl">内存 - {index+1}</p>
+              <Table dataSource={formattedData(item)} columns={columnsTable} />
+            </div>
+          </>
         );
       })}
     </>

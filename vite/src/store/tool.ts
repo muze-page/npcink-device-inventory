@@ -99,6 +99,22 @@ export const bytesToMB = (bytes: number | null, type: string) => {
     return (bytes / (1024 * 1024 * 1024 * 1024)).toFixed(2) + " TB";
   }
 };
+
+/**
+ * 判断布尔值
+ */
+export const judge_bool = (boo: any) => {
+  if (boo === true) {
+    return "是";
+  }
+
+  if (boo === false) {
+    return "否";
+  }
+
+  return "未知";
+};
+
 /**
  * 
  const data =[

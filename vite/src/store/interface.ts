@@ -222,6 +222,19 @@ export interface ComputerDevice {
   sectorsPerTrack: number | null;
   firmwareRevision: string;
   tracksPerCylinder: number | null;
+  smartData: string;
+  smartAttributes: string;
+  smartError: string;
+  smartSelfTest: string;
+  smartAvailable: string;
+  smartEnabled: string;
+  smartEnabledDefault: string;
+  smartAvailableDefault: string;
+  smartSelfTestDefault: string;
+  smartAttributesDefault: string;
+  smartErrorDefault: string;
+  smartStatusDefault: string;
+  smartDataDefault: object;
 }
 //网口
 export interface ComputerNet {

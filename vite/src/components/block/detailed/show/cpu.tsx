@@ -3,7 +3,7 @@
  */
 import { Table } from "antd";
 import { ComputerCpu } from "@/store/interface";
-import { bytesToMB } from "@/store/tool";
+import { bytesToMB,judge_bool } from "@/store/tool";
 import { columnsTable } from "@/store/dataReplace";
 interface Props {
   data: ComputerCpu;
@@ -32,7 +32,7 @@ const App: React.FC<Props> = ({ data }) => {
     { key: "17", label: "校订", value: data.revision },
     { key: "18", label: "电压", value: data.voltage },
     { key: "19", label: "处理器标志", value: data.flags },
-    { key: "20", label: "虚拟化", value: data.virtualization },
+    { key: "20", label: "虚拟化", value: judge_bool(data.virtualization) },
     { key: "21", label: "L1数据", value: bytesToMB(data.cache.l1d, "MB") },
     { key: "22", label: "L1指令", value: bytesToMB(data.cache.l1i, "MB") },
     { key: "23", label: "L2缓存", value: bytesToMB(data.cache.l2, "MB") },
