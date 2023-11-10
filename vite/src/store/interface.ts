@@ -38,7 +38,7 @@ export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
 export interface Computer {
   baseboard: ComputerBaseboard;
   bios: ComputerBios;
-  chassis: object;
+  chassis: ComputerChassis; //机箱
   cpu: ComputerCpu;
   diskLayout: ComputerDevice[];
   graphics: {
@@ -153,6 +153,8 @@ export interface ComputerOS {
   logofile: string;
   platform: string;
   servicepack: string;
+  hypervisor: string;
+  remoteSession: string;
 }
 
 //操作系统
@@ -269,6 +271,17 @@ export interface ComputerBios {
   langage: string;
   features: string;
   serial: string;
+}
+
+//机箱
+export interface ComputerChassis {
+  manufacturer: string;
+  model: string;
+  type: string;
+  version: string;
+  serial: string;
+  assetTag: string;
+  sku: string;
 }
 
 //不同的设备不同的背景色

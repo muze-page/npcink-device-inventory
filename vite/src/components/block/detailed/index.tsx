@@ -15,6 +15,9 @@ import Monitor from "@/components/block/detailed/show/monitor";
 import Disk from "@/components/block/detailed/show/disk";
 import Net from "@/components/block/detailed/show/net";
 import Bios from "@/components/block/detailed/show/bios";
+import Chassis from "@/components/block/detailed/show/chassis";
+import Os from "@/components/block/detailed/show/os";
+
 
 interface Props {
   data: Computer;
@@ -38,6 +41,8 @@ const App: React.FC<Props> = ({ data }) => {
     { key: "6", label: "硬盘", children: <Disk data={data.diskLayout} /> },
     { key: "7", label: "网卡", children: <Net data={data.net} /> },
     { key: "8", label: "BIOS", children: <Bios data={data.bios} /> },
+    { key: "9", label: "机箱", children: <Chassis data={data.chassis} /> },
+    { key: "10", label: "OS", children: <Os data={data.os} /> },
   ];
 
   return (

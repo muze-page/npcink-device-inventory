@@ -31,12 +31,12 @@ const App: React.FC<Props> = ({ data }) => {
     <>
       {data.map((item, index) => {
         return (
-          <>
+          
             <div key={index}>
               <p className="font-black my-2 text-xl">内存 - {index+1}</p>
               <Table dataSource={formattedData(item)} columns={columnsTable} />
             </div>
-          </>
+          
         );
       })}
     </>
