@@ -82,7 +82,7 @@ export const diskScreenList = [
 //硬件详细配置表头
 export const columnsTable = [
   {
-    title: "编号",
+    title: "序号",
     dataIndex: "key",
     key: "key",
   },
@@ -92,7 +92,7 @@ export const columnsTable = [
     key: "label",
   },
   {
-    title: "值",
+    title: "配置",
     dataIndex: "value",
     key: "value",
   },
