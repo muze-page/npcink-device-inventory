@@ -4,6 +4,7 @@
 import { Table } from "antd";
 import { ComputerDishplays } from "@/store/interface";
 import { columnsTable } from "@/store/dataReplace";
+import { judge_bool } from "@/store/tool";
 interface Props {
   data: ComputerDishplays[];
 }
@@ -16,8 +17,8 @@ const App: React.FC<Props> = ({ data }) => {
       { key: "4", label: "生产年份", value: item.productionYear },
       { key: "5", label: "序列号", value: item.serial },
       { key: "6", label: "显示ID", value: item.displayId },
-      { key: "7", label: "主显示器", value: item.main },
-      { key: "8", label: "内置显示器", value: item.builtin },
+      { key: "7", label: "主显示器", value: judge_bool(item.main) },
+      { key: "8", label: "内置显示器", value: judge_bool(item.builtin) },
       { key: "9", label: "链接类型", value: item.connection },
       { key: "10", label: "尺寸", value: `${item.sizeX} x ${item.sizeY} 毫米` },
       { key: "11", label: "颜色深度（位）", value: `${item.pixelDepth} 位` },
