@@ -17,7 +17,8 @@ import Net from "@/components/block/detailed/show/net";
 import Bios from "@/components/block/detailed/show/bios";
 import Chassis from "@/components/block/detailed/show/chassis";
 import Os from "@/components/block/detailed/show/os";
-
+import System from "@/components/block/detailed/show/system";
+import Uuid from "@/components/block/detailed/show/uuid";
 
 interface Props {
   data: Computer;
@@ -43,6 +44,8 @@ const App: React.FC<Props> = ({ data }) => {
     { key: "8", label: "BIOS", children: <Bios data={data.bios} /> },
     { key: "9", label: "机箱", children: <Chassis data={data.chassis} /> },
     { key: "10", label: "OS", children: <Os data={data.os} /> },
+    { key: "11", label: "系统", children: <System data={data.system} /> },
+    { key: "12", label: "UUID", children: <Uuid data={data.uuid} /> },
   ];
 
   return (

@@ -49,7 +49,7 @@ export interface Computer {
   net: ComputerNet[];
   os: ComputerOS;
   system: ComputerSystem;
-  uuid: object;
+  uuid: ComputerUuid;
   version: string;
   versions: object;
 }
@@ -166,6 +166,9 @@ export interface ComputerSystem {
   version: string;
   virtual: boolean;
   manufacturer: string;
+
+  virtualHost: boolean;
+  raspberry: object;
 }
 
 //显示器
@@ -282,6 +285,12 @@ export interface ComputerChassis {
   serial: string;
   assetTag: string;
   sku: string;
+}
+
+//UUID
+export interface ComputerUuid{
+  os: string;
+  hardware: string;
 }
 
 //不同的设备不同的背景色
