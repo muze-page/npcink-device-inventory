@@ -42,7 +42,13 @@ const App: React.FC<Props> = ({ name }) => {
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = "硬件管理数据-导出文件.json";
+    if (name == "custom_table") {
+      link.download = "硬件管理数据-导出文件.json";
+    }
+
+    if (name == "custom_change") {
+      link.download = "硬件变更数据-导出文件.json";
+    }
     link.click();
 
     // 等待一段时间后释放 URL 对象

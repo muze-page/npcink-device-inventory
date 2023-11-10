@@ -90,11 +90,11 @@ if (!class_exists('DEMA_Admin_Interface')) {
                 );
             }
 
-            $uuid_hardware = $data['data']['uuid']['hardware'];//唯一UUID
-            $name = $data['name'];//姓名
-            $state= $data['state'];//状态
-            $datas = json_encode($data['data']);//数据
-            
+            $uuid_hardware = $data['data']['uuid']['hardware']; //唯一UUID
+            $name = $data['name']; //姓名
+            $state = $data['state']; //状态
+            $datas = json_encode($data['data']); //数据
+
 
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_table';
@@ -114,10 +114,10 @@ if (!class_exists('DEMA_Admin_Interface')) {
                     [
                         'uuid' => $uuid_hardware,
                         'name' => $name,
-                        'is_enabled'=>$state,
+                        'is_enabled' => $state,
                         'dataNew' => $datas,
                     ],
-                    ['%s', '%s','%s', '%s']
+                    ['%s', '%s', '%s', '%s']
                 );
 
                 $response = [
@@ -133,12 +133,12 @@ if (!class_exists('DEMA_Admin_Interface')) {
                         $table_name,
                         [
                             'name' => $name,
-                            'is_enabled'=>$state,
+                            'is_enabled' => $state,
                             'dataOld' => $existingData['dataNew'],
                             'dataNew' => $datas,
                         ],
                         ['id' => $existingData['id']],
-                        ['%s', '%s', '%s','%s'],
+                        ['%s', '%s', '%s', '%s'],
                         ['%d']
                     );
 
@@ -573,29 +573,61 @@ if (!class_exists('DEMA_Admin_Interface')) {
                 // 构建插入数据的数组
                 $insert_data = array();
                 if ($name == "custom_table") {
+
+
                     foreach ($data as $item) {
-                        $insert_data[] = array(
-                            'is_enabled' => isset($item['is_enabled']) ? $item['is_enabled'] : 1,
-                            'name' => isset($item['name']) ? $item['name'] : '',
-                            'styleName' => isset($item['styleName']) ? $item['styleName'] : null,
-                            'styleNumber' => isset($item['styleNumber']) ? $item['styleNumber'] : 0,
-                            'uuid' => isset($item['uuid']) ? $item['uuid'] : '',
-                            'dataNew' => isset($item['dataNew']) ? ($item['dataNew']) : null,
-                            'dataOld' => isset($item['dataOld']) ? ($item['dataOld']) : null
+
+                        //是否有重复数据
+                        $uuid_hardware = isset($item['uuid']) ? $item['uuid'] : null;
+                        $table_name = $wpdb->prefix . 'custom_table';
+                        $existingData = $wpdb->get_row(
+                            $wpdb->prepare(
+                                "SELECT * FROM $table_name WHERE uuid = %s;",
+                                $uuid_hardware
+                            ),
+                            ARRAY_A
                         );
+
+                        if (!$existingData) {
+
+
+
+                            $insert_data[] = array(
+                                'is_enabled' => isset($item['is_enabled']) ? $item['is_enabled'] : 1,
+                                'name' => isset($item['name']) ? $item['name'] : '',
+                                'styleName' => isset($item['styleName']) ? $item['styleName'] : null,
+                                'styleNumber' => isset($item['styleNumber']) ? $item['styleNumber'] : 0,
+                                'uuid' => isset($item['uuid']) ? $item['uuid'] : '',
+                                'dataNew' => isset($item['dataNew']) ? ($item['dataNew']) : null,
+                                'dataOld' => isset($item['dataOld']) ? ($item['dataOld']) : null
+                            );
+                        }
                     }
                 }
                 if ($name == "custom_change") {
                     foreach ($data as $item) {
-                        $insert_data[] = array(
-                            'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
-                            'time' => isset($item['time']) ? $item['time'] :  0,
-                            'type' => isset($item['type']) ? $item['type'] :  null,
-                            'new' => isset($item['new']) ? $item['new'] :  null,
-                            'old' => isset($item['old']) ? $item['old'] :  null,
-                            'ch_name' => isset($item['ch_name']) ? $item['ch_name'] :  null,
-                            'ch_describe' => isset($item['ch_describe']) ? $item['ch_describe'] :  null,
+                        //是否有重复数据
+                        $time = isset($item['time']) ? $item['time'] : null;
+                        $table_name = $wpdb->prefix . 'custom_change';
+                        $existingData = $wpdb->get_row(
+                            $wpdb->prepare(
+                                "SELECT * FROM $table_name WHERE time = %s;",
+                                $time
+                            ),
+                            ARRAY_A
                         );
+
+                        if (!$existingData) {
+                            $insert_data[] = array(
+                                'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
+                                'time' => isset($item['time']) ? $item['time'] :  0,
+                                'type' => isset($item['type']) ? $item['type'] :  null,
+                                'new' => isset($item['new']) ? $item['new'] :  null,
+                                'old' => isset($item['old']) ? $item['old'] :  null,
+                                'ch_name' => isset($item['ch_name']) ? $item['ch_name'] :  null,
+                                'ch_describe' => isset($item['ch_describe']) ? $item['ch_describe'] :  null,
+                            );
+                        }
                     }
                 }
 

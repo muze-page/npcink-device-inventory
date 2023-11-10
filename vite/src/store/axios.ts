@@ -159,8 +159,11 @@ export const importSQLData = async (
 
   try {
     const response = await axios.post<MysqlChange>(Ajaxurl, params);
+    console.log(response.data);
+    alert("导入成功")
     return response.data;
   } catch (error: any) {
+    alert("导入失败")
     // 将错误信息保存到全局状态中
     console.log("保存数据时出错：" + error.message);
     throw new Error("保存数据时出错：" + error.message);
