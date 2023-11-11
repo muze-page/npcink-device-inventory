@@ -1,6 +1,6 @@
 /**
  * 设备详情 - 机箱
- *
+ *https://systeminformation.io/system.html
  */
 import { Table } from "antd";
 import { ComputerChassis } from "@/store/interface";

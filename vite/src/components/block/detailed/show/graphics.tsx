@@ -1,5 +1,6 @@
 /**
  * 设备详情 - 显卡
+ * https://systeminformation.io/graphics.html
  */
 import { Table } from "antd";
 import { ComputerControllers } from "@/store/interface";

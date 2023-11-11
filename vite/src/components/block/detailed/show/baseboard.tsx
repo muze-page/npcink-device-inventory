@@ -1,5 +1,6 @@
 /**
  * 设备详情 - 主板
+ * https://systeminformation.io/system.html
  */
 import { Table } from "antd";
 import { ComputerBaseboard } from "@/store/interface";

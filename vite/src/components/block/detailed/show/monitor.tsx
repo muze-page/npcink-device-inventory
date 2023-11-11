@@ -1,5 +1,6 @@
 /**
  * 设备详情 - 显示器
+ * https://systeminformation.io/graphics.html
  */
 import { Table } from "antd";
 import { ComputerDishplays } from "@/store/interface";

@@ -1,5 +1,6 @@
 /**
  * 设备详情 - CPU
+ * https://systeminformation.io/cpu.html
  */
 import { Table } from "antd";
 import { ComputerCpu } from "@/store/interface";

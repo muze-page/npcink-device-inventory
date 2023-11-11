@@ -1,5 +1,6 @@
 /**
  * 设备详情 - 内存
+ * https://systeminformation.io/memory.html
  */
 import { Table } from "antd";
 import { ComputerRam } from "@/store/interface";

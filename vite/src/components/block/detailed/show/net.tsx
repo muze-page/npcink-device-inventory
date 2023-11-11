@@ -1,5 +1,6 @@
 /**
  * 设备详情 - 网卡
+ * https://systeminformation.io/network.html
  */
 import { Table } from "antd";
 import { ComputerNet } from "@/store/interface";
