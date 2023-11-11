@@ -17,7 +17,7 @@ interface Props {
   onSet: Function;//传递筛选后的数据
 }
 const App: React.FC<Props> = ({ data, onSet }) => {
-  console.log(data);
+  
 
   //以下功能做参数，由唯一函数决定输出值
 

@@ -27,7 +27,7 @@ interface Props {
   data: MysqlDeviceChangeMeat;
 }
 const App: React.FC<Props> = ({ data }) => {
-  console.log(data);
+ 
   const items: TabsProps["items"] = [
     {
       key: "1",

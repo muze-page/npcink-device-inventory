@@ -192,7 +192,7 @@ const App: React.FC<Props> = ({ data }) => {
 
       if (response.status === 200) {
         const data = response.data.data;
-        console.log(response.data);
+       
         //关键值替换
         const updatedData = replaceType(data);
 

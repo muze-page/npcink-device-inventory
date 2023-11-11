@@ -15,7 +15,7 @@ export const saveSQLData = async (optionObj: object) => {
 
     if (response.status === 200) {
       //保存成功
-      console.log(response);
+      //console.log(response);
       state = true;
     } else {
       console.error("保存设置选项时出错：" + response.data);
@@ -54,7 +54,7 @@ export const changeMySql = async (data: string, uuid: string, type: string) => {
     const response = await axios.post<MysqlChange>(Ajaxurl, params);
 
     if (response.status === 200) {
-      console.log(response.data);
+     // console.log(response.data);
     } else {
       console.log("保存设置选项时出错：" + response.data);
     }
@@ -111,7 +111,7 @@ export const deltSQLData = async (uuid: string) => {
     const response = await axios.post<MysqlChange>(Ajaxurl, params);
 
     if (response.status === 200) {
-      console.log(response.data);
+      //console.log(response.data);
     } else {
       console.log("保存设置选项时出错：" + response.data);
     }
@@ -159,7 +159,7 @@ export const importSQLData = async (
 
   try {
     const response = await axios.post<MysqlChange>(Ajaxurl, params);
-    console.log(response.data);
+    //console.log(response.data);
     alert("导入成功")
     return response.data;
   } catch (error: any) {

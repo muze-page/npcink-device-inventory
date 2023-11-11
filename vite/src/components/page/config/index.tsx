@@ -51,7 +51,7 @@ const App: React.FC = () => {
 
   //数据验证成功回调
   const onFinish = (values: any) => {
-    console.log("Success:", values);
+    //console.log("Success:", values);
     postData(values); //保存选项
   };
 
