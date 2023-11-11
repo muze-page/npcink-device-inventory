@@ -6,9 +6,31 @@ interface Props {
   data: Computer;
 }
 const App: React.FC<Props> = ({ data }) => {
- 
   //显示器
   const displayData = data.graphics.displays[0];
+
+  //全部内存条
+  interface MemoryInfo {
+    manufacturer: string;
+    clockSpeed: number;
+    size: number;
+  }
+
+  const displayMemoryInfo = (memoryInfo: MemoryInfo): string => {
+    return `
+    
+    <div class="text-xs">制造商: ${memoryInfo.manufacturer}
+  频率: ${memoryInfo.clockSpeed} MHz
+  大小: ${memoryInfo.size / 1024 ** 3} GB </div>`;
+  };
+
+  const allMemory = (arr: MemoryInfo[]): string => {
+    let result = "";
+    for (const memory of arr) {
+      result += displayMemoryInfo(memory);
+    }
+    return result;
+  };
 
   const handleData = [
     {
@@ -37,14 +59,7 @@ const App: React.FC<Props> = ({ data }) => {
     },
     {
       title: "内存",
-      data: `
-        ${data.memLayout[0].manufacturer} 
-        
-        ${data.memLayout[0].clockSpeed + " MHZ"}  
-       
-        ${data.memLayout[0].size / 1024 ** 3}  GB
-        
-      `,
+      data: allMemory(data.memLayout),
     },
     {
       title: "网卡",
@@ -52,12 +67,11 @@ const App: React.FC<Props> = ({ data }) => {
     },
     {
       title: "显示器",
-      data: displayData.model,
-      plug: `
-      (${displayData.currentResX}x${displayData.currentResY}
+      data:
+        displayData.model +
+        `(${displayData.currentResX}x${displayData.currentResY}
         ${displayData.currentRefreshRate}
-        ) 
-     `,
+        ) `,
     },
   ];
   interface itemType {
@@ -84,14 +98,22 @@ const App: React.FC<Props> = ({ data }) => {
           >
             <p className="text-sm text-zinc-600">{item.title}</p>
             <p className="mt-1 text-base text-zinc-600">
-              {item.data}
-              {item.plug}
+              <HTMLDisplay content={item.data} />
             </p>
           </div>
         ))}
       </div>
     </>
   );
+};
+
+//展示html内容
+interface PropsHtml {
+  content: string;
+}
+
+const HTMLDisplay: React.FC<PropsHtml> = ({ content }) => {
+  return <div dangerouslySetInnerHTML={{ __html: content }} />;
 };
 
 export default App;

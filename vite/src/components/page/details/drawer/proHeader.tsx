@@ -9,7 +9,7 @@ import { changeMySql } from "@/store/axios";
 
 import User from "@/assets/user.svg";
 
-import TextEditor from "@/components/page/details/drawer/block/TextEditor";
+import TextEditor from "@/components/block/TextEditor";
 
 interface Props {
   osType: PropBgColor;

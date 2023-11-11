@@ -19,7 +19,7 @@ import {
 import { AppContext } from "@/store/setingContext";
 
 //替换用数组
-import { osReplace, memoryReplace } from "@/store/dataReplace";
+import { osReplace } from "@/store/dataReplace";
 
 //收集数组中的指定键值的总和，并转为GB单位
 
@@ -44,6 +44,7 @@ const replaceString = (input: string, obj: any[]) => {
   }
   //return input;
   return "unknown"; //没有在上述系统数据中的，替换为more（方便其他筛选）
+  //TODO:筛选算法改进下，如果有没有在列表中存过的数据就会显示unknown
 };
 
 //添加需要的筛选标记数据
@@ -59,7 +60,7 @@ const updateOSType = (
       ostype: replaceString(parsedData.os.distro, osReplace), //系统版本
       cpu: parsedData.cpu.manufacturer, //CPU
       model: parsedData.system.model, //型号
-      memory: replaceString(Math.floor(memory).toString(), memoryReplace), //GB 取整
+      memory: Math.floor(memory), //GB 取整
       disk: Math.floor(disk), //GB 取整
     };
     return { ...obj, meat };

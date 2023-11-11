@@ -16,7 +16,7 @@
  * Plugin Name:       设备管理插件
  * Plugin URI:        https://www.npc.ink
  * Description:       用于硬件设备管理用
- * Version:           1.0.0
+ * Version:           1.0.1
  * Author:            Npcink
  * Author URI:        https://www.npc.ink
  * License:           GPL-2.0+
