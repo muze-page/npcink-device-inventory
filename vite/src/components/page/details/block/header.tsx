@@ -1,24 +1,23 @@
 /**
  * 设备详情 - 顶部筛选
- * TODO:搜索备注名或者昵称或编号，只能单次筛选
+ * TODO:搜索备注名或者昵称或编号，只能单次筛选，无法搜索其他数据，
  */
 import { useState, useEffect } from "react";
 import { Space, Select, Button } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
 
-
-import { osScreenList, memoryScreenList,diskScreenList } from "@/store/dataReplace";
-
-
+import {
+  osScreenList,
+  memoryScreenList,
+  diskScreenList,
+} from "@/store/dataReplace";
 
 interface Props {
-  data: MysqlDeviceChangeMeat[];//筛选用数据
-  onSet: Function;//传递筛选后的数据
+  data: MysqlDeviceChangeMeat[]; //筛选用数据
+  onSet: Function; //传递筛选后的数据
 }
 const App: React.FC<Props> = ({ data, onSet }) => {
-  
-
   //以下功能做参数，由唯一函数决定输出值
 
   //存储选项值
@@ -42,17 +41,18 @@ const App: React.FC<Props> = ({ data, onSet }) => {
         sizeCondition = meatDisk > 512 && meatDisk <= 1024;
       } else if (disk === "2048") {
         sizeCondition = meatDisk > 1024 && meatDisk <= 2048;
-      } else if (disk === "more") {
+      } else if (disk === "other") {
         sizeCondition = meatDisk > 2048;
       }
     }
 
+    //处理内存
+    const memoryData = item.meat.memory.toString();
+
     return (
       sizeCondition &&
       (!os || os === "" || item.meat.ostype === os) &&
-      (!memory ||
-        item.meat.memory.toString() === "" ||
-       item.meat.memory.toString() === memory)
+      (!memory || memoryData === "" || memoryData === memory)
     );
   });
 
@@ -69,7 +69,6 @@ const App: React.FC<Props> = ({ data, onSet }) => {
 
   return (
     <>
-     
       <div className="mt-6 flex justify-between items-center">
         <p className="text-base font-bold text-[#222] m-0">资产信息</p>
         <div className="w-fit flex items-center">

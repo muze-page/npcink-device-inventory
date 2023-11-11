@@ -34,14 +34,7 @@ export const osReplace = [
   { name: "macOS", data: "macOS" },
 ];
 
-//内存替换数组
-export const memoryReplace = [
-  { name: "8", data: "8" },
-  { name: "16", data: "16" },
-  { name: "32", data: "32" },
-  { name: "64", data: "64" },
-  { name: "128", data: "128" },
-];
+
 
 /**
  * 筛选数组
@@ -49,17 +42,15 @@ export const memoryReplace = [
 //系统数组
 export const osScreenList = [
   { value: "", label: "全部" },
-  { value: "unknown", label: "其他" },
   { value: "Windows 11", label: "Windows 11" },
   { value: "Windows 10", label: "Windows 10" },
   { value: "macOS", label: "Apple" },
   { value: "linux", label: "Linux" },
 ];
 
-//内存数组
+//内存数组TODO:没有其他筛选项
 export const memoryScreenList = [
   { value: "", label: "全部" },
-  { value: "unknown", label: "其他" },
   { value: "8", label: "8G" },
   { value: "16", label: "16G" },
   { value: "32", label: "32G" },
@@ -70,7 +61,7 @@ export const memoryScreenList = [
 //硬盘数组
 export const diskScreenList = [
   { value: "", label: "全部" },
-  { value: "unknown", label: "其他" },
+  { value: "other", label: "2T以上" },
   { value: "120", label: "120G" },
   { value: "250", label: "250G" },
   { value: "512", label: "512G" },

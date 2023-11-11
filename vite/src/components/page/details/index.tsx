@@ -42,9 +42,7 @@ const replaceString = (input: string, obj: any[]) => {
   if (match) {
     return match.data;
   }
-  //return input;
-  return "unknown"; //没有在上述系统数据中的，替换为more（方便其他筛选）
-  //TODO:筛选算法改进下，如果有没有在列表中存过的数据就会显示unknown
+  return "暂未收录"; //没有在上述系统数据中的，标记下
 };
 
 //添加需要的筛选标记数据
