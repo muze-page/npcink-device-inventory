@@ -173,25 +173,25 @@ export interface ComputerSystem {
 
 //显示器
 export interface ComputerDishplays {
-  main: boolean;
-  model: string;
-  sizeX: number | null;
-  sizeY: number | null;
-  serial: string | null;
-  vendor: string;
   builtin: boolean;
-  vendorId: string;
-  displayId: string;
-  positionX: number;
-  positionY: number;
-  connection: string | null;
-  pixelDepth: number | null;
+  connection: number | null;
+  currentRefreshRate: number;
   currentResX: number;
   currentResY: number;
+  displayId: string;
+  main: boolean;
+  model: string;
+  pixelDepth: number | null;
+  positionX: number;
+  positionY: number;
+  productionYear: string;
   resolutionX: number;
   resolutionY: number;
-  productionYear: string;
-  currentRefreshRate: number;
+  serial: number | null;
+  sizeX: number | null;
+  sizeY: number | null;
+  vendor: string;
+  vendorId: string;
   deviceName: string;
 }
 //显卡
@@ -288,7 +288,7 @@ export interface ComputerChassis {
 }
 
 //UUID
-export interface ComputerUuid{
+export interface ComputerUuid {
   os: string;
   hardware: string;
 }
