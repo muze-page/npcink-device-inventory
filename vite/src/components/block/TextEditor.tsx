@@ -1,64 +1,67 @@
-/**
- * 修改值
- * 需要：默认值、UUID、要修改的字段
- *  {data.styleName ?? "暂无备注"}
- */
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { Input } from "antd";
 import { EditOutlined } from "@ant-design/icons";
 import { AppContext } from "@/store/setingContext";
 import { changeMySql } from "@/store/axios";
+
 interface PropsEditor {
-  default_start: string; //初始值
-  uuid: string; //标识符
-  type: string; //字段名
-  default_value: string; //默认值
+  default_start?: string; // 初始值
+  uuid: string; // 标识符列表的唯一标识key
+  type: string; // 字段名
+  default_value: string; // 默认值
 }
+
 const TextEditor: React.FC<PropsEditor> = ({
   default_start,
   uuid,
   type,
   default_value,
 }) => {
-  const [editing, setEditing] = useState(false); //编辑状态
-  const [text, setText] = useState(default_start || default_value); //保存值
-  const [editedText, setEditedText] = useState(""); //保存输入框中的值
+  const [editing, setEditing] = useState(false); // 编辑状态
+  const [text, setText] = useState(default_start || default_value); // 保存值
 
   const { handleTypeUpdate } = useContext(AppContext);
 
-  //开始编辑
+  // 监听 default_start 变化，更新 text 值
+  useEffect(() => {
+    if (!editing) {
+      setText(default_start || default_value);
+    }
+  }, [default_start, default_value, editing]);
+
+  // 开始编辑
   const handleEditClick = () => {
-    setEditedText(text);
     setEditing(true);
   };
 
-  //取消编辑
+  // 取消编辑
   const handleCancelClick = () => {
     setEditing(false);
-    setEditedText("");
+    setText(default_start || default_value); // 恢复为默认值
   };
 
-  //保存
+  // 保存
   const handleSaveClick = () => {
-    setText(editedText);
     setEditing(false);
-    setEditedText("");
-    handleTypeUpdate && handleTypeUpdate(type, editedText); //修改当前的值
-    changeMySql(editedText, uuid, type); //修改数据库的值
+    handleTypeUpdate && handleTypeUpdate(type, text); // 修改当前的值
+    changeMySql(text, uuid, type); // 修改数据库的值
   };
 
-  //将值存入变量中
+  // 将值存入变量中
   const handleChange = (e: any) => {
-    setEditedText(e.target.value);
+    setText(e.target.value);
   };
 
   return (
-    <div>
+    <div key={uuid}>
+      {
+        //保持重载，避免状态继承造成数据更新不及时
+      }
       {editing ? (
         <>
           <Input
             style={{ width: "50%" }}
-            value={editedText}
+            value={text}
             onChange={handleChange}
           />
           <button onClick={handleSaveClick} className="bt">

@@ -96,10 +96,10 @@ const App: React.FC<Props> = ({ data }) => {
              `}
             key={index}
           >
-            <p className="text-sm text-zinc-600">{item.title}</p>
-            <p className="mt-1 text-base text-zinc-600">
+            <div className="text-sm text-zinc-600">{item.title}</div>
+            <div className="mt-1 text-base text-zinc-600">
               <HTMLDisplay content={item.data} />
-            </p>
+            </div>
           </div>
         ))}
       </div>
