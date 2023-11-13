@@ -9,8 +9,8 @@ export const replaceBaseboard: Replacements = {
   "Colorful Technology And Development Co.,LTD": "七彩虹",
   "Dell Inc.": "戴尔",
   "ASUSTeK COMPUTER INC.": "华硕",
-  "HUANANZHI": "华南金牌",
-  
+  HUANANZHI: "华南金牌",
+
   // 其他需要替换的字符串
 };
 
@@ -37,8 +37,6 @@ export const osReplace = [
   { name: "macOS", data: "macOS" },
 ];
 
-
-
 /**
  * 筛选数组
  */
@@ -64,14 +62,13 @@ export const memoryScreenList = [
 //硬盘数组
 export const diskScreenList = [
   { value: "", label: "全部" },
-  { value: "other", label: "2T以上" },
   { value: "120", label: "120G" },
   { value: "250", label: "250G" },
   { value: "512", label: "512G" },
   { value: "1024", label: "1T" },
   { value: "2048", label: "2T" },
+  { value: "other", label: "2T以上" },
 ];
-
 
 //硬件详细配置表头
 export const columnsTable = [
