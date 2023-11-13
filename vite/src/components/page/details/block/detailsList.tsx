@@ -53,8 +53,10 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             {data.styleName ?? "暂无备注"}
           </p>
           <span>编号：{data.styleNumber}</span>
-          {/*操作系统*/}
-          <p className="mt-3">{data.meat.model}</p>
+          {/*型号*/}
+          <p className="mt-3">
+            {data.meat.model === "" ? "暂无" : data.meat.model}
+          </p>
           {/*配置信息*/}
           <p className="mt-2">
             {data.meat.cpu} / {data.meat.memory} G /{" "}
@@ -65,7 +67,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           {/*昵称*/}
           <p className="flex items-center mt-4">
             <img src={User} className="svg" />
-            <span className="whitespace-nowrap overflow-hidden text-ellipsis">{data.name ?? "暂无"}</span>
+            <span className="whitespace-nowrap overflow-hidden text-ellipsis">
+              {data.name ?? "暂无"}
+            </span>
           </p>
           {/**状态信息 */}
           <div className="mt-4 flex items-center ">
