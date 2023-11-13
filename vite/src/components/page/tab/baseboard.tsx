@@ -3,7 +3,7 @@
  */
 
 import TabList from "@/components/page/tab/block/tabList";
-import { sum_brand, replaceType } from "@/store/tool";
+import { sum_brand, replaceKeyValues } from "@/store/tool";
 import { replaceBaseboard } from "@/store/dataReplace";
 import { ComputerBaseboard, TableData } from "@/store/interface";
 
@@ -20,7 +20,11 @@ const App: React.FC<Props> = ({ data }) => {
   const arr = sum_brand(data, "manufacturer");
 
   //关键词替换
-  const tableData = replaceType(arr, "type", replaceBaseboard) as TableData[];
+  const tableData = replaceKeyValues(
+    arr,
+    "type",
+    replaceBaseboard
+  ) as TableData[];
 
   return (
     <>

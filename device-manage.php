@@ -16,7 +16,7 @@
  * Plugin Name:       设备管理插件
  * Plugin URI:        https://www.npc.ink
  * Description:       用于硬件设备管理用
- * Version:           1.0.1
+ * Version:           1.0.2
  * Author:            Npcink
  * Author URI:        https://www.npc.ink
  * License:           GPL-2.0+
@@ -35,7 +35,7 @@ if (!defined('WPINC')) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define('DEMA_VERSION', '1.0.0');
+define('DEMA_VERSION', '1.0.2');
 
 /**
  * The code that runs during plugin activation.

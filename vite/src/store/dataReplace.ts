@@ -8,6 +8,9 @@ export const replaceBaseboard: Replacements = {
   "Apple Inc.": "Apple",
   "Colorful Technology And Development Co.,LTD": "七彩虹",
   "Dell Inc.": "戴尔",
+  "ASUSTeK COMPUTER INC.": "华硕",
+  "HUANANZHI": "华南金牌",
+  
   // 其他需要替换的字符串
 };
 

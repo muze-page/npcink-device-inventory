@@ -65,20 +65,19 @@ export const sum_order = (data: DataItem[], thresholds: Thresholds) => {
 //关键词替换TODO:改进，只要部分值出现，就整体替换，提高通用性
 /**
  * 根据字符表将指定键的值替换
- * @param arr 待处理
- * @param type 待处理的对象键
+ * @param tableData 待处理的数据数组
+ * @param key 待处理的对象键
  * @param replacements 替换映射表
- * @returns
+ * @returns 替换后的数据数组
  */
-export const replaceType = (
-  arr: TableData[],
-  type: keyof TableData,
+export const replaceKeyValues = (
+  tableData: TableData[],
+  key: keyof TableData,
   replacements: Replacements
-) => {
-  return arr.map((obj) => {
-    const { [type]: oldType, ...rest } = obj; // 解构出指定键对应的值和其他属性
-    const updatedType = replacements[oldType] || oldType; // 如果有对应的替换值，则使用替换值，否则保持不变
-    return { [type]: updatedType, ...rest }; // 返回更新后的对象
+): TableData[] => {
+  return tableData.map((obj) => {
+    const updatedValue = replacements[obj[key]] || obj[key];
+    return { ...obj, [key]: updatedValue };
   });
 };
 

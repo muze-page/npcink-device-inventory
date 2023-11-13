@@ -13,8 +13,6 @@ import { Ajaxurl } from "@/store";
 import { replacements } from "@/store/dataReplace";
 import { ComputerChangeReturn } from "@/store/interface";
 
-
-
 //在嵌套的组件之间传递Form实例，使得表单可以进行联动
 const EditableContext = React.createContext<FormInstance<any> | null>(null);
 
@@ -155,7 +153,7 @@ const columns: (ColumnTypes[number] & {
 ];
 
 //替换对象中type的值
-const replaceType = (data: ComputerChangeReturn[]) => {
+const replaceKeyValues = (data: ComputerChangeReturn[]) => {
   return data.map((obj: ComputerChangeReturn) => {
     const type = obj.type;
     if (type && replacements[type]) {
@@ -192,9 +190,9 @@ const App: React.FC<Props> = ({ data }) => {
 
       if (response.status === 200) {
         const data = response.data.data;
-       
+
         //关键值替换
-        const updatedData = replaceType(data);
+        const updatedData = replaceKeyValues(data);
 
         //添加key
         const updatedDatas = updatedData.map((obj: ComputerChangeReturn) => {
@@ -285,7 +283,6 @@ const App: React.FC<Props> = ({ data }) => {
           {/**下载按钮 */}
         </div>
       )}
-      
     </>
   );
 };
