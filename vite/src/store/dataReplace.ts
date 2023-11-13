@@ -40,6 +40,12 @@ export const osReplace = [
 /**
  * 筛选数组
  */
+//状态数组
+export const stateScreenList = [
+  { value: "", label: "全部" },
+  { value: "1", label: "启用" },
+  { value: "0", label: "停用" },
+];
 //系统数组
 export const osScreenList = [
   { value: "", label: "全部" },

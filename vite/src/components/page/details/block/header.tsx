@@ -1,6 +1,6 @@
 /**
  * 设备详情 - 顶部筛选
- * TODO:搜索备注名或者昵称或编号，只能单次筛选，无法搜索其他数据，
+ * TODO:搜索备注名或者昵称或编号
  */
 import { useState, useEffect } from "react";
 import { Space, Select, Button } from "antd";
@@ -8,6 +8,7 @@ import { ReloadOutlined } from "@ant-design/icons";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
 
 import {
+  stateScreenList,
   osScreenList,
   memoryScreenList,
   diskScreenList,
@@ -21,6 +22,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
   //以下功能做参数，由唯一函数决定输出值
 
   //存储选项值
+  const [state, setState] = useState(null);
   const [os, setOs] = useState(null);
   const [memory, setMemory] = useState(null);
   const [disk, setDisk] = useState(null);
@@ -49,10 +51,14 @@ const App: React.FC<Props> = ({ data, onSet }) => {
     //处理内存
     const memoryData = item.meat.memory.toString();
 
+    //处理状态
+    const stateData = item.is_enabled;
+
     return (
       sizeCondition &&
-      (!os || os === "" || item.meat.ostype === os) &&
-      (!memory || memoryData === "" || memoryData === memory)
+      (!os || os === "" || item.meat.ostype === os) &&//操作系统
+      (!memory || memoryData === "" || memoryData === memory) &&//内存
+      (!state || stateData === "" || stateData === state)//状态
     );
   });
 
@@ -73,6 +79,16 @@ const App: React.FC<Props> = ({ data, onSet }) => {
         <p className="text-base font-bold text-[#222] m-0">资产信息</p>
         <div className="w-fit flex items-center">
           <Space wrap>
+            状态：
+            <Select
+              defaultValue=""
+              style={{ width: 120 }}
+              onChange={(value: any) => {
+                setState(value);
+                setIsUpdating(true);
+              }}
+              options={stateScreenList}
+            />
             系统：
             <Select
               defaultValue=""
