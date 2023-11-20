@@ -22,12 +22,7 @@ const TextEditor: React.FC<PropsEditor> = ({
 
   const { handleTypeUpdate } = useContext(AppContext);
 
-  // 监听 default_start 变化，更新 text 值
-  useEffect(() => {
-    if (!editing) {
-      setText(default_start || default_value);
-    }
-  }, [default_start, default_value, editing]);
+
 
   // 开始编辑
   const handleEditClick = () => {
