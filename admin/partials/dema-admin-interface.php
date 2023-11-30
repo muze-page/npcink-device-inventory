@@ -55,7 +55,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
             register_rest_route('npcink/v1', $styleRoute, array(
                 'methods'  => 'POST',
                 'callback' => array(__CLASS__, 'submit_data_callback'),
-                'permission_callback' => '__return_true', // 无需验权
+                'permission_callback' => '__return_true', // 无需验权（验证密码即可）
             ));
         }
 
@@ -90,7 +90,12 @@ if (!class_exists('DEMA_Admin_Interface')) {
                 );
             }
 
+            //为了防止硬件UUID重复，这里再加上第一张网卡的MAC地址以防万一
+
             $uuid_hardware = $data['data']['uuid']['hardware']; //唯一UUID
+            $uuid_one_net = $data['data']['uuid']['macs'][0]; //第一个网口的MAC地址
+            $uuid = md5($uuid_hardware . $uuid_one_net); //进行md5处理，短点更好看
+
             $name = $data['name']; //姓名
             $state = $data['state']; //状态
             $datas = json_encode($data['data']); //数据
@@ -102,7 +107,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
             $existingData = $wpdb->get_row(
                 $wpdb->prepare(
                     "SELECT * FROM $table_name WHERE uuid = %s;",
-                    $uuid_hardware
+                    $uuid
                 ),
                 ARRAY_A
             );
@@ -112,7 +117,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
                 $wpdb->insert(
                     $table_name,
                     [
-                        'uuid' => $uuid_hardware,
+                        'uuid' => $uuid,
                         'name' => $name,
                         'is_enabled' => $state,
                         'dataNew' => $datas,
@@ -328,7 +333,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
             $field_map = array(
                 'styleName' => 'styleName',
                 'styleNumber' => 'styleNumber',
-                'type' => 'is_enabled' ,//修改状态
+                'type' => 'is_enabled', //修改状态
                 'name' => 'name' //修改名字
             );
 
