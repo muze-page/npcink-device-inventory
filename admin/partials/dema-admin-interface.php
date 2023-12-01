@@ -10,6 +10,9 @@ if (!class_exists('DEMA_Admin_Interface')) {
         //选项
         public static $option = "device_object_option";
 
+        //设备唯一标识符
+        public static $uuid_md5 = "";
+
         public static function run()
         {
             //添加接收设备数据api接口
@@ -76,6 +79,8 @@ if (!class_exists('DEMA_Admin_Interface')) {
          */
         public static function submit_data_callback($request)
         {
+            global $uuid_md5; //md5处理后的uuid+第一个网口的MAC地址，用作唯一标识符
+
             header('Access-Control-Allow-Origin: *');
 
             $data = $request->get_params();
@@ -94,7 +99,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
 
             $uuid_hardware = $data['data']['uuid']['hardware']; //唯一UUID
             $uuid_one_net = $data['data']['uuid']['macs'][0]; //第一个网口的MAC地址
-            $uuid = md5($uuid_hardware . $uuid_one_net); //进行md5处理，短点更好看
+            self::$uuid_md5 = md5($uuid_hardware . $uuid_one_net); //进行md5处理，短点更好看
 
             $name = $data['name']; //姓名
             $state = $data['state']; //状态
@@ -107,7 +112,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
             $existingData = $wpdb->get_row(
                 $wpdb->prepare(
                     "SELECT * FROM $table_name WHERE uuid = %s;",
-                    $uuid
+                    self::$uuid_md5
                 ),
                 ARRAY_A
             );
@@ -117,7 +122,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
                 $wpdb->insert(
                     $table_name,
                     [
-                        'uuid' => $uuid,
+                        'uuid' => self::$uuid_md5,
                         'name' => $name,
                         'is_enabled' => $state,
                         'dataNew' => $datas,
@@ -154,9 +159,9 @@ if (!class_exists('DEMA_Admin_Interface')) {
                     self::compare_arrays($dataNew, $dataOld, $diffs);
 
 
-                    //添加UUID
+                    //为每个变化数据添加UUID
                     $updatedData = array_map(function ($obj) use ($dataNew) {
-                        $obj["uuid"] = $dataNew["uuid"]["hardware"];
+                        $obj["uuid"] = self::$uuid_md5;
                         return $obj;
                     }, $diffs);
 
@@ -583,12 +588,12 @@ if (!class_exists('DEMA_Admin_Interface')) {
                     foreach ($data as $item) {
 
                         //是否有重复数据
-                        $uuid_hardware = isset($item['uuid']) ? $item['uuid'] : null;
+                        $uuid = isset($item['uuid']) ? $item['uuid'] : null;
                         $table_name = $wpdb->prefix . 'custom_table';
                         $existingData = $wpdb->get_row(
                             $wpdb->prepare(
                                 "SELECT * FROM $table_name WHERE uuid = %s;",
-                                $uuid_hardware
+                                $uuid
                             ),
                             ARRAY_A
                         );
