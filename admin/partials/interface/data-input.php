@@ -64,14 +64,10 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
             $name = $data['name']; //姓名
             $state = $data['state']; //状态
-            $datas = json_encode($data['data']); //数据
-
-            //将传来的数据存入公共
-            self::$receive_data = $data;
+            $data_hardware = json_encode($data['data']); //数据
 
             //检查是否存在重复数据
             $existingData = self::check_data_repeat();
-
 
             if (!$existingData) {
                 // 数据不存在，插入新数据
@@ -81,7 +77,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                         'uuid' => self::$uuid_md5,
                         'name' => $name,
                         'is_enabled' => $state,
-                        'dataNew' => $datas,
+                        'dataNew' => $data_hardware,
                     ],
                     ['%s', '%s', '%s', '%s']
                 );
@@ -91,8 +87,10 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                     'data' => $data,
                 ];
             } else {
+                //将传来的数据存入公共
+                self::$receive_data = $data;
                 //数据存在，插入新数据并记录变化
-                $response =  self::checkDataChange($existingData);
+                $response =  self::check_Data_Change($existingData);
             }
 
 
@@ -108,10 +106,10 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
         private static function password_verification($input_Password)
         {
             $setting_Password =  self::get_seting('password');
-            if (!($input_Password ==  $setting_Password)) {
+            if (!($input_Password ===  $setting_Password)) {
                 return new WP_REST_Response(
                     [
-                        'error' => '密码验证失败,请重新填写密码！',
+                        'message' => '密码验证失败,请重新填写密码！',
                         'input_password' => $input_Password,
                     ],
                     403
@@ -146,22 +144,20 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
          * @param $existingData 查出的数据
          * @return bool
          */
-        public static function checkDataChange($existingData)
+        public static function check_Data_Change($existingData)
         {
             global $wpdb;
 
             $name = self::$receive_data['name']; //姓名
             $state = self::$receive_data['state']; //状态
-            $datas = json_encode(self::$receive_data['data']); //数据
-
-            //获取原始数据的字符串
-            $original_data = $existingData['dataNew']; //原始存储的值
-            $input_data =  $datas; //传来的值
-
-            $existingDataDecoded = json_decode($existingData['dataNew'], true);
+            $data_afferent = self::$receive_data['data']; //传来的数据
 
 
-            if ($existingData['name'] !== $name || $existingDataDecoded !== self::$receive_data['data']) {
+
+            $data_query = json_decode($existingData['dataNew'], true); //查询的数据
+
+
+            if ($existingData['name'] !== $name || $data_query !== self::$receive_data['data']) {
                 // 如果名称或数据有变化，更新现有数据
                 $wpdb->update(
                     self::$table_name,
@@ -169,29 +165,27 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                         'name' => $name,
                         'is_enabled' => $state,
                         'dataOld' => $existingData['dataNew'],
-                        'dataNew' => $datas,
+                        'dataNew' => json_encode($data_afferent),
                     ],
                     ['id' => $existingData['id']],
                     ['%s', '%s', '%s', '%s'],
                     ['%d']
                 );
 
-                //存储变更数据
+                //存入变更数据
                 $diffs = [];
 
-                $dataNew = json_decode($datas, true);
-                $dataOld =  $existingDataDecoded;
-                self::compare_arrays($dataNew, $dataOld, $diffs); //检测数据变化
+                //存入变更表
+                self::compare_arrays($data_afferent, $data_query, $diffs); //检测数据变化
 
-
-                //为每个变化数据添加UUID
-                $updatedData = array_map(function ($obj) use ($dataNew) {
+                //添加UUID
+                foreach ($diffs as &$obj) {
                     $obj["uuid"] = self::$uuid_md5;
-                    return $obj;
-                }, $diffs);
+                }
 
-                // 存入表中
-                self::data_change($updatedData);
+                unset($obj); // 重置引用
+
+                self::data_change($diffs);
 
                 /**
                  * 检测数据变化
