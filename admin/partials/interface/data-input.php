@@ -7,8 +7,6 @@
 if (!class_exists('DEMA_Admin_Interface_DataInput')) {
     class DEMA_Admin_Interface_DataInput extends DEMA_Admin_Interface
     {
-
-
         //表名
         public static $table_name;
 
@@ -38,8 +36,6 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 'permission_callback' => '__return_true', // 无需验权（验证密码即可）
             ));
         }
-
-
 
         /**
          * 处理传来的数据
@@ -159,10 +155,13 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             $datas = json_encode(self::$receive_data['data']); //数据
 
             //获取原始数据的字符串
-            $original_data = $existingData['dataNew'];//原始存储的值
-            $input_data = self::$receive_data['data'];//传来的值
+            $original_data = $existingData['dataNew']; //原始存储的值
+            $input_data =  $datas; //传来的值
 
-            if ($existingData['name'] !== $name || strcmp($original_data, $input_data)) {
+            $existingDataDecoded = json_decode($existingData['dataNew'], true);
+
+
+            if ($existingData['name'] !== $name || $existingDataDecoded !== self::$receive_data['data']) {
                 // 如果名称或数据有变化，更新现有数据
                 $wpdb->update(
                     self::$table_name,
@@ -179,9 +178,10 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
                 //存储变更数据
                 $diffs = [];
-                $dataNew = $datas; //新传来的值存入新值字段
-                $dataOld =  $original_data; //旧值存储旧值字段
-                self::compare_arrays($dataNew, $dataOld, $diffs);//检测数据变化
+
+                $dataNew = json_decode($datas, true);
+                $dataOld =  $existingDataDecoded;
+                self::compare_arrays($dataNew, $dataOld, $diffs); //检测数据变化
 
 
                 //为每个变化数据添加UUID
