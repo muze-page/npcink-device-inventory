@@ -7,13 +7,13 @@
 if (!class_exists('DEMA_Admin_Interface_DataInput')) {
     class DEMA_Admin_Interface_DataInput extends DEMA_Admin_Interface
     {
-        
+
 
         //表名
         public static $table_name;
 
         //接收的数据
-        public static $receive_data ;
+        public static $receive_data;
 
         //设备唯一标识符
         public static $uuid_md5;
@@ -146,7 +146,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
         }
 
         /**
-         * 数据变化
+         * 数据变化并存入数据库
          * @param $existingData 查出的数据
          * @return bool
          */
@@ -158,11 +158,11 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             $state = self::$receive_data['state']; //状态
             $datas = json_encode(self::$receive_data['data']); //数据
 
-            //获取原始数据
-            $existingDataDecoded = json_decode($existingData['dataNew'], true);
+            //获取原始数据的字符串
+            $original_data = $existingData['dataNew'];//原始存储的值
+            $input_data = self::$receive_data['data'];//传来的值
 
-            if ($existingData['name'] !== $name || $existingDataDecoded !== self::$receive_data['data']) 
-            {
+            if ($existingData['name'] !== $name || strcmp($original_data, $input_data)) {
                 // 如果名称或数据有变化，更新现有数据
                 $wpdb->update(
                     self::$table_name,
@@ -179,9 +179,9 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
                 //存储变更数据
                 $diffs = [];
-                $dataNew = json_decode($datas, true);//传来的值存入新值字段
-                $dataOld =  $existingDataDecoded;//原来的值存储旧值字段
-                self::compare_arrays($dataNew, $dataOld, $diffs);
+                $dataNew = $datas; //新传来的值存入新值字段
+                $dataOld =  $original_data; //旧值存储旧值字段
+                self::compare_arrays($dataNew, $dataOld, $diffs);//检测数据变化
 
 
                 //为每个变化数据添加UUID
@@ -199,9 +199,11 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                  * 存入数据库
                  */
 
+
                 $response = [
                     'message' => '数据已更新！',
                     'change' => $updatedData,
+
                 ];
             } else {
                 // 数据未变化
