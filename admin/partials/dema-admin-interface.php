@@ -10,8 +10,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
         //选项
         public static $option = "device_object_option";
 
-        //设备唯一标识符
-        public static $uuid_md5 = "";
+       
 
         public static function run()
         {
