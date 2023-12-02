@@ -158,19 +158,19 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             $state = self::$receive_data['state']; //状态
             $data_afferent = self::$receive_data['data']; //传来的数据
 
+            $query_name = $existingData['name']; //查询的名字
+            $query_data = $existingData['dataNew']; //查询的数据
 
 
-            $data_query = json_decode($existingData['dataNew'], true); //查询的数据
 
-
-            if ($existingData['name'] !== $name || $data_query !== self::$receive_data['data']) {
-                // 如果名称或数据有变化，更新现有数据
+           
+                //TODO: 如果名称或数据有变化，更新现有数据
                 $wpdb->update(
                     self::$table_name,
                     [
                         'name' => $name,
                         'is_enabled' => $state,
-                        'dataOld' => $existingData['dataNew'],
+                        'dataOld' =>  $query_data,
                         'dataNew' => json_encode($data_afferent),
                     ],
                     ['id' => $existingData['id']],
@@ -182,7 +182,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 $diffs = [];
 
                 //存入变更表
-                self::compare_arrays($data_afferent, $data_query, $diffs); //检测数据变化
+                self::compare_arrays($data_afferent,  json_decode($query_data, true), $diffs); //检测数据变化
 
                 //添加UUID
                 foreach ($diffs as &$obj) {
@@ -191,27 +191,13 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
                 unset($obj); // 重置引用
 
+                //存入数据库
                 self::data_change($diffs);
-
-                /**
-                 * 检测数据变化
-                 * 准备变化的数据
-                 * 存入数据库
-                 */
-
 
                 $response = [
                     'message' => '数据已更新！',
-                    
-
                 ];
-            } else {
-                // 数据未变化
-                $response = [
-                    'message' => '数据未变化！',
-                    'data' => self::$receive_data,
-                ];
-            }
+            
             return $response;
         }
 
