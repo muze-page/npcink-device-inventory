@@ -54,7 +54,16 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             $password = isset($data['password']) ? $data['password'] : '';
 
             //验证密码
-            self::password_verification($password);
+            $proving =  self::password_verification($password);
+            if (!$proving) {
+                return new WP_REST_Response(
+                    [
+                        'message' => '密码验证失败,请重新填写密码！',
+
+                    ],
+                    403
+                );
+            }
 
             //为了防止硬件UUID重复，这里再加上第一张网卡的MAC地址以防万一
 
@@ -105,15 +114,12 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
          */
         private static function password_verification($input_Password)
         {
-            $setting_Password =  self::get_seting('password');
-            if (!($input_Password ===  $setting_Password)) {
-                return new WP_REST_Response(
-                    [
-                        'message' => '密码验证失败,请重新填写密码！',
-                        'input_password' => $input_Password,
-                    ],
-                    403
-                );
+            $setting_Password =  self::get_seting('password'); //设置的密码
+
+            if ($input_Password ===  $setting_Password) {
+                return true;
+            } else {
+                return false;
             }
         }
 
@@ -196,7 +202,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
                 $response = [
                     'message' => '数据已更新！',
-                    'change' => $updatedData,
+                    
 
                 ];
             } else {
