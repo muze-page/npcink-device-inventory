@@ -22,7 +22,21 @@ const TextEditor: React.FC<PropsEditor> = ({
 
   const { handleTypeUpdate } = useContext(AppContext);
 
+  // 监听 default_start 变化，更新 text 值
 
+  
+
+  //监听UUID，若变换则关闭编辑装
+  useEffect(() => {
+    // 组件挂载时执行的操作
+    setText(default_start || default_value);
+
+    // 组件将要卸载时执行的操作
+    return () => {
+      setText(default_value); // 重置为默认值
+      setEditing(false); // 关闭编辑状态
+    };
+  }, [uuid]);
 
   // 开始编辑
   const handleEditClick = () => {
@@ -32,7 +46,7 @@ const TextEditor: React.FC<PropsEditor> = ({
   // 取消编辑
   const handleCancelClick = () => {
     setEditing(false);
-    setText(default_start || default_value); // 恢复为默认值
+    //setText(default_start || default_value); // 恢复为默认值
   };
 
   // 保存

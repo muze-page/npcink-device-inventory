@@ -10,7 +10,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
         //选项
         public static $option = "device_object_option";
 
-       
+
 
         public static function run()
         {
@@ -57,10 +57,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
         public static  function save_object_option_callback()
         {
 
-            // 设置跨域访问标头
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST');
-            header('Access-Control-Allow-Headers: Content-Type');
+
 
             // 获取通过 Ajax POST 请求传递的对象数据
             $object_data = $_POST['object_data'];
@@ -72,11 +69,34 @@ if (!class_exists('DEMA_Admin_Interface')) {
             update_option(self::$option, $object);
 
 
+            //   升级UUID用
+            //    global $wpdb;
+            //
+            //    $table_name = $wpdb->prefix . 'custom_table'; // 替换 'custom_table' 为你的表名
+            //
+            //    // 获取字段 dataNew 的值和对应的唯一标识符 id
+            //    $results = $wpdb->get_results("SELECT id, dataNew FROM $table_name");
+            //
+            //   
+            //    foreach ($results as $result) {
+            //        $a = json_decode($result->dataNew)->uuid->hardware;
+            //        $b = json_decode($result->dataNew)->uuid->macs[0];
+            //       
+            //        $combined_value = md5($a . $b);
+            //
+            //        // 更新字段 uuid 的值为组合后的内容
+            //         $wpdb->update(
+            //             $table_name,
+            //             array('uuid' => $combined_value),
+            //             array('id' => $result->id) // 使用 id 作为更新条件
+            //         );
+            //
+            //    }
 
             // 发送成功响应
             $response = array(
                 'message' => '设置选项已保存！',
-                'object' => $object,
+                'object' => $combined_value,
 
             );
 
@@ -92,10 +112,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
         public static function search_change_data_callback()
         {
 
-            // 设置跨域访问标头
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST');
-            header('Access-Control-Allow-Headers: Content-Type');
+
 
             $object_data = $_POST['uuid'];
             //拿到uuid
@@ -143,10 +160,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_table';
 
-            // 设置跨域访问标头
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST');
-            header('Access-Control-Allow-Headers: Content-Type');
+
 
             // 获取前端传递的参数并进行输入验证
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : ''; //唯一标识符
@@ -212,10 +226,6 @@ if (!class_exists('DEMA_Admin_Interface')) {
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_change';
 
-            // 设置跨域访问标头
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST');
-            header('Access-Control-Allow-Headers: Content-Type');
 
             // 获取前端传递的参数并进行输入验证
             $id = isset($_POST['id']) ? sanitize_text_field($_POST['id']) : ''; //id
@@ -286,10 +296,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
             $table_name = $wpdb->prefix . 'custom_table';
             $table_change = $wpdb->prefix . 'custom_change';
 
-            // 设置跨域访问标头
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST');
-            header('Access-Control-Allow-Headers: Content-Type');
+
 
             // 获取前端传递的参数并进行输入验证
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : '';
@@ -338,10 +345,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
             global $wpdb;
 
 
-            // 设置跨域访问标头
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST');
-            header('Access-Control-Allow-Headers: Content-Type');
+
 
             // 获取前端传递的参数并进行输入验证
             $name = isset($_POST['name']) ? sanitize_text_field($_POST['name']) : '';
@@ -387,10 +391,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
             global $wpdb;
 
 
-            // 设置跨域访问标头
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST');
-            header('Access-Control-Allow-Headers: Content-Type');
+
 
             // 获取前端传递的参数并进行输入验证
             $text_data = isset($_POST['data']) ? ($_POST['data']) : '';

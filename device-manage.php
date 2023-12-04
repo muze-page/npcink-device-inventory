@@ -16,7 +16,7 @@
  * Plugin Name:       设备管理插件
  * Plugin URI:        https://www.npc.ink
  * Description:       用于硬件设备管理用
- * Version:           1.0.5
+ * Version:           1.0.6
  * Author:            Npcink
  * Author URI:        https://www.npc.ink
  * License:           GPL-2.0+
@@ -35,7 +35,7 @@ if (!defined('WPINC')) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define('DEMA_VERSION', '1.0.5');
+define('DEMA_VERSION', '1.0.6');
 
 /**
  * The code that runs during plugin activation.
@@ -84,10 +84,11 @@ function run_dema()
 run_dema();
 
 
- //设置按钮
- add_filter('plugin_action_links_'.plugin_basename(__FILE__), function($links){
-    $links[] = '<a href="'.get_admin_url(null, 'plugins.php?page=dema_seting') . '">' . __('设置','n') . '</a>';
-    return $links;
+//设置按钮
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), function ($links) {
+	$links[] = '<a href="' . get_admin_url(null, 'plugins.php?page=dema_seting') . '">' . __('设置', 'n') . '</a>';
+	return $links;
 });
 
-
+/**开发用 */
+require plugin_dir_path(__FILE__) . 'index.php';
