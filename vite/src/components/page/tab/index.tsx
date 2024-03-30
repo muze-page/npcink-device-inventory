@@ -21,10 +21,10 @@ import Memory from "@/components/page/tab/memory";
 
 //收集最新数据并输出数组
 interface DataArray {
-  dataNew: Computer;
+  data: Computer;
 }
 const collectDataNew = (dataArrays: DataArray[]): Computer[] => {
-  return dataArrays.map((obj: { dataNew: Computer }) => obj.dataNew);
+  return dataArrays.map((obj: { data: Computer }) => obj.data);
 };
 
 //将数组对象中对象的指定的键值取出，组成新数组

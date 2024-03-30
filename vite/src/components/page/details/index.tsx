@@ -50,7 +50,7 @@ const updateOSType = (
   dataArrays: MysqlDeviceChange[]
 ): MysqlDeviceChangeMeat[] => {
   const updatedData = dataArrays.map((obj: MysqlDeviceChange) => {
-    const parsedData = obj.dataNew; //拿到对象
+    const parsedData = obj.data; //拿到对象
     const memory = calculateTotalSize(parsedData.memLayout); //内存数组
     const disk = calculateTotalSize(parsedData.diskLayout); //硬盘数组
     //整理添加的信息

@@ -16,18 +16,17 @@ const getDataLocal = () => {
   }
 };
 
-//处理对象
-const processObject = ({ dataNew, dataOld, ...rest }: MysqlDevice) => ({
-  ...rest,
-  dataNew: JSON.parse(dataNew) as Computer,
-  dataOld: JSON.parse(dataOld) as Computer,
-});
+//将数组中的硬件数据从json格式处理成对象
+const combineData = (dataArrays: MysqlDevice[]) => {
+  return dataArrays.map((item) => {
+    // 解析 "data" 字符串为对象
+    const parsedData = JSON.parse(item.data);
+    // 返回更新后的对象
+    return { ...item, data: parsedData };
+  });
+};
 
-//处理成数组
-const combineData = (dataArrays: MysqlDevice[]) =>
-  dataArrays.map(processObject);
-
-//对新旧两个值进行处理后传出
+//对硬件值进行处理后传出
 export const dataMySql = combineData(getDataLocal().data);
 
 //拿到选项值并传出

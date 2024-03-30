@@ -25,6 +25,7 @@ interface Props {
 }
 const App: React.FC<Props> = ({ data }) => {
   //准备组件
+  
   const tabs = [
     { key: "1", label: "处理器", children: <Cpu data={data.cpu} /> },
     { key: "2", label: "内存", children: <Memory data={data.memLayout} /> },

@@ -37,7 +37,7 @@ const App: React.FC<Props> = ({ data }) => {
           硬件信息
         </span>
       ),
-      children: <Info data={data.dataNew} />,
+      children: <Info data={data.data} />,
     },
     {
       key: "2",
@@ -67,7 +67,7 @@ const App: React.FC<Props> = ({ data }) => {
           详细信息
         </span>
       ),
-      children: <Detailed data={data.dataNew} />,
+      children: <Detailed data={data.data} />,
     },
   ];
 

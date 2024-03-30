@@ -4,11 +4,9 @@ export interface MysqlDevice {
   id: string;
   uuid: string;
   name: string;
-  styleName: string;
-  styleNumber: string;
-  dataNew: string;
-  dataOld: string;
-  is_enabled: string;
+  number: string;
+  data: string;
+  state: string;
 }
 
 //整理后
@@ -16,11 +14,9 @@ export interface MysqlDeviceChange {
   id: string;
   uuid: string;
   name: string;
-  styleName: string;
-  styleNumber: string;
-  dataNew: Computer;
-  dataOld: Computer;
-  is_enabled: string;
+  number: string;
+  data: Computer;
+  state: string;
 }
 
 //准备交叉类型
