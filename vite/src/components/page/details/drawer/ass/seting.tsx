@@ -21,7 +21,7 @@ const stateArr = [
 const App: React.FC<Props> = ({ data }) => {
   const { deltArrData } = useContext(AppContext);
 
-  //消息提示
+  //提示信息
   const [messageApi, contextHolder] = message.useMessage();
 
   /*form 变量用于操作表单实例，
@@ -47,6 +47,7 @@ const App: React.FC<Props> = ({ data }) => {
     setFormData(values); // 将表单数据存储在状态中
   };
 
+
   //保存设置信息
   const saveData = async () => {
     //获取表单数据
@@ -61,18 +62,26 @@ const App: React.FC<Props> = ({ data }) => {
       if (fieldsValue.hasOwnProperty(key) && data.hasOwnProperty(key)) {
         if (fieldsValue[key] !== data[key]) {
           isChanged = true; // 一旦发现有变化，设置标志为 true
-          console.log("a 对象中键值对不同:", key, fieldsValue[key]);
+
+          //console.log("a 对象中键值对不同:", key, fieldsValue[key]);
 
           try {
             const success = await changeMySql(data.uuid, key, fieldsValue[key]);
             if (success && !isSaved) {
               isSaved = true; // 设置保存成功的标志为 true
-              messageApi.info("保存成功");
+              messageApi.open({
+                type: "success",
+                content: "保存成功",
+                className: "custom-class",
+                style: {
+                  marginTop: "2vh",
+                },
+              });
             } else if (!success && !isSaved) {
-              messageApi.error("保存设置选项时出错，请稍后重试。");
+              alert("保存设置选项时出错，请稍后重试。");
             }
           } catch (error: any) {
-            messageApi.warning("保存设置选项时出错：" + error.message);
+            alert("保存设置选项时出错：" + error.message);
           }
         }
       }
@@ -80,7 +89,14 @@ const App: React.FC<Props> = ({ data }) => {
 
     if (!isChanged) {
       // 如果循环结束后没有发现任何变化，弹出 "没有变化" 的提示
-      messageApi.warning("没有变化");
+      messageApi.open({
+        type: "warning",
+        content: "没有变化",
+        className: "custom-class",
+        style: {
+          marginTop: "2vh",
+        },
+      });
     }
   };
 
