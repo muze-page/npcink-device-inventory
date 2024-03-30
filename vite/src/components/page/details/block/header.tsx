@@ -52,7 +52,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
     const memoryData = item.meat.memory.toString();
 
     //处理状态
-    const stateData = item.is_enabled;
+    const stateData = item.state;
 
     return (
       sizeCondition &&

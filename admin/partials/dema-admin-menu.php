@@ -51,7 +51,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
                 <!--标题-->
 
                 <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-                <div id='root'>666</div>
+                <div id='root'>出现未知错误，请联系插件开发者</div>
             </div>
 <?php
 

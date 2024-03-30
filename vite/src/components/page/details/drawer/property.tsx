@@ -27,7 +27,6 @@ interface Props {
   data: MysqlDeviceChangeMeat;
 }
 const App: React.FC<Props> = ({ data }) => {
- 
   const items: TabsProps["items"] = [
     {
       key: "1",
@@ -53,21 +52,21 @@ const App: React.FC<Props> = ({ data }) => {
       key: "3",
       label: (
         <span>
-          <SettingOutlined />
-          设置
-        </span>
-      ),
-      children: <Seting data={data.uuid} />,
-    },
-    {
-      key: "4",
-      label: (
-        <span>
           <RadarChartOutlined />
           详细信息
         </span>
       ),
       children: <Detailed data={data.data} />,
+    },
+    {
+      key: "4",
+      label: (
+        <span>
+          <SettingOutlined />
+          设置
+        </span>
+      ),
+      children: <Seting data={data} />,
     },
   ];
 

@@ -17,6 +17,7 @@ export interface MysqlDeviceChange {
   number: string;
   data: Computer;
   state: string;
+  [key: string]: any;
 }
 
 //准备交叉类型

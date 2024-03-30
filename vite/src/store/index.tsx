@@ -1,6 +1,6 @@
 //准备初始数据
 import data from "@/store/defaultVar";
-import { MysqlDevice, Computer } from "./interface";
+import { MysqlDevice } from "./interface";
 
 //开发环境状态
 const state: boolean = import.meta.env.VITE_STATE;

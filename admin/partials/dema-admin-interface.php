@@ -167,12 +167,11 @@ if (!class_exists('DEMA_Admin_Interface')) {
             $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : ''; //修改的值
             $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : ''; //字段名
 
-            // 定义字段与类型的映射关系
+            // 定义字段与数据库类型的映射关系
             $field_map = array(
-                'styleName' => 'styleName',
-                'styleNumber' => 'styleNumber',
-                'type' => 'is_enabled', //修改状态
-                'name' => 'name' //修改名字
+                'name' => 'name',//姓名
+                'number' => 'number',//编号
+                'state' => 'state', //状态
             );
 
             // 确定要更新的字段

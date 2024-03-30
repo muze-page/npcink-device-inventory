@@ -54,7 +54,7 @@ class Dema_Activator
             id INT(11) NOT NULL AUTO_INCREMENT,
 			name VARCHAR(255) NOT NULL,
 			number INT(11) NOT NULL,
-			state TINYINT(1) NOT NULL DEFAULT 1,
+			state VARCHAR(36) NOT NULL,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             uuid VARCHAR(36) NOT NULL,
             data JSON,

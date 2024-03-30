@@ -48,11 +48,11 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
 
         {/**底部数据 */}
         <div className="p-4 text-xs text-zinc-500  bg-white rounded whitespace-nowrap">
-          {/*备注名*/}
+          {/*姓名*/}
           <p className="text-sm font-bold text-zinc-800 leading-5 m-0">
-            {data.styleName ?? "暂无备注"}
+            {data.name ?? "暂无备注"}
           </p>
-          <span>编号：{data.styleNumber}</span>
+          <span>编号：{data.number}</span>
           {/*型号*/}
           <p className="mt-3">
             {data.meat.model === "" ? "暂无" : data.meat.model}
@@ -73,7 +73,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           </p>
           {/**状态信息 */}
           <div className="mt-4 flex items-center ">
-            {data.is_enabled == "1" ? (
+            {data.state == "1" ? (
               <>
                 <Tooltip title="当前状态：正常">
                   <div className="rounded-full w-2 h-2 bg-green-500"></div>
