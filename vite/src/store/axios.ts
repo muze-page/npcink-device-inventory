@@ -43,7 +43,11 @@ type MysqlChange = {
  * @param data 修改后的值
  * @param type 修改的字段名
  */
-export const changeMySql = async (uuid: string, type: string, data: string) => {
+export const changeMySql = async (
+  uuid: string,
+  type: string,
+  data: string
+): Promise<boolean> => {
   const params = new URLSearchParams();
   params.append("action", "update_style_name_callback");
   params.append("uuid", uuid);
@@ -55,13 +59,14 @@ export const changeMySql = async (uuid: string, type: string, data: string) => {
 
     if (response.status === 200) {
       // console.log(response.data);
+      return true;
     } else {
       console.log("保存设置选项时出错：" + response.data);
+      return false;
     }
   } catch (error: any) {
     console.log("保存设置选项时出错：" + error.message);
-  } finally {
-    //console.log(false);
+    throw error; // 重新抛出错误
   }
 };
 

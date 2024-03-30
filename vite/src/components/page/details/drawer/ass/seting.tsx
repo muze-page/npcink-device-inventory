@@ -2,7 +2,7 @@
  * 设备详情 - 设置
  */
 import { useContext, useState, useEffect } from "react";
-import { Form, Button, Input, Select } from "antd";
+import { Form, Button, Input, Select, message } from "antd";
 import { AppContext } from "@/store/setingContext";
 import { deltSQLData } from "@/store/axios";
 import { MysqlDeviceChange } from "@/store/interface";
@@ -20,6 +20,9 @@ const stateArr = [
 ];
 const App: React.FC<Props> = ({ data }) => {
   const { deltArrData } = useContext(AppContext);
+
+  //消息提示
+  const [messageApi, contextHolder] = message.useMessage();
 
   /*form 变量用于操作表单实例，
   而 formData 状态变量用于存储表单数据。
@@ -45,25 +48,39 @@ const App: React.FC<Props> = ({ data }) => {
   };
 
   //保存设置信息
-  const saveData = () => {
+  const saveData = async () => {
     //获取表单数据
 
     const fieldsValue = form.getFieldsValue();
-    console.log(fieldsValue);
+
     //与默认数据对比，有变化则存入数据库
-    // 比较对象 a 和 b
+    let isChanged = false; // 标志是否有变化
+    let isSaved = false; // 标志是否成功保存过
+
     for (const key in fieldsValue) {
-      if (fieldsValue[key] !== undefined && data[key] !== undefined) {
-        // 如果 fieldsValue 和 data 中对应键的值不同，则进行处理
+      if (fieldsValue.hasOwnProperty(key) && data.hasOwnProperty(key)) {
         if (fieldsValue[key] !== data[key]) {
+          isChanged = true; // 一旦发现有变化，设置标志为 true
           console.log("a 对象中键值对不同:", key, fieldsValue[key]);
-          const uuid = data.uuid;
-          changeMySql(uuid, key, fieldsValue[key]);
+
+          try {
+            const success = await changeMySql(data.uuid, key, fieldsValue[key]);
+            if (success && !isSaved) {
+              isSaved = true; // 设置保存成功的标志为 true
+              messageApi.info("保存成功");
+            } else if (!success && !isSaved) {
+              messageApi.error("保存设置选项时出错，请稍后重试。");
+            }
+          } catch (error: any) {
+            messageApi.warning("保存设置选项时出错：" + error.message);
+          }
         }
-        alert("已保存");
-      } else {
-        alert("没有变化");
       }
+    }
+
+    if (!isChanged) {
+      // 如果循环结束后没有发现任何变化，弹出 "没有变化" 的提示
+      messageApi.warning("没有变化");
     }
   };
 
@@ -78,6 +95,7 @@ const App: React.FC<Props> = ({ data }) => {
   };
   return (
     <>
+      {contextHolder}
       <Form
         form={form}
         onFinish={onFinish}
