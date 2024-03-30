@@ -52,14 +52,12 @@ class Dema_Activator
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
             id INT(11) NOT NULL AUTO_INCREMENT,
-			is_enabled TINYINT(1) NOT NULL DEFAULT 1,
 			name VARCHAR(255) NOT NULL,
-			styleName VARCHAR(255),
-			styleNumber INT(11) NOT NULL,
+			number INT(11) NOT NULL,
+			state TINYINT(1) NOT NULL DEFAULT 1,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             uuid VARCHAR(36) NOT NULL,
-            dataNew JSON,
-            dataOld JSON,
+            data JSON,
             PRIMARY KEY (id)
         );";
 

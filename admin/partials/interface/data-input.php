@@ -72,7 +72,6 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             self::$uuid_md5 = md5($uuid_hardware . $uuid_one_net); //进行md5处理，短点更好看
 
             $name = $data['name']; //姓名
-            $state = $data['state']; //状态
             $data_hardware = json_encode($data['data']); //数据
 
             //检查是否存在重复数据
@@ -83,12 +82,11 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 $wpdb->insert(
                     self::$table_name,
                     [
-                        'uuid' => self::$uuid_md5,
-                        'name' => $name,
-                        'is_enabled' => $state,
-                        'dataNew' => $data_hardware,
+                        'uuid' => self::$uuid_md5,//唯一标识符
+                        'name' => $name,//姓名
+                        'data' => $data_hardware,//数据
                     ],
-                    ['%s', '%s', '%s', '%s']
+                    ['%s', '%s', '%s']
                 );
 
                 $response = [
@@ -96,9 +94,10 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                     'data' => $data,
                 ];
             } else {
+               
                 //将传来的数据存入公共
                 self::$receive_data = $data;
-                //数据存在，插入新数据并记录变化
+                //数据存在，更新现有数据
                 $response =  self::check_Data_Change($existingData);
             }
 
@@ -146,7 +145,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
         }
 
         /**
-         * 数据变化并存入数据库
+         * 已有数据则更新现有数据
          * @param $existingData 查出的数据
          * @return bool
          */
@@ -155,7 +154,6 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             global $wpdb;
 
             $name = self::$receive_data['name']; //姓名
-            $state = self::$receive_data['state']; //状态
             $data_afferent = self::$receive_data['data']; //传来的数据
 
             $query_name = $existingData['name']; //查询的名字
@@ -169,12 +167,11 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                     self::$table_name,
                     [
                         'name' => $name,
-                        'is_enabled' => $state,
-                        'dataOld' =>  $query_data,
-                        'dataNew' => json_encode($data_afferent),
+                       
+                        'data' => json_encode($data_afferent),
                     ],
                     ['id' => $existingData['id']],
-                    ['%s', '%s', '%s', '%s'],
+                    ['%s', '%s'],
                     ['%d']
                 );
 
@@ -182,7 +179,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 $diffs = [];
 
                 //存入变更表
-                self::compare_arrays($data_afferent,  json_decode($query_data, true), $diffs); //检测数据变化
+               // self::compare_arrays($data_afferent,  json_decode($query_data, true), $diffs); //检测数据变化
 
                 //添加UUID
                 foreach ($diffs as &$obj) {
@@ -195,7 +192,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 self::data_change($diffs);
 
                 $response = [
-                    'message' => '数据已更新！',
+                    'message' => '现有数据已更新！',
                 ];
             
             return $response;
