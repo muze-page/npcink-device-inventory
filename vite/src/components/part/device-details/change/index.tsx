@@ -13,7 +13,7 @@ import { Ajaxurl } from "@/store";
 
 import { ComputerChangeReturn } from "@/store/interface";
 
-import AddChangeData from "@/components/device-details/change/add";
+import AddChangeData from "@/components/part/device-details/change/add";
 
 //在嵌套的组件之间传递Form实例，使得表单可以进行联动
 const EditableContext = React.createContext<FormInstance<any> | null>(null);

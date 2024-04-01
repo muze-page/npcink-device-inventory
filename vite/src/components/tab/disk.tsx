@@ -2,7 +2,7 @@
  * 硬盘
  */
 
-import TabList from "@/components/page/tab/block/tabList";
+import TabList from "@/components/tab/block/tabList";
 import { sum_order } from "@/store/tool";
 
 import { ComputerDevice } from "@/store/interface";
@@ -16,7 +16,6 @@ interface Props {
   data: ComputerDevice[];
 }
 const App: React.FC<Props> = ({ data }) => {
-  
   const thresholds = {
     "128G": 128,
     "256G": 256,

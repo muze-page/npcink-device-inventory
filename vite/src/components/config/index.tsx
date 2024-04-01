@@ -6,7 +6,7 @@ import { Button, Form, Input, Switch, message } from "antd";
 import { option, Site } from "@/store";
 import { saveSQLData } from "@/store/axios";
 
-import Export from "@/components/page/config/importChange";
+import Export from "@/components/config/importChange";
 
 type FieldType = {
   route?: string;

@@ -2,7 +2,7 @@
  * 内存条
  */
 
-import TabList from "@/components/page/tab/block/tabList";
+import TabList from "@/components/tab/block/tabList";
 import { sum_order } from "@/store/tool";
 import { ComputerRam } from "@/store/interface";
 
@@ -26,7 +26,6 @@ interface Props {
   data: ComputerRam[];
 }
 const App: React.FC<Props> = ({ data }) => {
-  
   //进行处理
   const tableData = sum_order(data, replaceMemory);
 

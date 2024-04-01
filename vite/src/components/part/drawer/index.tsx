@@ -3,13 +3,12 @@
  */
 
 import { Drawer } from "antd";
-import Property from "@/components/device-details";
+import Property from "@/components/part/device-details";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
 interface Props {
   data: MysqlDeviceChangeMeat;
   active: boolean;
   onActive: () => void;
- 
 }
 const App: React.FC<Props> = ({ data, active, onActive }) => {
   return (
@@ -22,7 +21,7 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
         width={"60%"}
         className="pt-9"
       >
-        <Property data={data}  />
+        <Property data={data} />
       </Drawer>
     </>
   );

@@ -4,9 +4,9 @@
 import React from "react";
 import { Tabs } from "antd";
 import type { TabsProps } from "antd";
-import Tab from "@/components/page/tab/index";
-import Details from "@/components/page/details/index";
-import Config from "@/components/page/config/index";
+import Tab from "@/components/tab/index";
+import Details from "@/components/details/index";
+import Config from "@/components/config/index";
 
 const items: TabsProps["items"] = [
   {

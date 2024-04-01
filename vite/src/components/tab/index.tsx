@@ -11,13 +11,13 @@ import {
   ComputerDevice,
 } from "@/store/interface";
 
-import Ad from "@/components/page/tab/block/ad";
-import TabHeader from "@/components/page/tab/block/tableHeader";
+import Ad from "@/components/tab/block/ad";
+import TabHeader from "@/components/tab/block/tableHeader";
 
-import Baseboard from "@/components/page/tab/baseboard";
-import Cpu from "@/components/page/tab/cpu";
-import Disk from "@/components/page/tab/disk";
-import Memory from "@/components/page/tab/memory";
+import Baseboard from "@/components/tab/baseboard";
+import Cpu from "@/components/tab/cpu";
+import Disk from "@/components/tab/disk";
+import Memory from "@/components/tab/memory";
 
 //收集最新数据并输出数组
 interface DataArray {

@@ -5,9 +5,9 @@
 import { SetStateAction, useState } from "react";
 import { Pagination, Empty } from "antd";
 import { dataMySql } from "@/store";
-import DetailsList from "@/components/page/details/block/detailsList";
-import Header from "@/components/page/details/block/header";
-import Drawer from "@/components/page/details/drawer";
+import DetailsList from "@/components/details/detailsList";
+import Header from "@/components/details/screen";
+import Drawer from "@/components/part/drawer";
 import {
   MysqlDeviceChangeMeat,
   MysqlDeviceChange,

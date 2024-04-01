@@ -12,11 +12,11 @@ import {
 
 import type { TabsProps } from "antd";
 
-import Msg from "@/components/page/details/drawer/proHeader";
-import Info from "@/components/device-details/info";
-import Change from "@/components/device-details/change";
-import Seting from "@/components/device-details/seting";
-import Detailed from "@/components/device-details/detailed/index";
+import Msg from "@/components/part/drawer/tabHeader";
+import Info from "@/components/part/device-details/info";
+import Change from "@/components/part/device-details/change";
+import Seting from "@/components/part/device-details/seting";
+import Detailed from "@/components/part/device-details/detailed/index";
 
 import MacOs from "@/assets/macos.png";
 import Win from "@/assets/windows_s.png";
