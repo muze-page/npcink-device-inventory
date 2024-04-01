@@ -71,7 +71,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             <Tooltip title={"设备编号：" + data.number}>
               <CodeOutlined /> ： {data.number}
             </Tooltip>
-            <Tooltip title={"当前状态：" + deviceStatus}>
+            <Tooltip title={"当前状态：" + deviceStatus+"中"}>
               <span className="ml-8">
                 <BuildFilled />：{deviceStatus}
               </span>
