@@ -10,7 +10,7 @@ import { changeMySqlData } from "@/store/axios";
 
 import axios from "axios";
 import { Ajaxurl } from "@/store";
-import { replacements } from "@/store/dataReplace";
+
 import { ComputerChangeReturn } from "@/store/interface";
 
 //在嵌套的组件之间传递Form实例，使得表单可以进行联动
@@ -119,49 +119,30 @@ const columns: (ColumnTypes[number] & {
   dataIndex: string;
 })[] = [
   {
+    title: "变更项目",
+    dataIndex: "type",
+    key: "type",
+    editable: true,
+  },
+
+  {
+    title: "变更说明",
+    dataIndex: "msg",
+    key: "msg",
+    editable: true,
+  },
+  {
+    title: "变更人",
+    dataIndex: "user",
+    key: "user",
+    editable: true,
+  },
+  {
     title: "时间",
     dataIndex: "time",
     key: "time",
   },
-  {
-    title: "变更项目",
-    dataIndex: "type",
-    key: "type",
-  },
-  {
-    title: "新配置",
-    dataIndex: "new",
-    key: "new",
-  },
-  {
-    title: "旧配置",
-    dataIndex: "old",
-    key: "old",
-  },
-  {
-    title: "变更人",
-    dataIndex: "ch_name",
-    key: "ch_name",
-    editable: true,
-  },
-  {
-    title: "变更说明",
-    dataIndex: "ch_describe",
-    key: "ch_describe",
-    editable: true,
-  },
 ];
-
-//替换对象中type的值
-const replaceKeyValues = (data: ComputerChangeReturn[]) => {
-  return data.map((obj: ComputerChangeReturn) => {
-    const type = obj.type;
-    if (type && replacements[type]) {
-      return { ...obj, type: replacements[type] };
-    }
-    return obj;
-  });
-};
 
 interface Props {
   data: string; //UUID
@@ -191,11 +172,8 @@ const App: React.FC<Props> = ({ data }) => {
       if (response.status === 200) {
         const data = response.data.data;
 
-        //关键值替换
-        const updatedData = replaceKeyValues(data);
-
         //添加key
-        const updatedDatas = updatedData.map((obj: ComputerChangeReturn) => {
+        const updatedDatas = data.map((obj: ComputerChangeReturn) => {
           return { ...obj, key: obj.id };
         });
         //传递
@@ -224,8 +202,44 @@ const App: React.FC<Props> = ({ data }) => {
       ...row,
     });
     setDataAxios(newData); //保存选项
-    changeMySqlData(row.id, "ch_name", row.ch_name); //更新姓名
-    changeMySqlData(row.id, "ch_describe", row.ch_describe); //更新描述
+   
+    //找到需要的数据
+    // 用于存储符合条件的对象的数组
+
+    //原始对象
+    let changeData;
+    // 遍历数组，查找 id 为当前的对象
+    for (let i = 0; i < dataAxios.length; i++) {
+      if (dataAxios[i].id === row.id) {
+        changeData = dataAxios[i];
+      }
+    }
+    console.log(row);//当前设置的值
+    console.log(dataAxios);//服务器传来的值
+    console.log(changeData);//来自服务器的当前设置的值
+
+    for (let key in changeData) {
+      if (changeData[key] !== row[key]) {
+        console.log(`a2.${key}: `, row[key]);
+        switch (key) {
+          case "user":
+            changeMySqlData(row.id, "user", row.user); //更新姓名
+            break;
+          case "type":
+            changeMySqlData(row.id, "type", row.type); //更新类型
+            break;
+          case "msg":
+            changeMySqlData(row.id, "msg", row.msg); //更新描述
+            break;
+          default:
+            break;
+        }
+      }
+    }
+
+   
+
+    
   };
 
   //覆盖默认的 table 元素
@@ -263,8 +277,8 @@ const App: React.FC<Props> = ({ data }) => {
         <div className="pl-5 relative">
           {/**列表 */}
           <div className="mt-1">
+            添加修改记录
             <p className="mb-4 text-base font-bold text-[#333]">硬件信息变更</p>
-
             {dataAxios.length !== 0 ? (
               //展示数据
               <Table

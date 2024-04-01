@@ -85,11 +85,9 @@ class Dema_Activator
             id INT NOT NULL AUTO_INCREMENT,
             uuid TEXT,
             time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	        type TEXT,
-            new TEXT,
-            old TEXT,
-			ch_name TEXT,
-            ch_describe TEXT,
+			user TEXT,
+			type TEXT,
+            msg TEXT,
             PRIMARY KEY (id)
             
         );";

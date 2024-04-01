@@ -106,7 +106,7 @@ export const changeMySqlData = async (
   }
 };
 
-//根据指定UUID删除
+//根据指定UUID移除设备
 export const deltSQLData = async (uuid: string) => {
   const params = new URLSearchParams();
   params.append("action", "delt_sql_uuid_callback");

@@ -234,10 +234,9 @@ if (!class_exists('DEMA_Admin_Interface')) {
 
             // 定义字段与类型的映射关系
             $field_map = array(
-                'ch_name' => 'ch_name', //修改姓名
-                'ch_describe' => 'ch_describe', //修改描述
-
-
+                'user' => 'user', //修改姓名
+                'type' => 'type', //类型
+                'msg' => 'msg', //修改描述
             );
 
             // 确定要更新的字段
