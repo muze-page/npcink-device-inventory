@@ -46,7 +46,7 @@ const App: React.FC<Props> = ({ data }) => {
           变更记录
         </span>
       ),
-      children: <Change data={data.uuid} />,
+      children: <Change uuid={data.uuid} />,
     },
     {
       key: "3",

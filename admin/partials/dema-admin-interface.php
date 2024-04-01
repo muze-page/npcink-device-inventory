@@ -30,7 +30,11 @@ if (!class_exists('DEMA_Admin_Interface')) {
             add_action('wp_ajax_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
             add_action('wp_ajax_nopriv_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
 
-            // 修改设备变更信息接口
+            // 添加 - 设备变更信息接口
+            add_action('wp_ajax_add_change_data_callback',  array(__CLASS__, 'add_change_data_callback'));
+            add_action('wp_ajax_nopriv_add_change_data_callback',  array(__CLASS__, 'add_change_data_callback'));
+
+            // 修改 - 设备变更信息接口
             add_action('wp_ajax_update_change_callback',  array(__CLASS__, 'update_change_callback'));
             add_action('wp_ajax_nopriv_update_change_callback',  array(__CLASS__, 'update_change_callback'));
 
@@ -68,30 +72,6 @@ if (!class_exists('DEMA_Admin_Interface')) {
             // 保存设置选项
             update_option(self::$option, $object);
 
-
-            //   升级UUID用
-            //    global $wpdb;
-            //
-            //    $table_name = $wpdb->prefix . 'custom_table'; // 替换 'custom_table' 为你的表名
-            //
-            //    // 获取字段 dataNew 的值和对应的唯一标识符 id
-            //    $results = $wpdb->get_results("SELECT id, dataNew FROM $table_name");
-            //
-            //   
-            //    foreach ($results as $result) {
-            //        $a = json_decode($result->dataNew)->uuid->hardware;
-            //        $b = json_decode($result->dataNew)->uuid->macs[0];
-            //       
-            //        $combined_value = md5($a . $b);
-            //
-            //        // 更新字段 uuid 的值为组合后的内容
-            //         $wpdb->update(
-            //             $table_name,
-            //             array('uuid' => $combined_value),
-            //             array('id' => $result->id) // 使用 id 作为更新条件
-            //         );
-            //
-            //    }
 
             // 发送成功响应
             $response = array(
@@ -149,6 +129,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
 
             return $results;
         }
+
 
         /**
          * 修改设备信息接口
@@ -218,7 +199,51 @@ if (!class_exists('DEMA_Admin_Interface')) {
         }
 
         /**
-         * 修改设备变更信息接口
+         * 添加 - 设备变更信息接口
+         */
+        public static function add_change_data_callback() {
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'custom_change';
+        
+            // 获取前端传递的参数并进行输入验证
+            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //id
+            $user = isset($_POST['user']) ? sanitize_text_field($_POST['user']) : null; //id
+            $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : null; //字段名
+            $data = isset($_POST['msg']) ? sanitize_text_field($_POST['msg']) : null; //修改的值
+        
+// TODO:验证接收的数据是否为undefined或为空字符串
+
+        
+            // 使用预处理语句插入数据
+            $wpdb->insert(
+                $table_name,
+                array(
+                    'uuid' => $uuid,
+                    'user' => $user,
+                    'type' => $type,
+                    'msg' => $data
+                ),
+                array(
+                    '%s', // uuid
+                    '%s', // user
+                    '%s', // type
+                    '%s'  // data
+                )
+            );
+        
+            // 检查插入是否成功
+    if ( $result === false ) {
+        wp_send_json_error( '未能插入数据。' );
+    } else {
+        wp_send_json_success( '数据插入成功。' );
+    }
+        
+            // 插入成功，可以进行其他操作
+        }
+        
+
+        /**
+         * 修改 - 设备变更信息接口
          */
         public static function update_change_callback()
         {
@@ -256,10 +281,10 @@ if (!class_exists('DEMA_Admin_Interface')) {
                     // 返回更新成功的响应
                     echo json_encode(array(
                         'success' => true,
-                        'table_name' => $table_name,
-                        'type' => $type,
-                        'field_name' => $field_name,
-                        'data' => $data,
+                        '表名' => $table_name,
+                        '类型' => $type,
+                        '字段名' => $field_name,
+                        '数据' => $data,
                         'id' => $id
                     ));
                 } else {

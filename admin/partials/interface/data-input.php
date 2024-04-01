@@ -85,6 +85,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                         'uuid' => self::$uuid_md5,//唯一标识符
                         'name' => $name,//姓名
                         'data' => $data_hardware,//数据
+                        'state'=>"apply",//默认状态
                     ],
                     ['%s', '%s', '%s']
                 );

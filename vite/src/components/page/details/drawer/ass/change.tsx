@@ -2,7 +2,7 @@
  * 设备详情 - 变更记录
  */
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { Table, Empty, Form, Input } from "antd";
+import { Table, Empty, Form, Input, Button, message } from "antd";
 import type { InputRef } from "antd";
 import type { FormInstance } from "antd/es/form";
 
@@ -145,9 +145,9 @@ const columns: (ColumnTypes[number] & {
 ];
 
 interface Props {
-  data: string; //UUID
+  uuid: string; //UUID
 }
-const App: React.FC<Props> = ({ data }) => {
+const App: React.FC<Props> = ({ uuid }) => {
   const [dataAxios, setDataAxios] = useState<ComputerChangeReturn[]>([]); //待渲染的值
   const [loading, setLoading] = useState(false); //加载中
   const [error, setError] = useState(""); //报错
@@ -170,14 +170,15 @@ const App: React.FC<Props> = ({ data }) => {
       const response = await axios.post<MysqlChange>(Ajaxurl, params);
 
       if (response.status === 200) {
+        //拿到的展示用数据
         const data = response.data.data;
 
         //添加key
         const updatedDatas = data.map((obj: ComputerChangeReturn) => {
           return { ...obj, key: obj.id };
         });
-        //传递
-        setDataAxios(updatedDatas);
+        //倒序并传递
+        setDataAxios(updatedDatas.reverse());
       } else {
         setError("获取数据时出错：" + response.data);
       }
@@ -189,8 +190,8 @@ const App: React.FC<Props> = ({ data }) => {
   };
 
   useEffect(() => {
-    getData(data);
-  }, [data]);
+    getData(uuid);
+  }, [uuid]);
 
   //保存
   const handleSave = (row: ComputerChangeReturn) => {
@@ -202,7 +203,7 @@ const App: React.FC<Props> = ({ data }) => {
       ...row,
     });
     setDataAxios(newData); //保存选项
-   
+
     //找到需要的数据
     // 用于存储符合条件的对象的数组
 
@@ -214,9 +215,9 @@ const App: React.FC<Props> = ({ data }) => {
         changeData = dataAxios[i];
       }
     }
-    console.log(row);//当前设置的值
-    console.log(dataAxios);//服务器传来的值
-    console.log(changeData);//来自服务器的当前设置的值
+    console.log(row); //当前设置的值
+    console.log(dataAxios); //服务器传来的值
+    console.log(changeData); //来自服务器的当前设置的值
 
     for (let key in changeData) {
       if (changeData[key] !== row[key]) {
@@ -236,10 +237,6 @@ const App: React.FC<Props> = ({ data }) => {
         }
       }
     }
-
-   
-
-    
   };
 
   //覆盖默认的 table 元素
@@ -277,7 +274,8 @@ const App: React.FC<Props> = ({ data }) => {
         <div className="pl-5 relative">
           {/**列表 */}
           <div className="mt-1">
-            添加修改记录
+            {/*添加 - 修改记录*/}
+            <AddChangeData uuid={uuid} />
             <p className="mb-4 text-base font-bold text-[#333]">硬件信息变更</p>
             {dataAxios.length !== 0 ? (
               //展示数据
@@ -320,6 +318,110 @@ interface PropsError {
 
 const Error: React.FC<PropsError> = ({ message }) => {
   return <p>{message}</p>;
+};
+
+//添加修改记录
+interface ACDProps {
+  uuid: string; //UUID
+}
+const AddChangeData: React.FC<ACDProps> = ({ uuid }) => {
+  //多行输入
+  const { TextArea } = Input;
+
+  //表单数据
+  const [form] = Form.useForm();
+
+  /**
+   * 说明：提交表单且数据验证成功后回调事件
+   * 在 onFinish 回调函数中，通过调用
+   * setFormData 函数将表单数据存储在 formData 状态变量中，
+   * 以便在组件中进行进一步处理或展示。
+   * */
+
+  interface ACD {
+    user: string;
+    type: string;
+    msg: string;
+  }
+  const onFinish = (values: ACD) => {
+    //检查数据是否符合需求，不符合则弹窗
+    // 检查数据是否符合需求
+    // 检查数据是否符合需求
+    if (
+      typeof values.user !== "string" ||
+      typeof values.type !== "string" ||
+      typeof values.msg !== "string" ||
+      !values.user.trim() ||
+      !values.type.trim() ||
+      !values.msg.trim()
+    ) {
+      message.error("请填写完整信息");
+      return;
+    }
+    console.log("Received values:", values);
+    // 发送POST请求
+    const params = new URLSearchParams();
+    params.append("action", "add_change_data_callback");
+    params.append("uuid", uuid);
+    params.append("user", values.user);
+    params.append("type", values.type);
+    params.append("msg", values.msg);
+
+    axios
+      .post(Ajaxurl, params)
+      .then((response) => {
+        // 请求成功的处理逻辑
+        console.log(response.data);
+        alert("添加成功，刷新页面后查看效果");
+        // 提交后清空表单数据
+        form.resetFields();
+      })
+      .catch((error) => {
+        // 请求失败的处理逻辑
+        console.error("Error:", error);
+        alert("添加失败");
+      });
+  };
+
+  return (
+    <>
+      <h2 className="mb-4 text-base font-bold text-[#333]">添加记录：</h2>
+      <Form
+        labelCol={{ span: 4 }}
+        wrapperCol={{ span: 12 }}
+        form={form}
+        onFinish={onFinish}
+      >
+        <Form.Item
+          label="变更人"
+          name={"user"}
+          rules={[{ required: true, message: "请输入用户名" }]}
+        >
+          <Input placeholder="操作变更同事的名字" />
+        </Form.Item>
+        <Form.Item
+          label="变更项目"
+          name={"type"}
+          rules={[{ required: true, message: "请选择类型" }]}
+        >
+          <Input placeholder="变更的项目，例如硬盘、内存条等" />
+        </Form.Item>
+        <Form.Item
+          label="变更说明"
+          name="msg"
+          rules={[{ required: true, message: "请输入消息" }]}
+        >
+          <TextArea placeholder="变更内容详情" />
+        </Form.Item>
+
+        <Form.Item>
+          <Button type="primary" htmlType="submit">
+            添加
+          </Button>
+        </Form.Item>
+      </Form>
+    </>
+  );
 };
 
 export default App;
