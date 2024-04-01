@@ -9,7 +9,7 @@ import { MysqlDeviceChangeMeat } from "@/store/interface";
 
 import {
   stateScreenList,
-  osScreenList,
+  osTypeReplace,
   memoryScreenList,
   diskScreenList,
 } from "@/store/dataReplace";
@@ -56,9 +56,9 @@ const App: React.FC<Props> = ({ data, onSet }) => {
 
     return (
       sizeCondition &&
-      (!os || os === "" || item.meat.ostype === os) &&//操作系统
-      (!memory || memoryData === "" || memoryData === memory) &&//内存
-      (!state || stateData === "" || stateData === state)//状态
+      (!os || os === "" || item.meat.ostype === os) && //操作系统
+      (!memory || memoryData === "" || memoryData === memory) && //内存
+      (!state || stateData === "" || stateData === state) //状态
     );
   });
 
@@ -97,7 +97,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
                 setOs(value);
                 setIsUpdating(true);
               }}
-              options={osScreenList}
+              options={osTypeReplace}
             />
             内存：
             <Select

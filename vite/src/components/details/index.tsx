@@ -19,7 +19,7 @@ import {
 import { AppContext } from "@/store/setingContext";
 
 //替换用数组
-import { osReplace } from "@/store/dataReplace";
+import { osReplace, osTypeReplace } from "@/store/dataReplace";
 
 //收集数组中的指定键值的总和，并转为GB单位
 
@@ -37,12 +37,21 @@ const calculateTotalSize = (dataArrays: DataType[]) => {
  * @param dataArrays
  * @returns
  */
-const replaceString = (input: string, obj: any[]) => {
-  const match = obj.find(({ name }) => input.includes(name));
-  if (match) {
-    return match.data;
+interface repType {
+  value: string;
+  label: string;
+}
+const replaceString = (input: string, obj: repType[]): string => {
+  const filteredObjects = obj.filter((item) => input.includes(item.value));
+  if (filteredObjects.length === 0) {
+    // 如果没有找到匹配项，返回 "未收录"
+    return "未收录";
+  } else {
+    // 使用map方法将符合条件的label值映射为一个字符串数组
+    const labels = filteredObjects.map((item) => item.label);
+    // 使用join方法将字符串数组连接成一个字符串，以逗号分隔
+    return labels.join(", ");
   }
-  return "暂未收录"; //没有在上述系统数据中的，标记下
 };
 
 //添加需要的筛选标记数据
@@ -55,6 +64,7 @@ const updateOSType = (
     const disk = calculateTotalSize(parsedData.diskLayout); //硬盘数组
     //整理添加的信息
     const meat = {
+      os: replaceString(parsedData.os.distro, osTypeReplace), //系统型号
       ostype: replaceString(parsedData.os.platform, osReplace), //系统版本
       cpu: parsedData.cpu.manufacturer, //CPU
       model: parsedData.system.model, //型号

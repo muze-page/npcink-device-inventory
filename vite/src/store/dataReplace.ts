@@ -18,11 +18,18 @@ export const replaceBaseboard: Replacements = {
  * 替换数组
  */
 
-//系统替换数组
+//系统类型替换数组
 export const osReplace = [
-  { name: "Windows", data: "Windows" },
-  { name: "darwin", data: "Mac" },
-  { name: "linux", data: "linux" },
+  { value: "Windows", label: "Windows" },
+  { value: "darwin", label: "Mac" },
+  { value: "linux", label: "linux" },
+];
+//系统型号替换数组
+export const osTypeReplace = [
+  { value: "Windows 11", label: "Windows 11" },
+  { value: "Windows 10", label: "Windows 10" },
+  { value: "macOS", label: "Apple" },
+  { value: "linux", label: "Linux" },
 ];
 
 export const device_status = [
@@ -42,13 +49,7 @@ export const stateScreenList = [
   { value: "0", label: "停用" },
 ];
 //系统数组
-export const osScreenList = [
-  { value: "", label: "全部" },
-  { value: "Windows 11", label: "Windows 11" },
-  { value: "Windows 10", label: "Windows 10" },
-  { value: "macOS", label: "Apple" },
-  { value: "linux", label: "Linux" },
-];
+
 
 //内存数组TODO:没有其他筛选项
 export const memoryScreenList = [
