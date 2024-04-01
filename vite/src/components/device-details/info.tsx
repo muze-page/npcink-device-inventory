@@ -1,5 +1,5 @@
 /**
- * 设备详情 - 详细信息
+ * 设备详情 - 大概信息
  */
 import { Computer } from "@/store/interface";
 interface Props {

@@ -1,4 +1,6 @@
-//详情展示内容
+/**
+ * 设备详情 - 详细信息
+ */
 
 /**
  * 设备详情 - 设备详细信息，TODO:电池信息
@@ -7,25 +9,25 @@
 import { Tabs } from "antd";
 import { Computer } from "@/store/interface";
 
-import Cpu from "@/components/block/detailed/show/cpu";
-import Memory from "@/components/block/detailed/show/memory";
-import Graphics from "@/components/block/detailed/show/graphics";
-import Baseboard from "@/components/block/detailed/show/baseboard";
-import Monitor from "@/components/block/detailed/show/monitor";
-import Disk from "@/components/block/detailed/show/disk";
-import Net from "@/components/block/detailed/show/net";
-import Bios from "@/components/block/detailed/show/bios";
-import Chassis from "@/components/block/detailed/show/chassis";
-import Os from "@/components/block/detailed/show/os";
-import System from "@/components/block/detailed/show/system";
-import Uuid from "@/components/block/detailed/show/uuid";
+import Cpu from "@/components/device-details/detailed/show/cpu";
+import Memory from "@/components/device-details/detailed/show/memory";
+import Graphics from "@/components/device-details/detailed/show/graphics";
+import Baseboard from "@/components/device-details/detailed/show/baseboard";
+import Monitor from "@/components/device-details/detailed/show/monitor";
+import Disk from "@/components/device-details/detailed/show/disk";
+import Net from "@/components/device-details/detailed/show/net";
+import Bios from "@/components/device-details/detailed/show/bios";
+import Chassis from "@/components/device-details/detailed/show/chassis";
+import Os from "@/components/device-details/detailed/show/os";
+import System from "@/components/device-details/detailed/show/system";
+import Uuid from "@/components/device-details/detailed/show/uuid";
 
 interface Props {
   data: Computer;
 }
 const App: React.FC<Props> = ({ data }) => {
   //准备组件
-  
+
   const tabs = [
     { key: "1", label: "处理器", children: <Cpu data={data.cpu} /> },
     { key: "2", label: "内存", children: <Memory data={data.memLayout} /> },
