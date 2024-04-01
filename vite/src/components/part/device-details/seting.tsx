@@ -7,17 +7,12 @@ import { AppContext } from "@/store/setingContext";
 import { deltSQLData } from "@/store/axios";
 import { MysqlDeviceChange } from "@/store/interface";
 import { changeMySql } from "@/store/axios";
+import {device_status} from "@/store/dataReplace"
 interface Props {
   data: MysqlDeviceChange; //UUID
 }
 
-//设备状态
-const stateArr = [
-  { value: "apply", label: "使用" },
-  { value: "idie", label: "闲置" },
-  { value: "fault", label: "故障" },
-  { value: "scrap", label: "报废" },
-];
+
 const App: React.FC<Props> = ({ data }) => {
   const { deltArrData } = useContext(AppContext);
 
@@ -128,7 +123,7 @@ const App: React.FC<Props> = ({ data }) => {
           <Input placeholder="设备唯一标识编号" />
         </Form.Item>
         <Form.Item label="状态" name="state">
-          <Select style={{ width: 120 }} options={stateArr} />
+          <Select style={{ width: 120 }} options={device_status} />
         </Form.Item>
         <Form.Item>
           <Button type="primary" onClick={saveData}>

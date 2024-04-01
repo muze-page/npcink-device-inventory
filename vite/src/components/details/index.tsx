@@ -55,7 +55,7 @@ const updateOSType = (
     const disk = calculateTotalSize(parsedData.diskLayout); //硬盘数组
     //整理添加的信息
     const meat = {
-      ostype: replaceString(parsedData.os.distro, osReplace), //系统版本
+      ostype: replaceString(parsedData.os.platform, osReplace), //系统版本
       cpu: parsedData.cpu.manufacturer, //CPU
       model: parsedData.system.model, //型号
       memory: Math.floor(memory), //GB 取整

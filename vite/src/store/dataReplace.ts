@@ -14,18 +14,22 @@ export const replaceBaseboard: Replacements = {
   // 其他需要替换的字符串
 };
 
-
-
 /**
  * 替换数组
  */
 
 //系统替换数组
 export const osReplace = [
-  { name: "Windows 11", data: "Windows 11" },
-  { name: "Windows 10", data: "Windows 10" },
+  { name: "Windows", data: "Windows" },
+  { name: "darwin", data: "Mac" },
   { name: "linux", data: "linux" },
-  { name: "macOS", data: "macOS" },
+];
+
+export const device_status = [
+  { value: "apply", label: "使用" },
+  { value: "idie", label: "闲置" },
+  { value: "fault", label: "故障" },
+  { value: "scrap", label: "报废" },
 ];
 
 /**

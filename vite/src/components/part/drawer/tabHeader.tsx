@@ -1,5 +1,6 @@
 //弹窗内容头部
 import { MysqlDeviceChangeMeat, PropBgColor } from "@/store/interface";
+import { device_status } from "@/store/dataReplace";
 //import User from "@/assets/user.svg";
 
 interface Props {
@@ -8,6 +9,9 @@ interface Props {
 }
 
 const App: React.FC<Props> = ({ osType, data }) => {
+  //当前设备状态
+  const deviceStatus =
+    device_status.find((obj) => obj.value === data.state)?.label ?? "无状态";
   return (
     <div
       className={`pt-6 pr-[17px] pb-6 pl-[23px] text-white text-sm flex-1 
@@ -42,7 +46,7 @@ const App: React.FC<Props> = ({ osType, data }) => {
 
         <div className="flex items-center ml-8 m-0">
           状态：
-          {data.state ?? "没有状态"}
+          {deviceStatus}
         </div>
       </div>
     </div>

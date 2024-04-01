@@ -4,8 +4,9 @@
 import { Tooltip } from "antd";
 import Mac from "@/assets/mac.png";
 import Win from "@/assets/windows_ico.png";
-import User from "@/assets/user.svg";
+import { CodeOutlined, BuildFilled } from "@ant-design/icons";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
+import { device_status } from "@/store/dataReplace";
 
 interface Props {
   data: MysqlDeviceChangeMeat;
@@ -20,11 +21,18 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
   };
 
   //展示图片
-  const osTypes = [
-    { id: 1, name: "mac", image: Mac },
+  const osTypeArray = [
+    { id: 1, name: "Mac", image: Mac },
     { id: 2, name: "Windows", image: Win },
   ];
 
+  //当前设备状态
+  const deviceStatus =
+    device_status.find((obj) => obj.value === data.state)?.label ?? "无状态";
+
+  //找到需要的系统对象
+  const osTypeObj = osTypeArray.find((obj) => obj.name === data.meat.ostype);
+  console.log(data);
   return (
     <>
       {/**开始循环 */}
@@ -39,24 +47,18 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
       >
         {/**顶部标志 */}
         <div className="mt-2 mb-3 ml-3">
-          {osTypes
-            .filter((osType) => data.meat.ostype.includes(osType.name))
-            .map((osType) => (
-              <img key={osType.id} src={osType.image} className="h-10" />
-            ))}
+          <img key={osTypeObj?.id} src={osTypeObj?.image} className="h-10" />
         </div>
 
         {/**底部数据 */}
         <div className="p-4 text-xs text-zinc-500  bg-white rounded whitespace-nowrap">
           {/*姓名*/}
-          <p className="text-sm font-bold text-zinc-800 leading-5 m-0">
-            {data.name ?? "暂无备注"}
+          <p className="text-sm font-bold text-zinc-800 leading-5 m-0 ">
+            {data.name ?? "暂无"}
           </p>
-          <span>编号：{data.number}</span>
+
           {/*型号*/}
-          <p className="mt-3">
-            {data.meat.model === "" ? "暂无" : data.meat.model}
-          </p>
+          <p className="mt-3">{data.meat.model ?? "暂无"}</p>
           {/*配置信息*/}
           <p className="mt-2">
             {data.meat.cpu} / {data.meat.memory} G /{" "}
@@ -64,29 +66,19 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
               ? (data.meat.disk / 1024).toFixed(2) + " T"
               : data.meat.disk + " G"}
           </p>
-          {/*昵称*/}
-          <p className="flex items-center mt-4">
-            <img src={User} className="svg" />
-            <span className="whitespace-nowrap overflow-hidden text-ellipsis">
-              {data.name ?? "暂无"}
-            </span>
+          {/*编号*/}
+          <p className="flex items-center  mt-4">
+            <Tooltip title={"设备编号：" + data.number}>
+              <CodeOutlined /> ： {data.number}
+            </Tooltip>
+            <Tooltip title={"当前状态：" + deviceStatus}>
+              <span className="ml-8">
+                <BuildFilled />：{deviceStatus}
+              </span>
+            </Tooltip>
           </p>
           {/**状态信息 */}
-          <div className="mt-4 flex items-center ">
-            {data.state == "1" ? (
-              <>
-                <Tooltip title="当前状态：正常">
-                  <div className="rounded-full w-2 h-2 bg-green-500"></div>
-                </Tooltip>
-              </>
-            ) : (
-              <>
-                <Tooltip title="当前状态：停用">
-                  <div className="rounded-full w-2 h-2 bg-neutral-300"></div>
-                </Tooltip>
-              </>
-            )}
-          </div>
+          <div className="mt-4 flex items-center "></div>
         </div>
       </div>
     </>
