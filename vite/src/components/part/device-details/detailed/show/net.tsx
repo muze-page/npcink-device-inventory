@@ -10,8 +10,7 @@ interface Props {
   data: ComputerNet[];
 }
 const App: React.FC<Props> = ({ data }) => {
-  console.log("网口");
-  console.log(data);
+
   const formattedData = (item: ComputerNet) => {
     const arr = [
       { key: "1", label: "接口名", value: item.ifaceName },

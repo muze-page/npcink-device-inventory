@@ -10,8 +10,7 @@ interface Props {
   data: ComputerRam[];
 }
 const App: React.FC<Props> = ({ data }) => {
-  console.log("内存");
-  console.log(data);
+
   const formattedData = (item: ComputerRam) => {
     const arr = [
       { key: "1", label: "大小", value: bytesToMB(item.size, "GB") },

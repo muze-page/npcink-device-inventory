@@ -10,8 +10,7 @@ interface Props {
   data: ComputerOS;
 }
 const App: React.FC<Props> = ({ data }) => {
-  console.log("OS");
-  console.log(data);
+
 
   const Items = [
     { key: "1", label: "平台", value: data.platform },

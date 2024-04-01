@@ -10,8 +10,7 @@ interface Props {
   data: ComputerSystem;
 }
 const App: React.FC<Props> = ({ data }) => {
-  console.log("系统");
-  console.log(data);
+
 
   const Items = [
     { key: "1", label: "厂家", value: data.manufacturer },

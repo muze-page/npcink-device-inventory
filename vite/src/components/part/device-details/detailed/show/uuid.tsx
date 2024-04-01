@@ -9,8 +9,7 @@ interface Props {
   data: ComputerUuid;
 }
 const App: React.FC<Props> = ({ data }) => {
-  console.log("UUID");
-  console.log(data);
+  
 
   const Items = [
     { key: "1", label: "系统", value: data.os },

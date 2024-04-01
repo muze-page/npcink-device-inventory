@@ -10,8 +10,7 @@ interface Props {
   data: ComputerDishplays[];
 }
 const App: React.FC<Props> = ({ data }) => {
-  console.log("显示器");
-  console.log(data);
+
   const formattedData = (item: ComputerDishplays) => {
     const arr = [
       { key: "1", label: "型号", value: item.model },

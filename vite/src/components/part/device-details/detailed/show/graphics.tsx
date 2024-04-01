@@ -10,8 +10,7 @@ interface Props {
   data: ComputerControllers[];
 }
 const App: React.FC<Props> = ({ data }) => {
-  console.log("显卡");
-  console.log(data);
+
   const formattedData = (item: ComputerControllers) => {
     const arr = [
       { key: "1", label: "供应商", value: item.vendor },

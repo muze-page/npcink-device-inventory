@@ -10,8 +10,7 @@ interface Props {
   data: ComputerCpu;
 }
 const App: React.FC<Props> = ({ data }) => {
-  console.log("CPU");
-  console.log(data);
+
   // CPU信息的数组
   const Items = [
     { key: "1", label: "制造者", value: data.manufacturer },
