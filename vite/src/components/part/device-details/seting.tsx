@@ -4,14 +4,12 @@
 import { useContext, useState, useEffect } from "react";
 import { Form, Button, Input, Select, message } from "antd";
 import { AppContext } from "@/store/setingContext";
-import { deltSQLData } from "@/store/axios";
+import { deltSQLData, changeMySql } from "@/store/axios";
 import { MysqlDeviceChange } from "@/store/interface";
-import { changeMySql } from "@/store/axios";
-import {device_status} from "@/store/dataReplace"
+import { device_status } from "@/store/dataReplace";
 interface Props {
   data: MysqlDeviceChange; //UUID
 }
-
 
 const App: React.FC<Props> = ({ data }) => {
   const { deltArrData } = useContext(AppContext);
@@ -41,7 +39,6 @@ const App: React.FC<Props> = ({ data }) => {
     console.log("Received values:", values);
     setFormData(values); // 将表单数据存储在状态中
   };
-
 
   //保存设置信息
   const saveData = async () => {

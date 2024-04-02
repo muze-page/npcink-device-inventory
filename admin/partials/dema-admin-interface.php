@@ -22,11 +22,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
             add_action('wp_ajax_save_object_option', array(__CLASS__, 'save_object_option_callback'));
             add_action('wp_ajax_nopriv_save_object_option', array(__CLASS__, 'save_object_option_callback'));
 
-            //添加查询变更接口
-            add_action('wp_ajax_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
-            add_action('wp_ajax_nopriv_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
-
-            // 修改设备信息接口
+            // 修改 - 设备信息接口
             add_action('wp_ajax_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
             add_action('wp_ajax_nopriv_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
 
@@ -38,6 +34,9 @@ if (!class_exists('DEMA_Admin_Interface')) {
             add_action('wp_ajax_update_change_callback',  array(__CLASS__, 'update_change_callback'));
             add_action('wp_ajax_nopriv_update_change_callback',  array(__CLASS__, 'update_change_callback'));
 
+             //查询 - 设备变更信息接口
+             add_action('wp_ajax_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
+             add_action('wp_ajax_nopriv_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
 
             // 删除设备接口
             add_action('wp_ajax_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));

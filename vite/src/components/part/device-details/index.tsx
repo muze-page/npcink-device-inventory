@@ -85,7 +85,9 @@ const App: React.FC<Props> = ({ data }) => {
             {/**LOGO */}
             <Mark osType={osType} />
             {/**详细内容 */}
+           
             <Msg osType={osType} data={data} />
+            
           </div>
         ))}
 

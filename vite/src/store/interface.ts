@@ -73,6 +73,15 @@ export interface ComputerChangeReturn {
   [key: string]: string;
 }
 
+/**
+ * Axios 返回类型
+ */
+export interface MysqlChange  {
+  message: string;
+  status: string;
+  data: string;
+};
+
 //主板
 export interface ComputerBaseboard {
   assetTag: string;

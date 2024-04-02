@@ -25,8 +25,6 @@ const TextEditor: React.FC<PropsEditor> = ({
 
   // 监听 default_start 变化，更新 text 值
 
-  
-
   //监听UUID，若变换则关闭编辑装
   useEffect(() => {
     // 组件挂载时执行的操作

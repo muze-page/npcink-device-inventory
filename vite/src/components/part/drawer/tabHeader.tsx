@@ -22,6 +22,7 @@ const App: React.FC<Props> = ({ osType, data }) => {
   
   `}
     >
+      
       {/**姓名 */}
       <div className="flex justify-between">
         <div className="flex items-center text-lg">
@@ -37,7 +38,6 @@ const App: React.FC<Props> = ({ osType, data }) => {
           ? (data.meat.disk / 1024).toFixed(2) + " T"
           : data.meat.disk + " G"}
       </p>
-
       {/**编号 状态 */}
       <div className="mt-5 flex items-center">
         <div className="flex items-center">
