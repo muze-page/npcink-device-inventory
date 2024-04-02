@@ -1,7 +1,6 @@
 //弹窗内容头部
 import { MysqlDeviceChangeMeat, PropBgColor } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
-//import User from "@/assets/user.svg";
 
 interface Props {
   osType: PropBgColor;
@@ -17,7 +16,7 @@ const App: React.FC<Props> = ({ osType, data }) => {
       className={`pt-6 pr-[17px] pb-6 pl-[23px] text-white text-sm flex-1 
   ${
     (osType.name === "Windows" && "Windows_content_background_color") ||
-    (osType.name === "mac" && "Mac_content_background_color")
+    (osType.name === "Mac" && "Mac_content_background_color")
   }
   
   `}

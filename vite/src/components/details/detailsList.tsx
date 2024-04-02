@@ -2,11 +2,12 @@
  * 设备详情
  */
 import { Tooltip } from "antd";
-import Mac from "@/assets/mac.png";
-import Win from "@/assets/windows_ico.png";
 import { CodeOutlined, BuildFilled } from "@ant-design/icons";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
+import Mac from "@/assets/mac.png";
+import Win from "@/assets/windows_ico.png";
+import {findOsTypeObj} from "@/store/tool"
 
 interface Props {
   data: MysqlDeviceChangeMeat;
@@ -31,8 +32,8 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
     device_status.find((obj) => obj.value === data.state)?.label ?? "无状态";
 
   //找到需要的系统对象
-  const osTypeObj = osTypeArray.find((obj) => obj.name === data.meat.ostype);
-  //console.log(data);
+  const osTypeObj = findOsTypeObj(osTypeArray,data);
+  
   return (
     <>
       {/**开始循环 */}

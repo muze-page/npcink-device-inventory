@@ -23,33 +23,15 @@ export interface MysqlDeviceChange {
 //准备交叉类型
 export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
   meat: {
-    ostype: string;
-    cpu: string;
-    model: string;
-    memory: number;
-    disk: number;
+    //为方便筛选
+    os: string; //系统型号
+    ostype: string; //系统类型
+    cpu: string; //cpu型号
+    model: string;//系统型号
+    memory: number; //内存
+    disk: number; //硬盘
   };
 };
-
-//硬件基本信息
-export interface Computer {
-  baseboard: ComputerBaseboard;
-  bios: ComputerBios;
-  chassis: ComputerChassis; //机箱
-  cpu: ComputerCpu;
-  diskLayout: ComputerDevice[];
-  graphics: {
-    displays: ComputerDishplays[];
-    controllers: ComputerControllers[];
-  };
-  memLayout: ComputerRam[];
-  net: ComputerNet[];
-  os: ComputerOS;
-  system: ComputerSystem;
-  uuid: ComputerUuid;
-  version: string;
-  versions: object;
-}
 
 //替换列表
 export interface Replacements {
@@ -76,11 +58,40 @@ export interface ComputerChangeReturn {
 /**
  * Axios 返回类型
  */
-export interface MysqlChange  {
+export interface MysqlChange {
   message: string;
   status: string;
   data: string;
-};
+}
+
+/**
+ * 列表图片内容
+ */
+export interface OsTypeArray {
+  id: number;
+  name: string;
+  image: string;
+}
+
+//硬件基本信息
+export interface Computer {
+  baseboard: ComputerBaseboard;
+  bios: ComputerBios;
+  chassis: ComputerChassis; //机箱
+  cpu: ComputerCpu;
+  diskLayout: ComputerDevice[];
+  graphics: {
+    displays: ComputerDishplays[];
+    controllers: ComputerControllers[];
+  };
+  memLayout: ComputerRam[];
+  net: ComputerNet[];
+  os: ComputerOS;
+  system: ComputerSystem;
+  uuid: ComputerUuid;
+  version: string;
+  versions: object;
+}
 
 //主板
 export interface ComputerBaseboard {

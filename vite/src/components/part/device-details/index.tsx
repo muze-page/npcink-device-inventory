@@ -12,7 +12,7 @@ import {
 
 import type { TabsProps } from "antd";
 
-import Msg from "@/components/part/drawer/tabHeader";
+import TabHeader from "@/components/part/drawer/tabHeader";
 import Info from "@/components/part/device-details/info";
 import Change from "@/components/part/device-details/change";
 import Seting from "@/components/part/device-details/seting";
@@ -20,6 +20,7 @@ import Detailed from "@/components/part/device-details/detailed/index";
 
 import MacOs from "@/assets/macos.png";
 import Win from "@/assets/windows_s.png";
+import {findOsTypeObj} from "@/store/tool"
 
 import { MysqlDeviceChangeMeat, PropBgColor } from "@/store/interface";
 
@@ -27,6 +28,8 @@ interface Props {
   data: MysqlDeviceChangeMeat;
 }
 const App: React.FC<Props> = ({ data }) => {
+  
+  //Tab 栏
   const items: TabsProps["items"] = [
     {
       key: "1",
@@ -70,26 +73,27 @@ const App: React.FC<Props> = ({ data }) => {
     },
   ];
 
-  const osTypes = [
-    { id: 1, name: "mac", image: MacOs },
+  const osTypeArray = [
+    { id: 1, name: "Mac", image: MacOs },
     { id: 2, name: "Windows", image: Win },
   ];
 
+  //找到需要的系统对象
+  const osTypeObj = findOsTypeObj(osTypeArray,data);
+
   return (
     <>
+     
       {/**品牌标志 */}
-      {osTypes
-        .filter((osType) => data.meat.ostype.includes(osType.name))
-        .map((osType) => (
-          <div key={osType.id} className="flex">
+     
+          <div key={osTypeObj?.id} className="flex">
             {/**LOGO */}
-            <Mark osType={osType} />
+            <Mark osType={osTypeObj!} />
             {/**详细内容 */}
-           
-            <Msg osType={osType} data={data} />
-            
+            <TabHeader osType={osTypeObj!} data={data} />
           </div>
-        ))}
+        
+
 
       <Tabs defaultActiveKey="1" items={items} />
     </>
@@ -109,7 +113,7 @@ const Mark: React.FC<PropsMark> = ({ osType }) => (
     className={`rounded-l-[4px] py-[22px] px-[10px] 
 ${
   (osType.name === "Windows" && "bg-[#356dee]") ||
-  (osType.name === "mac" && "Mac_icon_background_color")
+  (osType.name === "Mac" && "Mac_icon_background_color")
 }
 `}
   >

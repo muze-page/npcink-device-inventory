@@ -1,5 +1,10 @@
 //公共方法
-import { Replacements, TableData } from "@/store/interface";
+import {
+  Replacements,
+  TableData,
+  OsTypeArray,
+  MysqlDeviceChangeMeat,
+} from "@/store/interface";
 
 /**
  *拿到指定键的值并统计该键的出现次数
@@ -112,6 +117,19 @@ export const judge_bool = (boo: any) => {
   }
 
   return "未知";
+};
+
+/**
+ * 找到需要的系统对象
+ * @param array  存储图片的数组对象
+ * @param data 系统类型
+ * @returns 包含图片的对象
+ */
+export const findOsTypeObj = (
+  array: OsTypeArray[],
+  data: MysqlDeviceChangeMeat
+) => {
+  return array.find((item) => item.name === data.meat.ostype);
 };
 
 /**

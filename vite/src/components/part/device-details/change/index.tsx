@@ -217,9 +217,9 @@ const App: React.FC<Props> = ({ uuid }) => {
         changeData = dataAxios[i];
       }
     }
-    console.log(row); //当前设置的值
-    console.log(dataAxios); //服务器传来的值
-    console.log(changeData); //来自服务器的当前设置的值
+    //console.log(row); //当前设置的值
+    //console.log(dataAxios); //服务器传来的值
+    //console.log(changeData); //来自服务器的当前设置的值
 
     for (let key in changeData) {
       if (changeData[key] !== row[key]) {
