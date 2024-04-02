@@ -26,15 +26,15 @@ if (!class_exists('DEMA_Admin_Interface')) {
             add_action('wp_ajax_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
             add_action('wp_ajax_nopriv_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
 
-            // 添加 - 设备变更信息接口
+            // 增 - 设备变更信息接口
             add_action('wp_ajax_add_change_data_callback',  array(__CLASS__, 'add_change_data_callback'));
             add_action('wp_ajax_nopriv_add_change_data_callback',  array(__CLASS__, 'add_change_data_callback'));
 
-            // 修改 - 设备变更信息接口
+            // 改 - 设备变更信息接口
             add_action('wp_ajax_update_change_callback',  array(__CLASS__, 'update_change_callback'));
             add_action('wp_ajax_nopriv_update_change_callback',  array(__CLASS__, 'update_change_callback'));
 
-             //查询 - 设备变更信息接口
+             //查 - 设备变更信息接口
              add_action('wp_ajax_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
              add_action('wp_ajax_nopriv_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
 

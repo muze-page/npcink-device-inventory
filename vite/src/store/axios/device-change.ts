@@ -5,6 +5,7 @@
 import axios from "axios";
 import { Ajaxurl } from "@/store";
 import { MysqlChange, ComputerChangeReturn } from "@/store/interface";
+
 /**
  * 增 - 添加变更数据
  */
@@ -66,3 +67,10 @@ export const changeMySqlData = async (
 /**
  * 查
  */
+export const searchChangeData = async (uuid: string): Promise<MysqlChange> => {
+  const params = new URLSearchParams();
+  params.append("action", "search_change_data_callback");
+  params.append("uuid", JSON.stringify(uuid));
+  const { data: res } = await axios.post(Ajaxurl, params);
+  return res;
+};

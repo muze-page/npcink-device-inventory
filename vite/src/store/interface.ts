@@ -61,7 +61,7 @@ export interface ComputerChangeReturn {
 export interface MysqlChange {
   message: string;
   status: string;
-  data: string;
+  data: any;
 }
 
 /**

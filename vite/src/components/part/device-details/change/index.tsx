@@ -6,10 +6,7 @@ import { Table, Empty, Form, Input } from "antd";
 import type { InputRef } from "antd";
 import type { FormInstance } from "antd/es/form";
 
-import { changeMySqlData } from "@/store/axios";
-
-import axios from "axios";
-import { Ajaxurl } from "@/store";
+import { changeMySqlData, searchChangeData } from "@/store/axios";
 
 import { ComputerChangeReturn } from "@/store/interface";
 
@@ -162,33 +159,24 @@ const App: React.FC<Props> = ({ uuid }) => {
   };
 
   //发出请求获取值 TODO:抽离试试
-  const getData = async (uuid: string) => {
-    const params = new URLSearchParams();
-    params.append("action", "search_change_data_callback");
-    params.append("uuid", JSON.stringify(uuid));
+  const getData = (uuid: string) => {
+    setLoading(true);
 
-    try {
-      setLoading(true);
-      const response = await axios.post<MysqlChange>(Ajaxurl, params);
-
-      if (response.status === 200) {
-        //拿到的展示用数据
-        const data = response.data.data;
-
+    searchChangeData(uuid)
+      .then((res) => {
         //添加key
-        const updatedDatas = data.map((obj: ComputerChangeReturn) => {
+        const addKeyData = res.data.map((obj: ComputerChangeReturn) => {
           return { ...obj, key: obj.id };
         });
         //倒序并传递
-        setDataAxios(updatedDatas.reverse());
-      } else {
-        setError("获取数据时出错：" + response.data);
-      }
-    } catch (error: any) {
-      setError("获取数据时出错：" + error.message);
-    } finally {
-      setLoading(false);
-    }
+        setDataAxios(addKeyData.reverse());
+      })
+      .catch((err) => {
+        setError("获取数据时出错：" + err.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
