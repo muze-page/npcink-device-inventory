@@ -127,11 +127,22 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
          */
         public static function search_change_data_callback()
         {
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'custom_change';
+
+            //拿到值
             $object_data = $_POST['uuid'];
             //拿到uuid
             $uuid = json_decode(stripslashes($object_data));
 
-            $object = self::get_custom_table_data_by_uuid($uuid);
+            //查询
+             // 使用预处理语句执行查询
+             $object = $wpdb->get_results(
+                $wpdb->prepare("SELECT * FROM $table_name WHERE uuid = %s", $uuid),
+                ARRAY_A
+            );
+
+           // $object = self::get_custom_table_data_by_uuid($uuid);
             //数据库中查找
             // 处理请求，并生成响应数据
             $response = array(

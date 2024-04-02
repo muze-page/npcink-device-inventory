@@ -77,14 +77,8 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                     'error' => '数据库更新失败: ' . $e->getMessage()
                 ));
             }
-
-
-
             wp_die();
         }
-
-       
-
 
         /**
          * 添加删除设备接口 - 删除设备信息和变更信息

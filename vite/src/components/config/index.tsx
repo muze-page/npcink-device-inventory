@@ -107,7 +107,7 @@ const App: React.FC = () => {
           label="删除插件数据"
           name="delete_mysql"
           valuePropName="checked"
-          extra={"删除插件用数据库和选项值"}
+          extra={"删除插件的同时，删除数据库和设置"}
         >
           <Switch />
         </Form.Item>
