@@ -118,6 +118,11 @@ const columns: (ColumnTypes[number] & {
   dataIndex: string;
 })[] = [
   {
+    title: "序号",
+    dataIndex: "id",
+    key: "id",
+  },
+  {
     title: "变更项目",
     dataIndex: "type",
     key: "type",
@@ -151,9 +156,6 @@ const App: React.FC<Props> = ({ uuid }) => {
   const [loading, setLoading] = useState(false); //加载中
   const [error, setError] = useState(""); //报错
 
-
-
-  //发出请求获取值 TODO:抽离试试
   const getData = (uuid: string) => {
     setLoading(true);
 
@@ -165,6 +167,7 @@ const App: React.FC<Props> = ({ uuid }) => {
         });
         //倒序并传递
         setDataAxios(addKeyData.reverse());
+        console.log(addKeyData);
       })
       .catch((err) => {
         setError("获取数据时出错：" + err.message);
@@ -180,32 +183,32 @@ const App: React.FC<Props> = ({ uuid }) => {
 
   //保存
   const handleSave = (row: ComputerChangeReturn) => {
+    //浅拷贝 创建副本
     const newData = [...dataAxios];
+
+    //在newData数组中查找具有与row.id相同的id属性的元素，并返回该元素在数组中的索引位置。
     const index = newData.findIndex((item) => row.id === item.id);
-    const item = newData[index];
+    const oldData = newData[index]; //修改前的值
+
+    //更新数据
     newData.splice(index, 1, {
-      ...item,
+      ...oldData,
       ...row,
     });
+
     setDataAxios(newData); //保存选项
+    //console.log(row);
+    //console.log(dataAxios);
+    //console.log(newData);
+    //console.log(index);
+    //console.log(oldData);
 
-    //找到需要的数据
-    // 用于存储符合条件的对象的数组
-
-    //原始对象
-    let changeData;
-    // 遍历数组，查找 id 为当前的对象
-    for (let i = 0; i < dataAxios.length; i++) {
-      if (dataAxios[i].id === row.id) {
-        changeData = dataAxios[i];
-      }
-    }
     //console.log(row); //当前设置的值
     //console.log(dataAxios); //服务器传来的值
     //console.log(changeData); //来自服务器的当前设置的值
-
-    for (let key in changeData) {
-      if (changeData[key] !== row[key]) {
+    //哪个发生变化就更新那个
+    for (let key in oldData) {
+      if (oldData[key] !== row[key]) {
         console.log(`a2.${key}: `, row[key]);
         switch (key) {
           case "user":
@@ -259,8 +262,6 @@ const App: React.FC<Props> = ({ uuid }) => {
         <div className="pl-5 relative">
           {/**列表 */}
           <div className="mt-1">
-            {/*添加 - 修改记录*/}
-            <AddChangeData uuid={uuid} />
             <p className="mb-4 text-base font-bold text-[#333]">硬件信息变更</p>
             {dataAxios.length !== 0 ? (
               //展示数据
@@ -276,8 +277,9 @@ const App: React.FC<Props> = ({ uuid }) => {
               //没有数据
               <Empty description={<span>暂无记录</span>} />
             )}
+            {/*添加 - 修改记录*/}
+            <AddChangeData uuid={uuid} />
           </div>
-          {/**下载按钮 */}
         </div>
       )}
     </>

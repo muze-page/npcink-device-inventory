@@ -77,13 +77,13 @@ const AddChangeData: React.FC<ACDProps> = ({ uuid }) => {
         <Form.Item
           label="变更说明"
           name="msg"
-          rules={[{ required: true, message: "请输入消息" }]}
+          rules={[{ required: true, message: "请输入变更内容" }]}
         >
           <TextArea placeholder="变更内容详情" />
         </Form.Item>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit">
+          <Button  htmlType="submit">
             添加
           </Button>
         </Form.Item>
