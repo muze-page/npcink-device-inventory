@@ -10,37 +10,30 @@ if (!class_exists('DEMA_Admin_Interface')) {
         //选项
         public static $option = "device_object_option";
 
-
-
+        //运行
         public static function run()
         {
             //数据接收
             require_once plugin_dir_path(__FILE__) . 'interface/data-input.php';
             DEMA_Admin_Interface_DataInput::run();
 
+            //硬件变更增删改查接口
+            require_once plugin_dir_path(__FILE__) . 'interface/device-change.php';
+            DEMA_Admin_Interface_Device_Change::run();
+
+            //硬件设置-删改
+            require_once plugin_dir_path(__FILE__) . 'interface/device-seting.php';
+            DEMA_Admin_Interface_Device_Seting::run();
+
             // 保存设置选项接口
             add_action('wp_ajax_save_object_option', array(__CLASS__, 'save_object_option_callback'));
             add_action('wp_ajax_nopriv_save_object_option', array(__CLASS__, 'save_object_option_callback'));
 
-            // 修改 - 设备信息接口
-            add_action('wp_ajax_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
-            add_action('wp_ajax_nopriv_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
+           
 
-            // 增 - 设备变更信息接口
-            add_action('wp_ajax_add_change_data_callback',  array(__CLASS__, 'add_change_data_callback'));
-            add_action('wp_ajax_nopriv_add_change_data_callback',  array(__CLASS__, 'add_change_data_callback'));
+           
 
-            // 改 - 设备变更信息接口
-            add_action('wp_ajax_update_change_callback',  array(__CLASS__, 'update_change_callback'));
-            add_action('wp_ajax_nopriv_update_change_callback',  array(__CLASS__, 'update_change_callback'));
-
-             //查 - 设备变更信息接口
-             add_action('wp_ajax_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
-             add_action('wp_ajax_nopriv_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
-
-            // 删除设备接口
-            add_action('wp_ajax_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));
-            add_action('wp_ajax_nopriv_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));
+           
 
             //导出数据接口
             add_action('wp_ajax_export_data_callback', array(__CLASS__, 'export_data_callback'));
@@ -85,32 +78,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
             wp_send_json($response, 200, JSON_UNESCAPED_UNICODE);
         }
 
-        /**
-         * 创建查询接口，
-         */
-        public static function search_change_data_callback()
-        {
-
-
-
-            $object_data = $_POST['uuid'];
-            //拿到uuid
-            $uuid = json_decode(stripslashes($object_data));
-
-            $object = self::get_custom_table_data_by_uuid($uuid);
-            //数据库中查找
-            // 处理请求，并生成响应数据
-            $response = array(
-                'status' => 'success',
-                'message' => '处理下：Received data1=' . $object,
-                'data' =>  $object,
-            );
-
-
-
-            // 返回响应数据
-            wp_send_json($response);
-        }
+       
 
         /**
          * 查找功能
@@ -130,234 +98,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
         }
 
 
-        /**
-         * 修改设备信息接口
-         */
-        public static function update_style_name_callback()
-        {
-
-
-            global $wpdb;
-            $table_name = $wpdb->prefix . 'custom_table';
-
-
-
-            // 获取前端传递的参数并进行输入验证
-            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : ''; //唯一标识符
-            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : ''; //修改的值
-            $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : ''; //字段名
-
-            // 定义字段与数据库类型的映射关系
-            $field_map = array(
-                'name' => 'name',//姓名
-                'number' => 'number',//编号
-                'state' => 'state', //状态
-            );
-
-            // 确定要更新的字段
-            $field_name = isset($field_map[$type]) ? $field_map[$type] : '';
-
-            try {
-                if (!empty($field_name)) {
-                    // 使用预处理语句更新数据库中对应的数据
-                    $wpdb->update(
-                        $table_name,
-                        array($field_name => $data),
-                        array('uuid' => $uuid),
-                        '%s', // 字段类型
-                        '%s'  // 条件类型
-                    );
-
-                    // 返回更新成功的响应
-                    echo json_encode(array(
-                        'success' => true,
-                        'table_name' => $table_name,
-                        'type' => $type,
-                        'field_name' => $field_name,
-                        'data' => $data,
-                        'uuid' => $uuid
-                    ));
-                } else {
-                    // 未找到对应的字段名
-                    echo json_encode(array(
-                        'success' => false,
-                        'error' => '未找到对应的字段名'
-                    ));
-                }
-            } catch (Exception $e) {
-                // 返回更新失败的响应，包含详细的错误信息
-                echo json_encode(array(
-                    'success' => false,
-                    'error' => '数据库更新失败: ' . $e->getMessage()
-                ));
-            }
-
-
-
-            wp_die();
-        }
-
-        /**
-         * 添加 - 设备变更信息接口
-         */
-        public static function add_change_data_callback() {
-            global $wpdb;
-            $table_name = $wpdb->prefix . 'custom_change';
         
-            // 获取前端传递的参数并进行输入验证
-            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //id
-            $user = isset($_POST['user']) ? sanitize_text_field($_POST['user']) : null; //id
-            $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : null; //字段名
-            $data = isset($_POST['msg']) ? sanitize_text_field($_POST['msg']) : null; //修改的值
-        
-// TODO:验证接收的数据是否为undefined或为空字符串
-
-        
-            // 使用预处理语句插入数据
-            $wpdb->insert(
-                $table_name,
-                array(
-                    'uuid' => $uuid,
-                    'user' => $user,
-                    'type' => $type,
-                    'msg' => $data
-                ),
-                array(
-                    '%s', // uuid
-                    '%s', // user
-                    '%s', // type
-                    '%s'  // data
-                )
-            );
-        
-            // 检查插入是否成功
-    if ( $result === false ) {
-        wp_send_json_error( '未能插入数据。' );
-    } else {
-        wp_send_json_success( '数据插入成功。' );
-    }
-        
-            // 插入成功，可以进行其他操作
-        }
-        
-
-        /**
-         * 修改 - 设备变更信息接口
-         */
-        public static function update_change_callback()
-        {
-            global $wpdb;
-            $table_name = $wpdb->prefix . 'custom_change';
-
-
-            // 获取前端传递的参数并进行输入验证
-            $id = isset($_POST['id']) ? sanitize_text_field($_POST['id']) : ''; //id
-            $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : ''; //字段名
-            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : ''; //修改的值
-
-
-            // 定义字段与类型的映射关系
-            $field_map = array(
-                'user' => 'user', //修改姓名
-                'type' => 'type', //类型
-                'msg' => 'msg', //修改描述
-            );
-
-            // 确定要更新的字段
-            $field_name = isset($field_map[$type]) ? $field_map[$type] : '';
-
-            try {
-                if (!empty($field_name)) {
-                    // 使用预处理语句更新数据库中对应的数据
-                    $wpdb->update(
-                        $table_name,
-                        array($field_name => $data),
-                        array('id' => $id),
-                        '%s', // 字段类型
-                        '%s'  // 条件类型
-                    );
-
-                    // 返回更新成功的响应
-                    echo json_encode(array(
-                        'success' => true,
-                        '表名' => $table_name,
-                        '类型' => $type,
-                        '字段名' => $field_name,
-                        '数据' => $data,
-                        'id' => $id
-                    ));
-                } else {
-                    // 未找到对应的字段名
-                    echo json_encode(array(
-                        'success' => false,
-                        'error' => '未找到对应的字段名'
-                    ));
-                }
-            } catch (Exception $e) {
-                // 返回更新失败的响应，包含详细的错误信息
-                echo json_encode(array(
-                    'success' => false,
-                    'error' => '数据库更新失败: ' . $e->getMessage()
-                ));
-            }
-
-
-
-            wp_die();
-        }
-
-
-        /**
-         * 添加删除设备接口
-         */
-        public static  function delt_sql_uuid_callback()
-        {
-
-
-            global $wpdb;
-            $table_name = $wpdb->prefix . 'custom_table';
-            $table_change = $wpdb->prefix . 'custom_change';
-
-
-
-            // 获取前端传递的参数并进行输入验证
-            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : '';
-
-            // 使用预处理语句构建SQL查询
-            $sql = $wpdb->prepare("DELETE FROM $table_name WHERE uuid = %s", $uuid);
-            $sql_change = $wpdb->prepare("DELETE FROM $table_change WHERE uuid = %s", $uuid);
-
-            // 开始事务
-            $wpdb->query('START TRANSACTION');
-
-            try {
-                // 执行删除操作
-                $result = $wpdb->query($sql);
-                $result_change = $wpdb->query($sql_change);
-
-                if ($result === false || $result_change === false) {
-                    throw new Exception('删除数据时发生错误');
-                }
-
-                // 提交事务
-                $wpdb->query('COMMIT');
-
-                wp_send_json([
-                    'success' => true,
-                    'message' => '行数据已成功删除'
-                ]);
-            } catch (Exception $e) {
-                // 回滚事务
-                $wpdb->query('ROLLBACK');
-
-                wp_send_json([
-                    'success' => false,
-                    'message' => $e->getMessage()
-                ]);
-            } finally {
-                wp_die();
-            }
-        }
 
         /**
          * 添加数据导出接口
