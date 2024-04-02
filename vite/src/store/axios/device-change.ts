@@ -4,7 +4,28 @@
 
 import axios from "axios";
 import { Ajaxurl } from "@/store";
-import { MysqlChange } from "@/store/interface";
+import { MysqlChange, ComputerChangeReturn } from "@/store/interface";
+/**
+ * 增 - 添加变更数据
+ */
+export const addChangeData = async (
+  uuid: string,
+  data: ComputerChangeReturn
+): Promise<MysqlChange> => {
+  const params = new URLSearchParams();
+  params.append("action", "add_change_data_callback");
+  params.append("uuid", uuid);
+  params.append("user", data.user);
+  params.append("type", data.type);
+  params.append("msg", data.msg);
+
+  const { data: res } = await axios.post(Ajaxurl, params);
+  return res;
+};
+
+/**
+ * 删
+ */
 
 /**
  * 改
@@ -41,3 +62,7 @@ export const changeMySqlData = async (
     //console.log(false);
   }
 };
+
+/**
+ * 查
+ */
