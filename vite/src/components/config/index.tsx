@@ -15,37 +15,13 @@ type FieldType = {
 };
 
 const App: React.FC = () => {
-  //提示信息
-  const [messageApi, contextHolder] = message.useMessage();
-  //成功
-  const success = () => {
-    messageApi.open({
-      type: "success",
-      content: "保存成功",
-      style: {
-        marginTop: "6vh",
-      },
-    });
-  };
-
-  //失败
-  const warning = () => {
-    messageApi.open({
-      type: "warning",
-      content: "保存失败",
-      style: {
-        marginTop: "6vh",
-      },
-    });
-  };
-
   //保存选项动作
   const postData = async (optionObj: object) => {
     const state = saveSQLData(optionObj);
     if (await state) {
-      success();
+      message.success('保存成功');
     } else {
-      warning();
+      message.error('保存失败');
     }
   };
 
@@ -69,7 +45,7 @@ const App: React.FC = () => {
 
   return (
     <>
-      {contextHolder}
+     
       <Form
         name="basic"
         form={form}

@@ -38,14 +38,16 @@ const AddChangeData: React.FC<ACDProps> = ({ uuid }) => {
       .then((response) => {
         // 请求成功的处理逻辑
         console.log(response.data);
-        alert("添加成功，刷新页面后查看效果");
+        
+        message.success('添加成功，刷新页面后查看效果');
         // 提交后清空表单数据
         form.resetFields();
+        
       })
       .catch((error) => {
         // 请求失败的处理逻辑
         console.error("Error:", error);
-        alert("添加失败");
+        message.error('添加失败');
       });
   };
 

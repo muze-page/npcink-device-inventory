@@ -14,9 +14,6 @@ interface Props {
 const App: React.FC<Props> = ({ data }) => {
   const { deltArrData } = useContext(AppContext);
 
-  //提示信息
-  const [messageApi, contextHolder] = message.useMessage();
-
   /*form 变量用于操作表单实例，
   而 formData 状态变量用于存储表单数据。
   */
@@ -61,16 +58,9 @@ const App: React.FC<Props> = ({ data }) => {
             const success = await changeMySql(data.uuid, key, fieldsValue[key]);
             if (success && !isSaved) {
               isSaved = true; // 设置保存成功的标志为 true
-              messageApi.open({
-                type: "success",
-                content: "保存成功",
-                className: "custom-class",
-                style: {
-                  marginTop: "2vh",
-                },
-              });
+              message.success("保存成功");
             } else if (!success && !isSaved) {
-              alert("保存设置选项时出错，请稍后重试。");
+              message.error("保存设置选项时出错，请稍后重试。");
             }
           } catch (error: any) {
             alert("保存设置选项时出错：" + error.message);
@@ -81,14 +71,7 @@ const App: React.FC<Props> = ({ data }) => {
 
     if (!isChanged) {
       // 如果循环结束后没有发现任何变化，弹出 "没有变化" 的提示
-      messageApi.open({
-        type: "warning",
-        content: "没有变化",
-        className: "custom-class",
-        style: {
-          marginTop: "2vh",
-        },
-      });
+      message.warning("没有变化");
     }
   };
 
@@ -103,7 +86,6 @@ const App: React.FC<Props> = ({ data }) => {
   };
   return (
     <>
-      {contextHolder}
       <Form
         form={form}
         onFinish={onFinish}
