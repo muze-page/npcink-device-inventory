@@ -26,6 +26,8 @@ export const changeMySql = async (
   params.append("data", data);
   params.append("type", type);
 
+
+  
   try {
     const response = await axios.post<MysqlChange>(Ajaxurl, params);
 

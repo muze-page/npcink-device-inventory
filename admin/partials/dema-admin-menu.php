@@ -68,8 +68,6 @@ if (!class_exists('DEMA_Admin_Menu')) {
                 return;
             }
 
-
-
             //准备地址
             $index_css = plugin_dir_url(dirname(__DIR__)) . 'vite/dist/index.css';
             $index_js = plugin_dir_url(dirname(__DIR__)) . 'vite/dist/index.js';

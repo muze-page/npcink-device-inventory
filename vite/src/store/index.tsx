@@ -1,10 +1,14 @@
 //准备初始数据
 import data from "@/store/defaultVar";
 import { MysqlDevice } from "./interface";
+import axios from "axios";
 
 //开发环境状态
 const state: boolean = import.meta.env.VITE_STATE;
 
+if (state) {
+  axios.defaults.baseURL = "/api"; //开发环境下配置代理
+}
 //输出选项值
 const getDataLocal = () => {
   if (state) {

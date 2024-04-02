@@ -151,12 +151,7 @@ const App: React.FC<Props> = ({ uuid }) => {
   const [loading, setLoading] = useState(false); //加载中
   const [error, setError] = useState(""); //报错
 
-  //返回值类型
-  type MysqlChange = {
-    data: ComputerChangeReturn[];
-    message: string;
-    status: string;
-  };
+
 
   //发出请求获取值 TODO:抽离试试
   const getData = (uuid: string) => {

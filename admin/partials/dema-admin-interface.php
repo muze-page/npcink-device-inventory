@@ -27,7 +27,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
 
             // 保存设置选项接口
             add_action('wp_ajax_save_object_option', array(__CLASS__, 'save_object_option_callback'));
-            add_action('wp_ajax_nopriv_save_object_option', array(__CLASS__, 'save_object_option_callback'));
+            //add_action('wp_ajax_nopriv_save_object_option', array(__CLASS__, 'save_object_option_callback'));
 
            
 
@@ -37,11 +37,11 @@ if (!class_exists('DEMA_Admin_Interface')) {
 
             //导出数据接口
             add_action('wp_ajax_export_data_callback', array(__CLASS__, 'export_data_callback'));
-            add_action('wp_ajax_nopriv_export_data_callback', array(__CLASS__, 'export_data_callback'));
+            //add_action('wp_ajax_nopriv_export_data_callback', array(__CLASS__, 'export_data_callback'));
 
             //导入数据接口
             add_action('wp_ajax_import_config_data_callback', array(__CLASS__, 'import_config_data_callback'));
-            add_action('wp_ajax_nopriv_import_config_data_callback', array(__CLASS__, 'import_config_data_callback'));
+            //add_action('wp_ajax_nopriv_import_config_data_callback', array(__CLASS__, 'import_config_data_callback'));
         }
 
 

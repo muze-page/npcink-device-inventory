@@ -92,7 +92,7 @@ export const option = {
 const data = {
   data: dataMysql,
   option: option, //选项
-  ajaxurl: "http://localhost:10048/wp-admin/admin-ajax.php",
+  ajaxurl: "/wp-admin/admin-ajax.php",//代理
   site: "http://localhost:10048",
 };
 export default data;
