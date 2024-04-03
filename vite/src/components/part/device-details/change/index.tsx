@@ -252,6 +252,11 @@ const App: React.FC<Props> = ({ uuid }) => {
     };
   });
 
+  //显示配置
+  const pagination = {
+    pageSize: 6, // 每页显示的数据条数
+  };
+
   return (
     <>
       {loading ? (
@@ -272,6 +277,7 @@ const App: React.FC<Props> = ({ uuid }) => {
                 size="small"
                 columns={columnss as ColumnTypes}
                 dataSource={dataAxios}
+                pagination={pagination}
               />
             ) : (
               //没有数据

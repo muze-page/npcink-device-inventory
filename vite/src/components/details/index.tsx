@@ -163,7 +163,7 @@ const App: React.FC = () => {
 
       {/**分页 */}
       {screenData.length > pageSize && (
-        <div className="mt-2">
+        <div className="mt-4 float-right">
           <Pagination
             current={currentPage}
             onChange={handlePageChange}
