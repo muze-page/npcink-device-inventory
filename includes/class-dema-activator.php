@@ -53,9 +53,10 @@ class Dema_Activator
 			$sql = "CREATE TABLE $table_name (
             id INT(11) NOT NULL AUTO_INCREMENT,
 			name VARCHAR(255) NOT NULL,
-			number INT(11) NOT NULL,
-			state VARCHAR(36) NOT NULL,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			state VARCHAR(255) NOT NULL,
+			number INT(12) NOT NULL,
+			department VARCHAR(255) NOT NULL,
+			time DATETIME DEFAULT CURRENT_TIMESTAMP,
             uuid VARCHAR(36) NOT NULL,
             data JSON,
             PRIMARY KEY (id)

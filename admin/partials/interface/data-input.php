@@ -82,12 +82,14 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 $wpdb->insert(
                     self::$table_name,
                     [
-                        'uuid' => self::$uuid_md5,//唯一标识符
                         'name' => $name,//姓名
+                        'state'=>"apply",//默认状态为启用
+                        'number' => 0,//编号
+                        'department'=>"默认",//默认部门
+                        'uuid' => self::$uuid_md5,//唯一标识符
                         'data' => $data_hardware,//数据
-                        'state'=>"apply",//默认状态
                     ],
-                    ['%s', '%s', '%s']
+                    ['%s', '%s', '%s','%s', '%s', '%s']
                 );
 
                 $response = [

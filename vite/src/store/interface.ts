@@ -2,21 +2,25 @@
 //从数据库读取的设备信息
 export interface MysqlDevice {
   id: string;
-  uuid: string;
-  name: string;
-  number: string;
-  data: string;
-  state: string;
+  name: string; //姓名
+  state: string; //状态
+  number: string; //编号
+  department: string; //部门
+  time: string;//添加时间
+  uuid: string; //唯一编号
+  data: string; //数据
 }
 
 //整理后
 export interface MysqlDeviceChange {
   id: string;
-  uuid: string;
-  name: string;
-  number: string;
-  data: Computer;
-  state: string;
+  name: string; //姓名
+  state: string; //状态
+  number: string; //编号
+  department: string; //部门
+  time: string;//添加时间
+  uuid: string; //唯一编号
+  data: Computer; //数据
   [key: string]: any;
 }
 
@@ -27,7 +31,7 @@ export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
     os: string; //系统型号
     ostype: string; //系统类型
     cpu: string; //cpu型号
-    model: string;//系统型号
+    model: string; //系统型号
     memory: number; //内存
     disk: number; //硬盘
   };
