@@ -14,7 +14,6 @@ interface Props {
   onDrawerData: () => void; //保存值
 }
 const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
-  
   //点击打开弹窗
   const showDrawer = () => {
     onActive(); //打开弹窗
@@ -39,9 +38,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
       {/**开始循环 */}
       <div
         className="
-        cursor-pointer p-[10px] rounded mr-[1.7%] mt-4 w-[23.7%] h-[272px] mac
+        cursor-pointer p-[10px] rounded mr-[2%] mt-4 w-[18%] h-[272px] mac
         hover:border-1 hover:border-blue-400 
-        [&:nth-child(4n)]:mr-0"
+        [&:nth-child(5n)]:mr-0"
         onClick={() => {
           showDrawer();
         }}

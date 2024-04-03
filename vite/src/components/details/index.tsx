@@ -14,7 +14,8 @@ import {
   ComputerRam,
   ComputerDevice,
 } from "@/store/interface";
-
+//选项
+import { defaultOption } from "@/store";
 //公共方法
 import { AppContext } from "@/store/setingContext";
 
@@ -130,7 +131,7 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   //每页展示数量，TODO:改为设置项
-  const pageSize = 12;
+  const pageSize = defaultOption.device_show_number;
 
   //设置页码
   const handlePageChange = (page: SetStateAction<number>) => {
