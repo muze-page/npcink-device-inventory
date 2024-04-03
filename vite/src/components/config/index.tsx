@@ -13,7 +13,7 @@ import {
   Popconfirm,
 } from "antd";
 import { defaultOption, Site } from "@/store";
-import { saveSQLData } from "@/store/axios";
+import { saveSQLData, remove_department } from "@/store/axios";
 
 import ImportExport from "@/components/config/importExport";
 import { OptionType } from "@/store/interface";
@@ -109,13 +109,16 @@ const App: React.FC = () => {
 
   //删除的二次确认
   const confirm = () => {
-    //console.log(e);
-    //移除选中部门
-    if (selectedDepartment === "") {
-      return message.error("请选择部门");
-    } else {
-      handleDeleteDepartment();
-      message.success("已移除此部门，请点击保存按钮存储此设置");
+    switch (selectedDepartment) {
+      case "":
+        message.error("请选择要移除的部门");
+        break;
+      case "默认":
+        message.error("保留用，请不要移除此部门");
+        break;
+      default:
+        handleDeleteDepartment();
+        message.success("已移除此部门，请点击保存按钮存储此设置");
     }
   };
 
@@ -123,6 +126,17 @@ const App: React.FC = () => {
     //e: React.MouseEvent<HTMLElement>
     //console.log(e);
     message.warning("已取消");
+  };
+
+  //测试移除部门
+  const removeData = async () => {
+    const state = await remove_department("运营部");
+    if (state) {
+      message.success("已移除此部门，请点击保存按钮存储此设置");
+    } else {
+      message.error("移除失败");
+    }
+    return;
   };
 
   return (
@@ -227,6 +241,7 @@ const App: React.FC = () => {
           </Button>
         </Form.Item>
       </Form>
+      <Button onClick={removeData}>测试</Button>
     </>
   );
 };

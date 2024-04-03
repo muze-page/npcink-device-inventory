@@ -5,6 +5,34 @@ import axios from "axios";
 import { Ajaxurl } from "@/store";
 import { MysqlChange } from "@/store/interface";
 import { message } from "antd";
+
+/**
+ * 保存选项
+ *
+ */
+export const remove_department = async (optionObj: string) => {
+  let state = false;
+  const params = new URLSearchParams();
+  params.append("action", "remove_department_callback");
+  params.append("data", JSON.stringify(optionObj));
+  try {
+    const response = await axios.post(Ajaxurl, params);
+
+    if (response.status === 200) {
+      //保存成功
+      //console.log(response);
+      state = true;
+    } else {
+      console.error("保存设置选项时出错：" + response.data);
+    }
+  } catch (error: any) {
+    console.error("保存设置选项时出错：" + error.message);
+  } finally {
+    //console.log(false);
+  }
+  return state;
+};
+
 /**
  * 保存选项
  */
@@ -69,10 +97,10 @@ export const importSQLData = async (
   try {
     const response = await axios.post<MysqlChange>(Ajaxurl, params);
     //console.log(response.data);
-    message.success('导入成功');
+    message.success("导入成功");
     return response.data;
   } catch (error: any) {
-    message.error('导入失败');
+    message.error("导入失败");
     // 将错误信息保存到全局状态中
     console.log("保存数据时出错：" + error.message);
     throw new Error("保存数据时出错：" + error.message);

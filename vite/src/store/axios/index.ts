@@ -2,6 +2,7 @@ export {
   saveSQLData,
   exportSQLData,
   importSQLData,
+  remove_department,
 } from "@/store/axios/seting";
 export {
   addChangeData,
@@ -9,4 +10,3 @@ export {
   searchChangeData,
 } from "@/store/axios/device-change";
 export { changeMySql, deltSQLData } from "@/store/axios/device-seting";
-
