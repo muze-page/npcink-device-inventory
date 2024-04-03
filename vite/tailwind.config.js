@@ -5,5 +5,7 @@ export default {
     extend: {},
   },
   plugins: [],
-
+  corePlugins: {
+    preflight: false,//禁止默认属性
+  },
 };

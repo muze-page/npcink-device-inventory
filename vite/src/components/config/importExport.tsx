@@ -4,13 +4,13 @@ import { Space, Button } from "antd";
 import { exportSQLData, importSQLData } from "@/store/axios";
 
 interface Props {
-  name: string; //数据库表名
+  data: string; //数据库表名
   /**
    * 基础数据：custom_table
    * 变更数据：custom_change
    */
 }
-const App: React.FC<Props> = ({ name }) => {
+const App: React.FC<Props> = ({ data }) => {
   //导入数据
   const [jsonContent, setJsonContent] = useState(null);
 
@@ -30,23 +30,23 @@ const App: React.FC<Props> = ({ name }) => {
   //保存到数据库
   const importData = () => {
     const jsonString = JSON.stringify(jsonContent);
-    importSQLData(name, jsonString);
+    importSQLData(data, jsonString);
   };
 
   //导出数据
   const downloadData = async () => {
-    const jsonData = await exportSQLData(name);
+    const jsonData = await exportSQLData(data);
     const jsonString = JSON.stringify(jsonData.data);
     const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement("a");
     link.href = url;
-    if (name == "custom_table") {
+    if (data == "custom_table") {
       link.download = "硬件管理数据-导出文件.json";
     }
 
-    if (name == "custom_change") {
+    if (data == "custom_change") {
       link.download = "硬件变更数据-导出文件.json";
     }
     link.click();

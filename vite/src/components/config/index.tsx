@@ -164,45 +164,53 @@ const App: React.FC = () => {
           name="device_show_number"
           extra={"设备详情页展示的数量，默认 8"}
         >
-          <InputNumber min={4} max={80} defaultValue={8} />
+          <InputNumber min={4} max={80} />
         </Form.Item>
 
         <Form.Item label="基础数据" extra={"方便数据迁移操作"}>
-          <ImportExport name="custom_table" />
+          <ImportExport data="custom_table" />
         </Form.Item>
         <Form.Item label="变更数据" extra={"方便数据迁移操作"}>
-          <ImportExport name="custom_change" />
+          <ImportExport data="custom_change" />
         </Form.Item>
 
-        <Form.Item label="添加部门" style={{ width: "100%" }} name="department">
-          <Input
-            style={{ width: "70%" }}
-            value={newDepartment}
-            onChange={(e) => setNewDepartment(e.target.value)}
-          />
-          <Button style={{ width: "30%" }} onClick={handleAddDepartment}>
-            添加
-          </Button>
-          {option.department}
+        <Form.Item
+          label="添加部门"
+          style={{ width: "100%" }}
+          name="department"
+          extra={option.department}
+        >
+          <div>
+            <Input
+              style={{ width: "70%" }}
+              value={newDepartment}
+              onChange={(e) => setNewDepartment(e.target.value)}
+            />
+            <Button style={{ width: "30%" }} onClick={handleAddDepartment}>
+              添加
+            </Button>
+          </div>
         </Form.Item>
 
         <Form.Item label="删除部门" name="department">
-          <Select
-            value={selectedDepartment}
-            style={{ width: "70%" }}
-            options={getSelectData()}
-            onChange={(value) => setSelectedDepartment(value)}
-          />
-          <Popconfirm
-            title="移除此部门"
-            description="您确定要移除此部门吗？"
-            onConfirm={confirm}
-            onCancel={cancel}
-            okText="是的"
-            cancelText="我再想想"
-          >
-            <Button>删除</Button>
-          </Popconfirm>
+          <div>
+            <Select
+              value={selectedDepartment}
+              style={{ width: "70%" }}
+              options={getSelectData()}
+              onChange={(value) => setSelectedDepartment(value)}
+            />
+            <Popconfirm
+              title="移除此部门"
+              description="您确定要移除此部门吗？"
+              onConfirm={confirm}
+              onCancel={cancel}
+              okText="是的"
+              cancelText="我再想想"
+            >
+              <Button>删除</Button>
+            </Popconfirm>
+          </div>
         </Form.Item>
 
         <Form.Item wrapperCol={{ offset: 8, span: 16 }}>

@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 @layer base {
+  /**
   button,
   [type="button"],
   [type="reset"],
@@ -11,6 +12,7 @@
     background: var(--ant-color-primary);
     box-shadow: none;
   }
+  */
 }
 
 @layer components {
