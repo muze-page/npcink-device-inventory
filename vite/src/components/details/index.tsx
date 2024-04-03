@@ -82,11 +82,10 @@ const updateOSType = (
 };
 
 const App: React.FC = () => {
-  //拿到数据
-  const data = dataMySql;
+  //拿到数据 dataMySql
 
   //处理后的数据
-  const updatedDataArray = updateOSType(data);
+  const updatedDataArray = updateOSType(dataMySql);
 
   //共享弹窗状态
   const [active, setActive] = useState(false);
@@ -130,8 +129,8 @@ const App: React.FC = () => {
   //当前页码
   const [currentPage, setCurrentPage] = useState(1);
 
-  //每页展示数量
-  const pageSize = 8;
+  //每页展示数量，TODO:改为设置项
+  const pageSize = 12;
 
   //设置页码
   const handlePageChange = (page: SetStateAction<number>) => {

@@ -4,8 +4,9 @@
 import { Computer } from "@/store/interface";
 interface Props {
   data: Computer;
+  time: string;
 }
-const App: React.FC<Props> = ({ data }) => {
+const App: React.FC<Props> = ({ data, time }) => {
   //显示器
   const displayData = data.graphics.displays[0];
 
@@ -49,10 +50,7 @@ const App: React.FC<Props> = ({ data }) => {
       title: "主硬盘",
       data: data.diskLayout[0].name,
     },
-    {
-      title: "磁盘序列号",
-      data: data.diskLayout[0].serialNum,
-    },
+
     {
       title: "显卡",
       data: data.graphics.controllers[0].model,
@@ -72,6 +70,14 @@ const App: React.FC<Props> = ({ data }) => {
         `(${displayData.currentResX}x${displayData.currentResY}
         ${displayData.currentRefreshRate}
         ) `,
+    },
+    {
+      title: "磁盘序列号",
+      data: data.diskLayout[0].serialNum,
+    },
+    {
+      title: "添加时间",
+      data: time,
     },
   ];
   interface itemType {
