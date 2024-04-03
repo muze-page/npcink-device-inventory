@@ -69,11 +69,19 @@ const App: React.FC = () => {
 
   //添加部门
   const handleAddDepartment = () => {
+    //先检查输入框的值是否为空
+    if (newDepartment.trim() === "") {
+      message.error("请输入部门名称");
+      return;
+    }
+
+    //清空输入框
     setNewDepartment("");
     setOption({
       ...option,
       department: [...option.department, newDepartment],
     });
+    message.success("已添加此部门，请点击保存按钮以存储此设置");
   };
 
   //删除部门
@@ -107,14 +115,14 @@ const App: React.FC = () => {
       return message.error("请选择部门");
     } else {
       handleDeleteDepartment();
-      message.success("已移除此部门");
+      message.success("已移除此部门，请点击保存按钮存储此设置");
     }
   };
 
   const cancel = () => {
     //e: React.MouseEvent<HTMLElement>
     //console.log(e);
-    message.error("已取消");
+    message.warning("已取消");
   };
 
   return (
@@ -178,15 +186,15 @@ const App: React.FC = () => {
           label="添加部门"
           style={{ width: "100%" }}
           name="department"
-          extra={option.department}
+          extra={option.department.join("，")}
         >
           <div>
             <Input
-              style={{ width: "70%" }}
+              style={{ width: "80%" }}
               value={newDepartment}
               onChange={(e) => setNewDepartment(e.target.value)}
             />
-            <Button style={{ width: "30%" }} onClick={handleAddDepartment}>
+            <Button style={{ width: "20%" }} onClick={handleAddDepartment}>
               添加
             </Button>
           </div>
@@ -196,7 +204,7 @@ const App: React.FC = () => {
           <div>
             <Select
               value={selectedDepartment}
-              style={{ width: "70%" }}
+              style={{ width: "80%" }}
               options={getSelectData()}
               onChange={(value) => setSelectedDepartment(value)}
             />
@@ -208,7 +216,7 @@ const App: React.FC = () => {
               okText="是的"
               cancelText="我再想想"
             >
-              <Button>删除</Button>
+              <Button style={{ width: "20%" }}>删除</Button>
             </Popconfirm>
           </div>
         </Form.Item>

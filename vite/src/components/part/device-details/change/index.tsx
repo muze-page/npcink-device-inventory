@@ -142,7 +142,7 @@ const columns: (ColumnTypes[number] & {
     editable: true,
   },
   {
-    title: "时间",
+    title: "变更时间",
     dataIndex: "time",
     key: "time",
   },
