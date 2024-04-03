@@ -35,7 +35,7 @@ export const dataMySql = combineData(getDataLocal().data);
 
 //拿到选项值并传出
 
-export const option: OptionType = getDataLocal().option;
+export const defaultOption: OptionType = getDataLocal().option;
 
 //输出接口地址
 export const Ajaxurl:string = getDataLocal().ajaxurl;

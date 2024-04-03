@@ -1,7 +1,7 @@
-import "./App.css";
+
 import Index from "@/components/index";
 import { ConfigProvider } from "antd";
-
+import "./App.css";
 import zhCN from "antd/locale/zh_CN";
 import { message } from "antd";
 message.config({

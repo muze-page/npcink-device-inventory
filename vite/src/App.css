@@ -3,9 +3,14 @@
 @tailwind utilities;
 
 @layer base {
-  
-
- 
+  button,
+  [type="button"],
+  [type="reset"],
+  [type="submit"] {
+    
+    background: var(--ant-color-primary);
+    box-shadow: none;
+  }
 }
 
 @layer components {
@@ -31,7 +36,7 @@
   }
   /*通用 - 按钮*/
   .bt {
-    @apply mx-2 px-2 rounded-lg  hover:bg-white hover:bg-opacity-10 ;
+    @apply mx-2 px-2 rounded-lg  hover:bg-white hover:bg-opacity-10;
   }
 }
 
