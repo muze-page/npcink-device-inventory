@@ -91,11 +91,14 @@ const dataMysql = [
   },
 ];
 
+
 //示例设置信息
 export const option = {
-  route: "11", //路由
-  password: "22", //密码
+  route: "device-post-data", //路由
+  password: "9527", //密码
   delete_mysql: false, //是否删除数据库
+  department: ["开发部", "推广部", "运营部", "默认"],
+  device_show_number: 8, //设备显示
 };
 
 const data = {

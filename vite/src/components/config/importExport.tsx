@@ -59,10 +59,10 @@ const App: React.FC<Props> = ({ name }) => {
   return (
     <Space>
       <input type="file" accept=".json" onChange={handleFileChange} />
-      <Button type="text" onClick={importData}>
+      <Button onClick={importData}>
         导入
       </Button>
-      <Button type="text" onClick={downloadData}>
+      <Button  onClick={downloadData}>
         导出
       </Button>
     </Space>

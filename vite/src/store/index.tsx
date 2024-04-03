@@ -1,6 +1,6 @@
 //准备初始数据
 import data from "@/store/defaultVar";
-import { MysqlDevice } from "./interface";
+import { MysqlDevice,OptionType } from "./interface";
 import axios from "axios";
 
 //开发环境状态
@@ -34,10 +34,11 @@ const combineData = (dataArrays: MysqlDevice[]) => {
 export const dataMySql = combineData(getDataLocal().data);
 
 //拿到选项值并传出
-export const option = getDataLocal().option;
+
+export const option: OptionType = getDataLocal().option;
 
 //输出接口地址
-export const Ajaxurl = getDataLocal().ajaxurl;
+export const Ajaxurl:string = getDataLocal().ajaxurl;
 
 //输出站点网址
-export const Site = getDataLocal().site;
+export const Site:string = getDataLocal().site;

@@ -36,7 +36,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             // 发送成功响应
             $response = array(
                 'message' => '设置选项已保存！',
-                'object' => $combined_value,
+                'object' => $object,
 
             );
 

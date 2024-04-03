@@ -6,7 +6,7 @@ export interface MysqlDevice {
   state: string; //状态
   number: string; //编号
   department: string; //部门
-  time: string;//添加时间
+  time: string; //添加时间
   uuid: string; //唯一编号
   data: string; //数据
 }
@@ -18,7 +18,7 @@ export interface MysqlDeviceChange {
   state: string; //状态
   number: string; //编号
   department: string; //部门
-  time: string;//添加时间
+  time: string; //添加时间
   uuid: string; //唯一编号
   data: Computer; //数据
   [key: string]: any;
@@ -36,6 +36,15 @@ export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
     disk: number; //硬盘
   };
 };
+
+//选项数据类型
+export interface OptionType {
+  route?: string;
+  password?: string;
+  delete_mysql?: boolean;
+  department: string[];
+  device_show_number: number; //设备显示数
+}
 
 //替换列表
 export interface Replacements {
@@ -69,7 +78,7 @@ export interface MysqlChange {
 }
 
 /**
- * 列表图片内容
+ * 列表图片内容,不同的设备不同的背景色
  */
 export interface OsTypeArray {
   id: number;
@@ -311,11 +320,4 @@ export interface ComputerChassis {
 export interface ComputerUuid {
   os: string;
   hardware: string;
-}
-
-//不同的设备不同的背景色
-export interface PropBgColor {
-  id: number;
-  name: string;
-  image: string;
 }

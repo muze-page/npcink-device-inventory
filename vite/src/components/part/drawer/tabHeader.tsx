@@ -1,9 +1,9 @@
 //弹窗内容头部
-import { MysqlDeviceChangeMeat, PropBgColor } from "@/store/interface";
+import { MysqlDeviceChangeMeat, OsTypeArray } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
 
 interface Props {
-  osType: PropBgColor;
+  osType: OsTypeArray;
   data: MysqlDeviceChangeMeat;
 }
 
@@ -21,7 +21,6 @@ const App: React.FC<Props> = ({ osType, data }) => {
   
   `}
     >
-      
       {/**姓名 */}
       <div className="flex justify-between">
         <div className="flex items-center text-lg">

@@ -20,15 +20,14 @@ import Detailed from "@/components/part/device-details/detailed/index";
 
 import MacOs from "@/assets/macos.png";
 import Win from "@/assets/windows_s.png";
-import {findOsTypeObj} from "@/store/tool"
+import { findOsTypeObj } from "@/store/tool";
 
-import { MysqlDeviceChangeMeat, PropBgColor } from "@/store/interface";
+import { MysqlDeviceChangeMeat, OsTypeArray } from "@/store/interface";
 
 interface Props {
   data: MysqlDeviceChangeMeat;
 }
 const App: React.FC<Props> = ({ data }) => {
-  
   //Tab 栏
   const items: TabsProps["items"] = [
     {
@@ -39,7 +38,7 @@ const App: React.FC<Props> = ({ data }) => {
           硬件信息
         </span>
       ),
-      children: <Info data={data.data} time={data.time}/>,
+      children: <Info data={data.data} time={data.time} />,
     },
     {
       key: "2",
@@ -79,21 +78,18 @@ const App: React.FC<Props> = ({ data }) => {
   ];
 
   //找到需要的系统对象
-  const osTypeObj = findOsTypeObj(osTypeArray,data);
+  const osTypeObj = findOsTypeObj(osTypeArray, data);
 
   return (
     <>
-     
       {/**品牌标志 */}
-     
-          <div key={osTypeObj?.id} className="flex">
-            {/**LOGO */}
-            <Mark osType={osTypeObj!} />
-            {/**详细内容 */}
-            <TabHeader osType={osTypeObj!} data={data} />
-          </div>
-        
 
+      <div key={osTypeObj?.id} className="flex">
+        {/**LOGO */}
+        <Mark osType={osTypeObj!} />
+        {/**详细内容 */}
+        <TabHeader osType={osTypeObj!} data={data} />
+      </div>
 
       <Tabs defaultActiveKey="1" items={items} />
     </>
@@ -106,7 +102,7 @@ export default App;
  */
 
 interface PropsMark {
-  osType: PropBgColor;
+  osType: OsTypeArray;
 }
 const Mark: React.FC<PropsMark> = ({ osType }) => (
   <div
