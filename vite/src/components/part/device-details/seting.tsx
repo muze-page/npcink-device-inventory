@@ -7,9 +7,18 @@ import { AppContext } from "@/store/setingContext";
 import { deltSQLData, changeMySql } from "@/store/axios";
 import { MysqlDeviceChange } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
+import { defaultOption } from "@/store";
 interface Props {
   data: MysqlDeviceChange; //UUID
 }
+
+//下拉筛选 - 准备筛选数据
+const getSelectData = () => {
+  return defaultOption.department.map((str) => ({
+    value: str,
+    label: str,
+  }));
+};
 
 const App: React.FC<Props> = ({ data }) => {
   const { deltArrData } = useContext(AppContext);
@@ -103,6 +112,9 @@ const App: React.FC<Props> = ({ data }) => {
         </Form.Item>
         <Form.Item label="状态" name="state">
           <Select style={{ width: 120 }} options={device_status} />
+        </Form.Item>
+        <Form.Item label="部门" name="department">
+          <Select style={{ width: 120 }} options={getSelectData()} />
         </Form.Item>
         <Form.Item>
           <Button type="primary" onClick={saveData}>

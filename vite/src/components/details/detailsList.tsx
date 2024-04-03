@@ -2,12 +2,11 @@
  * 设备详情
  */
 import { Tooltip } from "antd";
-import { CodeOutlined, BuildFilled } from "@ant-design/icons";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
 import Mac from "@/assets/mac.png";
 import Win from "@/assets/windows_ico.png";
-import {findOsTypeObj} from "@/store/tool"
+import { findOsTypeObj } from "@/store/tool";
 
 interface Props {
   data: MysqlDeviceChangeMeat;
@@ -15,6 +14,7 @@ interface Props {
   onDrawerData: () => void; //保存值
 }
 const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
+  
   //点击打开弹窗
   const showDrawer = () => {
     onActive(); //打开弹窗
@@ -32,8 +32,8 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
     device_status.find((obj) => obj.value === data.state)?.label ?? "无状态";
 
   //找到需要的系统对象
-  const osTypeObj = findOsTypeObj(osTypeArray,data);
-  
+  const osTypeObj = findOsTypeObj(osTypeArray, data);
+
   return (
     <>
       {/**开始循环 */}
@@ -68,18 +68,18 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
               : data.meat.disk + " G"}
           </p>
           {/*编号*/}
-          <p className="flex items-center  mt-4">
+          <p className="grid gap-y-2 items-center  mt-4">
             <Tooltip title={"设备编号：" + data.number}>
-              <CodeOutlined /> ： {data.number}
+              <span>编号 ： {data.number}</span>
             </Tooltip>
-            <Tooltip title={"当前状态：" + deviceStatus+"中"}>
-              <span className="ml-8">
-                <BuildFilled />：{deviceStatus}
-              </span>
+
+            <Tooltip title={"当前部门：" + data.department}>
+              <span>部门：{data.department}</span>
+            </Tooltip>
+            <Tooltip title={"当前状态：" + deviceStatus + "中"}>
+              <span>状态：{deviceStatus}</span>
             </Tooltip>
           </p>
-          {/**状态信息 */}
-          <div className="mt-4 flex items-center "></div>
         </div>
       </div>
     </>

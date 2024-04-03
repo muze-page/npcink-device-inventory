@@ -38,6 +38,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 'name' => 'name',//姓名
                 'number' => 'number',//编号
                 'state' => 'state', //状态
+                'department' => 'department', //部门
             );
 
             // 确定要更新的字段
