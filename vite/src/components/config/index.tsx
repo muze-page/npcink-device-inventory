@@ -213,10 +213,10 @@ const App: React.FC = () => {
               description="您确定要移除此部门吗？"
               onConfirm={confirm}
               onCancel={cancel}
-              okText="是的"
+              okText="移除"
               cancelText="我再想想"
             >
-              <Button style={{ width: "20%" }}>删除</Button>
+              <Button style={{ width: "20%" }}>移除</Button>
             </Popconfirm>
           </div>
         </Form.Item>

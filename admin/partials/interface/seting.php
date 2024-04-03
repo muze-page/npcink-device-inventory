@@ -119,13 +119,13 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
 
                         if (!$existingData) {
                             $insert_data[] = array(
-                                'is_enabled' => isset($item['is_enabled']) ? $item['is_enabled'] : 1,
                                 'name' => isset($item['name']) ? $item['name'] : '',
-                                'styleName' => isset($item['styleName']) ? $item['styleName'] : null,
-                                'styleNumber' => isset($item['styleNumber']) ? $item['styleNumber'] : 0,
+                                'state' => isset($item['state']) ? $item['state'] : 'apply',
+                                'number' => isset($item['number']) ? $item['number'] : 0,
+                                'department' => isset($item['department']) ? $item['department'] : 0,
+                                'time' => isset($item['time']) ? ($item['time']) : null,
                                 'uuid' => isset($item['uuid']) ? $item['uuid'] : '',
-                                'dataNew' => isset($item['dataNew']) ? ($item['dataNew']) : null,
-                                'dataOld' => isset($item['dataOld']) ? ($item['dataOld']) : null
+                                'data' => isset($item['data']) ? ($item['data']) : null,
                             );
                         }
                     }
@@ -147,11 +147,9 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                             $insert_data[] = array(
                                 'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
                                 'time' => isset($item['time']) ? $item['time'] :  0,
+                                'user' => isset($item['user']) ? $item['user'] :  null,
                                 'type' => isset($item['type']) ? $item['type'] :  null,
-                                'new' => isset($item['new']) ? $item['new'] :  null,
-                                'old' => isset($item['old']) ? $item['old'] :  null,
-                                'ch_name' => isset($item['ch_name']) ? $item['ch_name'] :  null,
-                                'ch_describe' => isset($item['ch_describe']) ? $item['ch_describe'] :  null,
+                                'msg' => isset($item['msg']) ? $item['msg'] :  null,
                             );
                         }
                     }
