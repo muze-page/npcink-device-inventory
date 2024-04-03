@@ -46,12 +46,12 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             $object_value = $wpdb->prepare('%s', $object);
             
             // 执行更新操作
-            $result = $wpdb->query(
-                $wpdb->prepare(
-                    "UPDATE $table_name SET department = '默认' WHERE department = %s",
-                    $object_value
-                )
-            );
+            // 更新表中department字段的值为$object的行，将其替换为"默认"
+$result = $wpdb->update(
+    $table_name, 
+    array('department' => '默认'), 
+    array('department' => $object)
+);
 
             // 检查更新操作是否成功
             if ($result !== false) {
