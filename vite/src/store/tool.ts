@@ -133,6 +133,15 @@ export const findOsTypeObj = (
 };
 
 /**
+ * 将字符串数组转换为对象，方便下拉选择
+ */
+export const changeSelectData = (data: string[]) => {
+  return data.map((str) => ({
+    value: str,
+    label: str,
+  }));
+};
+/**
  * 
  const data =[
     {
