@@ -3,7 +3,6 @@
 /**
  * 接口 接收传来的数据
  */
-//http://localhost:10048/wp-json/custom/v1/submit-data
 if (!class_exists('DEMA_Admin_Interface_DataInput')) {
     class DEMA_Admin_Interface_DataInput extends DEMA_Admin_Interface
     {
@@ -21,9 +20,87 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
          */
         public static function run()
         {
-            //添加接收设备数据api接口
+            
+            /**
+             * 添加接收设备数据api接口
+             * http://localhost:10048/wp-json/npcink/v1/submit-data
+             */
             add_action('rest_api_init', array(__CLASS__, 'create_custom_endpoint'));
+
+            /**
+             * 添加查询设备数据api接口
+             * http://localhost:10048/wp-json/npcink/v1/query?number=1&password=9527
+             */
+            add_action('rest_api_init', array(__CLASS__, 'create_query_endpoint'));
         }
+
+        /**
+         * 添加查询设备数据api接口
+         * 
+         */
+        public static function create_query_endpoint()
+        {
+            register_rest_route('npcink/v1', '/query', array(
+                'methods' => 'GET',
+                'callback' => array(__CLASS__, 'query_data'),
+                'permission_callback' => '__return_true', // 无需验权（验证密码即可）
+            ));
+        }
+
+        public static function query_data($request)
+        {
+            global $wpdb;
+            self::$table_name = $wpdb->prefix . "custom_table";
+
+            header('Access-Control-Allow-Origin: *');
+
+            // 获取传递过来的参数
+            $number = $request->get_param('number');
+            $password = $request->get_param('password');
+
+            // 验证密码
+            $is_valid_password = self::password_verification($password);
+            if (!$is_valid_password) {
+                // 密码验证失败
+                return new WP_REST_Response(
+                    [
+                        'message' => '密码验证失败，请重新填写密码！'
+                    ],
+                    403
+                );
+            }
+
+            // 验证数字参数
+            if (empty($number) || !is_numeric($number)) {
+                // 数字参数为空或非数字
+                return new WP_REST_Response(
+                    [
+                        'error' => '无效的数字参数'
+                    ],
+                    400
+                );
+            }
+
+            // 构造 SQL 查询语句
+            $query = $wpdb->prepare("SELECT * FROM " . self::$table_name . " WHERE number = %d", $number);
+
+            // 执行查询
+            $result = $wpdb->get_row($query);
+
+            if ($result) {
+                // 返回查询结果
+                return $result;
+            } else {
+                // 数据不存在
+                return new WP_REST_Response(
+                    [
+                        'error' => '未找到数据'
+                    ],
+                    404
+                );
+            }
+        }
+
 
         public static function create_custom_endpoint()
         {
