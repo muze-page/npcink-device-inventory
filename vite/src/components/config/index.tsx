@@ -17,6 +17,7 @@ import { saveSQLData, remove_department } from "@/store/axios";
 
 import ImportExport from "@/components/config/importExport";
 import { OptionType } from "@/store/interface";
+import {changeSelectData} from "@/store/tool";
 
 const App: React.FC = () => {
   //传来的默认选项
@@ -89,12 +90,8 @@ const App: React.FC = () => {
 
   //删除部门
   //下拉筛选 - 准备筛选数据
-  const getSelectData = () => {
-    return option.department.map((str) => ({
-      value: str,
-      label: str,
-    }));
-  };
+  const getSelectData=changeSelectData(option.department);
+  
 
   const [selectedDepartment, setSelectedDepartment] = useState<string>("默认");
 
@@ -195,10 +192,10 @@ const App: React.FC = () => {
           <InputNumber min={4} max={80} />
         </Form.Item>
 
-        <Form.Item label="基础数据" extra={"方便数据迁移操作"}>
+        <Form.Item label="基础数据" extra={"仅导入当前没有的设备数据，导出全部数据"}>
           <ImportExport data="custom_table" />
         </Form.Item>
-        <Form.Item label="变更数据" extra={"方便数据迁移操作"}>
+        <Form.Item label="变更数据" extra={"仅导入当前没有的设备数据，导出全部数据"}>
           <ImportExport data="custom_change" />
         </Form.Item>
 
@@ -225,7 +222,7 @@ const App: React.FC = () => {
             <Select
               value={selectedDepartment}
               style={{ width: "80%" }}
-              options={getSelectData()}
+              options={getSelectData}
               onChange={(value) => setSelectedDepartment(value)}
             />
             <Popconfirm
