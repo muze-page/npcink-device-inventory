@@ -1,4 +1,5 @@
 <?php
+
 /**
  * 硬件信息设置接口 - 改
  */
@@ -7,11 +8,11 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
     {
         public static function run()
         {
-             // 修改 - 设备信息接口
-             add_action('wp_ajax_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
-             //add_action('wp_ajax_nopriv_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
+            // 修改 - 设备信息接口
+            add_action('wp_ajax_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
+            //add_action('wp_ajax_nopriv_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
 
-              // 删除设备接口
+            // 删除设备接口
             add_action('wp_ajax_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));
             //add_action('wp_ajax_nopriv_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));
         }
@@ -35,8 +36,8 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
 
             // 定义字段与数据库类型的映射关系
             $field_map = array(
-                'name' => 'name',//姓名
-                'number' => 'number',//编号
+                'name' => 'name', //姓名
+                'number' => 'number', //编号
                 'state' => 'state', //状态
                 'department' => 'department', //部门
             );
@@ -133,4 +134,4 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
             }
         }
     }
-    }
+}

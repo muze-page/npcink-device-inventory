@@ -1,6 +1,6 @@
 //导入导出变更数据
 import { useState } from "react";
-import { Space, Button } from "antd";
+import { Space, Button, message } from "antd";
 import { exportSQLData, importSQLData } from "@/store/axios";
 
 interface Props {
@@ -29,8 +29,16 @@ const App: React.FC<Props> = ({ data }) => {
 
   //保存到数据库
   const importData = () => {
-    const jsonString = JSON.stringify(jsonContent);
-    importSQLData(data, jsonString);
+    console.log(jsonContent);
+   
+    if (jsonContent === null) {
+      message.error("请先选择文件");
+      return;
+    } else {
+      const jsonString = JSON.stringify(jsonContent);
+      importSQLData(data, jsonString);
+      return;
+    }
   };
 
   //导出数据
@@ -43,7 +51,7 @@ const App: React.FC<Props> = ({ data }) => {
     const link = document.createElement("a");
     link.href = url;
     if (data == "custom_table") {
-      link.download = "硬件管理数据-导出文件.json";
+      link.download = "硬件基础数据-导出文件.json";
     }
 
     if (data == "custom_change") {
@@ -59,12 +67,8 @@ const App: React.FC<Props> = ({ data }) => {
   return (
     <Space>
       <input type="file" accept=".json" onChange={handleFileChange} />
-      <Button onClick={importData}>
-        导入
-      </Button>
-      <Button  onClick={downloadData}>
-        导出
-      </Button>
+      <Button onClick={importData}>导入</Button>
+      <Button onClick={downloadData}>导出</Button>
     </Space>
   );
 };

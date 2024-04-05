@@ -82,14 +82,14 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 $wpdb->insert(
                     self::$table_name,
                     [
-                        'name' => $name,//姓名
-                        'state'=>"apply",//默认状态为启用
-                        'number' => 0,//编号
-                        'department'=>"默认",//默认部门
-                        'uuid' => self::$uuid_md5,//唯一标识符
-                        'data' => $data_hardware,//数据
+                        'name' => $name, //姓名
+                        'state' => "apply", //默认状态为启用
+                        'number' => 0, //编号
+                        'department' => "默认", //默认部门
+                        'uuid' => self::$uuid_md5, //唯一标识符
+                        'data' => $data_hardware, //数据
                     ],
-                    ['%s', '%s', '%s','%s', '%s', '%s']
+                    ['%s', '%s', '%s', '%s', '%s', '%s']
                 );
 
                 $response = [
@@ -97,7 +97,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                     'data' => $data,
                 ];
             } else {
-               
+
                 //将传来的数据存入公共
                 self::$receive_data = $data;
                 //数据存在，更新现有数据
@@ -164,40 +164,40 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
 
 
-           
-                //TODO: 如果名称或数据有变化，更新现有数据
-                $wpdb->update(
-                    self::$table_name,
-                    [
-                        'name' => $name,
-                       
-                        'data' => json_encode($data_afferent),
-                    ],
-                    ['id' => $existingData['id']],
-                    ['%s', '%s'],
-                    ['%d']
-                );
 
-                //存入变更数据
-                $diffs = [];
+            //TODO: 如果名称或数据有变化，更新现有数据
+            $wpdb->update(
+                self::$table_name,
+                [
+                    'name' => $name,
 
-                //存入变更表
-               // self::compare_arrays($data_afferent,  json_decode($query_data, true), $diffs); //检测数据变化
+                    'data' => json_encode($data_afferent),
+                ],
+                ['id' => $existingData['id']],
+                ['%s', '%s'],
+                ['%d']
+            );
 
-                //添加UUID
-                foreach ($diffs as &$obj) {
-                    $obj["uuid"] = self::$uuid_md5;
-                }
+            //存入变更数据
+            $diffs = [];
 
-                unset($obj); // 重置引用
+            //存入变更表
+            // self::compare_arrays($data_afferent,  json_decode($query_data, true), $diffs); //检测数据变化
 
-                //存入数据库
-                self::data_change($diffs);
+            //添加UUID
+            foreach ($diffs as &$obj) {
+                $obj["uuid"] = self::$uuid_md5;
+            }
 
-                $response = [
-                    'message' => '现有数据已更新！',
-                ];
-            
+            unset($obj); // 重置引用
+
+            //存入数据库
+            self::data_change($diffs);
+
+            $response = [
+                'message' => '现有数据已更新！',
+            ];
+
             return $response;
         }
 

@@ -49,7 +49,7 @@ if (!class_exists('Mare_Admin_Uninstall')) {
             return true;
         }
 
-        
+
         /**
          * 删除选项
          */

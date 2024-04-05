@@ -12,10 +12,10 @@ if (!class_exists('DEMA_Admin_Interface')) {
         //运行
         public static function run()
         {
-             //设置
-             require_once plugin_dir_path(__FILE__) . 'interface/seting.php';
-             DEMA_Admin_Interface_Seting::run();
-            
+            //设置
+            require_once plugin_dir_path(__FILE__) . 'interface/seting.php';
+            DEMA_Admin_Interface_Seting::run();
+
             //数据接收
             require_once plugin_dir_path(__FILE__) . 'interface/data-input.php';
             DEMA_Admin_Interface_DataInput::run();

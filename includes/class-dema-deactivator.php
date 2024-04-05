@@ -20,7 +20,8 @@
  * @subpackage Dema/includes
  * @author     Npcink <1355471563@qq.com>
  */
-class Dema_Deactivator {
+class Dema_Deactivator
+{
 
 	/**
 	 * Short Description. (use period)
@@ -29,8 +30,7 @@ class Dema_Deactivator {
 	 *
 	 * @since    1.0.0
 	 */
-	public static function deactivate() {
-
+	public static function deactivate()
+	{
 	}
-
 }
