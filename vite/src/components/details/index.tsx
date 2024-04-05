@@ -6,7 +6,7 @@ import { SetStateAction, useState } from "react";
 import { Pagination, Empty } from "antd";
 import { dataMySql } from "@/store";
 import DetailsList from "@/components/details/detailsList";
-import Header from "@/components/details/screen";
+import Screen from "@/components/details/screen";
 import Drawer from "@/components/part/drawer";
 import {
   MysqlDeviceChangeMeat,
@@ -130,7 +130,7 @@ const App: React.FC = () => {
   //当前页码
   const [currentPage, setCurrentPage] = useState(1);
 
-  //每页展示数量，TODO:改为设置项
+  //每页展示数量
   const pageSize = defaultOption.device_show_number;
 
   //设置页码
@@ -146,7 +146,7 @@ const App: React.FC = () => {
 
   return (
     <AppContext.Provider value={{ handleTypeUpdate, deltArrData }}>
-      <Header data={updatedDataArray} onSet={setScreenData} />
+      <Screen data={updatedDataArray} onSet={setScreenData} />
       <div className="mt-1 flex content-start items-center flex-wrap w-full">
         {/**开始循环 */}
         {displayData.map((tab, index) => (
@@ -159,7 +159,16 @@ const App: React.FC = () => {
         ))}
       </div>
       {/**没有数据 */}
-      {screenData.length === 0 && <Empty className="mt-10" />}
+      {screenData.length === 0 && (
+        <Empty
+          className="mt-10"
+          description={
+            <span>
+              暂无数据<br/>请更换筛选条件<br/>或搜索内容试试
+            </span>
+          }
+        />
+      )}
 
       {/**分页 */}
       {screenData.length > pageSize && (

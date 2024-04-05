@@ -3,13 +3,17 @@
  * TODO:搜索备注名或编号
  */
 import { useState, useEffect } from "react";
-import { Space, Select, Button, Tooltip } from "antd";
+import { Space, Select, Button, Tooltip, Input } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
 import { defaultOption } from "@/store";
 import { changeSelectData } from "@/store/tool";
 import { device_status, memoryScreenList } from "@/store/dataReplace";
+import type { SearchProps } from "antd/es/input/Search";
+import Fuse from 'fuse.js';
 
+//准备搜索框
+const { Search } = Input;
 interface Props {
   data: MysqlDeviceChangeMeat[]; //筛选用数据
   onSet: Function; //传递筛选后的数据
@@ -68,11 +72,33 @@ const App: React.FC<Props> = ({ data, onSet }) => {
   //监听，更新最新值
   useEffect(() => {
     if (isUpdating) {
+      console.log(filteredData);
       onSet(filteredData);
       setIsUpdating(false);
     }
   }, [filteredData, isUpdating]);
 
+  /**
+   * 搜索框
+   */
+  
+
+// 配置 Fuse.js
+const options = {
+  keys: ['name','number'], // 定义要搜索的键
+};
+
+// 创建 Fuse 实例
+const fuse = new Fuse(data, options);
+
+  const onSearch: SearchProps["onSearch"] = (value, _e, _info) => {
+    
+    const results = fuse.search(value);
+    const data = results.map((result) => result.item);
+    onSet(data);
+    //console.log(data);
+    //console.log(info?.source, value);
+  };
   /**
    * 重置按钮
    */
@@ -84,6 +110,9 @@ const App: React.FC<Props> = ({ data, onSet }) => {
     <>
       <div className="mt-6 flex justify-between items-center">
         <p className="text-base font-bold text-[#222] m-0">资产信息</p>
+       
+     
+
         <div className="w-fit flex items-center">
           <Space size={"middle"} wrap>
             <div>
@@ -111,7 +140,15 @@ const App: React.FC<Props> = ({ data, onSet }) => {
               />
             </div>
             <div>
-              {true && (
+              <Search
+                placeholder="搜索名字或编号"
+                allowClear
+                onSearch={onSearch}
+                style={{ width: 200 }}
+              />
+            </div>
+            <div>
+              {false && (
                 <Tooltip title="重置筛选条件">
                   <Button
                     type="primary"
