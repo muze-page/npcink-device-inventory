@@ -20,7 +20,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
          */
         public static function run()
         {
-            
+
             /**
              * 添加接收设备数据api接口
              * http://localhost:10048/wp-json/npcink/v1/submit-data
@@ -47,6 +47,10 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             ));
         }
 
+        /**
+         * data:编号或姓名
+         * password:密码
+         */
         public static function query_data($request)
         {
             global $wpdb;
@@ -55,7 +59,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             header('Access-Control-Allow-Origin: *');
 
             // 获取传递过来的参数
-            $number = $request->get_param('number');
+            $number_or_name = $request->get_param('data');
             $password = $request->get_param('password');
 
             // 验证密码
@@ -64,25 +68,25 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 // 密码验证失败
                 return new WP_REST_Response(
                     [
-                        'message' => '密码验证失败，请重新填写密码！'
+                        'error' => '密码验证失败，请重新填写密码！'
                     ],
                     403
                 );
             }
 
-            // 验证数字参数
-            if (empty($number) || !is_numeric($number)) {
-                // 数字参数为空或非数字
+            // 验证参数
+            if (empty($number_or_name)) {
+                // 参数为空
                 return new WP_REST_Response(
                     [
-                        'error' => '无效的数字参数'
+                        'error' => '参数不能为空'
                     ],
                     400
                 );
             }
 
             // 构造 SQL 查询语句
-            $query = $wpdb->prepare("SELECT * FROM " . self::$table_name . " WHERE number = %d", $number);
+            $query = $wpdb->prepare("SELECT * FROM " . self::$table_name . " WHERE number = %d OR name = %s", $number_or_name, $number_or_name);
 
             // 执行查询
             $result = $wpdb->get_row($query);
@@ -94,12 +98,13 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 // 数据不存在
                 return new WP_REST_Response(
                     [
-                        'error' => '未找到数据'
+                        'error' => '未找到匹配数据'
                     ],
                     404
                 );
             }
         }
+
 
 
         public static function create_custom_endpoint()
