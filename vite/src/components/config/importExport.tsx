@@ -29,7 +29,7 @@ const App: React.FC<Props> = ({ data }) => {
 
   //保存到数据库
   const importData = () => {
-    console.log(jsonContent);
+    
    
     if (jsonContent === null) {
       message.error("请先选择文件");

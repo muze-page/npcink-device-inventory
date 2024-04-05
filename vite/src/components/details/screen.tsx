@@ -8,11 +8,7 @@ import { ReloadOutlined } from "@ant-design/icons";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
 import { defaultOption } from "@/store";
 import { changeSelectData } from "@/store/tool";
-import {
-  device_status,
-  memoryScreenList,
- 
-} from "@/store/dataReplace";
+import { device_status, memoryScreenList } from "@/store/dataReplace";
 
 interface Props {
   data: MysqlDeviceChangeMeat[]; //筛选用数据
@@ -60,7 +56,6 @@ const App: React.FC<Props> = ({ data, onSet }) => {
 
     return (
       sizeCondition &&
-     
       (!memory || memoryData === "" || memoryData === memory) && //内存
       (!state || item.state === "" || item.state === state) && //状态
       (!department || item.department === "" || item.department === department) //
@@ -77,6 +72,13 @@ const App: React.FC<Props> = ({ data, onSet }) => {
       setIsUpdating(false);
     }
   }, [filteredData, isUpdating]);
+
+  /**
+   * 重置按钮
+   */
+  const restSelect = () => {
+    console.log("重置");
+  };
 
   return (
     <>
@@ -116,6 +118,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
                     shape="circle"
                     icon={<ReloadOutlined />}
                     className="bg-[#1677ff]"
+                    onClick={restSelect}
                   />
                 </Tooltip>
               )}
@@ -133,8 +136,6 @@ const App: React.FC<Props> = ({ data, onSet }) => {
                     options={memoryScreenList}
                   />
                 </div>
-
-     
               </>
             )}
           </Space>
