@@ -81,7 +81,10 @@ const App: React.FC = () => {
       ...option,
       department: [...option.department, newDepartment],
     });
-    message.success("已添加此部门，请点击保存按钮以存储此设置");
+    //保存数据
+    const fieldsValue = form.getFieldsValue(); // 获取所有字段的值
+    postData(fieldsValue); //保存选项
+    message.success("已添加此部门");
   };
 
   //删除部门
@@ -107,6 +110,18 @@ const App: React.FC = () => {
     setSelectedDepartment(""); // 清空下拉框选中的内容
   };
 
+  //测试移除部门
+  const removeData = async (data: string) => {
+    const state = await remove_department(data);
+    if (state) {
+      handleDeleteDepartment();
+      message.success("已移除此部门");
+    } else {
+      message.error("移除失败");
+    }
+    return;
+  };
+
   //删除的二次确认
   const confirm = () => {
     switch (selectedDepartment) {
@@ -117,8 +132,10 @@ const App: React.FC = () => {
         message.error("保留用，请不要移除此部门");
         break;
       default:
-        handleDeleteDepartment();
-        message.success("已移除此部门，请点击保存按钮存储此设置");
+        //移除
+        const fieldsValue = form.getFieldsValue(); // 获取所有字段的值
+        postData(fieldsValue); //保存选项
+        removeData(selectedDepartment);//删除操作
     }
   };
 
@@ -126,17 +143,6 @@ const App: React.FC = () => {
     //e: React.MouseEvent<HTMLElement>
     //console.log(e);
     message.warning("已取消");
-  };
-
-  //测试移除部门
-  const removeData = async () => {
-    const state = await remove_department("运营部");
-    if (state) {
-      message.success("已移除此部门，请点击保存按钮存储此设置");
-    } else {
-      message.error("移除失败");
-    }
-    return;
   };
 
   return (
@@ -241,7 +247,6 @@ const App: React.FC = () => {
           </Button>
         </Form.Item>
       </Form>
-      <Button onClick={removeData}>测试</Button>
     </>
   );
 };
