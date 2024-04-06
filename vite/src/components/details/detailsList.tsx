@@ -6,7 +6,7 @@ import { MysqlDeviceChangeMeat } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
 import Mac from "@/assets/mac.png";
 import Win from "@/assets/windows_ico.png";
-import { findOsTypeObj } from "@/store/tool";
+import { findOsTypeObj,findBValue } from "@/store/tool";
 
 interface Props {
   data: MysqlDeviceChangeMeat;
@@ -27,8 +27,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
   ];
 
   //当前设备状态
-  const deviceStatus =
-    device_status.find((obj) => obj.value === data.state)?.label ?? "无状态";
+  const deviceStatus =findBValue(device_status,data.state);
 
   //找到需要的系统对象
   const osTypeObj = findOsTypeObj(osTypeArray, data);

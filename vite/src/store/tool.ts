@@ -149,7 +149,7 @@ export const changeSelectData = (data: string[]) => {
 
 export const findBValue = (arr: DataItemArr[], targetAValue: string) => {
   const foundObject = arr.find((obj) => obj.value === targetAValue);
-  return foundObject ? foundObject.label : null;
+  return foundObject ? foundObject.label+'中' : '无状态';
 };
 /**
  * 
