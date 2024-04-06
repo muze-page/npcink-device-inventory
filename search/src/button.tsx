@@ -1,50 +1,45 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import { Input, Space } from "antd";
 import { fetchData } from "./axios";
 import Detailed from "@/components/part/device-details/detailed";
 import { MysqlDevice, Computer } from "@/store/interface";
-import ShowUser from "@/showUser"
+import ShowUser from "@/showUser";
+import type { SearchProps } from "antd/es/input/Search";
+
+const { Search } = Input;
 const App: React.FC = () => {
-  const [inputValue, setInputValue] = useState(""); //输入框的值
-  const [responseData, setResponseData] = useState<MysqlDevice>(); //响应数据
-  const [showData, setShowData] = useState<Computer>(); //展示数据
+  const [responseData, setResponseData] = useState<MysqlDevice>(); // 返回值
+  const [displayData, setDisplayData] = useState<Computer>(); // 设备数据
 
-  // 处理输入框内容变化
-  const handleChange = (event: any) => {
-    setInputValue(event.target.value);
-  };
+  //输入框中的值
+  const onSearch: SearchProps["onSearch"] = async (value, _e, info) => {
+    const data = await fetchData(value, "9527"); //获取数据
 
-  // 处理按钮点击
-  const handleClick = async () => {
-    console.log(inputValue);
-    const data = await fetchData(inputValue, "9527");
-    
-    
     /**
      * 渲染用数据
      *  将数组中的硬件数据从json格式处理成对象
      */
-    const showData = JSON.parse(data.data);
-    console.log(data);
-    console.log(showData);
-    setResponseData(data);//存储响应数据
-    setShowData(showData);//存储渲染用数据
-    
+    const parsedData = JSON.parse(data.data); //从字符串处理为对象
+
+    setResponseData(data); // 存储返回数据
+    setDisplayData(parsedData); // 存储对象设备数据
+    console.log(info?.source, value);
   };
 
   return (
     <>
-      <input
-        type="text"
-        value={inputValue}
-        onChange={handleChange}
-        placeholder="请输入要查询的编号或名字"
-      />
-      <button onClick={handleClick}>打印值</button>
-      <hr />
-      <pre>{JSON.stringify(responseData, null, 2)}</pre>
-      {responseData && <ShowUser data={responseData} />}
-      {responseData && <Detailed data={showData!} />}
+      <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+        <Search
+          placeholder="输入编号或者姓名"
+          onSearch={onSearch}
+          style={{ width: 200 }}
+        />
+
+        {responseData && <ShowUser data={responseData} />}
+        {responseData && <Detailed data={displayData!} />}
+      </Space>
     </>
   );
 };
+
 export default App;
