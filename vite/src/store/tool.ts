@@ -4,6 +4,7 @@ import {
   TableData,
   OsTypeArray,
   MysqlDeviceChangeMeat,
+  DataItemArr,
 } from "@/store/interface";
 
 /**
@@ -140,6 +141,15 @@ export const changeSelectData = (data: string[]) => {
     value: str,
     label: str,
   }));
+};
+
+/**
+ * 查找对象中，符合要求对象的另一个键的值
+ */
+
+export const findBValue = (arr: DataItemArr[], targetAValue: string) => {
+  const foundObject = arr.find((obj) => obj.value === targetAValue);
+  return foundObject ? foundObject.label : null;
 };
 /**
  * 

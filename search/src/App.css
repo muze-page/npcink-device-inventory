@@ -40,3 +40,10 @@
 .read-the-docs {
   color: #888;
 }
+
+/* 在小屏幕下更改比例 */
+@media (max-width: 768px) {
+  .ant-space-item {
+    width: 300px;
+  }
+}

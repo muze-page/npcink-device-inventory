@@ -3,7 +3,7 @@ import { Input, Space } from "antd";
 import { fetchData } from "./axios";
 import Detailed from "@/components/part/device-details/detailed";
 import { MysqlDevice, Computer } from "@/store/interface";
-import ShowUser from "@/showUser";
+import ShowUser from "@/components/showUser";
 import type { SearchProps } from "antd/es/input/Search";
 
 const { Search } = Input;
@@ -28,7 +28,7 @@ const App: React.FC = () => {
 
   return (
     <>
-      <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+      <Space direction="vertical" size="middle" style={{ display: "flex" }}>
         <Search
           placeholder="输入编号或者姓名"
           onSearch={onSearch}

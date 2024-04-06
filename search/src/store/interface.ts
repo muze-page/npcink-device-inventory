@@ -56,6 +56,12 @@ export interface MysqlDevice {
     type: string;
     sum: number;
   }
+
+  //标准下拉
+export interface DataItemArr {
+  value: string;
+  label: string;
+}
   
   //硬件变更返回值
   export interface ComputerChangeReturn {
