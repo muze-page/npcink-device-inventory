@@ -44,6 +44,10 @@ export interface OptionType {
   delete_mysql?: boolean;
   department: string[];
   device_show_number: number; //设备显示数
+  addPage: {
+    route: string;
+    state: boolean;
+  };
 }
 
 //替换列表

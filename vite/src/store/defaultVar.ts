@@ -7,6 +7,10 @@ export const option = {
   delete_mysql: false, //是否删除数据库
   department: ["开发部", "推广部", "运营部", "默认"],
   device_show_number: 10, //设备显示
+  addPage: {
+    route: "publicsearch",
+    state: false,
+  },
 };
 
 const data = {

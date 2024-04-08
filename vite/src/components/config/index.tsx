@@ -78,7 +78,7 @@ const App: React.FC = () => {
       return;
     }
     //使用传来的值组成数组，将输入框中的值添加进数组前面
-    const newDepartmentArr = [newDepartment,...depArr ];
+    const newDepartmentArr = [newDepartment, ...depArr];
     setNewDepartment(""); //清空输入框
 
     //更新选项中的部门数组，直接使用setOption 可能无法通过option拿到最新值
@@ -87,7 +87,7 @@ const App: React.FC = () => {
       department: newDepartmentArr,
     };
     setOption(newOption); //保存数据TODO:这里直接获取选项值
-   
+
     //保存选项
     postData(newOption).then(() => {
       message.success("已添加此部门");
@@ -146,6 +146,42 @@ const App: React.FC = () => {
     //console.log(e);
     message.warning("已取消");
   };
+
+  //公共查询页面
+  const [publicSearch, setPublicSearch] = useState(""); // 公共查询输入框的值
+
+  //添加页面
+  const addPage = () => {
+    //修改状态和路由
+    //保存选项
+    const newData = {
+      route: publicSearch,
+      state: true,
+    };
+    const newOption = {
+      ...option,
+      addPage: newData,
+    };
+    console.log(newOption);
+    setOption(newOption); //保存数据TODO:这里直接获取选项值
+
+    //保存选项
+    postData(newOption).then(() => {
+      message.success("已添加此页面");
+    });
+  };
+
+  // 在组件加载时设置输入框的默认值
+  useEffect(() => {
+    // 检查默认选项中是否有公共查询页面的默认值
+    if (option.addPage?.route) {
+      // 如果有，默认值为默认选项中的值
+      setPublicSearch(option.addPage.route);
+    } else {
+      // 否则，设置一个默认的默认值
+      setPublicSearch("默认的公共查询页面地址");
+    }
+  }, [option]);
 
   return (
     <>
@@ -246,6 +282,28 @@ const App: React.FC = () => {
             >
               <Button style={{ width: "20%" }}>移除</Button>
             </Popconfirm>
+          </div>
+        </Form.Item>
+        <Form.Item
+          label="添加公共查询页面"
+          name="addPage.route"
+          extra={
+            <>
+              公共查询页面地址：
+              <pre>{routerMsg()}</pre>
+            </>
+          }
+        >
+          <div>
+            <Input
+              style={{ width: "80%" }}
+              value={publicSearch}
+              placeholder="填写页面路由"
+              onChange={(e) => setPublicSearch(e.target.value)}
+            />
+            <Button style={{ width: "20%" }} onClick={addPage}>
+              添加
+            </Button>
           </div>
         </Form.Item>
 
