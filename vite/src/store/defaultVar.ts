@@ -1,3 +1,4 @@
+import DemoData from "./demoData";
 const dataMysql = [
   {
     id: "7",
@@ -131,7 +132,7 @@ export const option = {
 };
 
 const data = {
-  data: dataMysql,
+  data: DemoData,
   option: option, //选项
   ajaxurl: "/wp-admin/admin-ajax.php", //代理
   site: "http://localhost:10048",

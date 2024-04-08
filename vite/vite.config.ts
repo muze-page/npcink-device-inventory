@@ -20,6 +20,7 @@ export default defineConfig({
         chunkFileNames: "[name].js",
       },
     },
+    //sourcemap: true,//保留映射关系，方便调试
   },
   //配置路径别名
   resolve: {
@@ -33,9 +34,9 @@ export default defineConfig({
 
   //代理
   server: {
-   //host: "0.0.0.0",
-   //port: 3000,
-   //open: true,
+    //host: "0.0.0.0",
+    //port: 3000,
+    //open: true,
     proxy: {
       "/api": {
         target: "http://localhost:10048/",
@@ -44,7 +45,4 @@ export default defineConfig({
       },
     },
   },
-
-
-
 });

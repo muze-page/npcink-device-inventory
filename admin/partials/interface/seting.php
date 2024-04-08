@@ -97,6 +97,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             // 将 JSON 字符串解析为 PHP 对象
             $object = json_decode(stripslashes($object_data));
 
+            //TODO:验证数据格式，department必须的字符串数组
             // 保存设置选项
             update_option(self::$option, $object);
 

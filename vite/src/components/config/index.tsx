@@ -17,7 +17,7 @@ import { saveSQLData, remove_department } from "@/store/axios";
 
 import ImportExport from "@/components/config/importExport";
 import { OptionType } from "@/store/interface";
-import {changeSelectData} from "@/store/tool";
+import { changeSelectData } from "@/store/tool";
 
 const App: React.FC = () => {
   //传来的默认选项
@@ -68,30 +68,35 @@ const App: React.FC = () => {
    */
   const [newDepartment, setNewDepartment] = useState(""); // 新增部门输入框的值
 
-  //添加部门
+  //添加部门TODO:检查，保存的数据必须符合对应格式
+
+  const depArr = option.department; //传来的部门数组
   const handleAddDepartment = () => {
     //先检查输入框的值是否为空
     if (newDepartment.trim() === "") {
       message.error("请输入部门名称");
       return;
     }
+    //使用传来的值组成数组，将输入框中的值添加进数组后面
+    const newDepartmentArr = [...depArr, newDepartment];
+    console.log(newDepartmentArr);
 
-    //清空输入框
-    setNewDepartment("");
+    setNewDepartment(""); //清空输入框
     setOption({
       ...option,
-      department: [...option.department, newDepartment],
+      department: newDepartmentArr,
     });
-    //保存数据
-    const fieldsValue = form.getFieldsValue(); // 获取所有字段的值
-    postData(fieldsValue); //保存选项
-    message.success("已添加此部门");
+    //保存数据TODO:这里直接获取选项值
+    console.log(option);
+    //保存选项
+    postData(option).then(() => {
+      message.success("已添加此部门");
+    });
   };
 
   //删除部门
   //下拉筛选 - 准备筛选数据
-  const getSelectData=changeSelectData(option.department);
-  
+  const getSelectData = changeSelectData(option.department);
 
   const [selectedDepartment, setSelectedDepartment] = useState<string>("默认");
 
@@ -132,7 +137,7 @@ const App: React.FC = () => {
         //移除
         const fieldsValue = form.getFieldsValue(); // 获取所有字段的值
         postData(fieldsValue); //保存选项
-        removeData(selectedDepartment);//删除操作
+        removeData(selectedDepartment); //删除操作
     }
   };
 
@@ -192,10 +197,16 @@ const App: React.FC = () => {
           <InputNumber min={4} max={80} />
         </Form.Item>
 
-        <Form.Item label="基础数据" extra={"仅导入当前没有的设备数据，导出全部数据"}>
+        <Form.Item
+          label="基础数据"
+          extra={"仅导入当前没有的设备数据，导出全部数据"}
+        >
           <ImportExport data="custom_table" />
         </Form.Item>
-        <Form.Item label="变更数据" extra={"仅导入当前没有的设备数据，导出全部数据"}>
+        <Form.Item
+          label="变更数据"
+          extra={"仅导入当前没有的设备数据，导出全部数据"}
+        >
           <ImportExport data="custom_change" />
         </Form.Item>
 
