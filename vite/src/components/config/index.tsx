@@ -79,17 +79,17 @@ const App: React.FC = () => {
     }
     //使用传来的值组成数组，将输入框中的值添加进数组后面
     const newDepartmentArr = [...depArr, newDepartment];
-    console.log(newDepartmentArr);
-
     setNewDepartment(""); //清空输入框
-    setOption({
+
+    //更新选项中的部门数组，直接使用setOption 可能无法通过option拿到最新值
+    const newOption = {
       ...option,
       department: newDepartmentArr,
-    });
-    //保存数据TODO:这里直接获取选项值
-    console.log(option);
+    };
+    setOption(newOption); //保存数据TODO:这里直接获取选项值
+   
     //保存选项
-    postData(option).then(() => {
+    postData(newOption).then(() => {
       message.success("已添加此部门");
     });
   };
