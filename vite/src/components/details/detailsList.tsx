@@ -50,7 +50,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         </div>
 
         {/**底部数据 */}
-        <div className="p-4 text-xs text-zinc-500  bg-white rounded whitespace-nowrap">
+        <div className="p-4 text-xs text-zinc-500  bg-white rounded whitespace-nowrap min-h-[190px]">
           {/*姓名*/}
           <p className="text-sm font-bold text-zinc-800 leading-5 m-0 ">
             {data.name ?? "暂无"}

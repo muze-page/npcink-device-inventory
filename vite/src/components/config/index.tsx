@@ -77,8 +77,8 @@ const App: React.FC = () => {
       message.error("请输入部门名称");
       return;
     }
-    //使用传来的值组成数组，将输入框中的值添加进数组后面
-    const newDepartmentArr = [...depArr, newDepartment];
+    //使用传来的值组成数组，将输入框中的值添加进数组前面
+    const newDepartmentArr = [newDepartment,...depArr ];
     setNewDepartment(""); //清空输入框
 
     //更新选项中的部门数组，直接使用setOption 可能无法通过option拿到最新值

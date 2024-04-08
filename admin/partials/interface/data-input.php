@@ -165,7 +165,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                     self::$table_name,
                     [
                         'name' => $name, //姓名
-                        'state' => "apply", //默认状态为启用
+                        'state' => "idie", //默认状态为启用
                         'number' => 0, //编号
                         'department' => "默认", //默认部门
                         'uuid' => self::$uuid_md5, //唯一标识符
