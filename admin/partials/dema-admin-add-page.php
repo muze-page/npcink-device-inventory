@@ -24,7 +24,7 @@ if (!class_exists('DEMA_Admin_Add_Page')) {
         {
             // 检查是否已经存在自定义页面
             $page_slug = 'goto'; //链接
-            $config = 'my_custom_plugin_page_a3'; //唯一标识
+            $config = 'my_custom_plugin_page_a5'; //唯一标识
             $existing_page_id = get_option($config);
 
             if ($existing_page_id) {
@@ -32,7 +32,7 @@ if (!class_exists('DEMA_Admin_Add_Page')) {
             }
 
             // 创建新页面
-            $page_title = '公共查询设备页';
+            $page_title = '勿删：公共查询设备页';
             $page_content = '<div id="npcinkSearch">错误，请联系管理员</div>';
 
             $page = array(
@@ -59,18 +59,20 @@ if (!class_exists('DEMA_Admin_Add_Page')) {
             // Check if it's the target page (replace 'target-page-slug' with the actual slug of your target page)
             if ($current_page && $current_page->post_name === 'goto') {
 
+                $ver = self::$plugin_version;
+                $name = self::$plugin_name.'-search';
                  //准备地址
-            $index_css = plugin_dir_url(dirname(__DIR__)) . 'search/dist/index.css';
+           // $index_css = plugin_dir_url(dirname(__DIR__)) . 'search/dist/index.css';
             $index_js = plugin_dir_url(dirname(__DIR__)) . 'search/dist/index.js';
                 // Enqueue your JavaScript file
-                wp_enqueue_style('custom-script', $index_css, array(), '2.0', false);
-                wp_enqueue_script('custom-script', $index_js, array(), '1.0', true);
+               // wp_enqueue_style($name, $index_css, array(), $ver, false);
+                wp_enqueue_script($name, $index_js, array(), $ver, true);
 
                 $pf_api_translation_array = array(
                     'site' => get_home_url(), //首页网址
                     'option' => get_option(self::$option), //传递选项
                 );
-                wp_localize_script('custom-script', 'dataLocal', $pf_api_translation_array); //传给search项目
+                wp_localize_script($name, 'dataLocal', $pf_api_translation_array); //传给search项目
             }
         }
 

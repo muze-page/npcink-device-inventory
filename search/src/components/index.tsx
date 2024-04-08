@@ -13,7 +13,7 @@ const App: React.FC = () => {
 
   //输入框中的值
   const onSearch: SearchProps["onSearch"] = async (value, _e, info) => {
-    const data = await fetchData(value, "9527"); //获取数据
+    const data = await fetchData(value); //获取数据
 
     /**
      * 渲染用数据
