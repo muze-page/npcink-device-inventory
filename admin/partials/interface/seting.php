@@ -9,13 +9,13 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
         public static function run()
         {
             // 保存设置选项接口
-            add_action('wp_ajax_save_object_option', array(__CLASS__, 'save_object_option_callback'));
+            add_action('wp_ajax_save_object_option', array(__CLASS__, 'save_option_callback'));
 
             //导出数据接口
             add_action('wp_ajax_export_data_callback', array(__CLASS__, 'export_data_callback'));
 
             //导入数据接口
-            add_action('wp_ajax_import_config_data_callback', array(__CLASS__, 'import_config_data_callback'));
+            add_action('wp_ajax_import_data_callback', array(__CLASS__, 'import_data_callback'));
 
             //移除部门接口
             add_action('wp_ajax_remove_department_callback', array(__CLASS__, 'remove_department_callback'));
@@ -89,7 +89,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
         /**
          * 添加选项保存接口
          */
-        public static  function save_object_option_callback()
+        public static  function save_option_callback()
         {
             // 获取通过 Ajax POST 请求传递的对象数据
             $object_data = $_POST['object_data'];
@@ -159,7 +159,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
         /**
          * 添加数据导入接口
          */
-        public static function import_config_data_callback()
+        public static function import_data_callback()
         {
             global $wpdb;
 

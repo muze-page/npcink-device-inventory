@@ -9,18 +9,16 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
         public static function run()
         {
             // 修改 - 设备信息接口
-            add_action('wp_ajax_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
-            //add_action('wp_ajax_nopriv_update_style_name_callback',  array(__CLASS__, 'update_style_name_callback'));
+            add_action('wp_ajax_modify_device_callback',  array(__CLASS__, 'modify_device_callback'));
 
             // 删除设备接口
-            add_action('wp_ajax_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));
-            //add_action('wp_ajax_nopriv_delt_sql_uuid_callback', array(__CLASS__, 'delt_sql_uuid_callback'));
+            add_action('wp_ajax_delt_device_callback', array(__CLASS__, 'delt_device_callback'));
         }
 
         /**
          * 修改设备信息接口
          */
-        public static function update_style_name_callback()
+        public static function modify_device_callback()
         {
 
 
@@ -85,7 +83,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
         /**
          * 添加删除设备接口 - 删除设备信息和变更信息
          */
-        public static  function delt_sql_uuid_callback()
+        public static  function delt_device_callback()
         {
 
 

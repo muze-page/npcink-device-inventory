@@ -21,13 +21,11 @@ export const changeMySql = async (
   data: string
 ): Promise<boolean> => {
   const params = new URLSearchParams();
-  params.append("action", "update_style_name_callback");
+  params.append("action", "modify_device_callback");
   params.append("uuid", uuid);
   params.append("data", data);
   params.append("type", type);
 
-
-  
   try {
     const response = await axios.post<MysqlChange>(Ajaxurl, params);
 
@@ -47,7 +45,7 @@ export const changeMySql = async (
 //根据指定UUID移除设备
 export const deltSQLData = async (uuid: string) => {
   const params = new URLSearchParams();
-  params.append("action", "delt_sql_uuid_callback");
+  params.append("action", "delt_device_callback");
   params.append("uuid", uuid);
 
   try {

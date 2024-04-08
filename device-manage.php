@@ -13,7 +13,7 @@
  * @package           Dema
  *
  * @wordpress-plugin
- * Plugin Name:       设备管理插件
+ * Plugin Name:       魔法电脑设备管理
  * Plugin URI:        https://www.npc.ink
  * Description:       用于硬件设备管理用
  * Version:           1.0.6

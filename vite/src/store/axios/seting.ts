@@ -90,7 +90,7 @@ export const importSQLData = async (
   data: string
 ): Promise<MysqlChange> => {
   const params = new URLSearchParams();
-  params.append("action", "import_config_data_callback");
+  params.append("action", "import_data_callback");
   params.append("name", name);
   params.append("data", data);
 

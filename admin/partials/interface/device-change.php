@@ -10,15 +10,12 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
         {
             // 增 - 设备变更信息接口
             add_action('wp_ajax_add_change_data_callback',  array(__CLASS__, 'add_change_data_callback'));
-            //add_action('wp_ajax_nopriv_add_change_data_callback',  array(__CLASS__, 'add_change_data_callback'));
 
             // 改 - 设备变更信息接口
-            add_action('wp_ajax_update_change_callback',  array(__CLASS__, 'update_change_callback'));
-            //add_action('wp_ajax_nopriv_update_change_callback',  array(__CLASS__, 'update_change_callback'));
+            add_action('wp_ajax_modify_change_data_callback',  array(__CLASS__, 'modify_change_data_callback'));
 
             //查 - 设备变更信息接口
             add_action('wp_ajax_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
-            //add_action('wp_ajax_nopriv_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
         }
 
         /**
@@ -67,7 +64,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
         /**
          * 修改 - 设备变更信息接口
          */
-        public static function update_change_callback()
+        public static function modify_change_data_callback()
         {
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_change';

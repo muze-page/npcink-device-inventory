@@ -34,14 +34,13 @@ const App: React.FC<Props> = ({ data, onSet }) => {
   };
 
   return (
-    <>
-      <Search
-        placeholder="搜索名字或编号"
-        allowClear
-        onSearch={onSearch}
-        style={{ width: 200 }}
-      />
-    </>
+    <Search
+      placeholder="搜索名字或编号"
+      allowClear
+      onSearch={onSearch}
+      style={{ width: 200, lineHeight: "inherit", minHeight: "10px" }}
+      className="searchInput"
+    />
   );
 };
 

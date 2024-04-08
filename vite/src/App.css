@@ -70,3 +70,9 @@
 #root {
   width: 1200px;
 }
+
+/*覆盖WordPress 样式*/
+.searchInput input{
+  line-height: inherit;
+  min-height: auto;
+}

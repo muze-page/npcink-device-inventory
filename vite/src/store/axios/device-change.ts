@@ -44,7 +44,7 @@ export const changeMySqlData = async (
   data: string
 ) => {
   const params = new URLSearchParams();
-  params.append("action", "update_change_callback");
+  params.append("action", "modify_change_data_callback");
   params.append("id", id);
   params.append("data", data);
   params.append("type", type);
