@@ -156,7 +156,7 @@ const App: React.FC = () => {
     //保存选项
     const newData = {
       route: publicSearch,
-      state: true,
+      state: false,//未创建
     };
     const newOption = {
       ...option,
@@ -169,6 +169,11 @@ const App: React.FC = () => {
     postData(newOption).then(() => {
       message.success("已添加此页面");
     });
+  };
+
+  //拼接公共搜索路由
+  const routerSearch = () => {
+    return Site + '/'+ publicSearch;
   };
 
   // 在组件加载时设置输入框的默认值
@@ -290,7 +295,7 @@ const App: React.FC = () => {
           extra={
             <>
               公共查询页面地址：
-              <pre>{routerMsg()}</pre>
+              <pre>{routerSearch()}</pre>
             </>
           }
         >

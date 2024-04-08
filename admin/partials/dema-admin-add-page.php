@@ -6,6 +6,7 @@
 if (!class_exists('DEMA_Admin_Add_Page')) {
     class DEMA_Admin_Add_Page extends DEMA_Admin_Menu
     {
+        //public static $route; //路由
         //运行
         public static function runs()
         {
@@ -28,13 +29,19 @@ if (!class_exists('DEMA_Admin_Add_Page')) {
              * 点击生成按钮，设state的值为false
              * 生成页面后，state的值为true
              */
-           
-            // 检查是否已经存在自定义页面
-            $page_slug = 'goto'; //链接
-            $config = 'my_custom_plugin_page_a7'; //唯一标识
-            $existing_page_id = get_option($config);
 
-            if ($existing_page_id) {
+
+            //拿到选项的值
+            $option = DEMA_Admin_Interface::get_seting('addPage');
+
+
+            // 检查是否已经存在自定义页面
+            $page_slug = $option->route; //路由
+            //self::$route = $page_slug; //传值
+            $state = $option->state; //状态
+
+
+            if ($state) {
                 return; // 页面已经存在，不执行后续操作
             }
 
@@ -50,12 +57,22 @@ if (!class_exists('DEMA_Admin_Add_Page')) {
                 'post_name'    => $page_slug
             );
 
-            // 添加页面，并获取页面ID
-            $page_id = wp_insert_post($page);
+            // 添加页面
+            wp_insert_post($page);
 
+            //拿到选项名
+            $name = DEMA_Admin_Interface::$option;
+
+            //拿到选项值
+            $config = get_option($name);
+            //$config = json_encode($config);
+            //printf('<script>console.log(%s)</script>', $config);
+
+            //修改路由状态为已创建
+            $config->addPage->state = true;
 
             // 存储页面ID
-            update_option($config, $page_id);
+            update_option($name, $config);
         }
 
         public static function load_js()
@@ -83,7 +100,7 @@ if (!class_exists('DEMA_Admin_Add_Page')) {
             $current_page = get_page_by_path(get_query_var('pagename'));
 
             // 检查它是否是目标页面（用目标页面的实际段塞替换“目标页面段塞”）
-            if ($current_page && $current_page->post_name === 'goto') {
+            if ($current_page && $current_page->post_name === self::$route) {
                 self::load_js();
             }
         }

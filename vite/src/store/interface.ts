@@ -46,7 +46,7 @@ export interface OptionType {
   device_show_number: number; //设备显示数
   addPage: {
     route: string;
-    state: boolean;
+    state: boolean;//true为已创建，false为未创建
   };
 }
 

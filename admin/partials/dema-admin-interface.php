@@ -33,11 +33,11 @@ if (!class_exists('DEMA_Admin_Interface')) {
         /**
          * 提供选项
          */
-        public static function get_seting($option)
+        public static function get_seting($name)
         {
             //拿到选项值
             $config = get_option(self::$option);
-            $value =  self::get_config($config, $option);
+            $value =  self::get_config($config, $name);
             return $value;
         }
         /**
