@@ -13,7 +13,11 @@ import {
   Popconfirm,
 } from "antd";
 import { defaultOption, Site } from "@/store";
-import { saveSQLData, remove_department } from "@/store/axios";
+import {
+  saveSQLData,
+  remove_department,
+  addPublicSearchPage,
+} from "@/store/axios";
 
 import ImportExport from "@/components/config/importExport";
 import { OptionType } from "@/store/interface";
@@ -154,37 +158,25 @@ const App: React.FC = () => {
   const addPage = () => {
     //修改状态和路由
     //保存选项
-    const newData = {
-      route: publicSearch,
-      state: false,//未创建
-    };
-    const newOption = {
-      ...option,
-      addPage: newData,
-    };
-    console.log(newOption);
-    setOption(newOption); //保存数据TODO:这里直接获取选项值
-
-    //保存选项
-    postData(newOption).then(() => {
+    addPublicSearchPage(publicSearch).then(() => {
       message.success("已添加此页面");
     });
   };
 
   //拼接公共搜索路由
   const routerSearch = () => {
-    return Site + '/'+ publicSearch;
+    return Site + "/" + publicSearch;
   };
 
   // 在组件加载时设置输入框的默认值
   useEffect(() => {
     // 检查默认选项中是否有公共查询页面的默认值
-    if (option.addPage?.route) {
+    if (option.public_search_route) {
       // 如果有，默认值为默认选项中的值
-      setPublicSearch(option.addPage.route);
+      setPublicSearch(option.public_search_route);
     } else {
       // 否则，设置一个默认的默认值
-      setPublicSearch("默认的公共查询页面地址");
+      setPublicSearch("public_search_route");
     }
   }, [option]);
 
@@ -236,6 +228,11 @@ const App: React.FC = () => {
           extra={"设备详情页展示的数量，默认 8"}
         >
           <InputNumber min={4} max={80} />
+        </Form.Item>
+        <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
+          <Button type="primary" htmlType="submit" className=" bg-[#1677ff]">
+            保存
+          </Button>
         </Form.Item>
 
         <Form.Item
@@ -291,7 +288,7 @@ const App: React.FC = () => {
         </Form.Item>
         <Form.Item
           label="添加公共查询页面"
-          name="addPage.route"
+          name="public_search_route"
           extra={
             <>
               公共查询页面地址：
@@ -310,12 +307,6 @@ const App: React.FC = () => {
               添加
             </Button>
           </div>
-        </Form.Item>
-
-        <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-          <Button type="primary" htmlType="submit" className=" bg-[#1677ff]">
-            保存
-          </Button>
         </Form.Item>
       </Form>
     </>

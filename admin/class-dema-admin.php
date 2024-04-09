@@ -113,8 +113,7 @@ class Dema_Admin
 		//菜单
 		require_once plugin_dir_path(__FILE__) . 'partials/dema-admin-menu.php';
 
-		//自定义页面
-		require_once plugin_dir_path(__FILE__) . 'partials/dema-admin-add-page.php';
+		
 	}
 	public  function run()
 	{
@@ -124,7 +123,6 @@ class Dema_Admin
 		//添加菜单
 		DEMA_Admin_Menu::run($this->plugin_name, $this->version);
 
-		//添加自定义页面
-		DEMA_Admin_Add_Page::runs();
+		
 	}
 }

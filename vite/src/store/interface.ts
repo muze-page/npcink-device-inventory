@@ -44,10 +44,7 @@ export interface OptionType {
   delete_mysql?: boolean;
   department: string[];
   device_show_number: number; //设备显示数
-  addPage: {
-    route: string;
-    state: boolean;//true为已创建，false为未创建
-  };
+  public_search_route: string;//前端公共搜索路由
 }
 
 //替换列表

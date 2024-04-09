@@ -3,6 +3,7 @@ export {
   exportSQLData,
   importSQLData,
   remove_department,
+  addPublicSearchPage,
 } from "@/store/axios/seting";
 export {
   addChangeData,

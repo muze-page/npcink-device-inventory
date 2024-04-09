@@ -27,6 +27,10 @@ if (!class_exists('DEMA_Admin_Interface')) {
             //硬件设置-删改
             require_once plugin_dir_path(__FILE__) . 'interface/device-seting.php';
             DEMA_Admin_Interface_Device_Seting::run();
+
+             //添加前端公共搜索页接口
+             require_once plugin_dir_path(__FILE__) . 'interface/add-page.php';
+             DEMA_Admin_Interface_Add_Page::run();
         }
 
 

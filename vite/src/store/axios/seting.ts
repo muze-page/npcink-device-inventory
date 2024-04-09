@@ -7,7 +7,7 @@ import { MysqlChange } from "@/store/interface";
 import { message } from "antd";
 
 /**
- * 保存选项
+ * 移除部门
  *
  */
 export const remove_department = async (optionObj: string) => {
@@ -106,5 +106,24 @@ export const importSQLData = async (
     // 将错误信息保存到全局状态中
     console.log("保存数据时出错：" + error.message);
     throw new Error("保存数据时出错：" + error.message);
+  }
+};
+
+/**
+ * 添加自定义公共引导页
+ * 接收路由字符串
+ */
+export const addPublicSearchPage = async (route: string) => {
+  const params = new URLSearchParams();
+  params.append("action", "add_public_search_page_callback");
+  params.append("route", JSON.stringify(route));
+  try {
+    const response = await axios.post(Ajaxurl, params);
+    if (response.status === 200) {
+      //保存成功
+      console.log(response);
+    }
+  } catch {
+    console.log("添加自定义公共引导页失败");
   }
 };
