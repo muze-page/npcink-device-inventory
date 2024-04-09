@@ -120,8 +120,8 @@ export const addPublicSearchPage = async (route: string) => {
   try {
     const response = await axios.post(Ajaxurl, params);
     if (response.status === 200) {
-      //保存成功
-      console.log(response);
+      //传出获取的信息
+      return response.data;
     }
   } catch {
     console.log("添加自定义公共引导页失败");

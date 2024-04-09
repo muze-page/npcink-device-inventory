@@ -52,7 +52,7 @@ const App: React.FC = () => {
   //数据验证成功回调
   const onFinish = (values: OptionType) => {
     postData(values); //保存选项
-    console.log("Received values:", values);
+    //console.log("Received values:", values);
   };
 
   //数据验证失败回调
@@ -158,8 +158,9 @@ const App: React.FC = () => {
   const addPage = () => {
     //修改状态和路由
     //保存选项
-    addPublicSearchPage(publicSearch).then(() => {
-      message.success("已添加此页面");
+    addPublicSearchPage(publicSearch).then((arr) => {
+      //打印信息
+      message.success(arr.message);
     });
   };
 

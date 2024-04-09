@@ -167,7 +167,7 @@ const App: React.FC<Props> = ({ uuid }) => {
         });
         //倒序并传递
         setDataAxios(addKeyData.reverse());
-        console.log(addKeyData);
+        //console.log(addKeyData);
       })
       .catch((err) => {
         setError("获取数据时出错：" + err.message);

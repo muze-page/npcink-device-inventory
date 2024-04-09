@@ -79,8 +79,8 @@ const App: React.FC<Props> = ({ data }) => {
 
   //找到需要的系统对象
   const osTypeObj = findOsTypeObj(osTypeArray, data);
-  console.log(osTypeObj);
-  console.log(data);
+  //console.log(osTypeObj);
+  //console.log(data);
 
   return (
     <>

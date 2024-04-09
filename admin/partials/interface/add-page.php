@@ -27,8 +27,7 @@ if (!class_exists('DEMA_Admin_Interface_Add_Page')) {
                 //返回相关信息
                 return wp_send_json(array(
                     'status' => 'error',
-                    'message' => '页面已经存在',
-                    'data' =>  $state,
+                    'message' => '页面已存在，请勿重复添加',
                 ));
                 // 页面已经存在，不执行后续操作
             }

@@ -34,7 +34,7 @@ const combineData = (dataArrays: MysqlDevice[]) => {
 export const dataMySql = combineData(getDataLocal().data);
 
 //拿到选项值并传出
-console.log(getDataLocal().option);
+//console.log(getDataLocal().option);
 export const defaultOption: OptionType = getDataLocal().option;
 
 //输出接口地址
