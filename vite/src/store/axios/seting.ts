@@ -6,58 +6,79 @@ import { Ajaxurl } from "@/store";
 import { MysqlChange } from "@/store/interface";
 import { message } from "antd";
 
-/**
- * 移除部门
- *
- */
-export const remove_department = async (optionObj: string) => {
-  let state = false;
-  const params = new URLSearchParams();
-  params.append("action", "remove_department_callback");
-  params.append("data", JSON.stringify(optionObj));
-  try {
-    const response = await axios.post(Ajaxurl, params);
 
-    if (response.status === 200) {
-      //保存成功
-      //console.log(response);
-      state = true;
+// 创建 axios 实例
+const instance = axios.create({
+  //baseURL: Ajaxurl, // 设置请求的基础URL
+});
+
+// 响应拦截器
+instance.interceptors.response.use(
+ 
+  response => {
+    const responseData = response.data;
+    if (responseData.success) {
+      message.success(responseData.data.message);
     } else {
-      console.error("保存设置选项时出错：" + response.data);
+      message.error(responseData.data.message);
     }
-  } catch (error: any) {
-    console.error("保存设置选项时出错：" + error.message);
-  } finally {
-    //console.log(false);
+    return responseData;
+  },
+  error => {
+    const errorMessage =
+      error.response && error.response.status
+        ? `保存设置选项时出错：服务器返回状态码 ${error.response.status}`
+        : `保存设置选项时出错：${error.message}`;
+    message.error(errorMessage);
+    console.error(errorMessage);
+    return Promise.reject(error);
   }
-  return state;
+);
+
+export const saveSQLData = async (optionObj: object) => {
+  const params = new URLSearchParams();
+  params.append("action", "save_object_option");
+  params.append("object_data", JSON.stringify(optionObj));
+  try {
+    const response = await instance.post(Ajaxurl, params);
+    return response.data;
+  } catch (error: any) {
+    console.error(`保存设置选项时出错：${error}`);
+    throw error;
+  }
 };
 
 /**
  * 保存选项
  */
-export const saveSQLData = async (optionObj: object) => {
-  let state = false;
-  const params = new URLSearchParams();
-  params.append("action", "save_object_option");
-  params.append("object_data", JSON.stringify(optionObj));
-  try {
-    const response = await axios.post(Ajaxurl, params);
-
-    if (response.status === 200) {
-      //保存成功
-      //console.log(response);
-      state = true;
-    } else {
-      console.error("保存设置选项时出错：" + response.data);
-    }
-  } catch (error: any) {
-    console.error("保存设置选项时出错：" + error.message);
-  } finally {
-    //console.log(false);
-  }
-  return state;
-};
+//export const saveSQLData = async (optionObj: object) => {
+//  const params = new URLSearchParams();
+//  params.append("action", "save_object_option");
+//  params.append("object_data", JSON.stringify(optionObj));
+//  try {
+//    const response = await axios.post(Ajaxurl, params);
+//    if (response.status === 200) {
+//      if (response.data.success || response.data.success === false) {
+//        message.error(response.data.data.message);
+//      } else {
+//        message.success(response.data.data.message);
+//      }
+//      return response.data;
+//    } else {
+//      message.error("保存设置选项时出错：服务器返回状态码 " + response.status);
+//      throw new Error(
+//        "保存设置选项时出错：服务器返回状态码 " + response.status
+//      );
+//    }
+//  } catch (error: any) {
+//    // 处理错误情况
+//    console.error("保存设置选项时出错：" + error);
+//    console.log(error);
+//    throw error; // 重新抛出错误，以便调用者可以进一步处理
+//  } finally {
+//    //console.log(false);
+//  }
+//};
 
 /**
  * 导出数据
@@ -107,6 +128,33 @@ export const importSQLData = async (
     console.log("保存数据时出错：" + error.message);
     throw new Error("保存数据时出错：" + error.message);
   }
+};
+
+/**
+ * 移除部门
+ *
+ */
+export const remove_department = async (optionObj: string) => {
+  let state = false;
+  const params = new URLSearchParams();
+  params.append("action", "remove_department_callback");
+  params.append("data", JSON.stringify(optionObj));
+  try {
+    const response = await axios.post(Ajaxurl, params);
+
+    if (response.status === 200) {
+      //保存成功
+      //console.log(response);
+      state = true;
+    } else {
+      console.error("保存设置选项时出错：" + response.data);
+    }
+  } catch (error: any) {
+    console.error("保存设置选项时出错：" + error.message);
+  } finally {
+    //console.log(false);
+  }
+  return state;
 };
 
 /**

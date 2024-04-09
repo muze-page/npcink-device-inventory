@@ -19,8 +19,6 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
 
             //移除部门接口
             add_action('wp_ajax_remove_department_callback', array(__CLASS__, 'remove_department_callback'));
-
-            
         }
 
         /**
@@ -34,18 +32,30 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             // 将 JSON 字符串解析为 PHP 对象
             $object = json_decode(stripslashes($object_data));
 
+            // 验证数据格式，确保 object_data 是一个字符串
+            if (false) {
+                // 发送错误响应
+                $error_response = array(
+                    'message' => '传递的值不是一个字符串',
+                );
+                wp_send_json_error($error_response);
+            }
+
+
             //TODO:验证数据格式，department必须的字符串数组
             // 保存设置选项
             update_option(self::$option, $object);
 
+
             // 发送成功响应
             $response = array(
-                'message' => '设置选项已保存！',
-                'object' => $object,
+                'data' => array('message' => '设置选项已保存'),
+                'success' => true,
+
             );
 
-            // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义
-            wp_send_json($response, 200, JSON_UNESCAPED_UNICODE);
+            // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义200, JSON_UNESCAPED_UNICODE
+            wp_send_json($response);
         }
 
 

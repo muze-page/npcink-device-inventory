@@ -41,12 +41,8 @@ const App: React.FC = () => {
 
   //保存选项动作
   const postData = async (optionObj: object) => {
-    const state = saveSQLData(optionObj);
-    if (await state) {
-      message.success("保存成功");
-    } else {
-      message.error("保存失败");
-    }
+    await saveSQLData(optionObj);
+    //console.log(Data);
   };
 
   //数据验证成功回调
@@ -158,9 +154,9 @@ const App: React.FC = () => {
   const addPage = () => {
     //修改状态和路由
     //保存选项
-    addPublicSearchPage(publicSearch).then((arr) => {
+    addPublicSearchPage(publicSearch).then((res) => {
       //打印信息
-      message.success(arr.message);
+      message.success(res.message);
     });
   };
 
