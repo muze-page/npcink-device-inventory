@@ -32,31 +32,108 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             // 将 JSON 字符串解析为 PHP 对象
             $object = json_decode(stripslashes($object_data));
 
-            // 验证数据格式，确保 object_data 是一个字符串
-            if (false) {
+            //进行对象验证
+            $validation_result = self::validate_object($object);
+
+            if ($validation_result === true) {
+                // 所有验证通过，可以继续处理对象
+                // 保存设置选项
+                update_option(self::$option, $object);
+
+                // 发送成功响应
+                $response = array(
+                    'data' => array('message' => '设置选项已保存'),
+                    'success' => true,
+                    'datas' => $object,
+
+                );
+
+                // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义200, JSON_UNESCAPED_UNICODE
+                wp_send_json($response);
+            } else {
                 // 发送错误响应
                 $error_response = array(
-                    'message' => '传递的值不是一个字符串',
+                    'message' => $validation_result,
                 );
                 wp_send_json_error($error_response);
+                // 返回验证错误信息
+                echo json_encode(array('error' => $validation_result));
+            }
+        }
+
+        
+        //选项类型验证
+        public static function validate_object($object)
+        {
+            //验证是否为字符串数组
+            function is_string_array($array)
+            {
+                return array_reduce($array, function ($carry, $item) {
+                    return $carry && is_string($item);
+                }, true);
+            }
+            // 需要验证的属性列表
+            $required_properties = ['route', 'password', 'delete_mysql', 'department', 'device_show_number', 'public_search_route'];
+
+            // 循环遍历需要验证的属性
+            foreach ($required_properties as $property) {
+                // 检查属性是否存在
+                if (!property_exists($object, $property)) {
+                    return "缺少属性：$property";
+                }
+
+                // 根据属性类型进行验证
+                switch ($property) {
+                    case 'route':
+                        if (!is_string($object->route)) {
+                            return 'route 属性必须是字符串类型';
+                        }
+                        break;
+                    case 'password':
+                        if (!is_string($object->password)) {
+                            return 'password 属性必须是字符串类型';
+                        }
+                        break;
+                    case 'delete_mysql':
+                        if (!is_bool($object->delete_mysql)) {
+                            return 'delete_mysql 属性必须是布尔类型';
+                        }
+                        break;
+                    case 'department':
+                        if (!is_string_array($object->department)) {
+                            return 'department 属性必须是字符串数组类型';
+                        }
+                        break;
+                    case 'device_show_number':
+                        if (is_numeric($object->device_show_number)) {
+                            if (is_string($object->device_show_number)) {
+                                return 'device_show_number 属性必须是数字类型';
+                            }
+                        }
+
+                        break;
+                    case 'public_search_route':
+                        if (!is_string($object->public_search_route)) {
+                            return 'public_search_route 属性必须是字符串类型';
+                        }
+                        break;
+
+                        // 根据需要验证其他属性的类型或其他条件
+                        // 这里只是一个示例
+                        // 可以根据实际情况进行修改
+                        // 例如，检查是否是有效的整数、浮点数等
+                        // 或者检查其他条件
+                        break;
+                    default:
+                        // 如果有其他属性需要验证，可以在这里添加逻辑
+                        break;
+                }
             }
 
-
-            //TODO:验证数据格式，department必须的字符串数组
-            // 保存设置选项
-            update_option(self::$option, $object);
-
-
-            // 发送成功响应
-            $response = array(
-                'data' => array('message' => '设置选项已保存'),
-                'success' => true,
-
-            );
-
-            // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义200, JSON_UNESCAPED_UNICODE
-            wp_send_json($response);
+            // 所有属性验证通过
+            return true;
         }
+
 
 
         /**
