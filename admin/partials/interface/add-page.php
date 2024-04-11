@@ -20,28 +20,28 @@ if (!class_exists('DEMA_Admin_Interface_Add_Page')) {
             //接收传来的值
             $data = isset($_POST['route']) ? sanitize_text_field($_POST['route']) : ''; //id
             $route = json_decode(stripslashes($data));
+            //检查，接收的是否是字符串
+            if (!is_string($route)) {
+                return wp_send_json_error([
+                    'message' => '需要字符串类型',
+                ]);
+            }
 
             //检查，是否存在当前路由
             $state = get_page_by_path($route); //获取此路由信息
             if ($state) {
                 //返回相关信息
-                return wp_send_json(array(
-                    'status' => 'error',
-                    'message' => '页面已存在，请勿重复添加',
-                ));
+                return wp_send_json_error([
+                    'message' => '页面已存在',
+                ]);
                 // 页面已经存在，不执行后续操作
+                
             }
             //添加页面
             self::add_page($route);
 
-
-            $response = array(
-                'status' => 'success',
-                'message' => $state,
-                'data' =>  $data,
-            );
             // 返回响应数据
-            wp_send_json($response);
+            return wp_send_json_success(['message' => '页面创建成功',]);
         }
 
 
@@ -71,7 +71,7 @@ if (!class_exists('DEMA_Admin_Interface_Add_Page')) {
         public static function load_js()
         {
             $ver = DEMA_Admin_Menu::$plugin_version;
-            $name = DEMA_Admin_Menu::$plugin_name.'-search';
+            $name = DEMA_Admin_Menu::$plugin_name . '-search';
             //准备地址
             // $index_css = plugin_dir_url(dirname(__DIR__)) . 'search/dist/index.css';
             // wp_enqueue_style($name, $index_css, array(), $ver, false);

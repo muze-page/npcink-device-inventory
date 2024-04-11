@@ -10,7 +10,7 @@ import { message } from "antd";
 type axiosData = {
   success: boolean;
   data: {
-    data: any;
+    data?: any;
     message: string;
   };
 };
@@ -136,11 +136,7 @@ export const addPublicSearchPage = async (route: string) => {
   params.append("action", "add_public_search_page_callback");
   params.append("route", JSON.stringify(route));
   try {
-    const response = await axios.post(Ajaxurl, params);
-    if (response.status === 200) {
-      //传出获取的信息
-      return response.data;
-    }
+    await instance.post(Ajaxurl, params);
   } catch {
     console.log("添加自定义公共引导页失败");
   }

@@ -290,8 +290,6 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                 return;
             }
 
-
-
             // 获取通过 Ajax POST 请求传递的对象数据
             $data = $_POST['data'];
 
@@ -305,8 +303,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                 return;
             }
 
-            // 确保 $object 是字符串类型
-            $object_value = $wpdb->prepare('%s', $object);
+            
 
             // 执行更新操作
             // 更新表中department字段的值为$object的行，将其替换为"默认"
@@ -324,9 +321,10 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             }
 
             // 发送成功响应
+            // 确保 $object 是字符串类型
+            $object_value = $wpdb->prepare('%s', $object);
             wp_send_json_success([
                 'message' => '已移除！' . $object_value . '部门',
-                'msg' => $object_value,
             ]);
             return;
             // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义

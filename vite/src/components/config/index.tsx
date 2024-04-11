@@ -102,7 +102,7 @@ const App: React.FC = () => {
 
   //移除选中的部门
   const removeData = async (data: string) => {
-    await remove_department(data);//移除
+    await remove_department(data); //移除
     //更新数据
     const newDepartmentList = option.department.filter(
       (dep) => dep !== selectedDepartment
@@ -145,10 +145,7 @@ const App: React.FC = () => {
   const addPage = () => {
     //修改状态和路由
     //保存选项
-    addPublicSearchPage(publicSearch).then((res) => {
-      //打印信息
-      message.success(res.message);
-    });
+    addPublicSearchPage(publicSearch);
   };
 
   //拼接公共搜索路由
