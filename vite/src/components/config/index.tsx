@@ -100,8 +100,10 @@ const App: React.FC = () => {
 
   const [selectedDepartment, setSelectedDepartment] = useState<string>("默认");
 
-  //移除选择部门
-  const handleDeleteDepartment = () => {
+  //移除选中的部门
+  const removeData = async (data: string) => {
+    await remove_department(data);//移除
+    //更新数据
     const newDepartmentList = option.department.filter(
       (dep) => dep !== selectedDepartment
     );
@@ -110,17 +112,6 @@ const App: React.FC = () => {
       department: newDepartmentList,
     }));
     setSelectedDepartment(""); // 清空下拉框选中的内容
-  };
-
-  //测试移除部门
-  const removeData = async (data: string) => {
-    const state = await remove_department(data);
-    if (state) {
-      handleDeleteDepartment();
-      message.success("已移除此部门");
-    } else {
-      message.error("移除失败");
-    }
     return;
   };
 

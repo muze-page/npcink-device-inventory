@@ -67,7 +67,7 @@ export const exportSQLData = async (name: string) => {
   params.append("name", name);
 
   try {
-    const response = await instance.post(Ajaxurl, params) as axiosData;
+    const response = (await instance.post(Ajaxurl, params)) as axiosData;
     if (response.success) {
       return response.data.data;
     } else {
@@ -100,7 +100,7 @@ export const importSQLData = async (
     //console.log(response.data);
     //TODO:是覆盖式导入，还是只导入目前不存在的数据
     //只导入目前不存在的数据
-    
+
     return response.data;
   } catch (error: any) {
     message.error("导入失败");
@@ -115,26 +115,16 @@ export const importSQLData = async (
  *
  */
 export const remove_department = async (optionObj: string) => {
-  let state = false;
   const params = new URLSearchParams();
   params.append("action", "remove_department_callback");
   params.append("data", JSON.stringify(optionObj));
   try {
-    const response = await axios.post(Ajaxurl, params);
-
-    if (response.status === 200) {
-      //保存成功
-      //console.log(response);
-      state = true;
-    } else {
-      console.error("保存设置选项时出错：" + response.data);
-    }
+    await instance.post(Ajaxurl, params);
   } catch (error: any) {
     console.error("保存设置选项时出错：" + error.message);
   } finally {
     //console.log(false);
   }
-  return state;
 };
 
 /**

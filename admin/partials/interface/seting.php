@@ -284,60 +284,54 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             $table_name = $wpdb->prefix . 'custom_table';
 
             // 检查是否收到了正确的数据
-            if (isset($_POST['data'])) {
-                // 获取通过 Ajax POST 请求传递的对象数据
-                $data = $_POST['data'];
-
-                // 尝试解析 JSON 数据
-                $object = json_decode(stripslashes($data));
-
-                // 确保成功解析了 JSON 数据
-                if ($object !== null) {
-                    // 确保 $object 是字符串类型
-                    $object_value = $wpdb->prepare('%s', $object);
-
-                    // 执行更新操作
-                    // 更新表中department字段的值为$object的行，将其替换为"默认"
-                    $result = $wpdb->update(
-                        $table_name,
-                        array('department' => '默认'),
-                        array('department' => $object)
-                    );
-
-                    // 检查更新操作是否成功
-                    if ($result !== false) {
-                        // 发送成功响应
-                        $response = array(
-                            'message' => '设置选项已保存！',
-                            'object' => $object_value,
-                        );
-
-                        // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义
-                        wp_send_json($response, 200, JSON_UNESCAPED_UNICODE);
-                    } else {
-                        // 发送错误响应
-                        $response = array(
-                            'error' => '更新数据时发生错误。',
-                        );
-
-                        wp_send_json($response, 500);
-                    }
-                } else {
-                    // 发送错误响应，无法解析 JSON 数据
-                    $response = array(
-                        'error' => '无法解析收到的数据。',
-                    );
-
-                    wp_send_json($response, 400);
-                }
-            } else {
+            if (!isset($_POST['data'])) {
                 // 发送错误响应，未收到正确的数据
-                $response = array(
-                    'error' => '未收到正确的数据。',
-                );
-
-                wp_send_json($response, 400);
+                wp_send_json_error(['message' => '未收到正确的数据！']);
+                return;
             }
+
+
+
+            // 获取通过 Ajax POST 请求传递的对象数据
+            $data = $_POST['data'];
+
+            // 尝试解析 JSON 数据
+            $object = json_decode(stripslashes($data));
+
+            //能否正常解析JSON数据
+            if ($object === null) {
+                // 发送错误响应，无法解析 JSON 数据
+                wp_send_json_error(['message' => '无法解析收到的数据！']);
+                return;
+            }
+
+            // 确保 $object 是字符串类型
+            $object_value = $wpdb->prepare('%s', $object);
+
+            // 执行更新操作
+            // 更新表中department字段的值为$object的行，将其替换为"默认"
+            $result = $wpdb->update(
+                $table_name,
+                array('department' => '默认'),
+                array('department' => $object)
+            );
+
+            // 检查更新操作是否成功
+            if ($result) {
+                // 发送错误响应
+                wp_send_json_error(['message' => '更新数据时发生错误！']);
+                return;
+            }
+
+            // 发送成功响应
+            wp_send_json_success([
+                'message' => '已移除！' . $object_value . '部门',
+                'msg' => $object_value,
+            ]);
+            return;
+            // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义
+            //wp_send_json($response, 200, JSON_UNESCAPED_UNICODE);
+
         }
     }
 }
