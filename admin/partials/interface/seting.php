@@ -41,15 +41,8 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                 update_option(self::$option, $object);
 
                 // 发送成功响应
-                $response = array(
-                    'data' => array('message' => '设置选项已保存'),
-                    'success' => true,
-                    'datas' => $object,
-
-                );
-
                 // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义200, JSON_UNESCAPED_UNICODE
-                wp_send_json($response);
+                wp_send_json_success(['message' => '设置选项已保存']);
             } else {
                 // 发送错误响应
                 $error_response = array(
@@ -160,12 +153,10 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
 
             if ($rows) {
                 //正常返回数据
-                wp_send_json([
-                    'success' => true,
-                    'data' => array(
-                        'data' => $rows,
-                        'message' => '成功导出数据',
-                    ),
+
+                wp_send_json_success([
+                    'data' => $rows,
+                    'message' => '成功导出数据',
                 ]);
             } else {
                 wp_send_json_error([
@@ -190,6 +181,15 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             $data = json_decode(stripslashes($text_data), true);
 
             $name = isset($_POST['name']) ? ($_POST['name']) : '';
+
+            // 检查传来的数据是否为空
+            if (empty($data)) {
+                $response = array(
+                    'message' => '传递的数据为空，请检查文件'
+                );
+                wp_send_json_error($response);
+                return;
+            }
 
             if (!empty($data)) {
                 // 构建插入数据的数组
@@ -251,35 +251,26 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                 // 执行批量插入操作
                 foreach ($insert_data as $item) {
                     $result = $wpdb->insert($table_name, $item);
-                    // echo 'insert_data: ';
-                    //print_r($item);
                 }
 
                 // 检查插入结果
                 if ($result) {
                     $response = array(
-                        'success' => true,
-                        'message' => '已成功导入',
-                        'msg' => $name
+                        'message' => '导入成功，导入前的设备信息未变更',
                     );
+                    wp_send_json_success($response);
                 } else {
                     $error_message = $wpdb->last_error;
-                    echo "插入操作失败，错误信息：$error_message";
+                    //echo "插入操作失败，错误信息：$error_message";
 
                     $response = array(
-                        'success' => false,
-                        'message' => '导入数据时发生错误',
-                        'data' => ($insert_data[1])
+                        'message' => '导入数据时发生错误，请检查数据格式',
+                        'data' => ($insert_data[1]),
+                        'msg' => $error_message,
                     );
+                    wp_send_json_error($response);
                 }
-            } else {
-                $response = array(
-                    'success' => false,
-                    'message' => '传递的数据为空'
-                );
             }
-            // 返回JSON格式的结果
-            wp_send_json($response);
             wp_die();
         }
 

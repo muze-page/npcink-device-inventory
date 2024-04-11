@@ -30,7 +30,7 @@ const App: React.FC<Props> = ({ data }) => {
   //保存到数据库
   const importData = () => {
     if (jsonContent === null) {
-      message.error("请先选择文件");
+      message.error("请选择文件或文件内容为空");
       return;
     } else {
       const jsonString = JSON.stringify(jsonContent);

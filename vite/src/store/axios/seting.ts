@@ -96,11 +96,11 @@ export const importSQLData = async (
   params.append("data", data);
 
   try {
-    const response = await axios.post<MysqlChange>(Ajaxurl, params);
+    const response = await instance.post<MysqlChange>(Ajaxurl, params);
     //console.log(response.data);
     //TODO:是覆盖式导入，还是只导入目前不存在的数据
     //只导入目前不存在的数据
-    message.success("导入成功，导入前的设备信息未变更");
+    
     return response.data;
   } catch (error: any) {
     message.error("导入失败");
