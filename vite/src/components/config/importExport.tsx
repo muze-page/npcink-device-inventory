@@ -29,8 +29,6 @@ const App: React.FC<Props> = ({ data }) => {
 
   //保存到数据库
   const importData = () => {
-    
-   
     if (jsonContent === null) {
       message.error("请先选择文件");
       return;
@@ -44,7 +42,12 @@ const App: React.FC<Props> = ({ data }) => {
   //导出数据
   const downloadData = async () => {
     const jsonData = await exportSQLData(data);
-    const jsonString = JSON.stringify(jsonData.data);
+    //如果没有拿到值，就此结束
+    if (!jsonData) {
+      return;
+    }
+    
+    const jsonString = JSON.stringify(jsonData);
     const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 

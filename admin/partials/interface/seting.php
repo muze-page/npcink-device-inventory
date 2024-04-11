@@ -61,7 +61,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             }
         }
 
-        
+
         //选项类型验证
         public static function validate_object($object)
         {
@@ -104,6 +104,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                             return 'department 属性必须是字符串数组类型';
                         }
                         break;
+
                     case 'device_show_number':
                         if (is_numeric($object->device_show_number)) {
                             if (is_string($object->device_show_number)) {
@@ -112,18 +113,14 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                         }
 
                         break;
+
                     case 'public_search_route':
                         if (!is_string($object->public_search_route)) {
                             return 'public_search_route 属性必须是字符串类型';
                         }
                         break;
 
-                        // 根据需要验证其他属性的类型或其他条件
-                        // 这里只是一个示例
-                        // 可以根据实际情况进行修改
-                        // 例如，检查是否是有效的整数、浮点数等
-                        // 或者检查其他条件
-                        break;
+
                     default:
                         // 如果有其他属性需要验证，可以在这里添加逻辑
                         break;
@@ -148,8 +145,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
 
             // 检查表名是否合法
             if (!preg_match('/^[a-zA-Z_]+$/', $name)) {
-                wp_send_json([
-                    'success' => false,
+                wp_send_json_error([
                     'message' => '无效的表名'
                 ]);
                 return;
@@ -163,14 +159,17 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             $rows = $wpdb->get_results($sql, ARRAY_A);
 
             if ($rows) {
+                //正常返回数据
                 wp_send_json([
                     'success' => true,
-                    'data' => $rows
+                    'data' => array(
+                        'data' => $rows,
+                        'message' => '成功导出数据',
+                    ),
                 ]);
             } else {
-                wp_send_json([
-                    'success' => false,
-                    'message' => '查询数据时发生错误'
+                wp_send_json_error([
+                    'message' => '查询数据时发生错误,请检查表名是否正确'
                 ]);
             }
 

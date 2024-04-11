@@ -6,6 +6,14 @@ import { Ajaxurl } from "@/store";
 import { MysqlChange } from "@/store/interface";
 import { message } from "antd";
 
+//成功响应传出的接口数据
+type axiosData = {
+  success: boolean;
+  data: {
+    data: any;
+    message: string;
+  };
+};
 
 // 创建 axios 实例
 const instance = axios.create({
@@ -14,8 +22,7 @@ const instance = axios.create({
 
 // 响应拦截器
 instance.interceptors.response.use(
- 
-  response => {
+  (response) => {
     const responseData = response.data;
     if (responseData.success) {
       message.success(responseData.data.message);
@@ -24,11 +31,11 @@ instance.interceptors.response.use(
     }
     return responseData;
   },
-  error => {
+  (error) => {
     const errorMessage =
       error.response && error.response.status
-        ? `保存设置选项时出错：服务器返回状态码 ${error.response.status}`
-        : `保存设置选项时出错：${error.message}`;
+        ? `出错：服务器返回状态码 ${error.response.status}`
+        : `出错：${error.message}`;
     message.error(errorMessage);
     console.error(errorMessage);
     return Promise.reject(error);
@@ -49,50 +56,23 @@ export const saveSQLData = async (optionObj: object) => {
 };
 
 /**
- * 保存选项
- */
-//export const saveSQLData = async (optionObj: object) => {
-//  const params = new URLSearchParams();
-//  params.append("action", "save_object_option");
-//  params.append("object_data", JSON.stringify(optionObj));
-//  try {
-//    const response = await axios.post(Ajaxurl, params);
-//    if (response.status === 200) {
-//      if (response.data.success || response.data.success === false) {
-//        message.error(response.data.data.message);
-//      } else {
-//        message.success(response.data.data.message);
-//      }
-//      return response.data;
-//    } else {
-//      message.error("保存设置选项时出错：服务器返回状态码 " + response.status);
-//      throw new Error(
-//        "保存设置选项时出错：服务器返回状态码 " + response.status
-//      );
-//    }
-//  } catch (error: any) {
-//    // 处理错误情况
-//    console.error("保存设置选项时出错：" + error);
-//    console.log(error);
-//    throw error; // 重新抛出错误，以便调用者可以进一步处理
-//  } finally {
-//    //console.log(false);
-//  }
-//};
-
-/**
  * 导出数据
  * @param name 数据库名
  * @returns
  */
-export const exportSQLData = async (name: string): Promise<MysqlChange> => {
+
+export const exportSQLData = async (name: string) => {
   const params = new URLSearchParams();
   params.append("action", "export_data_callback");
   params.append("name", name);
 
   try {
-    const response = await axios.post<MysqlChange>(Ajaxurl, params);
-    return response.data;
+    const response = await instance.post(Ajaxurl, params) as axiosData;
+    if (response.success) {
+      return response.data.data;
+    } else {
+      return;
+    }
   } catch (error: any) {
     // 将错误信息保存到全局状态中
     console.log("传出数据时出错：" + error.message);
@@ -175,3 +155,35 @@ export const addPublicSearchPage = async (route: string) => {
     console.log("添加自定义公共引导页失败");
   }
 };
+
+/**
+ * 保存选项
+ */
+//export const saveSQLData = async (optionObj: object) => {
+//  const params = new URLSearchParams();
+//  params.append("action", "save_object_option");
+//  params.append("object_data", JSON.stringify(optionObj));
+//  try {
+//    const response = await axios.post(Ajaxurl, params);
+//    if (response.status === 200) {
+//      if (response.data.success || response.data.success === false) {
+//        message.error(response.data.data.message);
+//      } else {
+//        message.success(response.data.data.message);
+//      }
+//      return response.data;
+//    } else {
+//      message.error("保存设置选项时出错：服务器返回状态码 " + response.status);
+//      throw new Error(
+//        "保存设置选项时出错：服务器返回状态码 " + response.status
+//      );
+//    }
+//  } catch (error: any) {
+//    // 处理错误情况
+//    console.error("保存设置选项时出错：" + error);
+//    console.log(error);
+//    throw error; // 重新抛出错误，以便调用者可以进一步处理
+//  } finally {
+//    //console.log(false);
+//  }
+//};
