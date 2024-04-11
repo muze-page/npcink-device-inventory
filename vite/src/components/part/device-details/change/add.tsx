@@ -19,7 +19,7 @@ const AddChangeData: React.FC<ACDProps> = ({ uuid }) => {
    * 以便在组件中进行进一步处理或展示。
    * */
 
-  const onFinish = (values: ComputerChangeReturn) => {
+  const onFinish = async (values: ComputerChangeReturn) => {
     //检查数据是否符合需求，不符合则弹窗
     if (
       typeof values.user !== "string" ||
@@ -33,21 +33,14 @@ const AddChangeData: React.FC<ACDProps> = ({ uuid }) => {
       return;
     }
     console.log("Received values:", values);
-    // 发送POST请求
-    addChangeData(uuid, values)
-      .then((response) => {
-        // 请求成功的处理逻辑
-        console.log(response.data);
 
-        message.success("添加成功，刷新页面后查看效果");
-        // 提交后清空表单数据
-        form.resetFields();
-      })
-      .catch((error) => {
-        // 请求失败的处理逻辑
-        console.error("Error:", error);
-        message.error("添加失败");
-      });
+    // 发送POST请求
+    const state = await addChangeData(uuid, values);
+    
+    //成功添加则清除输入框
+    if (state) {
+      form.resetFields();
+    }
   };
 
   return (
@@ -78,7 +71,7 @@ const AddChangeData: React.FC<ACDProps> = ({ uuid }) => {
           name="msg"
           rules={[{ required: true, message: "请输入变更内容" }]}
         >
-          <TextArea  placeholder="变更内容详情" />
+          <TextArea placeholder="变更内容详情" />
         </Form.Item>
 
         <Form.Item>

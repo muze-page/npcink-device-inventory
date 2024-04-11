@@ -4,7 +4,12 @@
 
 import axios from "axios";
 import { Ajaxurl } from "@/store";
-import { MysqlChange, ComputerChangeReturn } from "@/store/interface";
+import {
+  MysqlChange,
+  ComputerChangeReturn,
+  axiosType,
+} from "@/store/interface";
+import { instance } from "@/store/axios/public";
 
 /**
  * 增 - 添加变更数据
@@ -12,16 +17,20 @@ import { MysqlChange, ComputerChangeReturn } from "@/store/interface";
 export const addChangeData = async (
   uuid: string,
   data: ComputerChangeReturn
-): Promise<MysqlChange> => {
+): Promise<boolean> => {
   const params = new URLSearchParams();
   params.append("action", "add_change_data_callback");
   params.append("uuid", uuid);
   params.append("user", data.user);
   params.append("type", data.type);
   params.append("msg", data.msg);
-
-  const { data: res } = await axios.post(Ajaxurl, params);
-  return res;
+  try {
+    const data = (await instance.post(Ajaxurl, params)) as axiosType;
+    return data.success;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
 };
 
 /**

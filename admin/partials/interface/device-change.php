@@ -28,14 +28,16 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
 
             // 获取前端传递的参数并进行输入验证
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //id
-            $user = isset($_POST['user']) ? sanitize_text_field($_POST['user']) : null; //id
+            $user = isset($_POST['user']) ? sanitize_text_field($_POST['user']) : null; //用户名
             $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : null; //字段名
             $data = isset($_POST['msg']) ? sanitize_text_field($_POST['msg']) : null; //修改的值
 
-            // TODO:验证接收的数据是否为undefined或为空字符串
-
+            //检查参数是否均为字符串类型
+            if (!isset($uuid, $user, $type, $data)) {
+                return wp_send_json_error(['message' => '所有参数必须是字符串类型']);
+            }
             // 使用预处理语句插入数据
-            $wpdb->insert(
+            $result = $wpdb->insert(
                 $table_name,
                 array(
                     'uuid' => $uuid,
@@ -53,9 +55,9 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
 
             // 检查插入是否成功
             if ($result === false) {
-                wp_send_json_error('未能插入数据。');
+                wp_send_json_error(['message' => '插入数据失败']);
             } else {
-                wp_send_json_success('数据插入成功。');
+                wp_send_json_success(['message' => '插入数据成功']);
             }
             // 插入成功，可以进行其他操作
         }

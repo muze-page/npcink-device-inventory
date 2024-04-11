@@ -78,6 +78,14 @@ export interface ComputerChangeReturn {
 /**
  * Axios 返回类型
  */
+export interface axiosType {
+  success: boolean;
+  data: {
+    data?: any;
+    message: string;
+  };
+};
+
 export interface MysqlChange {
   message: string;
   status: string;

@@ -1,54 +1,19 @@
 /**
  * 设置
  */
-import axios from "axios";
-import { Ajaxurl } from "@/store";
-import { MysqlChange } from "@/store/interface";
 import { message } from "antd";
+import { Ajaxurl } from "@/store";
+import { MysqlChange, axiosType } from "@/store/interface";
+import { instance } from "@/store/axios/public";
 
 //成功响应传出的接口数据
-type axiosData = {
-  success: boolean;
-  data: {
-    data?: any;
-    message: string;
-  };
-};
-
-// 创建 axios 实例
-const instance = axios.create({
-  //baseURL: Ajaxurl, // 设置请求的基础URL
-});
-
-// 响应拦截器
-instance.interceptors.response.use(
-  (response) => {
-    const responseData = response.data;
-    if (responseData.success) {
-      message.success(responseData.data.message);
-    } else {
-      message.error(responseData.data.message);
-    }
-    return responseData;
-  },
-  (error) => {
-    const errorMessage =
-      error.response && error.response.status
-        ? `出错：服务器返回状态码 ${error.response.status}`
-        : `出错：${error.message}`;
-    message.error(errorMessage);
-    console.error(errorMessage);
-    return Promise.reject(error);
-  }
-);
 
 export const saveSQLData = async (optionObj: object) => {
   const params = new URLSearchParams();
   params.append("action", "save_object_option");
   params.append("object_data", JSON.stringify(optionObj));
   try {
-    const response = await instance.post(Ajaxurl, params);
-    return response.data;
+    await instance.post(Ajaxurl, params);
   } catch (error: any) {
     console.error(`保存设置选项时出错：${error}`);
     throw error;
@@ -67,7 +32,7 @@ export const exportSQLData = async (name: string) => {
   params.append("name", name);
 
   try {
-    const response = (await instance.post(Ajaxurl, params)) as axiosData;
+    const response = (await instance.post(Ajaxurl, params)) as axiosType;
     if (response.success) {
       return response.data.data;
     } else {
@@ -86,22 +51,17 @@ export const exportSQLData = async (name: string) => {
  * @param data 导入数据
  * @returns
  */
-export const importSQLData = async (
-  name: string,
-  data: string
-): Promise<MysqlChange> => {
+export const importSQLData = async (name: string, data: string) => {
   const params = new URLSearchParams();
   params.append("action", "import_data_callback");
   params.append("name", name);
   params.append("data", data);
 
   try {
-    const response = await instance.post<MysqlChange>(Ajaxurl, params);
+    await instance.post<MysqlChange>(Ajaxurl, params);
     //console.log(response.data);
     //TODO:是覆盖式导入，还是只导入目前不存在的数据
     //只导入目前不存在的数据
-
-    return response.data;
   } catch (error: any) {
     message.error("导入失败");
     // 将错误信息保存到全局状态中
