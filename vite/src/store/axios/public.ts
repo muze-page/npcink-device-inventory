@@ -27,3 +27,19 @@ export const instance = axios.create({
     }
   );
 
+/**
+ * 检查它们的值是否为 undefined 并据此决定是否将它们添加到 URLSearchParams 实例中
+ * 默认情况下，若不传值，则会输出 undefined字符串
+ * @param params 实例
+ * @param key 关键词
+ * @param value 值
+ */
+export const addParamIfDefined = (
+  params: URLSearchParams,
+  key: string,
+  value: any
+) => {
+  if (value !== undefined) {
+    params.append(key, value);
+  }
+};

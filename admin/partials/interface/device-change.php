@@ -26,16 +26,26 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_change';
 
-            // 获取前端传递的参数并进行输入验证
+            // 获取前端传递的参数并进行输入验证，如果有值，肯定是字符串类型
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //id
             $user = isset($_POST['user']) ? sanitize_text_field($_POST['user']) : null; //用户名
             $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : null; //字段名
-            $data = isset($_POST['msg']) ? sanitize_text_field($_POST['msg']) : null; //修改的值
+            $msg = isset($_POST['msg']) ? sanitize_text_field($_POST['msg']) : null; //修改的值
 
-            //检查参数是否均为字符串类型
-            if (!isset($uuid, $user, $type, $data)) {
-                return wp_send_json_error(['message' => '所有参数必须是字符串类型']);
+            //是否缺少参数
+            // 假设 $uuid, $user, $type, $data 是需要检查的变量
+            $variables = compact('uuid', 'user', 'type', 'msg');
+
+            // 检查是否有参数为 null
+            $null_param = array_search(null, $variables, true);
+
+            // 如果有参数为 null，则返回相应的错误消息
+            if ($null_param !== false) {
+                $param_names = ['uuid' => 'uuid - 设备唯一编号', 'user' => 'user - 变更用户名', 'type' => 'type - 变更类型', 'msg' => 'msg - 变更内容'];
+                return wp_send_json_error(['message' => '缺少参数：' . $param_names[$null_param]]);
             }
+
+
             // 使用预处理语句插入数据
             $result = $wpdb->insert(
                 $table_name,
@@ -43,21 +53,21 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
                     'uuid' => $uuid,
                     'user' => $user,
                     'type' => $type,
-                    'msg' => $data
+                    'msg' => $msg
                 ),
                 array(
                     '%s', // uuid
                     '%s', // user
                     '%s', // type
-                    '%s'  // data
+                    '%s'  // msg
                 )
             );
 
             // 检查插入是否成功
             if ($result === false) {
-                wp_send_json_error(['message' => '插入数据失败']);
+                wp_send_json_error(['message' => '插入变更数据失败']);
             } else {
-                wp_send_json_success(['message' => '插入数据成功']);
+                wp_send_json_success(['message' => '插入变更数据成功']);
             }
             // 插入成功，可以进行其他操作
         }
@@ -71,10 +81,13 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_change';
             // 获取前端传递的参数并进行输入验证
-            $id = isset($_POST['id']) ? sanitize_text_field($_POST['id']) : ''; //id
-            $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : ''; //字段名
-            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : ''; //修改的值
-
+            $id = isset($_POST['id']) ? sanitize_text_field($_POST['id']) : null; //id
+            $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : null; //字段名
+            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : null; //修改的值
+            //检查参数是否均为字符串类型
+            if (!isset($id,  $type, $data)) {
+                return wp_send_json_error(['message' => '所有参数必须是字符串类型']);
+            }
 
             // 定义字段与类型的映射关系
             $field_map = array(
@@ -84,41 +97,35 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
             );
 
             // 确定要更新的字段
-            $field_name = isset($field_map[$type]) ? $field_map[$type] : '';
+            $field_name = isset($field_map[$type]) ? $field_map[$type] : null;
 
-            try {
-                if (!empty($field_name)) {
-                    // 使用预处理语句更新数据库中对应的数据
-                    $wpdb->update(
-                        $table_name,
-                        array($field_name => $data),
-                        array('id' => $id),
-                        '%s', // 字段类型
-                        '%s'  // 条件类型
-                    );
+            if (empty($field_name)) {
+                // 未找到对应的字段名
+                return wp_send_json_error(['message' => '未找到对应的字段名']);
+            }
+            // 使用预处理语句更新数据库中对应的数据
+            $result = $wpdb->update(
+                $table_name,
+                array($field_name => $data),
+                array('id' => $id),
+                '%s', // 字段类型
+                '%s'  // 条件类型
+            );
 
-                    // 返回更新成功的响应
-                    echo json_encode(array(
-                        'success' => true,
-                        '表名' => $table_name,
-                        '类型' => $type,
-                        '字段名' => $field_name,
-                        '数据' => $data,
-                        'id' => $id
-                    ));
-                } else {
-                    // 未找到对应的字段名
-                    echo json_encode(array(
-                        'success' => false,
-                        'error' => '未找到对应的字段名'
-                    ));
-                }
-            } catch (Exception $e) {
-                // 返回更新失败的响应，包含详细的错误信息
-                echo json_encode(array(
-                    'success' => false,
-                    'error' => '数据库更新失败: ' . $e->getMessage()
-                ));
+            // 返回更新成功的响应
+            echo json_encode(array(
+                'success' => true,
+                '表名' => $table_name,
+                '类型' => $type,
+                '字段名' => $field_name,
+                '数据' => $data,
+                'id' => $id
+            ));
+
+            if ($result) {
+                return wp_send_json_success(['message' => '数据库更新成功']);
+            } else {
+                return wp_send_json_error(['message' => '数据库更新失败']);
             }
             wp_die();
         }

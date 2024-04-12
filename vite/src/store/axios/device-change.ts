@@ -9,21 +9,24 @@ import {
   ComputerChangeReturn,
   axiosType,
 } from "@/store/interface";
-import { instance } from "@/store/axios/public";
+import { instance, addParamIfDefined } from "@/store/axios/public";
 
 /**
  * 增 - 添加变更数据
  */
+
 export const addChangeData = async (
   uuid: string,
   data: ComputerChangeReturn
 ): Promise<boolean> => {
   const params = new URLSearchParams();
   params.append("action", "add_change_data_callback");
-  params.append("uuid", uuid);
-  params.append("user", data.user);
-  params.append("type", data.type);
-  params.append("msg", data.msg);
+  addParamIfDefined(params, "uuid", uuid);
+  addParamIfDefined(params, "user", data.user);
+  addParamIfDefined(params, "type", data.type);
+  addParamIfDefined(params, "msg", data.msg);
+  console.log(data);
+  console.log(params);
   try {
     const data = (await instance.post(Ajaxurl, params)) as axiosType;
     return data.success;
@@ -54,9 +57,9 @@ export const changeMySqlData = async (
 ) => {
   const params = new URLSearchParams();
   params.append("action", "modify_change_data_callback");
-  params.append("id", id);
-  params.append("data", data);
-  params.append("type", type);
+  addParamIfDefined(params, "id", id);
+  addParamIfDefined(params, "data", data);
+  addParamIfDefined(params, "type", type);
 
   try {
     const response = await axios.post<MysqlChange>(Ajaxurl, params);
@@ -79,7 +82,7 @@ export const changeMySqlData = async (
 export const searchChangeData = async (uuid: string): Promise<MysqlChange> => {
   const params = new URLSearchParams();
   params.append("action", "search_change_data_callback");
-  params.append("uuid", JSON.stringify(uuid));
+  addParamIfDefined(params, "uuid", JSON.stringify(uuid));
   const { data: res } = await axios.post(Ajaxurl, params);
   return res;
 };

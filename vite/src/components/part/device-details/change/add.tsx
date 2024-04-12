@@ -32,10 +32,12 @@ const AddChangeData: React.FC<ACDProps> = ({ uuid }) => {
       message.error("请填写完整信息");
       return;
     }
-    console.log("Received values:", values);
+    //console.log("填入的信息：", values);
+
 
     // 发送POST请求
     const state = await addChangeData(uuid, values);
+    
     
     //成功添加则清除输入框
     if (state) {
