@@ -51,6 +51,12 @@ const App: React.FC = () => {
     //console.log("Received values:", values);
   };
 
+  //手动保存当前选项
+  const saveOption = () => {
+    const fieldsValue = form.getFieldsValue(); // 获取所有字段的值
+    postData(fieldsValue); //保存选项
+  };
+
   //数据验证失败回调
   const onFinishFailed = (errorInfo: any) => {
     console.log("Failed:", errorInfo);
@@ -86,12 +92,10 @@ const App: React.FC = () => {
       ...option,
       department: newDepartmentArr,
     };
-    setOption(newOption); //保存数据TODO:这里直接获取选项值
+    setOption(newOption); //保存数据
 
     //保存选项
-    postData(newOption).then(() => {
-      message.success("已添加此部门");
-    });
+    postData(newOption);
   };
 
   //删除部门
@@ -112,6 +116,7 @@ const App: React.FC = () => {
       department: newDepartmentList,
     }));
     setSelectedDepartment(""); // 清空下拉框选中的内容
+
     return;
   };
 
@@ -125,9 +130,7 @@ const App: React.FC = () => {
         message.error("保留用，请不要移除此部门");
         break;
       default:
-        //移除
-        const fieldsValue = form.getFieldsValue(); // 获取所有字段的值
-        postData(fieldsValue); //保存选项
+        saveOption(); //保存选项
         removeData(selectedDepartment); //删除操作
     }
   };
@@ -142,10 +145,9 @@ const App: React.FC = () => {
   const [publicSearch, setPublicSearch] = useState(""); // 公共查询输入框的值
 
   //添加页面
-  const addPage = () => {
-    //修改状态和路由
-    //保存选项
-    addPublicSearchPage(publicSearch);
+  const addPage = async () => {
+    await addPublicSearchPage(publicSearch); //添加页面
+    saveOption(); //保存选项
   };
 
   //拼接公共搜索路由
