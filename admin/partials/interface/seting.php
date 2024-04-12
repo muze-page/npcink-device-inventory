@@ -42,15 +42,10 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
 
                 // 发送成功响应
                 // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义200, JSON_UNESCAPED_UNICODE
-                wp_send_json_success(['message' => '设置选项已保存']);
+                return wp_send_json_success(['message' => '设置选项已保存']);
             } else {
                 // 发送错误响应
-                $error_response = array(
-                    'message' => $validation_result,
-                );
-                wp_send_json_error($error_response);
-                // 返回验证错误信息
-                echo json_encode(array('error' => $validation_result));
+                return wp_send_json_error(['message' => $validation_result,]);
             }
         }
 
@@ -134,14 +129,13 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             global $wpdb;
 
             // 获取前端传递的参数并进行输入验证
-            $name = isset($_POST['name']) ? sanitize_text_field($_POST['name']) : '';
+            $name = isset($_POST['name']) ? sanitize_text_field($_POST['name']) : null;
 
             // 检查表名是否合法
             if (!preg_match('/^[a-zA-Z_]+$/', $name)) {
-                wp_send_json_error([
+                return wp_send_json_error([
                     'message' => '无效的表名'
                 ]);
-                return;
             }
 
             // 构建SQL语句
@@ -154,12 +148,12 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             if ($rows) {
                 //正常返回数据
 
-                wp_send_json_success([
+                return wp_send_json_success([
                     'data' => $rows,
                     'message' => '成功导出数据',
                 ]);
             } else {
-                wp_send_json_error([
+                return  wp_send_json_error([
                     'message' => '查询数据时发生错误,请检查表名是否正确'
                 ]);
             }
@@ -177,18 +171,18 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             global $wpdb;
 
             // 获取前端传递的参数并进行输入验证
-            $text_data = isset($_POST['data']) ? ($_POST['data']) : '';
-            $data = json_decode(stripslashes($text_data), true);
+            $text_data = isset($_POST['data']) ? ($_POST['data']) : null;
+            $name = isset($_POST['name']) ? ($_POST['name']) : null;
 
-            $name = isset($_POST['name']) ? ($_POST['name']) : '';
+            //拿到解析后的值
+            $data = json_decode(stripslashes($text_data), true);
 
             // 检查传来的数据是否为空
             if (empty($data)) {
                 $response = array(
                     'message' => '传递的数据为空，请检查文件'
                 );
-                wp_send_json_error($response);
-                return;
+                return wp_send_json_error($response);
             }
 
             if (!empty($data)) {
@@ -258,7 +252,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     $response = array(
                         'message' => '导入成功，导入前的设备信息未变更',
                     );
-                    wp_send_json_success($response);
+                    return wp_send_json_success($response);
                 } else {
                     $error_message = $wpdb->last_error;
                     //echo "插入操作失败，错误信息：$error_message";
@@ -268,7 +262,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                         'data' => ($insert_data[1]),
                         'msg' => $error_message,
                     );
-                    wp_send_json_error($response);
+                    return wp_send_json_error($response);
                 }
             }
             wp_die();
@@ -283,27 +277,18 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_table';
 
-            // 检查是否收到了正确的数据
-            if (!isset($_POST['data'])) {
-                // 发送错误响应，未收到正确的数据
-                wp_send_json_error(['message' => '未收到正确的数据！']);
-                return;
-            }
+
 
             // 获取通过 Ajax POST 请求传递的对象数据
-            $data = $_POST['data'];
+            $data = isset($_POST['data']) ? ($_POST['data']) : null;
+            // 检查是否收到了正确的数据
+            if (!$data) {
+                // 发送错误响应，未收到正确的数据
+                return wp_send_json_error(['message' => '未收到部门的数据！']);
+            }
 
             // 尝试解析 JSON 数据
             $object = json_decode(stripslashes($data));
-
-            //能否正常解析JSON数据
-            if ($object === null) {
-                // 发送错误响应，无法解析 JSON 数据
-                wp_send_json_error(['message' => '无法解析收到的数据！']);
-                return;
-            }
-
-            
 
             // 执行更新操作
             // 更新表中department字段的值为$object的行，将其替换为"默认"
@@ -316,17 +301,17 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             // 检查更新操作是否成功
             if ($result) {
                 // 发送错误响应
-                wp_send_json_error(['message' => '更新数据时发生错误！']);
-                return;
+                return wp_send_json_error(['message' => '更新数据时发生错误！']);
             }
 
             // 发送成功响应
             // 确保 $object 是字符串类型
             $object_value = $wpdb->prepare('%s', $object);
-            wp_send_json_success([
+            return wp_send_json_success([
                 'message' => '已移除！' . $object_value . '部门',
+                'msg'=>$result,
             ]);
-            return;
+
             // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义
             //wp_send_json($response, 200, JSON_UNESCAPED_UNICODE);
 
