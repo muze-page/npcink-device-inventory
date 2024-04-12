@@ -62,13 +62,7 @@ export const changeMySqlData = async (
   addParamIfDefined(params, "type", type);
 
   try {
-    const response = await axios.post<MysqlChange>(Ajaxurl, params);
-
-    if (response.status === 200) {
-      //console.log(response.data);
-    } else {
-      console.log("保存设置选项时出错：" + response.data);
-    }
+    await instance.post<MysqlChange>(Ajaxurl, params);
   } catch (error: any) {
     console.log("保存设置选项时出错：" + error.message);
   } finally {
@@ -79,10 +73,11 @@ export const changeMySqlData = async (
 /**
  * 查
  */
-export const searchChangeData = async (uuid: string): Promise<MysqlChange> => {
+export const searchChangeData = async (uuid: string): Promise<axiosType> => {
   const params = new URLSearchParams();
   params.append("action", "search_change_data_callback");
   addParamIfDefined(params, "uuid", JSON.stringify(uuid));
   const { data: res } = await axios.post(Ajaxurl, params);
+  console.log(res);
   return res;
 };

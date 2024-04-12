@@ -156,27 +156,24 @@ const App: React.FC<Props> = ({ uuid }) => {
   const [loading, setLoading] = useState(false); //加载中
   const [error, setError] = useState(""); //报错
 
-  const getData = (uuid: string) => {
-    setLoading(true);
-
-    searchChangeData(uuid)
-      .then((res) => {
-        //添加key
-        const addKeyData = res.data.map((obj: ComputerChangeReturn) => {
-          return { ...obj, key: obj.id };
-        });
-        //倒序并传递
-        setDataAxios(addKeyData.reverse());
-        //console.log(addKeyData);
-      })
-      .catch((err) => {
-        setError("获取数据时出错：" + err.message);
-      })
-      .finally(() => {
-        setLoading(false);
+  const getData = async (uuid: string) => {
+    setLoading(true); //开始加载
+    const data = await searchChangeData(uuid); //获取数据
+    //是否获取到数据
+    if (data.success) {
+      //添加key
+      const addKeyData = data.data.data.map((obj: ComputerChangeReturn) => {
+        return { ...obj, key: obj.id };
       });
+      //倒序并传递
+      setDataAxios(addKeyData.reverse());
+    } else {
+      setError("获取数据时出错：" + data.data.message);
+    }
+    setLoading(false); //结束加载
   };
 
+  //拿到最新UUID
   useEffect(() => {
     getData(uuid);
   }, [uuid]);
