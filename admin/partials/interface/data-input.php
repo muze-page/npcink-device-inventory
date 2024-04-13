@@ -50,6 +50,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
         /**
          * data:编号或姓名
          * password:密码
+         * all inspect
          */
         public static function query_data($request)
         {
@@ -59,11 +60,37 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             header('Access-Control-Allow-Origin: *');
 
             // 获取传递过来的参数
-            $number_or_name = $request->get_param('data');
+            $data = $request->get_param('data');
             $password = $request->get_param('password');
 
+            /**
+             * 安全检查 - 是否为空
+             */
+            if (empty($data)) {
+                return wp_send_json_error(
+                    [
+                        'error' => '请填写需要查询的值'
+                    ],
+                    400
+                );
+            }
+            if (empty($password)) {
+                return wp_send_json_error(
+                    [
+                        'error' => '请填写客户端传输数据用的验证密码'
+                    ],
+                    400
+                );
+            }
+
+            //安全过滤，确定为字符串
+            $query_data = sanitize_text_field($data);
+            $query_password = sanitize_text_field($password);
+
+
+
             // 验证密码
-            $is_valid_password = self::password_verification($password);
+            $is_valid_password = self::password_verification($query_password);
             if (!$is_valid_password) {
                 // 密码验证失败
                 return wp_send_json_error(
@@ -74,19 +101,9 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 );
             }
 
-            // 验证参数
-            if (empty($number_or_name)) {
-                // 参数为空
-                return wp_send_json_error(
-                    [
-                        'error' => '查询参数不能为空！'
-                    ],
-                    403
-                );
-            }
 
             // 构造 SQL 查询语句
-            $query = $wpdb->prepare("SELECT * FROM " . self::$table_name . " WHERE number = %d OR name = %s", $number_or_name, $number_or_name);
+            $query = $wpdb->prepare("SELECT * FROM " . self::$table_name . " WHERE number = %d OR name = %s", $query_data, $query_data);
 
             // 执行查询
             $result = $wpdb->get_row($query);
@@ -99,7 +116,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 ]);
             } else {
                 return wp_send_json_error([
-                    'error' => '数据不存在'
+                    'error' => '数据不存在，请换个姓名或编号再试试'
                 ], 404);
                 // 数据不存在
 
