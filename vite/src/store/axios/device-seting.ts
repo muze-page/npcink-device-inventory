@@ -1,10 +1,9 @@
 /**
  * 硬件设置选项
  */
-import axios from "axios";
 import { Ajaxurl } from "@/store";
-import { MysqlChange } from "@/store/interface";
-
+import { MysqlChange, axiosType } from "@/store/interface";
+import { instance, addParamIfDefined } from "@/store/axios/public";
 /**
  * 修改设备数据
  */
@@ -15,27 +14,25 @@ import { MysqlChange } from "@/store/interface";
  * @param data 修改后的值
  * @param type 修改的字段名
  */
-export const changeMySql = async (
-  uuid: string,
-  type: string,
-  data: string
-): Promise<boolean> => {
+export const changeMySql = async (uuid: string, type: string, data: string) => {
   const params = new URLSearchParams();
   params.append("action", "modify_device_callback");
-  params.append("uuid", uuid);
-  params.append("data", data);
-  params.append("type", type);
+  addParamIfDefined(params, "uuid", uuid);
+  addParamIfDefined(params, "data", data);
+  addParamIfDefined(params, "type", type);
 
   try {
-    const response = await axios.post<MysqlChange>(Ajaxurl, params);
+  const res =   await instance.post(Ajaxurl, params) as axiosType;
 
-    if (response.status === 200) {
-      // console.log(response.data);
-      return true;
-    } else {
-      console.log("保存设置选项时出错：" + response.data);
-      return false;
-    }
+  //TODO:自定义返回错误形式？
+ //if(res.success){
+ //  return res.success//返回状态
+ //} else{
+ //  message.warning(res.data.message);
+ //}
+  
+ return res.success//返回状态
+  
   } catch (error: any) {
     console.log("保存设置选项时出错：" + error.message);
     throw error; // 重新抛出错误
@@ -46,16 +43,12 @@ export const changeMySql = async (
 export const deltSQLData = async (uuid: string) => {
   const params = new URLSearchParams();
   params.append("action", "delt_device_callback");
-  params.append("uuid", uuid);
+  addParamIfDefined(params, "uuid", uuid);
 
   try {
-    const response = await axios.post<MysqlChange>(Ajaxurl, params);
+    await instance.post<MysqlChange>(Ajaxurl, params);
 
-    if (response.status === 200) {
-      //console.log(response.data);
-    } else {
-      console.log("保存设置选项时出错：" + response.data);
-    }
+   
   } catch (error: any) {
     console.log("保存设置选项时出错：" + error.message);
   } finally {

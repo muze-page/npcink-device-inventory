@@ -15,8 +15,7 @@ interface Props {
 }
 
 //下拉筛选 - 准备筛选数据
-const getSelectData=changeSelectData(defaultOption.department);
-
+const getSelectData = changeSelectData(defaultOption.department);
 
 const App: React.FC<Props> = ({ data }) => {
   const { deltArrData } = useContext(AppContext);
@@ -61,17 +60,9 @@ const App: React.FC<Props> = ({ data }) => {
 
           //console.log("a 对象中键值对不同:", key, fieldsValue[key]);
 
-          try {
-            const success = await changeMySql(data.uuid, key, fieldsValue[key]);
-            if (success && !isSaved) {
-              isSaved = true; // 设置保存成功的标志为 true
-              message.success("保存成功");
-            } else if (!success && !isSaved) {
-              message.error("保存设置选项时出错，请稍后重试。");
-            }
-          } catch (error: any) {
-            alert("保存设置选项时出错：" + error.message);
-          }
+          const success = await changeMySql(data.uuid, key, fieldsValue[key]);
+
+          isSaved = success; // 设置保存成功的标志为 true
         }
       }
     }
@@ -89,6 +80,7 @@ const App: React.FC<Props> = ({ data }) => {
       deltArrData && deltArrData(), deltSQLData; //删除本地数据
       deltSQLData(data.uuid); //删除数据库数据
     } else {
+      message.warning("已取消");
     }
   };
   return (

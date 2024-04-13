@@ -78,6 +78,6 @@ export const searchChangeData = async (uuid: string): Promise<axiosType> => {
   params.append("action", "search_change_data_callback");
   addParamIfDefined(params, "uuid", JSON.stringify(uuid));
   const { data: res } = await axios.post(Ajaxurl, params);
-  console.log(res);
+  
   return res;
 };
