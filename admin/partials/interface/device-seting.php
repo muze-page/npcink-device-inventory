@@ -58,6 +58,22 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 return wp_send_json_error(['message' => '没有找到对应的字段名']);
             }
 
+            // 查询数据库中原本的值
+            $current_value = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT $field_name FROM $table_name WHERE uuid = %s",
+                    $uuid
+                )
+            );
+
+            // 检查要更新的值是否与数据库中原本的值相同
+            if ($current_value === $data) {
+                
+                return wp_send_json_error(['message' => self::process_string($field_name) .'未改变，无需更新','msg'=>$current_value]);
+            }
+
+
+
             // 使用预处理语句更新数据库中对应的数据
             $result =    $wpdb->update(
                 $table_name,
@@ -67,11 +83,31 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 '%s'  // 条件类型
             );
             if (!is_wp_error($result) && $result != 0) {
-                return wp_send_json_success(['message' => '修改成功']);
+                return wp_send_json_success(['message' => self::process_string($field_name) . '已修改']);
             } else {
                 return wp_send_json_error(['message' => '数据重复，没有修改']);
             }
             wp_die();
+        }
+
+        //对象映射
+        public static function process_string($input)
+        {
+            // 定义映射关系
+            $mapping = [
+                'name' => '姓名',
+                'number' => '编号',
+                'state' => '状态',
+                'department' => '部门'
+                // 添加更多的情况...
+            ];
+
+            // 检查输入是否在映射中
+            if (array_key_exists($input, $mapping)) {
+                return $mapping[$input];
+            } else {
+                return $input; // 默认情况返回原始输入
+            }
         }
 
         /**

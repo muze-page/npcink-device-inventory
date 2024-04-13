@@ -194,8 +194,8 @@ const App: React.FC<Props> = ({ uuid }) => {
     });
 
     setDataAxios(newData); //保存选项
-    //console.log(row);
-    //console.log(dataAxios);
+   
+   
     //console.log(newData);
     //console.log(index);
     //console.log(oldData);
