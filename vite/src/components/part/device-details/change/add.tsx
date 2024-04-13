@@ -4,8 +4,9 @@ import { addChangeData } from "@/store/axios";
 import { ComputerChangeReturn } from "@/store/interface";
 interface ACDProps {
   uuid: string; //UUID
+  onUpdata: (uuid: string) => Promise<void>; // 定义onUpdata为接受uuid参数且返回Promise<void>类型的函数
 }
-const AddChangeData: React.FC<ACDProps> = ({ uuid }) => {
+const AddChangeData: React.FC<ACDProps> = ({ uuid, onUpdata }) => {
   //多行输入
   const { TextArea } = Input;
 
@@ -34,14 +35,14 @@ const AddChangeData: React.FC<ACDProps> = ({ uuid }) => {
     }
     //console.log("填入的信息：", values);
 
-
     // 发送POST请求
     const state = await addChangeData(uuid, values);
-    
-    
+
     //成功添加则清除输入框
     if (state) {
       form.resetFields();
+      //更新父组件表单数据
+      onUpdata(uuid);
     }
   };
 

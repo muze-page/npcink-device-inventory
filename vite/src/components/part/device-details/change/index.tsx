@@ -261,7 +261,7 @@ const App: React.FC<Props> = ({ uuid }) => {
       ) : error ? (
         <>
           <Error message={error} />
-          <AddChangeData uuid={uuid} />
+          <AddChangeData uuid={uuid} onUpdata={getData} />
         </>
       ) : (
         <div className="pl-5 relative">
@@ -284,7 +284,7 @@ const App: React.FC<Props> = ({ uuid }) => {
               <Empty description={<span>暂无记录</span>} />
             )}
             {/*添加 - 修改记录*/}
-            <AddChangeData uuid={uuid} />
+            <AddChangeData uuid={uuid} onUpdata={getData} />
           </div>
         </div>
       )}

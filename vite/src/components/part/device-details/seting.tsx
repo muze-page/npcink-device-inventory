@@ -51,7 +51,7 @@ const App: React.FC<Props> = ({ data }) => {
 
     //与默认数据对比，有变化则存入数据库
     let isChanged = false; // 标志是否有变化
-    let isSaved = false; // 标志是否成功保存过
+   // let isSaved = false; // 标志是否成功保存过
 
     for (const key in fieldsValue) {
       if (fieldsValue.hasOwnProperty(key) && data.hasOwnProperty(key)) {
@@ -60,9 +60,9 @@ const App: React.FC<Props> = ({ data }) => {
 
           //console.log("a 对象中键值对不同:", key, fieldsValue[key]);
 
-          const success = await changeMySql(data.uuid, key, fieldsValue[key]);
+         await changeMySql(data.uuid, key, fieldsValue[key]);
 
-          isSaved = success; // 设置保存成功的标志为 true
+          //isSaved = success; // 设置保存成功的标志为 true
         }
       }
     }
