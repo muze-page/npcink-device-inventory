@@ -1,9 +1,26 @@
 import { createContext } from "react";
+import { DeviceSeting } from "@/store/interface";
 // 创建一个 Context 对象，用于存储 handleTypeUpdate 函数
 interface AppContextType {
   //修改当前选中设备的状态
-  handleTypeUpdate?: (type: string,newType: string) => void; //修改状态
+  handleTypeUpdate?: (type: string, newType: string) => void; //修改状态
   deltArrData?: () => void; //删除数据
 }
 
 export const AppContext = createContext<AppContextType>({});
+
+//硬件变更的设置与硬件变更头部的数据进行沟通
+
+interface AppContextDevice {
+  aa: DeviceSeting;
+  ab: (key: string, value: string) => void;
+}
+export const DeviceContext = createContext<AppContextDevice>({
+  aa: {
+    name: "0", //项目
+    number: "0", //编号
+    state: "0", //状态
+    department: "0", //部门
+  },
+  ab: () => {},
+});

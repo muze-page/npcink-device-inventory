@@ -75,6 +75,15 @@ export interface ComputerChangeReturn {
   [key: string]: string;
 }
 
+//硬件设置选项
+export interface DeviceSeting {
+  name?: string; //项目
+  number?: string; //编号
+  state?: string; //状态
+  department?: string; //部门
+  [key: string]: string|undefined;
+}
+
 /**
  * Axios 返回类型
  */

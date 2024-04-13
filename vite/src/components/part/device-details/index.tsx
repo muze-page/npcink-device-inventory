@@ -1,6 +1,7 @@
 /**
  * 设备详情 - 展开
  */
+import { useState } from "react";
 import { Tabs } from "antd";
 
 import {
@@ -23,6 +24,9 @@ import Win from "@/assets/windows_s.png";
 import { findOsTypeObj } from "@/store/tool";
 
 import { MysqlDeviceChangeMeat, OsTypeArray } from "@/store/interface";
+
+//公共方法
+import { DeviceContext } from "@/store/setingContext";
 
 interface Props {
   data: MysqlDeviceChangeMeat;
@@ -79,11 +83,22 @@ const App: React.FC<Props> = ({ data }) => {
 
   //找到需要的系统对象
   const osTypeObj = findOsTypeObj(osTypeArray, data);
-  //console.log(osTypeObj);
-  //console.log(data);
+
+  // 初始对象值
+  const initialObject = {
+    aa: {},
+    ab: (key: string, value: string) => {
+      // 如果 key 不存在于 obj.aa 中，则新增键值对
+      // 更新或新增键值对
+      setObj({ ...obj, aa: { ...obj.aa, [key]: value } });
+    },
+  };
+
+  // 使用 useState 来定义对象和修改对象值的方法
+  const [obj, setObj] = useState(initialObject);
 
   return (
-    <>
+    <DeviceContext.Provider value={obj}>
       {/**品牌标志 */}
 
       <div key={osTypeObj?.id} className="flex">
@@ -94,7 +109,7 @@ const App: React.FC<Props> = ({ data }) => {
       </div>
 
       <Tabs defaultActiveKey="1" items={items} />
-    </>
+    </DeviceContext.Provider>
   );
 };
 
