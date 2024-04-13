@@ -66,9 +66,9 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             $is_valid_password = self::password_verification($password);
             if (!$is_valid_password) {
                 // 密码验证失败
-                return new WP_REST_Response(
+                return wp_send_json_error(
                     [
-                        'error' => '密码验证失败，请重新填写密码！'
+                        'error' => '密码验证失败，请检查！'
                     ],
                     403
                 );
@@ -77,11 +77,11 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             // 验证参数
             if (empty($number_or_name)) {
                 // 参数为空
-                return new WP_REST_Response(
+                return wp_send_json_error(
                     [
-                        'error' => '参数不能为空'
+                        'error' => '查询参数不能为空！'
                     ],
-                    400
+                    403
                 );
             }
 
@@ -93,20 +93,22 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
             if ($result) {
                 // 返回查询结果
-                return $result;
+                wp_send_json_success([
+                    'message' => '查询成功',
+                    'data' => $result
+                ]);
             } else {
+                return wp_send_json_error([
+                    'error' => '数据不存在'
+                ], 404);
                 // 数据不存在
-                return new WP_REST_Response(
-                    [
-                        'error' => '未找到匹配数据'
-                    ],
-                    404
-                );
+
             }
         }
 
 
 
+        //接收数据
         public static function create_custom_endpoint()
         {
             //获取路由地址

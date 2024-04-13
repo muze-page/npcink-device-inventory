@@ -64,7 +64,6 @@ const App: React.FC<Props> = ({ data }) => {
           //console.log("a 对象中键值对不同:", key, fieldsValue[key]);
 
           await changeMySql(data.uuid, key, fieldsValue[key]);
-          console.log("更新数据");
           ab(key, fieldsValue[key]);
 
           //isSaved = success; // 设置保存成功的标志为 true

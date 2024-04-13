@@ -14,7 +14,10 @@ const App: React.FC = () => {
   //输入框中的值
   const onSearch: SearchProps["onSearch"] = async (value, _e, info) => {
     const data = await fetchData(value); //获取数据
-
+    //空对象
+    if (Object.keys(data).length === 0) {
+      return;
+    }
     /**
      * 渲染用数据
      *  将数组中的硬件数据从json格式处理成对象
@@ -23,7 +26,7 @@ const App: React.FC = () => {
 
     setResponseData(data); // 存储返回数据
     setDisplayData(parsedData); // 存储对象设备数据
-    console.log(info?.source, value);
+    //console.log(info?.source, value);
   };
 
   return (

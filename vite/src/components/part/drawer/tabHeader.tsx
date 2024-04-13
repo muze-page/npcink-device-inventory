@@ -11,8 +11,7 @@ interface Props {
 
 const App: React.FC<Props> = ({ osType, data }) => {
   const { aa } = useContext(DeviceContext);
-  console.log("头部接收到的值");
-  console.log(aa);
+
   //准备一个设置值，若设置值为空，则使用传来的数据
   //若设置值存在，则使用传来的设置值
   //const updataData = {

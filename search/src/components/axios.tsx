@@ -18,26 +18,18 @@ export const fetchData = async (id: string) => {
         password: defaultOption.password,
       },
     });
+    console.log(response);
 
-    // 如果响应中存在错误信息，则抛出错误
-    if (response.data && response.data.error) {
-      throw new Error(response.data.error);
-    }
+ 
 
     // 更新状态以显示响应数据
-    return response.data;
+    return response.data.data.data;
   } catch (error: any) {
-    const msg = error.response.status + "：" + error.response.data.error;
+    const msg = error.response.status + "：" + error.response.data.data.error;
     alert(msg);
     // 捕获错误并处理
-    console.error("Error fetching data: ", error);
-    // 如果是服务器错误，可能包含响应对象
-    //if (error.response) {
-    //  console.log("Server Response Data: ", error.response.data.message);//错误信息
-    //  console.log("Server Response Status: ", error.response.status);//状态码
-    //  console.log("Server Response Headers: ", error.response.headers);
-    //}
-    // 返回空对象或其他默认值，或者继续抛出错误
+   // console.error("错误原因: ", error);
+    
     return {}; // 或者 return null; 或者 throw error;
   }
 };
