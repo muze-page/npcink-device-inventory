@@ -1,7 +1,7 @@
 /**
  * 设备详情 - 展开
  */
-import { useState } from "react";
+import { useState, } from "react";
 import { Tabs } from "antd";
 
 import {
@@ -84,21 +84,18 @@ const App: React.FC<Props> = ({ data }) => {
   //找到需要的系统对象
   const osTypeObj = findOsTypeObj(osTypeArray, data);
 
-  // 初始对象值
-  const initialObject = {
-    aa: {},
-    ab: (key: string, value: string) => {
-      // 如果 key 不存在于 obj.aa 中，则新增键值对
-      // 更新或新增键值对
-      setObj({ ...obj, aa: { ...obj.aa, [key]: value } });
-    },
+  //实时更新数据
+  const [aa, setAa] = useState({});
+
+  const ab = (key:string, value:string) => {
+    setAa((prevAa) => ({ ...prevAa, [key]: value }));
   };
 
-  // 使用 useState 来定义对象和修改对象值的方法
-  const [obj, setObj] = useState(initialObject);
+  // 将 aa 和 ab 作为上下文的值
+  const value = { aa, ab };
 
   return (
-    <DeviceContext.Provider value={obj}>
+    <DeviceContext.Provider value={value}>
       {/**品牌标志 */}
 
       <div key={osTypeObj?.id} className="flex">
