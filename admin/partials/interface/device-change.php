@@ -160,7 +160,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
                 return wp_send_json_success(['data' =>  $object, 'message' => '查询成功',]);
             } else {
                 // 返回空数组表示没有找到符合条件的记录
-                return wp_send_json_error(['data' =>  [], 'message' => '查询失败',]);
+                return wp_send_json_error(['data' =>  [], 'message' => '未查到变更记录',]);
             }
         }
     }

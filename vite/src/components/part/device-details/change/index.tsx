@@ -156,6 +156,7 @@ const App: React.FC<Props> = ({ uuid }) => {
   const [loading, setLoading] = useState(false); //加载中
   const [error, setError] = useState(""); //报错
 
+  //获取数据
   const getData = async (uuid: string) => {
     setLoading(true); //开始加载
     const data = await searchChangeData(uuid); //获取数据
@@ -194,8 +195,7 @@ const App: React.FC<Props> = ({ uuid }) => {
     });
 
     setDataAxios(newData); //保存选项
-   
-   
+
     //console.log(newData);
     //console.log(index);
     //console.log(oldData);
@@ -259,7 +259,10 @@ const App: React.FC<Props> = ({ uuid }) => {
       {loading ? (
         <Loading />
       ) : error ? (
-        <Error message={error} />
+        <>
+          <Error message={error} />
+          <AddChangeData uuid={uuid} />
+        </>
       ) : (
         <div className="pl-5 relative">
           {/**列表 */}
@@ -307,7 +310,12 @@ interface PropsError {
 }
 
 const Error: React.FC<PropsError> = ({ message }) => {
-  return <p>{message}</p>;
+  return (
+    <>
+      <p className="mb-4 text-base font-bold text-[#333]">硬件信息变更</p>
+      <p className="mb-4">{message}</p>
+    </>
+  );
 };
 
 export default App;
