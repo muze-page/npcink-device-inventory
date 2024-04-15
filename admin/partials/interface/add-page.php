@@ -15,20 +15,21 @@ if (!class_exists('DEMA_Admin_Interface_Add_Page')) {
             add_action('wp_enqueue_scripts', array(__CLASS__, 'load_search_page_script'));
         }
 
+        /**
+         * all inspect
+         */
         public static function add_public_search_page_callback()
         {
             //接收传来的值并清理路由参数
             $data = isset($_POST['route']) ? sanitize_text_field($_POST['route']) : '';
-
+            //处理格式
+            $route = json_decode(stripslashes($data));
             // 检查路由参数是否为空
-            if (empty($data)) {
+            if (empty($route)) {
                 return wp_send_json_error([
                     'error' => '需要路由参数',
                 ], 403);
             }
-            //处理格式
-            $route = json_decode(stripslashes($data));
-
 
             //检查，是否存在当前路由
             $state = get_page_by_path($route); //获取此路由信息
@@ -36,6 +37,7 @@ if (!class_exists('DEMA_Admin_Interface_Add_Page')) {
                 //返回相关信息
                 return wp_send_json_error([
                     'error' => '页面已存在',
+                    'site' => $state->guid,//页面地址
                 ], 403);
                 // 页面已经存在，不执行后续操作
             }
@@ -44,12 +46,13 @@ if (!class_exists('DEMA_Admin_Interface_Add_Page')) {
 
             // 返回响应数据
             if (!is_wp_error($insert_result) && $insert_result != 0) {
-                // 插入成功
 
+                // 插入成功
                 return wp_send_json_success(['message' => '页面创建成功,页面ID为：' . $insert_result,]);
             } else {
+
                 // 插入失败
-                return wp_send_json_error(['error' => '页面插入失败，请检查错误信息',], 500);
+                return wp_send_json_error(['error' => '页面插入失败，请检查错误信息'], 500);
             }
         }
 

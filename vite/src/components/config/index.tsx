@@ -148,7 +148,7 @@ const App: React.FC = () => {
   const addPage = async () => {
     //检查输入框是否为空
     if (publicSearch.trim() === "") {
-      return message.error("请输入公共查询页面路由地址，推荐英文");
+      return message.error("请输入公共查询页面路由地址");
     }
     const state = await addPublicSearchPage(publicSearch); //添加页面
     if (state) {
