@@ -21,9 +21,7 @@ if (!class_exists('DEMA_Admin_Interface_Add_Page')) {
         public static function add_public_search_page_callback()
         {
             //接收传来的值并清理路由参数
-            $data = isset($_POST['route']) ? sanitize_text_field($_POST['route']) : '';
-            //处理格式
-            $route = json_decode(stripslashes($data));
+            $route = isset($_POST['route']) ? sanitize_text_field($_POST['route']) : null;
             // 检查路由参数是否为空
             if (empty($route)) {
                 return wp_send_json_error([

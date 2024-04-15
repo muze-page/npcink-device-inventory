@@ -94,7 +94,7 @@ export const remove_department = async (optionObj: string) => {
 export const addPublicSearchPage = async (route: string) => {
   const params = new URLSearchParams();
   params.append("action", "add_public_search_page_callback");
-  addParamIfDefined(params, "route", JSON.stringify(route));
+  addParamIfDefined(params, "route", route);
   try {
     const res = await instance.post(Ajaxurl, params); //执行
     if (res.status === 200) {

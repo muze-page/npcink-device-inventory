@@ -56,38 +56,32 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
         {
             global $wpdb;
             self::$table_name = $wpdb->prefix . "custom_table";
-
             header('Access-Control-Allow-Origin: *');
 
-            // 获取传递过来的参数
-            $data = $request->get_param('data');
-            $password = $request->get_param('password');
+            // 获取传递过来的字符串参数并进行安全过滤
+            $query_data = isset($request['data']) ? sanitize_text_field($request['data']) : null;
+            $query_password = isset($request['password']) ? sanitize_text_field($request['password']) : null;
 
             /**
              * 安全检查 - 是否为空
              */
-            if (empty($data)) {
+            if (empty($query_data)) {
                 return wp_send_json_error(
                     [
-                        'error' => '请填写需要查询的值'
+                        'error' => '请填写需要查询的值',
                     ],
                     400
                 );
             }
-            if (empty($password)) {
+            if (empty($query_password)) {
                 return wp_send_json_error(
                     [
-                        'error' => '请填写客户端传输数据用的验证密码'
+                        'error' => '请填写客户端传输数据用的验证密码',
+
                     ],
                     400
                 );
             }
-
-            //安全过滤，确定为字符串
-            $query_data = sanitize_text_field($data);
-            $query_password = sanitize_text_field($password);
-
-
 
             // 验证密码
             $is_valid_password = self::password_verification($query_password);
@@ -95,7 +89,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 // 密码验证失败
                 return wp_send_json_error(
                     [
-                        'error' => '密码验证失败，请检查！'
+                        'error' => '密码验证失败，请检查！',
                     ],
                     403
                 );
@@ -112,7 +106,8 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 // 返回查询结果
                 wp_send_json_success([
                     'message' => '查询成功',
-                    'data' => $result
+                    'data' => $result,
+
                 ]);
             } else {
                 return wp_send_json_error([
@@ -148,23 +143,37 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
             header('Access-Control-Allow-Origin: *');
 
-            //拿到传来的值
-            $data = $request->get_params();
+            //拿到传来的对象，检查对象
+            $data = isset($request['data']) ? sanitize_text_field($request['data']) : null;
+            //文本转对象
+            $data = json_decode(stripslashes($data));
 
-            //拿到传来的密码
-            $password = isset($data['password']) ? $data['password'] : '';
-
+            if (empty($data)) {
+                return wp_send_json_error([
+                    'error' => '硬件数据为空',
+                ], 403);
+            }
+            //拿到传来的密码，检查密码
+            $password = isset($request['password']) ? wp_hash_password($request['password']) : null;
+           
+            //是否为空
+            if (empty($password)) {
+                return wp_send_json_error([
+                    'error' => '密码为空，请填写',
+                ], 403);
+            }
             //验证密码
             $proving =  self::password_verification($password);
             if (!$proving) {
-                return new WP_REST_Response(
+                return wp_send_json_error(
                     [
-                        'message' => '密码验证失败,请重新填写密码！',
-
+                        'error' => '密码验证失败，请检查！'
                     ],
                     403
                 );
             }
+
+
 
             //为了防止硬件UUID重复，这里再加上第一张网卡的MAC地址以防万一
 
@@ -197,17 +206,16 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                     'message' => '提交成功！',
                     'data' => $data,
                 ];
+                return wp_send_json_success($response);
             } else {
 
                 //将传来的数据存入公共
                 self::$receive_data = $data;
                 //数据存在，更新现有数据
                 $response =  self::check_Data_Change($existingData);
+                return wp_send_json_success($response);
             }
-
-
-
-            return new WP_REST_Response($response, 200);
+            wp_die();
         }
 
         /**
@@ -259,9 +267,6 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
             $name = self::$receive_data['name']; //姓名
             $data_afferent = self::$receive_data['data']; //传来的数据
-
-            $query_name = $existingData['name']; //查询的名字
-            $query_data = $existingData['dataNew']; //查询的数据
 
 
 

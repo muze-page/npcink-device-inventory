@@ -27,10 +27,16 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
         public static  function save_option_callback()
         {
             // 获取通过 Ajax POST 请求传递的对象数据
-            $object_data = $_POST['object_data'];
+            $object_data = isset($_POST['object_data']) ? sanitize_text_field($_POST['object_data']) : null;
 
             // 将 JSON 字符串解析为 PHP 对象
             $object = json_decode(stripslashes($object_data));
+
+            if (empty($object)) {
+                return wp_send_json_error([
+                    'error' => '设置选项为空',
+                ], 403);
+            }
 
             //进行对象验证
             $validation_result = self::validate_object($object);
@@ -38,6 +44,17 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             if ($validation_result === true) {
                 // 所有验证通过，可以继续处理对象
                 // 保存设置选项
+                //拿到选项中的password，加密后存储
+                // 获取原始密码
+                $raw_password = $object->password;
+
+                // 使用 wp_hash_password 函数对密码进行加密
+                $hashed_password = wp_hash_password($raw_password);
+
+                // 将加密后的密码替换 $object 中原来的密码值
+                $object->password = $hashed_password;
+
+
                 update_option(self::$option, $object);
 
                 // 发送成功响应
@@ -309,7 +326,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             $object_value = $wpdb->prepare('%s', $object);
             return wp_send_json_success([
                 'message' => '已移除！' . $object_value . '部门',
-                'msg'=>$result,
+                'msg' => $result,
             ]);
 
             // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义
