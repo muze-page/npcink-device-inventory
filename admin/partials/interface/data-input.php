@@ -71,7 +71,6 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 return wp_send_json_error(
                     [
                         'error' => '请填写客户端传输数据用的验证密码',
-
                     ],
                     400
                 );
@@ -140,7 +139,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             $name = isset($request['name']) ? sanitize_text_field($request['name']) : null;
             //拿到传来的密码，检查密码
             $password = isset($request['password']) ? sanitize_text_field($request['password']) : null;
-            //拿到传来的对象，检查对象
+            //拿到传来的JSON对象字符串，检查字符串
             $data = isset($request['data']) ? sanitize_text_field($request['data']) : null;
 
 
@@ -182,16 +181,13 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             //为了防止硬件UUID重复，这里再加上第一张网卡的MAC地址以防万一
             $uuid_hardware = $data_obj->uuid->hardware;; //唯一UUID
             $uuid_one_net = $data_obj->uuid->macs[0]; //第一个网口的MAC地址
-            $uuid = md5($uuid_hardware . $uuid_one_net); //进行md5处理，短点更好看
+            $uuid = md5($uuid_hardware . $uuid_one_net); //拼接，进行md5处理，短点更好看
 
             //检查是否存在重复数据
             $repeatData = self::check_data_repeat($uuid);
             if ($repeatData) {
-                //将传来的数据存入公共
-
                 //数据存在，更新现有数据
-                $response =  self::check_Data_Change($repeatData, $data, $name, $uuid);
-                return wp_send_json_success($response);
+                return self::check_Data_Change($repeatData, $data, $name);
             }
 
 
@@ -232,7 +228,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 $error_message = $wpdb->last_error;
                 $response = [
                     'error' => '数据提交失败！',
-                    'error_message' => $error_message,
+                    'message' => $error_message,
                 ];
                 return wp_send_json_error($response, 500);
             }
@@ -289,44 +285,40 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
 
         /**
-         * 已有数据则更新现有数据
+         * 更新现有数据
          * @param $existingData 查出的数据
          * @param $data 设备JSON字符串数据
          * @param $data_obj 设备对象数据
          * @param $uuid 设备唯一标识符
          * @return bool
          */
-        public static function check_Data_Change($existingData, $data, $name, $uuid)
+        public static function check_Data_Change($existingData, $data, $name)
         {
             global $wpdb;
             //TODO: 如果名称或数据有变化，更新现有数据
-            $wpdb->update(
-                self::$table_name,
-                [
-                    'name' => $name,
+            try {
+                $result = $wpdb->update(
+                    self::$table_name,
+                    [
+                        'name' => $name,
+                        'data' => $data,
+                    ],
+                    ['id' => $existingData['id']],
+                    ['%s', '%s'],
+                    ['%d']
+                );
 
-                    'data' => $data,
-                ],
-                ['id' => $existingData['id']],
-                ['%s', '%s'],
-                ['%d']
-            );
-
-            //存入变更数据
-            $diffs = [];
-
-            //添加UUID
-            foreach ($diffs as &$obj) {
-                $obj["uuid"] = $uuid;
+                if ($result !== false) {
+                    return wp_send_json_success(['message' => '更新成功','data'=>$result]);
+                } else {
+                    throw new Exception('更新失败');
+                }
+            } catch (Exception $e) {
+                return wp_send_json_error(['error' => $e->getMessage(), 'message' => $wpdb->last_error], 500);
             }
 
-            unset($obj); // 重置引用
 
-            $response = [
-                'message' => '现有数据已更新！',
-            ];
-
-            return $response;
+            wp_die();
         }
     }
 }
