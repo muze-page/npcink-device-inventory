@@ -328,28 +328,5 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
             return $response;
         }
-
-
-        /**
-         * 检测数据变化
-         */
-        public static function compare_arrays($arr1, $arr2, &$diffs, $prefix = '')
-        {
-
-            foreach ($arr1 as $key => $value1) {
-                if (is_array($value1)) {
-                    self::compare_arrays($value1, $arr2[$key], $diffs, $prefix . $key . '.');
-                } else if ($arr2[$key] !== $value1) {
-                    $diff = [
-                        'type' => $prefix . $key,
-                        'new' => $value1,
-                        'old' => $arr2[$key],
-                    ];
-                    array_push($diffs, $diff);
-                }
-            }
-        }
-
-
     }
 }
