@@ -4,14 +4,14 @@
 import { message } from "antd";
 import { Ajaxurl } from "@/store";
 import { MysqlChange, axiosType } from "@/store/interface";
-import { instance,addParamIfDefined } from "@/store/axios/public";
+import { instance, addParamIfDefined } from "@/store/axios/public";
 
 //成功响应传出的接口数据
 
 export const saveSQLData = async (optionObj: object) => {
   const params = new URLSearchParams();
   params.append("action", "save_object_option");
-  addParamIfDefined(params,"object_data", JSON.stringify(optionObj));
+  addParamIfDefined(params, "object_data", JSON.stringify(optionObj));
   try {
     await instance.post(Ajaxurl, params);
   } catch (error: any) {
@@ -29,7 +29,7 @@ export const saveSQLData = async (optionObj: object) => {
 export const exportSQLData = async (name: string) => {
   const params = new URLSearchParams();
   params.append("action", "export_data_callback");
-  addParamIfDefined(params,"name", name);
+  addParamIfDefined(params, "name", name);
 
   try {
     const response = (await instance.post(Ajaxurl, params)) as axiosType;
@@ -54,8 +54,8 @@ export const exportSQLData = async (name: string) => {
 export const importSQLData = async (name: string, data: string) => {
   const params = new URLSearchParams();
   params.append("action", "import_data_callback");
-  addParamIfDefined(params,"name", name);
-  addParamIfDefined(params,"data", data);
+  addParamIfDefined(params, "name", name);
+  addParamIfDefined(params, "data", data);
 
   try {
     await instance.post<MysqlChange>(Ajaxurl, params);
@@ -77,7 +77,7 @@ export const importSQLData = async (name: string, data: string) => {
 export const remove_department = async (optionObj: string) => {
   const params = new URLSearchParams();
   params.append("action", "remove_department_callback");
-  addParamIfDefined(params,"data", JSON.stringify(optionObj));
+  addParamIfDefined(params, "data", JSON.stringify(optionObj));
   try {
     await instance.post(Ajaxurl, params);
   } catch (error: any) {
@@ -94,11 +94,17 @@ export const remove_department = async (optionObj: string) => {
 export const addPublicSearchPage = async (route: string) => {
   const params = new URLSearchParams();
   params.append("action", "add_public_search_page_callback");
-  addParamIfDefined(params,"route", JSON.stringify(route));
+  addParamIfDefined(params, "route", JSON.stringify(route));
   try {
-    await instance.post(Ajaxurl, params);
+    const res = await instance.post(Ajaxurl, params); //执行
+    if (res.status === 200) {
+      return true;
+    }
   } catch {
-    console.log("添加自定义公共引导页失败");
+    //console.log("添加自定义公共引导页失败");
+    return false;
+  } finally {
+    return false;
   }
 };
 

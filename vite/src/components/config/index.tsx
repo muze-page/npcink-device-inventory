@@ -146,8 +146,14 @@ const App: React.FC = () => {
 
   //添加页面
   const addPage = async () => {
-    await addPublicSearchPage(publicSearch); //添加页面
-    saveOption(); //保存选项
+    //检查输入框是否为空
+    if (publicSearch.trim() === "") {
+      return message.error("请输入公共查询页面路由地址，推荐英文");
+    }
+    const state = await addPublicSearchPage(publicSearch); //添加页面
+    if (state) {
+      return saveOption(); //保存选项
+    }
   };
 
   //拼接公共搜索路由
