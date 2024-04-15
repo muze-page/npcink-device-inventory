@@ -9,12 +9,6 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
         //表名
         public static $table_name;
 
-        //接收的数据
-        public static $receive_data;
-
-        //设备唯一标识符
-        public static $uuid_md5;
-
         /**
          * 接收数据
          */
@@ -140,7 +134,6 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
         {
             global $wpdb;
             self::$table_name = $wpdb->prefix . "custom_table";
-
             header('Access-Control-Allow-Origin: *');
 
             //拿到传来的姓名，检查字符串
@@ -151,15 +144,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             $data = isset($request['data']) ? sanitize_text_field($request['data']) : null;
 
 
-            //文本转对象
-            $data = json_decode(stripslashes($data));
 
-            if (empty($data)) {
-                return wp_send_json_error([
-                    'error' => '硬件数据为空，请检查',
-
-                ], 400);
-            }
 
             //姓名是否为空
             if (empty($name)) {
@@ -173,64 +158,85 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                     'error' => '密码为空，请填写',
                 ], 400);
             }
+            //文本转对象
+            $data_obj = json_decode(stripslashes($data));
+            //是否为空
+            if (empty($data_obj)) {
+                return wp_send_json_error([
+                    'error' => '硬件数据为空，请检查',
+                ], 400);
+            }
+
+
             //验证密码
             $proving =  self::password_verification($password);
             if (!$proving) {
                 return wp_send_json_error(
                     [
                         'error' => '密码验证失败，请检查密码！',
-                        'name' => $name,
-                        'password' => $password,
-                        'data' => $data,
-                        'qq' => $request['password'],
-                        'ww' => self::get_seting('password'),
                     ],
                     400
                 );
             }
 
-
-
             //为了防止硬件UUID重复，这里再加上第一张网卡的MAC地址以防万一
-
-            $uuid_hardware = $data->uuid->hardware;; //唯一UUID
-            $uuid_one_net = $data->uuid->macs[0]; //第一个网口的MAC地址
-            self::$uuid_md5 = md5($uuid_hardware . $uuid_one_net); //进行md5处理，短点更好看
-
-
-
+            $uuid_hardware = $data_obj->uuid->hardware;; //唯一UUID
+            $uuid_one_net = $data_obj->uuid->macs[0]; //第一个网口的MAC地址
+            $uuid = md5($uuid_hardware . $uuid_one_net); //进行md5处理，短点更好看
 
             //检查是否存在重复数据
-            $existingData = self::check_data_repeat();
+            $repeatData = self::check_data_repeat($uuid);
+            if ($repeatData) {
+                //将传来的数据存入公共
 
-            if (!$existingData) {
-                // 数据不存在，插入新数据
-                $wpdb->insert(
-                    self::$table_name,
-                    [
-                        'name' => $name, //姓名
-                        'state' => "idie", //默认状态为启用
-                        'number' => 0, //编号
-                        'department' => "默认", //默认部门
-                        'uuid' => self::$uuid_md5, //唯一标识符
-                        'data' => $data, //数据
-                    ],
-                    ['%s', '%s', '%s', '%s', '%s', '%s']
-                );
+                //数据存在，更新现有数据
+                $response =  self::check_Data_Change($repeatData, $data, $name, $uuid);
+                return wp_send_json_success($response);
+            }
 
+
+            // 数据不存在，插入新数据
+            $insert_data = [
+                'name' => $name, // 姓名
+                'state' => 'idie', // 默认状态为启用
+                'number' => 0, // 编号
+                'department' => '默认', // 默认部门
+                'uuid' => $uuid, // 唯一标识符
+                'data' => $data, // 数据
+            ];
+
+            // 准备插入数据的格式
+            $data_formats = [
+                '%s', // 姓名是字符串
+                '%s', // 状态是字符串
+                '%s', // 编号是字符串
+                '%s', // 部门是字符串
+                '%s', // 唯一标识符是字符串
+                '%s', // 数据是字符串
+            ];
+
+            // 执行插入操作
+            $res = $wpdb->insert(
+                self::$table_name,
+                $insert_data,
+                $data_formats
+            );
+
+
+            if ($res) {
                 $response = [
                     'message' => '数据提交成功！',
-                    'msg'=>$existingData
                 ];
                 return wp_send_json_success($response);
             } else {
-
-                //将传来的数据存入公共
-                self::$receive_data = $data;
-                //数据存在，更新现有数据
-                $response =  self::check_Data_Change($existingData);
-                return wp_send_json_success($response);
+                $error_message = $wpdb->last_error;
+                $response = [
+                    'error' => '数据提交失败！',
+                    'error_message' => $error_message,
+                ];
+                return wp_send_json_error($response, 500);
             }
+
             wp_die();
         }
 
@@ -254,48 +260,52 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
 
         /**
-         * 判断数据是否重复,没有为null,有为查出的数据
-         * 
-         * @return null|data
+         * 检查数据库中是否存在指定 UUID 的数据
+         * @param string $uuid 要检查的 UUID
+         * @return array|null 返回关联数组表示数据库中找到的数据行，如果未找到则返回 null
          */
-        private  static function check_data_repeat()
+        private static function check_data_repeat(string $uuid): ?array
         {
             global $wpdb;
 
             $table = self::$table_name;
-            //根据唯一UUID查找是否存在数据
-            $existingData = $wpdb->get_row(
-                $wpdb->prepare(
-                    "SELECT * FROM $table WHERE uuid = %s;",
-                    self::$uuid_md5
-                ),
-                ARRAY_A
-            );
-            return $existingData;
+
+            // 准备 SQL 查询语句
+            $sql = $wpdb->prepare("SELECT * FROM $table WHERE uuid = %s;", $uuid);
+
+            // 执行查询
+            $result = $wpdb->get_row($sql, ARRAY_A);
+
+            // 检查是否查询成功
+            if ($result === null) {
+                // 查询失败或未找到匹配数据
+                return null;
+            }
+
+            // 查询成功，返回结果
+            return $result;
         }
+
+
 
         /**
          * 已有数据则更新现有数据
          * @param $existingData 查出的数据
+         * @param $data 设备JSON字符串数据
+         * @param $data_obj 设备对象数据
+         * @param $uuid 设备唯一标识符
          * @return bool
          */
-        public static function check_Data_Change($existingData)
+        public static function check_Data_Change($existingData, $data, $name, $uuid)
         {
             global $wpdb;
-
-            $name = self::$receive_data['name']; //姓名
-            $data_afferent = self::$receive_data['data']; //传来的数据
-
-
-
-
             //TODO: 如果名称或数据有变化，更新现有数据
             $wpdb->update(
                 self::$table_name,
                 [
                     'name' => $name,
 
-                    'data' => json_encode($data_afferent),
+                    'data' => $data,
                 ],
                 ['id' => $existingData['id']],
                 ['%s', '%s'],
@@ -305,18 +315,12 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             //存入变更数据
             $diffs = [];
 
-            //存入变更表
-            // self::compare_arrays($data_afferent,  json_decode($query_data, true), $diffs); //检测数据变化
-
             //添加UUID
             foreach ($diffs as &$obj) {
-                $obj["uuid"] = self::$uuid_md5;
+                $obj["uuid"] = $uuid;
             }
 
             unset($obj); // 重置引用
-
-            //存入数据库
-            self::data_change($diffs);
 
             $response = [
                 'message' => '现有数据已更新！',
@@ -346,25 +350,6 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             }
         }
 
-        /**
-         * 数据存入 数据变化表
-         */
-        public static function data_change($arr)
-        {
-            global $wpdb;
-            $table_name = $wpdb->prefix . 'custom_change';
 
-            foreach ($arr as $item) {
-                $data = array(
-                    'uuid' => isset($item['uuid']) ? sanitize_text_field($item['uuid']) : '默认uuid',
-                    'type' => isset($item['type']) ? sanitize_text_field($item['type']) : '',
-                    'new' => isset($item['new']) ? sanitize_text_field($item['new']) : '',
-                    'old' => isset($item['old']) ? sanitize_text_field($item['old']) : '',
-                    'ch_name' => "默认名",
-                    'ch_describe' => "默认描述"
-                );
-                $wpdb->insert($table_name, $data);
-            }
-        }
     }
 }
