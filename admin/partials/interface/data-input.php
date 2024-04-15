@@ -143,33 +143,49 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
             header('Access-Control-Allow-Origin: *');
 
+            //拿到传来的姓名，检查字符串
+            $name = isset($request['name']) ? sanitize_text_field($request['name']) : null;
+            //拿到传来的密码，检查密码
+            $password = isset($request['password']) ? sanitize_text_field($request['password']) : null;
             //拿到传来的对象，检查对象
             $data = isset($request['data']) ? sanitize_text_field($request['data']) : null;
+
+
             //文本转对象
             $data = json_decode(stripslashes($data));
 
             if (empty($data)) {
                 return wp_send_json_error([
-                    'error' => '硬件数据为空',
-                ], 403);
+                    'error' => '硬件数据为空，请检查',
+
+                ], 400);
             }
-            //拿到传来的密码，检查密码
-            $password = isset($request['password']) ? wp_hash_password($request['password']) : null;
-           
-            //是否为空
+
+            //姓名是否为空
+            if (empty($name)) {
+                return wp_send_json_error([
+                    'error' => '姓名为空，请填写',
+                ], 400);
+            }
+            //密码是否为空
             if (empty($password)) {
                 return wp_send_json_error([
                     'error' => '密码为空，请填写',
-                ], 403);
+                ], 400);
             }
             //验证密码
             $proving =  self::password_verification($password);
             if (!$proving) {
                 return wp_send_json_error(
                     [
-                        'error' => '密码验证失败，请检查！'
+                        'error' => '密码验证失败，请检查密码！',
+                        'name' => $name,
+                        'password' => $password,
+                        'data' => $data,
+                        'qq' => $request['password'],
+                        'ww' => self::get_seting('password'),
                     ],
-                    403
+                    400
                 );
             }
 
@@ -177,12 +193,12 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
             //为了防止硬件UUID重复，这里再加上第一张网卡的MAC地址以防万一
 
-            $uuid_hardware = $data['data']['uuid']['hardware']; //唯一UUID
-            $uuid_one_net = $data['data']['uuid']['macs'][0]; //第一个网口的MAC地址
+            $uuid_hardware = $data->uuid->hardware;; //唯一UUID
+            $uuid_one_net = $data->uuid->macs[0]; //第一个网口的MAC地址
             self::$uuid_md5 = md5($uuid_hardware . $uuid_one_net); //进行md5处理，短点更好看
 
-            $name = $data['name']; //姓名
-            $data_hardware = json_encode($data['data']); //数据
+
+
 
             //检查是否存在重复数据
             $existingData = self::check_data_repeat();
@@ -197,14 +213,14 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                         'number' => 0, //编号
                         'department' => "默认", //默认部门
                         'uuid' => self::$uuid_md5, //唯一标识符
-                        'data' => $data_hardware, //数据
+                        'data' => $data, //数据
                     ],
                     ['%s', '%s', '%s', '%s', '%s', '%s']
                 );
 
                 $response = [
-                    'message' => '提交成功！',
-                    'data' => $data,
+                    'message' => '数据提交成功！',
+                    'msg'=>$existingData
                 ];
                 return wp_send_json_success($response);
             } else {
@@ -226,8 +242,10 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
         private static function password_verification($input_Password)
         {
             $setting_Password =  self::get_seting('password'); //设置的密码
+            //验证
+            $valid_password = wp_check_password($input_Password, $setting_Password);
 
-            if ($input_Password ===  $setting_Password) {
+            if ($valid_password) {
                 return true;
             } else {
                 return false;
