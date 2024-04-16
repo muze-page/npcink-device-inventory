@@ -1,7 +1,7 @@
 /**
  * 设备详情 - 展开
  */
-import { useState, } from "react";
+import { useState } from "react";
 import { Tabs } from "antd";
 
 import {
@@ -85,14 +85,14 @@ const App: React.FC<Props> = ({ data }) => {
   const osTypeObj = findOsTypeObj(osTypeArray, data);
 
   //实时更新数据
-  const [aa, setAa] = useState({});
+  const [realData, setAa] = useState({});
 
-  const ab = (key:string, value:string) => {
+  const changeReal = (key: string, value: string) => {
     setAa((prevAa) => ({ ...prevAa, [key]: value }));
   };
 
-  // 将 aa 和 ab 作为上下文的值
-  const value = { aa, ab };
+  // 将 realData 和 changeReal 作为上下文的值
+  const value = { realData, changeReal };
 
   return (
     <DeviceContext.Provider value={value}>

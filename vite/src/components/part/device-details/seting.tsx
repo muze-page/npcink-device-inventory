@@ -44,7 +44,7 @@ const App: React.FC<Props> = ({ data }) => {
   };
 
   //接收上下文中的值
-  const { ab } = useContext(DeviceContext);
+  const { changeReal } = useContext(DeviceContext);
 
   //保存设置信息
   const saveData = async () => {
@@ -64,7 +64,7 @@ const App: React.FC<Props> = ({ data }) => {
           //console.log("a 对象中键值对不同:", key, fieldsValue[key]);
 
           await changeMySql(data.uuid, key, fieldsValue[key]);
-          ab(key, fieldsValue[key]);
+          changeReal(key, fieldsValue[key]);
 
           //isSaved = success; // 设置保存成功的标志为 true
         }

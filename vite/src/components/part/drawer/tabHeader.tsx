@@ -10,19 +10,10 @@ interface Props {
 }
 
 const App: React.FC<Props> = ({ osType, data }) => {
-  const { aa } = useContext(DeviceContext);
-
-  //准备一个设置值，若设置值为空，则使用传来的数据
-  //若设置值存在，则使用传来的设置值
-  //const updataData = {
-  //  name: "张志胜", //姓名
-  //  number: "1126", //编号
-  //  state: "apply", //状态
-  //  department: "默认", //部门
-  //};
+  const { realData } = useContext(DeviceContext);
 
   //当前设备状态
-  const deviceStatus = findBValue(device_status, aa.state ?? data.state);
+  const deviceStatus = findBValue(device_status, realData.state ?? data.state);
   return (
     <div
       className={`pt-6 pr-[17px] pb-6 pl-[23px] text-white text-sm flex-1 
@@ -36,7 +27,7 @@ const App: React.FC<Props> = ({ osType, data }) => {
       {/**姓名 */}
       <div className="flex justify-between">
         <div className="flex items-center text-lg">
-          {aa.name ?? data.name ?? "没有姓名"}
+          {realData.name ?? data.name ?? "没有姓名"}
         </div>
       </div>
       {/**操作系统 */}
@@ -51,7 +42,7 @@ const App: React.FC<Props> = ({ osType, data }) => {
       {/**编号 状态 */}
       <div className="mt-5 flex items-center">
         <div className="flex items-center">
-          编号：{aa.number ?? data.number ?? "没有编号"}
+          编号：{realData.number ?? data.number ?? "没有编号"}
         </div>
 
         <div className="flex items-center ml-8 m-0">
@@ -60,7 +51,7 @@ const App: React.FC<Props> = ({ osType, data }) => {
         </div>
         <div className="flex items-center ml-8 m-0">
           部门：
-          {aa.department ?? data.department ?? "未定"}
+          {realData.department ?? data.department ?? "未定"}
         </div>
       </div>
     </div>

@@ -25,8 +25,6 @@ export const addChangeData = async (
   addParamIfDefined(params, "user", data.user);
   addParamIfDefined(params, "type", data.type);
   addParamIfDefined(params, "msg", data.msg);
-  console.log(data);
-  console.log(params);
   try {
     const data = (await instance.post(Ajaxurl, params)) as axiosType;
     return data.success;

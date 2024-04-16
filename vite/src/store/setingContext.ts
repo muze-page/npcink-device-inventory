@@ -12,15 +12,15 @@ export const AppContext = createContext<AppContextType>({});
 //硬件变更的设置与硬件变更头部的数据进行沟通
 
 interface AppContextDevice {
-  aa: DeviceSeting;
-  ab: (key: string, value: string) => void;
+  realData: DeviceSeting;
+  changeReal: (key: string, value: string) => void;
 }
 export const DeviceContext = createContext<AppContextDevice>({
-  aa: {
+  realData: {
     name: "0", //项目
     number: "0", //编号
     state: "0", //状态
     department: "0", //部门
   },
-  ab: () => {},
+  changeReal: () => {},
 });

@@ -1,7 +1,6 @@
 /**
  * 设置
  */
-import { message } from "antd";
 import { Ajaxurl } from "@/store";
 import { MysqlChange, axiosType } from "@/store/interface";
 import { instance, addParamIfDefined } from "@/store/axios/public";
