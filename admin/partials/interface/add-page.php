@@ -36,7 +36,7 @@ if (!class_exists('DEMA_Admin_Interface_Add_Page')) {
                 return wp_send_json_error([
                     'error' => '页面已存在',
                     'site' => $state->guid,//页面地址
-                ], 403);
+                ], 404);
                 // 页面已经存在，不执行后续操作
             }
             //添加页面

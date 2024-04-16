@@ -42,6 +42,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
         }
 
         /**
+         * 前端查询数据
          * data:编号或姓名
          * password:密码
          * all inspect
@@ -127,7 +128,8 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
         }
 
         /**
-         * 处理传来的数据
+         * 上传数据
+         * all inspect
          */
         public static function submit_data_callback($request)
         {
