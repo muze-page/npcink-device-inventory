@@ -85,8 +85,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
     <>
       <div className="flex justify-between items-center">
         <Header title="资产信息" />
-        <div className="w-fit flex items-center">
-          <Space size={"middle"} wrap>
+          <Space size={"middle"} wrap className="mb-4">
             <div>
               状态：
               <Select
@@ -145,7 +144,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
               </>
             )}
           </Space>
-        </div>
+       
       </div>
     </>
   );
