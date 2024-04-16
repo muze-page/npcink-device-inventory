@@ -100,7 +100,7 @@ if (!class_exists('DEMA_Admin_Interface_Add_Page')) {
         //判断
         public static function load_search_page_script()
         {
-            //获取查询页录音
+            //获取查询页路由
             $route = self::get_seting('public_search_route');
             // 获取当前页面对象
             $current_page = get_page_by_path(get_query_var('pagename'));

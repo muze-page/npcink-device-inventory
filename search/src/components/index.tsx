@@ -12,7 +12,7 @@ const App: React.FC = () => {
   const [displayData, setDisplayData] = useState<Computer>(); // 设备数据
 
   //输入框中的值
-  const onSearch: SearchProps["onSearch"] = async (value, _e, info) => {
+  const onSearch: SearchProps["onSearch"] = async (value, _e, _info) => {
     const data = await fetchData(value); //获取数据
     //空对象
     if (Object.keys(data).length === 0) {
