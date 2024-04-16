@@ -2,7 +2,7 @@
  * 设备详情 - 变更记录
  */
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { Table, Empty, Form, Input } from "antd";
+import { Table, Form, Input, Empty } from "antd";
 import type { InputRef } from "antd";
 import type { FormInstance } from "antd/es/form";
 
@@ -153,26 +153,41 @@ interface Props {
 }
 const App: React.FC<Props> = ({ uuid }) => {
   const [dataAxios, setDataAxios] = useState<ComputerChangeReturn[]>([]); //待渲染的值
-  const [loading, setLoading] = useState(false); //加载中
-  const [error, setError] = useState(""); //报错
+  const [loading, setLoading] = useState(false); //加载状态
+  const [error, setError] = useState(false); //错误状态
+  const [errorData, setErrorData] = useState(""); //报错
 
-  //获取数据
+  // 获取数据并处理
+  // 获取数据并处理
   const getData = async (uuid: string) => {
-    setLoading(true); //开始加载
-    const data = await searchChangeData(uuid); //获取数据
-    //TODO:优化，展示返回的错误信息
-    //是否获取到数据
-    if (data.success) {
-      //添加key
-      const addKeyData = data.data.data.map((obj: ComputerChangeReturn) => {
-        return { ...obj, key: obj.id };
-      });
-      //倒序并传递
-      setDataAxios(addKeyData.reverse());
-    } else {
-      setError("获取数据时出错：" + data.data.error);
+    setLoading(true); // 开始加载
+    try {
+      const response = await searchChangeData(uuid); // 获取数据
+      console.log(response);
+      if (response.data.success) {
+        // 如果成功获取数据
+        // 添加 key 并倒序
+        const addKeyData = response.data.data.data
+          .map((obj: ComputerChangeReturn) => ({
+            ...obj,
+            key: obj.id,
+          }))
+          .reverse();
+
+        setDataAxios(addKeyData); // 传值
+        setError(false); // 重置错误状态为 false
+      } else {
+        // 如果获取数据失败
+        setErrorData("获取数据时出错：" + response.data.data.error); // 设置错误消息
+        setError(true); //展示错误状态下的信息
+      }
+    } catch (error: any) {
+      //请求数据失败
+      setErrorData(error.response.data.data.error); // 设置错误消息
+      setError(true); //展示错误状态下的信息
+    } finally {
+      setLoading(false); // 结束加载
     }
-    setLoading(false); //结束加载
   };
 
   //拿到最新UUID
@@ -257,39 +272,46 @@ const App: React.FC<Props> = ({ uuid }) => {
 
   return (
     <>
-      {loading && <Loading />} {/* 加载状态 */}
-      {error && (
+      {/* 加载状态 */}
+      {loading ? <Loading /> : ""}
+      {/* 错误状态 */}
+      {error ? (
         <>
-          {/* 错误状态 */}
-          <Error message={error} />
+          <Error message={errorData} />
           <AddChangeData uuid={uuid} onUpdata={getData} />
         </>
-      )}
-      {!loading && !error && (
-        <div className="pl-5 relative">
-          {/* 正常状态 */}
-          {/* 列表 */}
-          <div className="mt-1">
-            <p className="mb-4 text-base font-bold text-[#333]">硬件信息变更</p>
-            {/* 有数据 */}
-            {dataAxios.length !== 0 ? (
-              <Table
-                components={components}
-                rowClassName={() => "editable-row"}
-                bordered
-                size="small"
-                columns={columnss as ColumnTypes}
-                dataSource={dataAxios}
-                pagination={pagination}
-              />
-            ) : (
-              <Empty description={<span>暂无记录</span>} />
-            )}
-            {/* 没有数据 */}
-            {/* 添加 - 修改记录 */}
-            <AddChangeData uuid={uuid} onUpdata={getData} />
-          </div>
-        </div>
+      ) : (
+        <>
+          {/**展示数据 */}
+          {
+            <div className="pl-5 relative">
+              {/* 正常状态 */}
+              {/* 列表 */}
+              <div className="mt-1">
+                <p className="mb-4 text-base font-bold text-[#333]">
+                  硬件信息变更
+                </p>
+                {/* 有数据 */}
+                {dataAxios.length !== 0 ? (
+                  <Table
+                    components={components}
+                    rowClassName={() => "editable-row"}
+                    bordered
+                    size="small"
+                    columns={columnss as ColumnTypes}
+                    dataSource={dataAxios}
+                    pagination={pagination}
+                  />
+                ) : (
+                  <Empty description={<span>暂无记录</span>} />
+                )}
+                {/* 没有数据 */}
+                {/* 添加 - 修改记录 */}
+                <AddChangeData uuid={uuid} onUpdata={getData} />
+              </div>
+            </div>
+          }
+        </>
       )}
     </>
   );
@@ -300,7 +322,7 @@ const App: React.FC<Props> = ({ uuid }) => {
  * @returns
  */
 const Loading = () => {
-  return <p>加载中...</p>;
+  return <p>加载中···</p>;
 };
 
 /**
@@ -316,7 +338,7 @@ const Error: React.FC<PropsError> = ({ message }) => {
   return (
     <>
       <p className="mb-4 text-base font-bold text-[#333]">硬件信息变更</p>
-      <p className="mb-4">{message}</p>
+      <Empty description={message} />
     </>
   );
 };

@@ -73,11 +73,11 @@ export const changeMySqlData = async (
 /**
  * 查
  */
-export const searchChangeData = async (uuid: string): Promise<axiosType> => {
+export const searchChangeData = async (uuid: string) => {
   const params = new URLSearchParams();
   params.append("action", "search_change_data_callback");
   addParamIfDefined(params, "uuid", uuid);
-  const { data: res } = await axios.post(Ajaxurl, params);
+  const data = await axios.post(Ajaxurl, params);
   
-  return res;
+  return data;
 };
