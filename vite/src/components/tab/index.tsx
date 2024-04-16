@@ -18,6 +18,7 @@ import Baseboard from "@/components/tab/baseboard";
 import Cpu from "@/components/tab/cpu";
 import Disk from "@/components/tab/disk";
 import Memory from "@/components/tab/memory";
+import Header from "@/components/part/header";
 
 //收集最新数据并输出数组
 interface DataArray {
@@ -103,13 +104,9 @@ const App: React.FC = () => {
 
   return (
     <>
-      <div className="h-[625px] relative bg-white py-6 px-5 rounded-r border-rose-600 max-w-3xl">
+      <div className="h-[625px] relative bg-white pb-6 px-5 rounded-r border-rose-600 max-w-3xl">
         {/**标题 */}
-        <div className="flex justify-between items-center">
-          <div className="text-base font-black flex items-center text-zinc-900">
-            硬件资产盘点
-          </div>
-        </div>
+       <Header title="资产盘点" />
         {/**表头 */}
         <TabHeader
           items={items}

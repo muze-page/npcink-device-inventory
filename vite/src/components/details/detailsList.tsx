@@ -37,7 +37,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
       {/**开始循环 */}
       <div
         className="
-        cursor-pointer p-[10px] rounded mr-[2%] mt-4 w-[18.4%] h-[290px] mac
+        cursor-pointer p-[10px] rounded mr-[2%] mb-4 w-[18.4%] h-[290px] mac
         hover:border-1 hover:border-blue-400 
         [&:nth-child(5n)]:mr-0"
         onClick={() => {

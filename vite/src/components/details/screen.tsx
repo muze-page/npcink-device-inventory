@@ -9,8 +9,8 @@ import { MysqlDeviceChangeMeat } from "@/store/interface";
 import { defaultOption } from "@/store";
 import { changeSelectData } from "@/store/tool";
 import { device_status, memoryScreenList } from "@/store/dataReplace";
-import Search from "@/components/details/search"
-
+import Search from "@/components/details/search";
+import Header from "@/components/part/header";
 interface Props {
   data: MysqlDeviceChangeMeat[]; //筛选用数据
   onSet: Function; //传递筛选后的数据
@@ -69,13 +69,11 @@ const App: React.FC<Props> = ({ data, onSet }) => {
   //监听，更新最新值
   useEffect(() => {
     if (isUpdating) {
-     
       onSet(filteredData);
       setIsUpdating(false);
     }
   }, [filteredData, isUpdating]);
 
-  
   /**
    * 重置按钮
    */
@@ -86,10 +84,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
   return (
     <>
       <div className="flex justify-between items-center">
-        <p className="text-base font-bold text-[#222] m-0">资产信息</p>
-       
-     
-
+        <Header title="资产信息" />
         <div className="w-fit flex items-center">
           <Space size={"middle"} wrap>
             <div>
@@ -117,10 +112,11 @@ const App: React.FC<Props> = ({ data, onSet }) => {
               />
             </div>
             <div>
-              <Search data={data} onSet={onSet}/>
+              <Search data={data} onSet={onSet} />
             </div>
-            <div>
-              {false && (
+
+            {false && (
+              <div>
                 <Tooltip title="重置筛选条件">
                   <Button
                     type="primary"
@@ -130,8 +126,9 @@ const App: React.FC<Props> = ({ data, onSet }) => {
                     onClick={restSelect}
                   />
                 </Tooltip>
-              )}
-            </div>
+              </div>
+            )}
+
             {false && (
               <>
                 <div>

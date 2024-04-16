@@ -17,7 +17,7 @@ const App = () => {
         {/**第二部分 */}
         <div className="w-[104px] h-8 leading-8 rounded-sm bg-orange-300 text-xs font-normal text-center text-amber-950 cursor-pointer ">
           <a
-            href="https://www.npc.ink/"
+            href="https://www.npc.ink/277900.html"
             target="_blank"
             className="text-amber-950"
           >

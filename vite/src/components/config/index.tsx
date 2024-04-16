@@ -22,6 +22,7 @@ import {
 import ImportExport from "@/components/config/importExport";
 import { OptionType } from "@/store/interface";
 import { changeSelectData } from "@/store/tool";
+import Header from "@/components/part/header";
 
 const App: React.FC = () => {
   //传来的默认选项
@@ -175,12 +176,8 @@ const App: React.FC = () => {
 
   return (
     <>
-      <div className="py-6 px-5">
-        <div className="flex justify-between items-center">
-          <div className="text-base font-black flex items-center text-zinc-900">
-            设置
-          </div>
-        </div>
+      <div className="pb-6 px-5">
+        <Header title="设置" />
         <Form
           form={form}
           onFinish={onFinish}

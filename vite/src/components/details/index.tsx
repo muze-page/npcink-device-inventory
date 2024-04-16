@@ -8,6 +8,7 @@ import { dataMySql } from "@/store";
 import DetailsList from "@/components/details/detailsList";
 import Screen from "@/components/details/screen";
 import Drawer from "@/components/part/drawer";
+
 import {
   MysqlDeviceChangeMeat,
   MysqlDeviceChange,
@@ -146,9 +147,9 @@ const App: React.FC = () => {
 
   return (
     <AppContext.Provider value={{ handleTypeUpdate, deltArrData }}>
-      <div className="py-6 px-5">
+      <div className="pb-6 px-5">
         <Screen data={updatedDataArray} onSet={setScreenData} />
-        <div className="mt-1 flex content-start items-center flex-wrap w-full">
+        <div className="flex content-start items-center flex-wrap w-full">
           {/**开始循环 */}
           {displayData.map((tab, index) => (
             <DetailsList

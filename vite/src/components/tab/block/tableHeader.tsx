@@ -17,7 +17,7 @@ interface Props {
 
 const App: React.FC<Props> = ({ items, handleTabClick, activeTab }) => {
   return (
-    <div className="flex items-center mt-3">
+    <div className="flex items-center">
       {items.map((tab, index) => (
         <div
           className={`w-calc-1/4 first:ml-0 ml-4 cursor-pointer relative h-[6em] rounded px-5 py-4  bg-gradient-to-br   w-full ${tab.color}`}
