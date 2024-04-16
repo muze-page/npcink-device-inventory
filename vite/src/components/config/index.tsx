@@ -175,133 +175,140 @@ const App: React.FC = () => {
 
   return (
     <>
-      <Form
-        form={form}
-        onFinish={onFinish}
-        labelCol={{ span: 8 }}
-        wrapperCol={{ span: 16 }}
-        style={{ maxWidth: 600 }}
-        initialValues={option} //默认选项值
-        onFinishFailed={onFinishFailed}
-        autoComplete="off"
-      >
-        <Form.Item
-          label="路由"
-          name="route"
-          rules={[{ required: true, message: "客户端传输数据时的地址" }]}
-          extra={
-            <>
-              客户端数据传输地址：
-              <pre>{routerMsg()}</pre>
-            </>
-          }
+      <div className="py-6 px-5">
+        <div className="flex justify-between items-center">
+          <div className="text-base font-black flex items-center text-zinc-900">
+            设置
+          </div>
+        </div>
+        <Form
+          form={form}
+          onFinish={onFinish}
+          labelCol={{ span: 4 }}
+          wrapperCol={{ span: 20 }}
+          style={{ maxWidth: 600 }}
+          initialValues={option} //默认选项值
+          onFinishFailed={onFinishFailed}
+          autoComplete="off"
         >
-          <Input />
-        </Form.Item>
+          <Form.Item
+            label="路由"
+            name="route"
+            rules={[{ required: true, message: "客户端传输数据时的地址" }]}
+            extra={
+              <>
+                客户端数据传输地址：
+                <pre>{routerMsg()}</pre>
+              </>
+            }
+          >
+            <Input />
+          </Form.Item>
 
-        <Form.Item
-          label="密码"
-          name="password"
-          rules={[{ required: true, message: "客户端传输数据时的验证码" }]}
-          extra={"客户端传输数据时的验证码"}
-        >
-          <Input.Password />
-        </Form.Item>
-        <Form.Item
-          label="删除插件数据"
-          name="delete_mysql"
-          valuePropName="checked"
-          extra={"删除插件的同时，删除数据库和设置"}
-        >
-          <Switch className=" bg-[#e3eaf2]" />
-        </Form.Item>
-        <Form.Item
-          label="设备数量"
-          name="device_show_number"
-          extra={"设备详情页展示的数量，默认 8"}
-        >
-          <InputNumber min={4} max={80} />
-        </Form.Item>
-        <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-          <Button type="primary" htmlType="submit" className=" bg-[#1677ff]">
-            保存
-          </Button>
-        </Form.Item>
-
-        <Form.Item
-          label="基础数据"
-          extra={"仅导入当前没有的设备数据，导出全部数据"}
-        >
-          <ImportExport data="custom_table" />
-        </Form.Item>
-        <Form.Item
-          label="变更数据"
-          extra={"仅导入当前没有的设备数据，导出全部数据"}
-        >
-          <ImportExport data="custom_change" />
-        </Form.Item>
-
-        <Form.Item
-          label="添加部门"
-          style={{ width: "100%" }}
-          name="department"
-          extra={option.department.join("，")}
-        >
-          <div>
-            <Input
-              style={{ width: "80%" }}
-              value={newDepartment}
-              onChange={(e) => setNewDepartment(e.target.value)}
-            />
-            <Button style={{ width: "20%" }} onClick={handleAddDepartment}>
-              添加
+          <Form.Item
+            label="密码"
+            name="password"
+            rules={[{ required: true, message: "客户端传输数据时的验证码" }]}
+            extra={"客户端传输数据时的验证码"}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            label="删除插件数据"
+            name="delete_mysql"
+            valuePropName="checked"
+            extra={"删除插件的同时，删除数据库和设置"}
+          >
+            <Switch className=" bg-[#e3eaf2]" />
+          </Form.Item>
+          <Form.Item
+            label="设备数量"
+            name="device_show_number"
+            extra={"设备详情页展示的数量，默认 8"}
+          >
+            <InputNumber min={4} max={80} />
+          </Form.Item>
+          <Form.Item wrapperCol={{ offset: 2, span: 22 }}>
+            <Button type="primary" htmlType="submit" className=" bg-[#1677ff]">
+              保存
             </Button>
-          </div>
-        </Form.Item>
+          </Form.Item>
 
-        <Form.Item label="删除部门" name="department">
-          <div>
-            <Select
-              value={selectedDepartment}
-              style={{ width: "80%" }}
-              options={getSelectData}
-              onChange={(value) => setSelectedDepartment(value)}
-            />
-            <Popconfirm
-              title="移除此部门"
-              description="您确定要移除此部门吗？"
-              onConfirm={confirm}
-              onCancel={cancel}
-              okText="移除"
-              cancelText="我再想想"
-            >
-              <Button style={{ width: "20%" }}>移除</Button>
-            </Popconfirm>
-          </div>
-        </Form.Item>
-        <Form.Item
-          label="添加公共查询页面"
-          name="public_search_route"
-          extra={
-            <>
-              公共查询页面地址：
-              <pre>{routerSearch()}</pre>
-            </>
-          }
-        >
-          <div>
-            <Input
-              style={{ width: "80%" }}
-              value={publicSearch}
-              placeholder="填写页面路由"
-              onChange={(e) => setPublicSearch(e.target.value)}
-            />
-            <Button style={{ width: "20%" }} onClick={addPage}>
-              添加
-            </Button>
-          </div>
-        </Form.Item>
-      </Form>
+          <Form.Item
+            label="基础数据"
+            extra={"仅导入当前没有的设备数据，导出全部数据"}
+          >
+            <ImportExport data="custom_table" />
+          </Form.Item>
+          <Form.Item
+            label="变更数据"
+            extra={"仅导入当前没有的设备数据，导出全部数据"}
+          >
+            <ImportExport data="custom_change" />
+          </Form.Item>
+
+          <Form.Item
+            label="添加部门"
+            style={{ width: "100%" }}
+            name="department"
+            extra={option.department.join("，")}
+          >
+            <div>
+              <Input
+                style={{ width: "80%" }}
+                value={newDepartment}
+                onChange={(e) => setNewDepartment(e.target.value)}
+              />
+              <Button style={{ width: "20%" }} onClick={handleAddDepartment}>
+                添加
+              </Button>
+            </div>
+          </Form.Item>
+
+          <Form.Item label="移除部门" name="department">
+            <div>
+              <Select
+                value={selectedDepartment}
+                style={{ width: "80%" }}
+                options={getSelectData}
+                onChange={(value) => setSelectedDepartment(value)}
+              />
+              <Popconfirm
+                title="移除此部门"
+                description="您确定要移除此部门吗？"
+                onConfirm={confirm}
+                onCancel={cancel}
+                okText="移除"
+                cancelText="我再想想"
+              >
+                <Button style={{ width: "20%" }}>移除</Button>
+              </Popconfirm>
+            </div>
+          </Form.Item>
+          <Form.Item
+            label="公共查询页面"
+            name="public_search_route"
+            extra={
+              <>
+                公共查询页面地址：
+                <pre>{routerSearch()}</pre>
+              </>
+            }
+          >
+            <div>
+              <Input
+                style={{ width: "80%" }}
+                value={publicSearch}
+                placeholder="填写页面路由"
+                onChange={(e) => setPublicSearch(e.target.value)}
+              />
+              <Button style={{ width: "20%" }} onClick={addPage}>
+                添加
+              </Button>
+            </div>
+          </Form.Item>
+        </Form>
+      </div>
     </>
   );
 };

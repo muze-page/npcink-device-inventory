@@ -146,48 +146,54 @@ const App: React.FC = () => {
 
   return (
     <AppContext.Provider value={{ handleTypeUpdate, deltArrData }}>
-      <Screen data={updatedDataArray} onSet={setScreenData} />
-      <div className="mt-1 flex content-start items-center flex-wrap w-full">
-        {/**开始循环 */}
-        {displayData.map((tab, index) => (
-          <DetailsList
-            key={tab.id}
-            data={tab}
-            onActive={() => changeActive()}
-            onDrawerData={() => (setDrawerData(tab), setArrIndex(index))}
-          />
-        ))}
-      </div>
-      {/**没有数据 */}
-      {screenData.length === 0 && (
-        <Empty
-          className="mt-10"
-          description={
-            <span>
-              暂无数据<br/>请更换筛选条件<br/>或搜索内容试试
-            </span>
-          }
-        />
-      )}
-
-      {/**分页 */}
-      {screenData.length > pageSize && (
-        <div className="mt-4 float-right">
-          <Pagination
-            current={currentPage}
-            onChange={handlePageChange}
-            pageSize={pageSize}
-            total={screenData.length}
-          />
+      <div className="py-6 px-5">
+        <Screen data={updatedDataArray} onSet={setScreenData} />
+        <div className="mt-1 flex content-start items-center flex-wrap w-full">
+          {/**开始循环 */}
+          {displayData.map((tab, index) => (
+            <DetailsList
+              key={tab.id}
+              data={tab}
+              onActive={() => changeActive()}
+              onDrawerData={() => (setDrawerData(tab), setArrIndex(index))}
+            />
+          ))}
         </div>
-      )}
+        {/**没有数据 */}
+        {screenData.length === 0 && (
+          <Empty
+            className="mt-10"
+            description={
+              <span>
+                暂无数据
+                <br />
+                请更换筛选条件
+                <br />
+                或搜索内容试试
+              </span>
+            }
+          />
+        )}
 
-      {/**弹窗 */}
-      <Drawer
-        data={drawerData}
-        active={active}
-        onActive={() => changeActive()}
-      />
+        {/**分页 */}
+        {screenData.length > pageSize && (
+          <div className="mt-4 float-right">
+            <Pagination
+              current={currentPage}
+              onChange={handlePageChange}
+              pageSize={pageSize}
+              total={screenData.length}
+            />
+          </div>
+        )}
+
+        {/**弹窗 */}
+        <Drawer
+          data={drawerData}
+          active={active}
+          onActive={() => changeActive()}
+        />
+      </div>
     </AppContext.Provider>
   );
 };

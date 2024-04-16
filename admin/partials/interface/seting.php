@@ -314,7 +314,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             );
 
             // 检查更新操作是否成功
-            if ($result) {
+            if ($result === false) {
                 // 发送错误响应
                 return wp_send_json_error(['error' => '更新数据时发生错误！', 'reason' => $wpdb->last_error,], 500);
             }

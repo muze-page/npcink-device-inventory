@@ -85,7 +85,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
 
   return (
     <>
-      <div className="mt-6 flex justify-between items-center">
+      <div className="flex justify-between items-center">
         <p className="text-base font-bold text-[#222] m-0">资产信息</p>
        
      
