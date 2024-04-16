@@ -26,6 +26,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
          */
         public static  function save_option_callback()
         {
+            global $wpdb;
             // 获取通过 Ajax POST 请求传递的对象数据
             $object_data = isset($_POST['object_data']) ? sanitize_text_field($_POST['object_data']) : null;
 
@@ -40,29 +41,33 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
 
             //进行对象验证
             $validation_result = self::validate_object($object);
-
-            if ($validation_result === true) {
-                // 所有验证通过，可以继续处理对象
-                // 保存设置选项
-                //拿到选项中的password，加密后存储
-                // 获取原始密码
-                $raw_password = $object->password;
-
-                // 使用 wp_hash_password 函数对密码进行加密
-                $hashed_password = wp_hash_password($raw_password);
-
-                // 将加密后的密码替换 $object 中原来的密码值
-                $object->password = $hashed_password;
-
-
-                update_option(self::$option, $object);
-
-                // 发送成功响应
-                // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义200, JSON_UNESCAPED_UNICODE
-                return wp_send_json_success(['message' => '设置选项已保存']);
-            } else {
+            if ($validation_result !== true) {
                 // 发送错误响应
-                return wp_send_json_error(['message' => $validation_result,]);
+                return wp_send_json_error(['error' => $validation_result,], 500);
+            }
+
+            // 所有验证通过，可以继续处理对象
+            // 保存设置选项
+            //拿到选项中的password，加密后存储
+            // 获取原始密码
+            $raw_password = $object->password;
+
+            // 使用 wp_hash_password 函数对密码进行加密
+            $hashed_password = wp_hash_password($raw_password);
+
+            // 将加密后的密码替换 $object 中原来的密码值
+            $object->password = $hashed_password;
+
+
+            // 尝试更新选项
+            $result = update_option(self::$option, $object);
+
+            if ($result) { // 更新成功
+                // 发送成功响应
+                return wp_send_json_success(['message' => '设置选项已保存']);
+            } else { // 更新失败
+                // 发送错误响应
+                return wp_send_json_error(['error' => '保存设置选项失败', 'reason' => $wpdb->last_error,], 500);
             }
         }
 
@@ -148,11 +153,12 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             // 获取前端传递的参数并进行输入验证
             $name = isset($_POST['name']) ? sanitize_text_field($_POST['name']) : null;
 
+            if (empty($name)) {
+                return wp_send_json_error(['error' => '缺少表名'], 400);
+            }
             // 检查表名是否合法
             if (!preg_match('/^[a-zA-Z_]+$/', $name)) {
-                return wp_send_json_error([
-                    'message' => '无效的表名'
-                ]);
+                return wp_send_json_error(['error' => '无效的表名'], 400);
             }
 
             // 构建SQL语句
@@ -162,19 +168,16 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             // 执行查询操作
             $rows = $wpdb->get_results($sql, ARRAY_A);
 
+            // 根据查询结果返回响应
             if ($rows) {
-                //正常返回数据
-
-                return wp_send_json_success([
-                    'data' => $rows,
-                    'message' => '成功导出数据',
-                ]);
+                // 正常返回数据
+                wp_send_json_success(['message' => '成功导出数据', 'data' => $rows,]);
             } else {
-                return  wp_send_json_error([
-                    'message' => '查询数据时发生错误,请检查表名是否正确'
-                ]);
+                // 返回导出数据失败的错误
+                wp_send_json_error(['error' => '导出数据失败', 'reason' => $wpdb->last_error,], 500);
             }
 
+            // 结束请求
             wp_die();
         }
 
@@ -196,92 +199,88 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
 
             // 检查传来的数据是否为空
             if (empty($data)) {
+                return wp_send_json_error(['error' => '传递的数据为空，请检查文件'], 400);
+            }
+            // 检查传来的姓名是否为空
+            if (empty($name)) {
+                return wp_send_json_error(['error' => '传递的表名为空，请检查'], 400);
+            }
+
+            // 构建插入数据的数组
+            $insert_data = array();
+            if ($name == "custom_table") {
+                foreach ($data as $item) {
+                    //是否有重复数据
+                    $uuid = isset($item['uuid']) ? $item['uuid'] : null;
+                    $table_name = $wpdb->prefix . 'custom_table';
+                    $existingData = $wpdb->get_row(
+                        $wpdb->prepare(
+                            "SELECT * FROM $table_name WHERE uuid = %s;",
+                            $uuid
+                        ),
+                        ARRAY_A
+                    );
+
+                    if (!$existingData) {
+                        $insert_data[] = array(
+                            'name' => isset($item['name']) ? $item['name'] : '',
+                            'state' => isset($item['state']) ? $item['state'] : 'apply',
+                            'number' => isset($item['number']) ? $item['number'] : 0,
+                            'department' => isset($item['department']) ? $item['department'] : 0,
+                            'time' => isset($item['time']) ? ($item['time']) : null,
+                            'uuid' => isset($item['uuid']) ? $item['uuid'] : '',
+                            'data' => isset($item['data']) ? ($item['data']) : null,
+                        );
+                    }
+                }
+            }
+            if ($name == "custom_change") {
+                foreach ($data as $item) {
+                    //是否有重复数据
+                    $time = isset($item['time']) ? $item['time'] : null;
+                    $table_name = $wpdb->prefix . 'custom_change';
+                    $existingData = $wpdb->get_row(
+                        $wpdb->prepare(
+                            "SELECT * FROM $table_name WHERE time = %s;",
+                            $time
+                        ),
+                        ARRAY_A
+                    );
+
+                    if (!$existingData) {
+                        $insert_data[] = array(
+                            'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
+                            'time' => isset($item['time']) ? $item['time'] :  0,
+                            'user' => isset($item['user']) ? $item['user'] :  null,
+                            'type' => isset($item['type']) ? $item['type'] :  null,
+                            'msg' => isset($item['msg']) ? $item['msg'] :  null,
+                        );
+                    }
+                }
+            }
+
+            //准备数据库表名
+            $table_name = $wpdb->prefix . $name;
+
+            // 执行批量插入操作
+            foreach ($insert_data as $item) {
+                $result = $wpdb->insert($table_name, $item);
+            }
+
+            // 检查插入结果
+            if ($result) {
+                return wp_send_json_success([
+                    'message' => '导入成功，导入前的设备信息未变更',
+                ]);
+            } else {
                 $response = array(
-                    'message' => '传递的数据为空，请检查文件'
+                    'error' => '导入数据时发生错误，请检查数据格式',
+                    'data' => ($insert_data[1]),
+                    'reason' => $wpdb->last_error,
                 );
-                return wp_send_json_error($response);
+                return wp_send_json_error($response, 500);
             }
 
-            if (!empty($data)) {
-                // 构建插入数据的数组
-                $insert_data = array();
-                if ($name == "custom_table") {
-                    foreach ($data as $item) {
-                        //是否有重复数据
-                        $uuid = isset($item['uuid']) ? $item['uuid'] : null;
-                        $table_name = $wpdb->prefix . 'custom_table';
-                        $existingData = $wpdb->get_row(
-                            $wpdb->prepare(
-                                "SELECT * FROM $table_name WHERE uuid = %s;",
-                                $uuid
-                            ),
-                            ARRAY_A
-                        );
-
-                        if (!$existingData) {
-                            $insert_data[] = array(
-                                'name' => isset($item['name']) ? $item['name'] : '',
-                                'state' => isset($item['state']) ? $item['state'] : 'apply',
-                                'number' => isset($item['number']) ? $item['number'] : 0,
-                                'department' => isset($item['department']) ? $item['department'] : 0,
-                                'time' => isset($item['time']) ? ($item['time']) : null,
-                                'uuid' => isset($item['uuid']) ? $item['uuid'] : '',
-                                'data' => isset($item['data']) ? ($item['data']) : null,
-                            );
-                        }
-                    }
-                }
-                if ($name == "custom_change") {
-                    foreach ($data as $item) {
-                        //是否有重复数据
-                        $time = isset($item['time']) ? $item['time'] : null;
-                        $table_name = $wpdb->prefix . 'custom_change';
-                        $existingData = $wpdb->get_row(
-                            $wpdb->prepare(
-                                "SELECT * FROM $table_name WHERE time = %s;",
-                                $time
-                            ),
-                            ARRAY_A
-                        );
-
-                        if (!$existingData) {
-                            $insert_data[] = array(
-                                'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
-                                'time' => isset($item['time']) ? $item['time'] :  0,
-                                'user' => isset($item['user']) ? $item['user'] :  null,
-                                'type' => isset($item['type']) ? $item['type'] :  null,
-                                'msg' => isset($item['msg']) ? $item['msg'] :  null,
-                            );
-                        }
-                    }
-                }
-
-                //准备数据库表名
-                $table_name = $wpdb->prefix . $name;
-
-                // 执行批量插入操作
-                foreach ($insert_data as $item) {
-                    $result = $wpdb->insert($table_name, $item);
-                }
-
-                // 检查插入结果
-                if ($result) {
-                    $response = array(
-                        'message' => '导入成功，导入前的设备信息未变更',
-                    );
-                    return wp_send_json_success($response);
-                } else {
-                    $error_message = $wpdb->last_error;
-                    //echo "插入操作失败，错误信息：$error_message";
-
-                    $response = array(
-                        'message' => '导入数据时发生错误，请检查数据格式',
-                        'data' => ($insert_data[1]),
-                        'msg' => $error_message,
-                    );
-                    return wp_send_json_error($response);
-                }
-            }
             wp_die();
         }
 
@@ -293,45 +292,33 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
         {
             global $wpdb;
             $table_name = $wpdb->prefix . 'custom_table';
-
-
-
             // 获取通过 Ajax POST 请求传递的对象数据
             $data = isset($_POST['data']) ? ($_POST['data']) : null;
             // 检查是否收到了正确的数据
-            if (!$data) {
+            if (empty($data)) {
                 // 发送错误响应，未收到正确的数据
-                return wp_send_json_error(['message' => '未收到部门的数据！']);
+                return wp_send_json_error(['error' => '未收到部门的数据！'], 400);
             }
-
-            // 尝试解析 JSON 数据
-            $object = json_decode(stripslashes($data));
 
             // 执行更新操作
             // 更新表中department字段的值为$object的行，将其替换为"默认"
             $result = $wpdb->update(
                 $table_name,
                 array('department' => '默认'),
-                array('department' => $object)
+                array('department' => $data)
             );
 
             // 检查更新操作是否成功
             if ($result) {
                 // 发送错误响应
-                return wp_send_json_error(['message' => '更新数据时发生错误！']);
+                return wp_send_json_error(['error' => '更新数据时发生错误！', 'reason' => $wpdb->last_error,], 500);
             }
 
             // 发送成功响应
             // 确保 $object 是字符串类型
-            $object_value = $wpdb->prepare('%s', $object);
             return wp_send_json_success([
-                'message' => '已移除！' . $object_value . '部门',
-                'msg' => $result,
+                'message' => '已移除！' . $data . '部门',
             ]);
-
-            // 使用 wp_send_json 函数发送 JSON 响应，避免汉字转义
-            //wp_send_json($response, 200, JSON_UNESCAPED_UNICODE);
-
         }
     }
 }

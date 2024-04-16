@@ -76,7 +76,7 @@ export const changeMySqlData = async (
 export const searchChangeData = async (uuid: string): Promise<axiosType> => {
   const params = new URLSearchParams();
   params.append("action", "search_change_data_callback");
-  addParamIfDefined(params, "uuid", JSON.stringify(uuid));
+  addParamIfDefined(params, "uuid", uuid);
   const { data: res } = await axios.post(Ajaxurl, params);
   
   return res;

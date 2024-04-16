@@ -77,7 +77,7 @@ export const importSQLData = async (name: string, data: string) => {
 export const remove_department = async (optionObj: string) => {
   const params = new URLSearchParams();
   params.append("action", "remove_department_callback");
-  addParamIfDefined(params, "data", JSON.stringify(optionObj));
+  addParamIfDefined(params, "data", optionObj);
   try {
     await instance.post(Ajaxurl, params);
   } catch (error: any) {

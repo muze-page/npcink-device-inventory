@@ -160,6 +160,7 @@ const App: React.FC<Props> = ({ uuid }) => {
   const getData = async (uuid: string) => {
     setLoading(true); //开始加载
     const data = await searchChangeData(uuid); //获取数据
+    //TODO:优化，展示返回的错误信息
     //是否获取到数据
     if (data.success) {
       //添加key
@@ -169,7 +170,7 @@ const App: React.FC<Props> = ({ uuid }) => {
       //倒序并传递
       setDataAxios(addKeyData.reverse());
     } else {
-      setError("获取数据时出错：" + data.data.message);
+      setError("获取数据时出错：" + data.data.error);
     }
     setLoading(false); //结束加载
   };
@@ -256,20 +257,22 @@ const App: React.FC<Props> = ({ uuid }) => {
 
   return (
     <>
-      {loading ? (
-        <Loading />
-      ) : error ? (
+      {loading && <Loading />} {/* 加载状态 */}
+      {error && (
         <>
+          {/* 错误状态 */}
           <Error message={error} />
           <AddChangeData uuid={uuid} onUpdata={getData} />
         </>
-      ) : (
+      )}
+      {!loading && !error && (
         <div className="pl-5 relative">
-          {/**列表 */}
+          {/* 正常状态 */}
+          {/* 列表 */}
           <div className="mt-1">
             <p className="mb-4 text-base font-bold text-[#333]">硬件信息变更</p>
+            {/* 有数据 */}
             {dataAxios.length !== 0 ? (
-              //展示数据
               <Table
                 components={components}
                 rowClassName={() => "editable-row"}
@@ -280,10 +283,10 @@ const App: React.FC<Props> = ({ uuid }) => {
                 pagination={pagination}
               />
             ) : (
-              //没有数据
               <Empty description={<span>暂无记录</span>} />
             )}
-            {/*添加 - 修改记录*/}
+            {/* 没有数据 */}
+            {/* 添加 - 修改记录 */}
             <AddChangeData uuid={uuid} onUpdata={getData} />
           </div>
         </div>

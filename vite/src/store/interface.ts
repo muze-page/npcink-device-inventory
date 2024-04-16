@@ -88,10 +88,11 @@ export interface DeviceSeting {
  * Axios 返回类型
  */
 export interface axiosType {
-  success: boolean;
+  success: boolean;//状态
   data: {
-    data?: any;
-    message: string;
+    data?: any;//返回值
+    message?: string;//成功信息
+    error?:string;//失败信息
   };
 };
 

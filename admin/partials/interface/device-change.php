@@ -42,7 +42,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
             // 如果有参数为 null，则返回相应的错误消息
             if ($null_param !== false) {
                 $param_names = ['uuid' => 'uuid - 设备唯一编号', 'user' => 'user - 变更用户名', 'type' => 'type - 变更类型', 'msg' => 'msg - 变更内容'];
-                return wp_send_json_error(['message' => '缺少参数：' . $param_names[$null_param]]);
+                return wp_send_json_error(['error' => '缺少参数：' . $param_names[$null_param]], 400);
             }
 
 
@@ -64,12 +64,13 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
             );
 
             // 检查插入是否成功
-            if ($result === false) {
-                wp_send_json_error(['message' => '插入变更数据失败']);
+            if ($result !== false) {
+                return wp_send_json_success(['message' => '插入变更数据成功']);
             } else {
-                wp_send_json_success(['message' => '插入变更数据成功']);
+                return wp_send_json_error(['error' => '插入变更数据失败','reason' => $wpdb->last_error,], 500);
             }
             // 插入成功，可以进行其他操作
+            wp_die();
         }
 
 
@@ -94,7 +95,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
             // 如果有参数为 null，则返回相应的错误消息
             if ($null_param !== false) {
                 $param_names = ['uuid' => 'uuid - 设备唯一编号',  'type' => 'type - 变更类型', 'data' => 'data - 变更内容'];
-                return wp_send_json_error(['message' => '缺少参数：' . $param_names[$null_param]]);
+                return wp_send_json_error(['error' => '缺少参数：' . $param_names[$null_param]], 400);
             }
 
             // 定义字段与类型的映射关系
@@ -109,8 +110,9 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
 
             if (empty($field_name)) {
                 // 未找到对应的字段名
-                return wp_send_json_error(['message' => '未找到字段名 - ' . $type]);
+                return wp_send_json_error(['error' => '未找到字段名 - ' . $type], 400);
             }
+
             // 使用预处理语句更新数据库中对应的数据
             $result = $wpdb->update(
                 $table_name,
@@ -120,11 +122,12 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
                 '%s'  // 条件类型
             );
 
-            if ($result) {
+            if ($result !== false) {
                 // 返回更新成功的响应
                 return wp_send_json_success(['message' => '数据库更新成功']);
             } else {
-                return wp_send_json_error(['message' => '数据库更新失败']);
+                // 获取更新失败的原因
+                return wp_send_json_error(['error' => '数据库更新失败', 'reason' => $wpdb->last_error], 500);
             }
             wp_die();
         }
@@ -138,15 +141,12 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
             $table_name = $wpdb->prefix . 'custom_change';
 
             //拿到值
-            $object_data = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //字段名
+            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //字段名
 
             //检查是否有值
-            if (!$object_data) {
-                return wp_send_json_error(['message' => '缺少参数：uuid - 设备唯一编号']);
+            if (empty($uuid)) {
+                return wp_send_json_error(['error' => '缺少参数：uuid - 设备唯一编号'], 400);
             }
-
-            //拿到uuid字符串
-            $uuid = json_decode(stripslashes($object_data));
 
             //查询
             // 使用预处理语句执行查询
@@ -157,10 +157,10 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
 
             if (!empty($object)) {
                 // 返回查询结果
-                return wp_send_json_success(['data' =>  $object, 'message' => '查询成功',]);
+                return wp_send_json_success(['message' => '查询成功', 'data' =>  $object,]);
             } else {
                 // 返回空数组表示没有找到符合条件的记录
-                return wp_send_json_error(['data' =>  [], 'message' => '未查到变更记录',]);
+                return wp_send_json_error(['error' => '未查到变更记录','reason' => $wpdb->last_error, 'data' =>  [],], 500);
             }
         }
     }

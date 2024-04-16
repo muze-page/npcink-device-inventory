@@ -38,7 +38,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
             // 如果有参数为 null，则返回相应的错误消息
             if ($null_param !== false) {
                 $param_names = ['uuid' => 'uuid - 设备唯一编号', 'data' => 'user - 变更的值', 'type' => 'type - 变更的字段名'];
-                return wp_send_json_error(['message' => '缺少参数：' . $param_names[$null_param]]);
+                return wp_send_json_error(['error' => '缺少参数：' . $param_names[$null_param]], 400);
             }
 
 
@@ -53,9 +53,9 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
             // 确定要更新的字段
             $field_name = isset($field_map[$type]) ? $field_map[$type] : null;
 
-            //检查是否为空
+            //检查字段是否为空
             if (empty($field_name)) {
-                return wp_send_json_error(['message' => '没有找到对应的字段名']);
+                return wp_send_json_error(['error' => '没有找到字段名 - '.$type], 400);
             }
 
             // 查询数据库中原本的值
@@ -68,14 +68,13 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
 
             // 检查要更新的值是否与数据库中原本的值相同
             if ($current_value === $data) {
-                
-                return wp_send_json_error(['message' => self::process_string($field_name) .'未改变，无需更新','msg'=>$current_value]);
+                return wp_send_json_error(['error' => self::process_string($field_name) . '未改变，无需更新', 'reason' => $current_value], 500);
             }
 
 
 
             // 使用预处理语句更新数据库中对应的数据
-            $result =    $wpdb->update(
+            $result = $wpdb->update(
                 $table_name,
                 array($field_name => $data),
                 array('uuid' => $uuid),
@@ -83,9 +82,9 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 '%s'  // 条件类型
             );
             if (!is_wp_error($result) && $result != 0) {
-                return wp_send_json_success(['message' => self::process_string($field_name) . '已修改']);
+                return wp_send_json_success(['message' => self::process_string($field_name) . '已更新']);
             } else {
-                return wp_send_json_error(['message' => '数据重复，没有修改']);
+                return wp_send_json_error(['error' => '更新失败', 'reason' => $wpdb->last_error,], 500);
             }
             wp_die();
         }
@@ -124,7 +123,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
 
             //是否有值
             if (empty($uuid)) {
-                return wp_send_json_error(['message' => '缺少uuid参数']);
+                return wp_send_json_error(['error' => '缺少uuid参数'], 400);
             }
 
             // 使用预处理语句构建SQL查询
@@ -139,21 +138,23 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 $result = $wpdb->query($sql);
                 $result_change = $wpdb->query($sql_change);
 
+                // 检查删除操作是否成功
                 if ($result === false || $result_change === false) {
-                    return wp_send_json_error(['message' => '删除数据时发生错误']);
+                    throw new Exception('删除数据时发生错误');
                 }
 
                 // 提交事务
                 $wpdb->query('COMMIT');
 
-                wp_send_json_success([
-                    'message' => '此设备已移除'
-                ]);
+                // 返回成功响应
+                wp_send_json_success(['message' => '此设备已移除']);
             } catch (Exception $e) {
-                // 回滚事务
+                // 发生异常时回滚事务
                 $wpdb->query('ROLLBACK');
-                return wp_send_json_error(['message' => $e->getMessage()]);
+                // 返回错误响应
+                wp_send_json_error(['error' => $e->getMessage(),'reason' => $wpdb->last_error,], 500);
             } finally {
+                // 结束请求
                 wp_die();
             }
         }
