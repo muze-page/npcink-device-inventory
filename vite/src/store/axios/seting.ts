@@ -63,7 +63,6 @@ export const importSQLData = async (name: string, data: string) => {
     //TODO:是覆盖式导入，还是只导入目前不存在的数据
     //只导入目前不存在的数据
   } catch (error: any) {
-    message.error("导入失败");
     // 将错误信息保存到全局状态中
     console.log("保存数据时出错：" + error.message);
     throw new Error("保存数据时出错：" + error.message);

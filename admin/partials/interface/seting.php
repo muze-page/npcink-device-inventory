@@ -259,6 +259,11 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                 }
             }
 
+            //检查是否有可更新的数据
+            if (empty($insert_data)) {
+                return wp_send_json_error(['error'=>'没有可更新的数据'], 500);
+            }
+
             //准备数据库表名
             $table_name = $wpdb->prefix . $name;
 

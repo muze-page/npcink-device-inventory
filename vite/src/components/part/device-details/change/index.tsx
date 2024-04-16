@@ -163,7 +163,7 @@ const App: React.FC<Props> = ({ uuid }) => {
     setLoading(true); // 开始加载
     try {
       const response = await searchChangeData(uuid); // 获取数据
-      console.log(response);
+      //console.log(response);
       if (response.data.success) {
         // 如果成功获取数据
         // 添加 key 并倒序
