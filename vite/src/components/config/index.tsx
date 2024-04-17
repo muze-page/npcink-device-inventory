@@ -211,18 +211,11 @@ const App: React.FC = () => {
           <Form.Item
             label="密码"
             name="password"
-            rules={[{ required: true, message: "客户端传输数据时的验证码" }]}
-            extra={"客户端传输数据时的验证码"}
+            extra={
+              "客户端传输数据时的验证码，重新设定即可重置，展示的是加密后的，无需理会"
+            }
           >
-            <Input.Password />
-          </Form.Item>
-          <Form.Item
-            label="删除插件数据"
-            name="delete_mysql"
-            valuePropName="checked"
-            extra={"删除插件的同时，删除数据库和设置"}
-          >
-            <Switch className=" bg-[#e3eaf2]" />
+            <Input.Password className="py-0" />
           </Form.Item>
           <Form.Item
             label="设备数量"
@@ -231,6 +224,15 @@ const App: React.FC = () => {
           >
             <InputNumber min={4} max={80} />
           </Form.Item>
+          <Form.Item
+            label="删除插件数据"
+            name="delete_mysql"
+            valuePropName="checked"
+            extra={"删除插件的同时，删除数据库和设置信息"}
+          >
+            <Switch  />
+          </Form.Item>
+
           <Form.Item wrapperCol={{ offset: 2, span: 22 }}>
             <Button type="primary" htmlType="submit" className=" bg-[#1677ff]">
               保存
