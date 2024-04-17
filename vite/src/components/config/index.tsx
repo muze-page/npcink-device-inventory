@@ -85,7 +85,12 @@ const App: React.FC = () => {
       return;
     }
     //使用传来的值组成数组，将输入框中的值添加进数组前面
-    const newDepartmentArr = [newDepartment, ...depArr];
+    //判断，若传来的是空值或空数组，则自己创建一个数组
+    const newDepartmentArr =
+      depArr && depArr.length === 0
+        ? [newDepartment]
+        : [...(depArr || []), newDepartment];
+
     setNewDepartment(""); //清空输入框
 
     //更新选项中的部门数组，直接使用setOption 可能无法通过option拿到最新值
@@ -230,7 +235,7 @@ const App: React.FC = () => {
             valuePropName="checked"
             extra={"删除插件的同时，删除数据库和设置信息"}
           >
-            <Switch  />
+            <Switch />
           </Form.Item>
 
           <Form.Item wrapperCol={{ offset: 2, span: 22 }}>
