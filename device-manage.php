@@ -9,14 +9,14 @@
  * that starts the plugin.
  *
  * @link              https://www.npc.ink
- * @since             1.0.0
+ * @since             2.0.0
  * @package           Dema
  *
  * @wordpress-plugin
- * Plugin Name:       魔法电脑设备管理
- * Plugin URI:        https://www.npc.ink
- * Description:       用于硬件设备管理用
- * Version:           1.0.6
+ * Plugin Name:       魔法电脑资产管理 - 测试版
+ * Plugin URI:        https://www.npc.ink/277900.html
+ * Description:       用于小型公司，网络管理员管理电脑资产用，支持数据录入，设备编号，变更记录，部门分组和前后端搜索查询，数据大盘等实用功能
+ * Version:           2.0.0
  * Author:            Npcink
  * Author URI:        https://www.npc.ink
  * License:           GPL-2.0+
@@ -35,7 +35,7 @@ if (!defined('WPINC')) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define('DEMA_VERSION', '1.0.6');
+define('DEMA_VERSION', '2.0.0');
 
 /**
  * The code that runs during plugin activation.

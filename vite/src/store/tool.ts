@@ -136,11 +136,16 @@ export const findOsTypeObj = (
 /**
  * 将字符串数组转换为对象，方便下拉选择
  */
-export const changeSelectData = (data: string[]) => {
-  return data.map((str) => ({
-    value: str,
-    label: str,
-  }));
+export const changeSelectData = (data: string[] | undefined) => {
+  if (data && data.length > 0) {
+    return data.map((str) => ({
+      value: str,
+      label: str,
+    }));
+  } else {
+    // 如果 defaultOption.department 不存在或为空数组，返回一个空数组或其他默认值
+    return [];
+  }
 };
 
 /**
@@ -149,7 +154,7 @@ export const changeSelectData = (data: string[]) => {
 
 export const findBValue = (arr: DataItemArr[], targetAValue: string) => {
   const foundObject = arr.find((obj) => obj.value === targetAValue);
-  return foundObject ? foundObject.label+'中' : '无状态';
+  return foundObject ? foundObject.label + "中" : "无状态";
 };
 /**
  * 

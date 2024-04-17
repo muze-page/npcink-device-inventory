@@ -20,7 +20,7 @@ export default defineConfig({
         chunkFileNames: "[name].js",
       },
     },
-    //sourcemap: true,//保留映射关系，方便调试
+    sourcemap: true,//保留映射关系，方便调试
   },
   //配置路径别名
   resolve: {

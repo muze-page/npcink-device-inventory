@@ -99,6 +99,12 @@ const App: React.FC = () => {
     postData(newOption);
   };
 
+  //当前部门信息
+  const DepartmentState =
+    option.department && option.department.length > 0
+      ? option.department.join("，")
+      : "暂无部门信息";
+
   //删除部门
   //下拉筛选 - 准备筛选数据
   const getSelectData = changeSelectData(option.department);
@@ -248,7 +254,7 @@ const App: React.FC = () => {
             label="添加部门"
             style={{ width: "100%" }}
             name="department"
-            extra={option.department.join("，")}
+            extra={DepartmentState}
           >
             <div>
               <Input
