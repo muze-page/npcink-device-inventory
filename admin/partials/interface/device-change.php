@@ -30,18 +30,18 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //id
             $user = isset($_POST['user']) ? sanitize_text_field($_POST['user']) : null; //用户名
             $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : null; //字段名
-            $msg = isset($_POST['msg']) ? sanitize_text_field($_POST['msg']) : null; //修改的值
+            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : null; //修改的值
 
             //是否缺少参数
             // 假设 $uuid, $user, $type, $data 是需要检查的变量
-            $variables = compact('uuid', 'user', 'type', 'msg');
+            $variables = compact('uuid', 'user', 'type', 'data');
 
             // 检查是否有参数为 null
             $null_param = array_search(null, $variables, true);
 
             // 如果有参数为 null，则返回相应的错误消息
             if ($null_param !== false) {
-                $param_names = ['uuid' => 'uuid - 设备唯一编号', 'user' => 'user - 变更用户名', 'type' => 'type - 变更类型', 'msg' => 'msg - 变更内容'];
+                $param_names = ['uuid' => 'uuid - 设备唯一编号', 'user' => 'user - 变更用户名', 'type' => 'type - 变更类型', 'data' => 'data - 变更内容'];
                 return wp_send_json_error(['error' => '缺少参数：' . $param_names[$null_param]], 400);
             }
 
@@ -53,13 +53,13 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
                     'uuid' => $uuid,
                     'user' => $user,
                     'type' => $type,
-                    'msg' => $msg
+                    'data' => $data
                 ),
                 array(
                     '%s', // uuid
                     '%s', // user
                     '%s', // type
-                    '%s'  // msg
+                    '%s'  // data
                 )
             );
 
@@ -102,7 +102,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
             $field_map = array(
                 'user' => 'user', //修改姓名
                 'type' => 'type', //类型
-                'msg' => 'msg', //修改描述
+                'data' => 'data', //修改描述
             );
 
             // 确定要更新的字段
@@ -124,10 +124,10 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
 
             if ($result !== false) {
                 // 返回更新成功的响应
-                return wp_send_json_success(['message' => '数据库更新成功']);
+                return wp_send_json_success(['message' => '已更新']);
             } else {
                 // 获取更新失败的原因
-                return wp_send_json_error(['error' => '数据库更新失败', 'reason' => $wpdb->last_error], 500);
+                return wp_send_json_error(['error' => '更新失败', 'reason' => $wpdb->last_error], 500);
             }
             wp_die();
         }

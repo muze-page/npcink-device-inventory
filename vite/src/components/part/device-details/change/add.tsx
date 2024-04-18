@@ -25,10 +25,10 @@ const AddChangeData: React.FC<ACDProps> = ({ uuid, onUpdata }) => {
     if (
       typeof values.user !== "string" ||
       typeof values.type !== "string" ||
-      typeof values.msg !== "string" ||
+      typeof values.data !== "string" ||
       !values.user.trim() ||
       !values.type.trim() ||
-      !values.msg.trim()
+      !values.data.trim()
     ) {
       message.error("请填写完整信息");
       return;
@@ -71,7 +71,7 @@ const AddChangeData: React.FC<ACDProps> = ({ uuid, onUpdata }) => {
         </Form.Item>
         <Form.Item
           label="变更说明"
-          name="msg"
+          name="data"
           rules={[{ required: true, message: "请输入变更内容" }]}
         >
           <TextArea placeholder="变更内容详情" />

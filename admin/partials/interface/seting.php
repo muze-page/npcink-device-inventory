@@ -283,7 +283,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                             'time' => isset($item['time']) ? $item['time'] :  0,
                             'user' => isset($item['user']) ? $item['user'] :  null,
                             'type' => isset($item['type']) ? $item['type'] :  null,
-                            'msg' => isset($item['msg']) ? $item['msg'] :  null,
+                            'data' => isset($item['data']) ? $item['data'] :  null,
                         );
                     }
                 }

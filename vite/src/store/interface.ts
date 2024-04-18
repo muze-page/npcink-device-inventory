@@ -71,7 +71,7 @@ export interface ComputerChangeReturn {
   time: string; //变更时间
   type: string; //变更类型
   user: string; //变更人
-  msg: string; //变更说明
+  data: string; //变更说明
   [key: string]: string;
 }
 

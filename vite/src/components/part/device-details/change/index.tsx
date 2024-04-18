@@ -131,8 +131,8 @@ const columns: (ColumnTypes[number] & {
 
   {
     title: "变更说明",
-    dataIndex: "msg",
-    key: "msg",
+    dataIndex: "data",
+    key: "data",
     editable: true,
   },
   {
@@ -230,8 +230,8 @@ const App: React.FC<Props> = ({ uuid }) => {
           case "type":
             changeMySqlData(row.id, "type", row.type); //更新类型
             break;
-          case "msg":
-            changeMySqlData(row.id, "msg", row.msg); //更新描述
+          case "data":
+            changeMySqlData(row.id, "data", row.data); //更新描述
             break;
           default:
             break;

@@ -92,7 +92,7 @@ class Dema_Activator extends DEMA_Admin_Interface
             time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			user TEXT,
 			type TEXT,
-            msg TEXT,
+            data TEXT,
             PRIMARY KEY (id)
             
         );";
@@ -110,12 +110,12 @@ class Dema_Activator extends DEMA_Admin_Interface
 	{
 
 		$option = array(
-			"route" => "device-post-data",
-			"password" => "9527",
-			"device_show_number" => 8,
-			"delete_mysql" => false,
-			"department" => array("开发部", "推广部", "运营部", "默认"),
-			"public_search_route" => "public-search-page"
+			"route" => "device-post-data",//默认路由
+			"password" => "9527",//默认密码
+			"device_show_number" => 10,//默认每页显示数量
+			"delete_mysql" => false,//默认是否删除数据库
+			"department" => array("开发部", "推广部", "运营部", "默认"),//默认部门
+			"public_search_route" => "public-search-page",//默认公开搜索路由
 		);
 		//保存
 		update_option(self::$option, $option);
