@@ -12,7 +12,7 @@ import {
   message,
   Popconfirm,
 } from "antd";
-import { defaultOption, Site } from "@/store";
+import { defaultOption, Site,TableDataName,TableChangeName } from "@/store";
 import {
   saveSQLData,
   remove_department,
@@ -249,13 +249,13 @@ const App: React.FC = () => {
             label="基础数据"
             extra={"仅导入当前没有的设备数据，导出全部数据"}
           >
-            <ImportExport data="npcink_device_data" />
+            <ImportExport name={TableDataName} />
           </Form.Item>
           <Form.Item
             label="变更数据"
             extra={"仅导入当前没有的设备数据，导出全部数据"}
           >
-            <ImportExport data="npcink_device_change" />
+            <ImportExport name={TableChangeName} />
           </Form.Item>
 
           <Form.Item

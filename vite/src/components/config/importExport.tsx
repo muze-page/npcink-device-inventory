@@ -2,15 +2,15 @@
 import { useState } from "react";
 import { Space, Button, message } from "antd";
 import { exportSQLData, importSQLData } from "@/store/axios";
-
+import {TableDataName,TableChangeName} from "@/store/index";
 interface Props {
-  data: string; //数据库表名
+  name: string; //数据库表名
   /**
    * 基础数据：npcink_device_data
    * 变更数据：npcink_device_change
    */
 }
-const App: React.FC<Props> = ({ data }) => {
+const App: React.FC<Props> = ({ name }) => {
   //导入数据
   const [jsonContent, setJsonContent] = useState(null);
 
@@ -34,14 +34,14 @@ const App: React.FC<Props> = ({ data }) => {
       return;
     } else {
       const jsonString = JSON.stringify(jsonContent);
-      importSQLData(data, jsonString);
+      importSQLData(name, jsonString);
       return;
     }
   };
 
   //导出数据
   const downloadData = async () => {
-    const jsonData = await exportSQLData(data);
+    const jsonData = await exportSQLData(name);
     //如果没有拿到值，就此结束
     if (!jsonData) {
       return;
@@ -53,11 +53,11 @@ const App: React.FC<Props> = ({ data }) => {
 
     const link = document.createElement("a");
     link.href = url;
-    if (data == "npcink_device_data") {
+    if (name == TableDataName) {
       link.download = "硬件基础数据-导出文件.json";
     }
 
-    if (data == "npcink_device_change") {
+    if (name == TableChangeName) {
       link.download = "硬件变更数据-导出文件.json";
     }
     link.click();
