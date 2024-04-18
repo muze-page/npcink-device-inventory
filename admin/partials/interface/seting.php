@@ -82,14 +82,44 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     return $carry && is_string($item);
                 }, true);
             }
+
+            //提示
+            function findValueByKey($key, $array)
+            {
+                // 检查变量 $key 是否存在于数组的键中
+                if (array_key_exists($key, $array)) {
+                    // 返回与 $key 相匹配的键名的值
+                    return $array[$key];
+                } else {
+                    // 如果没有找到匹配项，则返回 null 或者其他自定义的值
+                    return "未找到匹配项";
+                }
+            }
+
             // 需要验证的属性列表
             $required_properties = ['route', 'password', 'delete_mysql', 'department', 'device_show_number', 'public_search_route'];
+
+            //提示
+            $prompt = array(
+                'route' => '请输入路由',
+                'password' => '请输入密码',
+                'public_search_route'=> '请输入路由',
+                'delete_mysql'=> '请选择删除数据库的状态',
+                'department'=> '请提供部门',
+                'device_show_number'=> '请选择显示设备数量',
+                'public_search_route'=> '请输入公共查询页面路由',
+            );
+
+
 
             // 循环遍历需要验证的属性
             foreach ($required_properties as $property) {
                 // 检查属性是否存在
                 if (!property_exists($object, $property)) {
-                    return "缺少属性：$property";
+                    // 调用函数并输出提示
+                    $result = findValueByKey($property, $prompt);
+
+                    return "缺少属性：$property" .' - '. $result;
                 }
 
                 // 根据属性类型进行验证
