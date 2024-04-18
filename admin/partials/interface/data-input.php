@@ -245,16 +245,14 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
          */
         private static function password_verification($input_Password)
         {
-            $setting_Password =  self::get_seting('password'); //设置的密码
-            //验证
+            $setting_Password = self::get_seting('password'); // 获取设置的密码
+
+            // 使用 wp_check_password 直接验证密码
             $valid_password = wp_check_password($input_Password, $setting_Password);
 
-            if ($valid_password) {
-                return true;
-            } else {
-                return false;
-            }
+            return $valid_password; // 返回验证结果
         }
+
 
 
         /**
