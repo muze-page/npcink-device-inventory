@@ -42,14 +42,14 @@ const App: React.FC = () => {
     <>
       <Space direction="vertical" size="middle" style={{ display: "flex" }}>
         <Input
-          addonBefore="后台设置下的验证码"
-          placeholder="输入编号或者姓名"
+          addonBefore="密码"
+          placeholder="后台设置下的密码"
           style={{ width: 300 }}
           value={inputValue} // 绑定输入框的值到状态变量
           onChange={handleInputChange} // 处理输入框值的变化
         />
         <Search
-        addonBefore="姓名/编号"
+        
           placeholder="输入编号或者姓名"
           onSearch={onSearch}
           style={{ width: 300 }}

@@ -57,14 +57,16 @@ const App: React.FC<Props> = ({ data }) => {
     // let isSaved = false; // 标志是否成功保存过
 
     for (const key in fieldsValue) {
+     //两值是否同时存在
       if (fieldsValue.hasOwnProperty(key) && data.hasOwnProperty(key)) {
+        //两值是否不同
         if (fieldsValue[key] !== data[key]) {
           isChanged = true; // 一旦发现有变化，设置标志为 true
 
           //console.log("a 对象中键值对不同:", key, fieldsValue[key]);
 
           await changeMySql(data.uuid, key, fieldsValue[key]);
-          changeReal(key, fieldsValue[key]);
+          changeReal(key, fieldsValue[key]);//更新上下文数据
 
           //isSaved = success; // 设置保存成功的标志为 true
         }

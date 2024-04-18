@@ -68,7 +68,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
 
             // 检查要更新的值是否与数据库中原本的值相同
             if ($current_value === $data) {
-                return wp_send_json_error(['error' => self::process_string($field_name) . '未改变，无需更新', 'reason' => $current_value], 500);
+                 wp_send_json_error(['error' => self::process_string($field_name) . '未改变，无需更新', 'reason' => $current_value], 500);
             }
 
 
