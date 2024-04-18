@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 // https://vitejs.dev/config/
 
-const site = "wp-content/plugins/device-manage/";
+const site = "wp-content/plugins/magick-device-manage/";
 
 export default defineConfig({
   plugins: [react()],

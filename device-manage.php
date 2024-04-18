@@ -13,7 +13,7 @@
  * @package           Dema
  *
  * @wordpress-plugin
- * Plugin Name:       魔法电脑资产管理 - 测试版
+ * Plugin Name:       魔法电脑资产管理
  * Plugin URI:        https://www.npc.ink/277900.html
  * Description:       用于小型公司，网络管理员管理电脑资产用，支持数据录入，设备编号，变更记录，部门分组和前后端搜索查询，数据大盘等实用功能
  * Version:           2.0.0

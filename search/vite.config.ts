@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 //配置路径
 import path from "path";
-const site = "wp-content/plugins/device-manage/";
+const site = "wp-content/plugins/magick-device-manage/";
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
