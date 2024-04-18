@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Provide a admin area view for the plugin
+ * 为插件提供管理区域视图
  *
- * This file is used to markup the admin-facing aspects of the plugin.
+ *该文件用于标记插件面向管理的方面。
  *
  * @link       https://www.npc.ink
  * @since      1.0.0

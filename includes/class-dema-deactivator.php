@@ -11,9 +11,9 @@
  */
 
 /**
- * Fired during plugin deactivation.
+ * 在插件停用期间激发。
  *
- * This class defines all code necessary to run during the plugin's deactivation.
+ *这个类定义了在插件停用期间运行所需的所有代码。
  *
  * @since      1.0.0
  * @package    Dema

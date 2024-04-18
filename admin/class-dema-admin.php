@@ -109,20 +109,17 @@ class Dema_Admin
 	{
 		//接口文件
 		require_once plugin_dir_path(__FILE__) . 'partials/dema-admin-interface.php';
-		
+
 		//菜单
 		require_once plugin_dir_path(__FILE__) . 'partials/dema-admin-menu.php';
-
-		
 	}
-	public  function run()
+	
+	public function run()
 	{
 		//添加接口
 		DEMA_Admin_Interface::run();
 
 		//添加菜单
 		DEMA_Admin_Menu::run_menu($this->plugin_name, $this->version);
-
-		
 	}
 }
