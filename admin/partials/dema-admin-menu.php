@@ -78,7 +78,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
             $pf_api_translation_array = array(
                 'site' => get_home_url(), //首页网址
                 'ajaxurl' => admin_url('admin-ajax.php'),
-                'data' => self::get_custom_table_data(), //传递变量
+                'data' => self::get_device_data(), //传递变量
                 'option' => get_option(self::$option), //传递选项
             );
             wp_localize_script($name, 'dataLocal', $pf_api_translation_array); //传给vite项目
@@ -99,22 +99,10 @@ if (!class_exists('DEMA_Admin_Menu')) {
          * 获取数据
          */
         // 自定义函数，用于从表中获取数据
-        public static function get_custom_table_data()
+        public static function get_device_data()
         {
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_data;
-
-            // 获取所有数据
-            $result = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);
-
-            return $result;
-        }
-
-        //获取变更数据
-        public static function get_custom_table_change()
-        {
-            global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_change;
 
             // 获取所有数据
             $result = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);

@@ -6,8 +6,8 @@ import { exportSQLData, importSQLData } from "@/store/axios";
 interface Props {
   data: string; //数据库表名
   /**
-   * 基础数据：custom_table
-   * 变更数据：custom_change
+   * 基础数据：npcink_device_data
+   * 变更数据：npcink_device_change
    */
 }
 const App: React.FC<Props> = ({ data }) => {
@@ -46,18 +46,18 @@ const App: React.FC<Props> = ({ data }) => {
     if (!jsonData) {
       return;
     }
-    
+
     const jsonString = JSON.stringify(jsonData);
     const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement("a");
     link.href = url;
-    if (data == "custom_table") {
+    if (data == "npcink_device_data") {
       link.download = "硬件基础数据-导出文件.json";
     }
 
-    if (data == "custom_change") {
+    if (data == "npcink_device_change") {
       link.download = "硬件变更数据-导出文件.json";
     }
     link.click();

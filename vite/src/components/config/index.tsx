@@ -221,7 +221,7 @@ const App: React.FC = () => {
               "客户端传输数据时的验证码，重新设定即可重置，展示的是加密后的，无需理会"
             }
           >
-           <Input.Password className="py-0" />
+            <Input.Password className="py-0" />
           </Form.Item>
           <Form.Item
             label="设备数量"
@@ -249,13 +249,13 @@ const App: React.FC = () => {
             label="基础数据"
             extra={"仅导入当前没有的设备数据，导出全部数据"}
           >
-            <ImportExport data="custom_table" />
+            <ImportExport data="npcink_device_data" />
           </Form.Item>
           <Form.Item
             label="变更数据"
             extra={"仅导入当前没有的设备数据，导出全部数据"}
           >
-            <ImportExport data="custom_change" />
+            <ImportExport data="npcink_device_change" />
           </Form.Item>
 
           <Form.Item

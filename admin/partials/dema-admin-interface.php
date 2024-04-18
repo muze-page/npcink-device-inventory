@@ -8,13 +8,13 @@ if (!class_exists('DEMA_Admin_Interface')) {
     {
         
         //选项
-        public static $option = "device_object_option";
+        public static $option = "device_manaje_option";
 
         //基本数据表
-        public static $table_data = "custom_table";
+        public static $table_data = "npcink_device_data";
 
         //变更表
-        public static $table_change = "custom_change";
+        public static $table_change = "npcink_device_change";
 
         //运行
         public static function run()
