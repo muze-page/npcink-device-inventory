@@ -2,6 +2,11 @@
   "name": "admin",
   "private": true,
   "version": "0.0.1",
+  "author": {
+    "name": "Npcink",
+    "email": "1355471563@qq.com"
+  },
+  "description": "后台管理界面项目",
   "type": "module",
   "scripts": {
     "dev": "vite",

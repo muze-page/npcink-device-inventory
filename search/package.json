@@ -2,6 +2,11 @@
   "name": "public-search-page",
   "private": true,
   "version": "0.0.1",
+  "author": {
+    "name": "Npcink",
+    "email": "1355471563@qq.com"
+  },
+  "description": "前端公共信息搜索项目",
   "type": "module",
   "scripts": {
     "dev": "vite",

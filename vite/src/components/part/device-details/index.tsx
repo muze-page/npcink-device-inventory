@@ -44,18 +44,9 @@ const App: React.FC<Props> = ({ data }) => {
       ),
       children: <Info data={data.data} time={data.time} />,
     },
+   
     {
       key: "2",
-      label: (
-        <span>
-          <ApartmentOutlined />
-          变更记录
-        </span>
-      ),
-      children: <Change uuid={data.uuid} />,
-    },
-    {
-      key: "3",
       label: (
         <span>
           <RadarChartOutlined />
@@ -63,6 +54,16 @@ const App: React.FC<Props> = ({ data }) => {
         </span>
       ),
       children: <Detailed data={data.data} />,
+    },
+    {
+      key: "3",
+      label: (
+        <span>
+          <ApartmentOutlined />
+          变更记录
+        </span>
+      ),
+      children: <Change uuid={data.uuid} />,
     },
     {
       key: "4",
