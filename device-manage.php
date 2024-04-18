@@ -91,4 +91,4 @@ add_filter('plugin_action_links_' . plugin_basename(__FILE__), function ($links)
 });
 
 /**开发用 */
-require plugin_dir_path(__FILE__) . 'index.php';
+//require plugin_dir_path(__FILE__) . 'index.php';
