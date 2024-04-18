@@ -20,7 +20,7 @@
  * @subpackage Dema/includes
  * @author     Npcink <1355471563@qq.com>
  */
-class Dema_Activator
+class Dema_Activator extends DEMA_Admin_Interface
 {
 
 	/**
@@ -36,6 +36,10 @@ class Dema_Activator
 		self::device_manage_create_table();
 		//数据变更表
 		self::device_manage_create_change();
+		//判断，所有选项都是空的，才会给初始值
+		if (get_option(self::$option) == false) {
+			self::device_manage_create_option();
+		}
 	}
 	//新建数据库表 - 存储数据用
 	// 在插件激活时创建数据库表
@@ -98,12 +102,22 @@ class Dema_Activator
 			dbDelta($sql);
 		}
 	}
+
+	/**
+	 * 创建选项初始值
+	 */
+	public static function device_manage_create_option()
+	{
+
+		$option = array(
+			"route" => "device-post-data",
+			"password" => "9527",
+			"device_show_number" => 8,
+			"delete_mysql" => false,
+			"department" => array("开发部", "推广部", "运营部", "默认"),
+			"public_search_route" => "public-search-page"
+		);
+		//保存
+		update_option(self::$option, $option);
+	}
 }
-/**
- * 新建表
- * id -唯一ID
- * obj_id - 唯一识别号
- * obj_time 变更时间
- * obj_new 变更后的值
- * obj_old 变更前的值
- */
