@@ -1,15 +1,14 @@
 <?php
 //添加菜单
 if (!class_exists('DEMA_Admin_Menu')) {
-    class DEMA_Admin_Menu
+    class DEMA_Admin_Menu extends DEMA_Admin_Interface
     {
-        //选项
-        public static $option = "device_object_option";
+
 
         public static $plugin_name; //插件名
         public static $plugin_version; //插件版本
 
-        public static function run($name, $version)
+        public static function run_menu($name, $version)
         {
             //传值
             self::$plugin_name = $name;
@@ -22,7 +21,6 @@ if (!class_exists('DEMA_Admin_Menu')) {
 
             //对js文件进行module接入
             add_filter('script_loader_tag', array(__CLASS__, 'refund_type_script'), 10, 2);
-
         }
         //创建菜单
         public static function dema_menu()
@@ -104,7 +102,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
         public static function get_custom_table_data()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . 'custom_table';
+            $table_name = $wpdb->prefix . self::$table_data;
 
             // 获取所有数据
             $result = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);
@@ -116,7 +114,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
         public static function get_custom_table_change()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . 'custom_change';
+            $table_name = $wpdb->prefix . self::$table_change;
 
             // 获取所有数据
             $result = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);

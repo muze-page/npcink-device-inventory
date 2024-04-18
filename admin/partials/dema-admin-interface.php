@@ -6,8 +6,15 @@
 if (!class_exists('DEMA_Admin_Interface')) {
     class DEMA_Admin_Interface
     {
+        
         //选项
         public static $option = "device_object_option";
+
+        //基本数据表
+        public static $table_data = "custom_table";
+
+        //变更表
+        public static $table_change = "custom_change";
 
         //运行
         public static function run()

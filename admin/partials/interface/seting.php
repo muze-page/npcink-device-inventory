@@ -103,11 +103,11 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             $prompt = array(
                 'route' => '请输入路由',
                 'password' => '请输入密码',
-                'public_search_route'=> '请输入路由',
-                'delete_mysql'=> '请选择删除数据库的状态',
-                'department'=> '请提供部门',
-                'device_show_number'=> '请选择显示设备数量',
-                'public_search_route'=> '请输入公共查询页面路由',
+                'public_search_route' => '请输入路由',
+                'delete_mysql' => '请选择删除数据库的状态',
+                'department' => '请提供部门',
+                'device_show_number' => '请选择显示设备数量',
+                'public_search_route' => '请输入公共查询页面路由',
             );
 
 
@@ -119,7 +119,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     // 调用函数并输出提示
                     $result = findValueByKey($property, $prompt);
 
-                    return "缺少属性：$property" .' - '. $result;
+                    return "缺少属性：$property" . ' - ' . $result;
                 }
 
                 // 根据属性类型进行验证
@@ -238,11 +238,11 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
 
             // 构建插入数据的数组
             $insert_data = array();
-            if ($name == "custom_table") {
+            if ($name == self::$table_data) {
                 foreach ($data as $item) {
                     //是否有重复数据
                     $uuid = isset($item['uuid']) ? $item['uuid'] : null;
-                    $table_name = $wpdb->prefix . 'custom_table';
+                    $table_name = $wpdb->prefix . self::$table_data;
                     $existingData = $wpdb->get_row(
                         $wpdb->prepare(
                             "SELECT * FROM $table_name WHERE uuid = %s;",
@@ -264,11 +264,11 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     }
                 }
             }
-            if ($name == "custom_change") {
+            if ($name == self::$table_change) {
                 foreach ($data as $item) {
                     //是否有重复数据
                     $time = isset($item['time']) ? $item['time'] : null;
-                    $table_name = $wpdb->prefix . 'custom_change';
+                    $table_name = $wpdb->prefix . self::$table_change;
                     $existingData = $wpdb->get_row(
                         $wpdb->prepare(
                             "SELECT * FROM $table_name WHERE time = %s;",
@@ -326,7 +326,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
         public static function remove_department_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . 'custom_table';
+            $table_name = $wpdb->prefix . self::$table_data;
             // 获取通过 Ajax POST 请求传递的对象数据
             $data = isset($_POST['data']) ? ($_POST['data']) : null;
             // 检查是否收到了正确的数据

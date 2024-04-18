@@ -24,7 +24,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
         public static function add_change_data_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . 'custom_change';
+            $table_name = $wpdb->prefix . self::$table_change;
 
             // 获取前端传递的参数并进行输入验证，如果有值，肯定是字符串类型
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //id
@@ -67,7 +67,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
             if ($result !== false) {
                 return wp_send_json_success(['message' => '插入变更数据成功']);
             } else {
-                return wp_send_json_error(['error' => '插入变更数据失败','reason' => $wpdb->last_error,], 500);
+                return wp_send_json_error(['error' => '插入变更数据失败', 'reason' => $wpdb->last_error,], 500);
             }
             // 插入成功，可以进行其他操作
             wp_die();
@@ -80,7 +80,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
         public static function modify_change_data_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . 'custom_change';
+            $table_name = $wpdb->prefix . self::$table_change;
             // 获取前端传递的参数并进行输入验证
             $id = isset($_POST['id']) ? sanitize_text_field($_POST['id']) : null; //id
             $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : null; //字段名
@@ -138,7 +138,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
         public static function search_change_data_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . 'custom_change';
+            $table_name = $wpdb->prefix . self::$table_change;
 
             //拿到值
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //字段名
@@ -160,7 +160,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
                 return wp_send_json_success(['message' => '查询成功', 'data' =>  $object,]);
             } else {
                 // 返回空数组表示没有找到符合条件的记录
-                return wp_send_json_error(['error' => '暂未查到变更记录','reason' => $wpdb->last_error, 'data' =>  [],], 500);
+                return wp_send_json_error(['error' => '暂未查到变更记录', 'reason' => $wpdb->last_error, 'data' =>  [],], 500);
             }
         }
     }

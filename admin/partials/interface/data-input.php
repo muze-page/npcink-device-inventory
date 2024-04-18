@@ -50,7 +50,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
         public static function query_data($request)
         {
             global $wpdb;
-            self::$table_name = $wpdb->prefix . "custom_table";
+            self::$table_name = $wpdb->prefix . self::$table_data;
             header('Access-Control-Allow-Origin: *');
 
             // 获取传递过来的字符串参数并进行安全过滤
@@ -134,7 +134,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
         public static function submit_data_callback($request)
         {
             global $wpdb;
-            self::$table_name = $wpdb->prefix . "custom_table";
+            self::$table_name = $wpdb->prefix . self::$table_data;
             header('Access-Control-Allow-Origin: *');
 
             //拿到传来的姓名，检查字符串
@@ -311,7 +311,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 );
 
                 if ($result !== false) {
-                    return wp_send_json_success(['message' => '更新成功','data'=>$result]);
+                    return wp_send_json_success(['message' => '更新成功', 'data' => $result]);
                 } else {
                     throw new Exception('更新失败');
                 }

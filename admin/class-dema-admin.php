@@ -121,7 +121,7 @@ class Dema_Admin
 		DEMA_Admin_Interface::run();
 
 		//添加菜单
-		DEMA_Admin_Menu::run($this->plugin_name, $this->version);
+		DEMA_Admin_Menu::run_menu($this->plugin_name, $this->version);
 
 		
 	}

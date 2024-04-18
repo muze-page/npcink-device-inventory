@@ -21,7 +21,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
         public static function modify_device_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . 'custom_table';
+            $table_name = $wpdb->prefix . self::$table_data;
 
             // 获取前端传递的参数并进行输入验证
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //唯一标识符
@@ -55,7 +55,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
 
             //检查字段是否为空
             if (empty($field_name)) {
-                return wp_send_json_error(['error' => '没有找到字段名 - '.$type], 400);
+                return wp_send_json_error(['error' => '没有找到字段名 - ' . $type], 400);
             }
 
             // 查询数据库中原本的值
@@ -115,8 +115,8 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
         public static  function delt_device_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . 'custom_table';
-            $table_change = $wpdb->prefix . 'custom_change';
+            $table_name = $wpdb->prefix . self::$table_data;
+            $table_change = $wpdb->prefix . self::$table_change;
 
             // 获取前端传递的参数并进行输入验证
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null;
@@ -152,7 +152,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 // 发生异常时回滚事务
                 $wpdb->query('ROLLBACK');
                 // 返回错误响应
-                wp_send_json_error(['error' => $e->getMessage(),'reason' => $wpdb->last_error,], 500);
+                wp_send_json_error(['error' => $e->getMessage(), 'reason' => $wpdb->last_error,], 500);
             } finally {
                 // 结束请求
                 wp_die();

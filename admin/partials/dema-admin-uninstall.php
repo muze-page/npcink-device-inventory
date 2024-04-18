@@ -1,7 +1,7 @@
 <?php
 //删除插件时执行
 if (!class_exists('Mare_Admin_Uninstall')) {
-    class Mare_Admin_Uninstall
+    class Mare_Admin_Uninstall extends DEMA_Admin_Interface
     {
         //执行
         public static function run()
@@ -16,7 +16,7 @@ if (!class_exists('Mare_Admin_Uninstall')) {
 
             //进行判断
             if ($config) {
-                $result = ['custom_table', 'custom_change'];
+                $result = [self::$table_data, self::$table_change];
                 self::delete_sql($result); //移除数据库
                 self::delete_option(); //移除选项值
             }
@@ -56,7 +56,7 @@ if (!class_exists('Mare_Admin_Uninstall')) {
         public static function delete_option()
         {
             // 删除插件设置
-            delete_option('device_object_option');
+            delete_option(self::$option);
         }
     }
 }
