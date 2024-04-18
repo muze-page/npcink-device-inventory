@@ -49,7 +49,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 		global $wpdb;
 
 		// 定义表名
-		$table_name = $wpdb->prefix .  self::$table_data;
+		$table_name = $wpdb->prefix .  self::$table_data_name;
 
 		// 检查是否已存在同名表
 		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
@@ -81,7 +81,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 		global $wpdb;
 
 		// 定义表名
-		$table_name = $wpdb->prefix .  self::$table_change;
+		$table_name = $wpdb->prefix .  self::$table_change_name;
 
 		// 检查是否已存在同名表
 		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {

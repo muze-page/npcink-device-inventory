@@ -21,7 +21,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
         public static function modify_device_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_data;
+            $table_name = $wpdb->prefix . self::$table_data_name;
 
             // 获取前端传递的参数并进行输入验证
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //唯一标识符
@@ -115,8 +115,8 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
         public static  function delt_device_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_data;
-            $table_change = $wpdb->prefix . self::$table_change;
+            $data_name = $wpdb->prefix . self::$table_data_name;
+            $change_name = $wpdb->prefix . self::$table_change_name;
 
             // 获取前端传递的参数并进行输入验证
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null;
@@ -127,8 +127,8 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
             }
 
             // 使用预处理语句构建SQL查询
-            $sql = $wpdb->prepare("DELETE FROM $table_name WHERE uuid = %s", $uuid);
-            $sql_change = $wpdb->prepare("DELETE FROM $table_change WHERE uuid = %s", $uuid);
+            $sql = $wpdb->prepare("DELETE FROM $data_name WHERE uuid = %s", $uuid);
+            $sql_change = $wpdb->prepare("DELETE FROM $change_name WHERE uuid = %s", $uuid);
 
             // 开始事务
             $wpdb->query('START TRANSACTION');

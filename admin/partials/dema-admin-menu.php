@@ -42,15 +42,11 @@ if (!class_exists('DEMA_Admin_Menu')) {
 
         public static function menu_displays()
         {
-
-
-
 ?>
             <div class="wrap">
                 <!--标题-->
-
                 <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-                <div id='root'>出现未知错误，请联系插件开发者</div>
+                <div id='root'>出现未知错误，请联系管理员</div>
             </div>
 <?php
 
@@ -80,6 +76,8 @@ if (!class_exists('DEMA_Admin_Menu')) {
                 'ajaxurl' => admin_url('admin-ajax.php'),
                 'data' => self::get_device_data(), //传递变量
                 'option' => get_option(self::$option), //传递选项
+                'table_data_name' => self::$table_data_name, //设备数据表名
+                'table_change_name' => self::$table_change_name, //变更数据表名
             );
             wp_localize_script($name, 'dataLocal', $pf_api_translation_array); //传给vite项目
         }
@@ -102,7 +100,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
         public static function get_device_data()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_data;
+            $table_name = $wpdb->prefix . self::$table_data_name;
 
             // 获取所有数据
             $result = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);

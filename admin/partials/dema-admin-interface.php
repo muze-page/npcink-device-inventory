@@ -6,15 +6,15 @@
 if (!class_exists('DEMA_Admin_Interface')) {
     class DEMA_Admin_Interface
     {
-        
+
         //选项
         public static $option = "device_manaje_option";
 
         //基本数据表
-        public static $table_data = "npcink_device_data";
+        public static $table_data_name = "npcink_device_data";
 
         //变更表
-        public static $table_change = "npcink_device_change";
+        public static $table_change_name = "npcink_device_change";
 
         //运行
         public static function run()
@@ -35,9 +35,9 @@ if (!class_exists('DEMA_Admin_Interface')) {
             require_once plugin_dir_path(__FILE__) . 'interface/device-seting.php';
             DEMA_Admin_Interface_Device_Seting::run();
 
-             //添加前端公共搜索页接口
-             require_once plugin_dir_path(__FILE__) . 'interface/add-page.php';
-             DEMA_Admin_Interface_Add_Page::run();
+            //添加前端公共搜索页接口
+            require_once plugin_dir_path(__FILE__) . 'interface/add-page.php';
+            DEMA_Admin_Interface_Add_Page::run();
         }
 
 

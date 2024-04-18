@@ -16,7 +16,7 @@ if (!class_exists('Mare_Admin_Uninstall')) {
 
             //进行判断
             if ($config) {
-                $result = [self::$table_data, self::$table_change];
+                $result = [self::$table_data_name, self::$table_change_name];
                 self::delete_sql($result); //移除数据库
                 self::delete_option(); //移除选项值
             }

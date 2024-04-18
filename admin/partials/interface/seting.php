@@ -238,11 +238,11 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
 
             // 构建插入数据的数组
             $insert_data = array();
-            if ($name == self::$table_data) {
+            if ($name == self::$table_data_name) {
                 foreach ($data as $item) {
                     //是否有重复数据
                     $uuid = isset($item['uuid']) ? $item['uuid'] : null;
-                    $table_name = $wpdb->prefix . self::$table_data;
+                    $table_name = $wpdb->prefix . self::$table_data_name;
                     $existingData = $wpdb->get_row(
                         $wpdb->prepare(
                             "SELECT * FROM $table_name WHERE uuid = %s;",
@@ -264,11 +264,11 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     }
                 }
             }
-            if ($name == self::$table_change) {
+            if ($name == self::$table_change_name) {
                 foreach ($data as $item) {
                     //是否有重复数据
                     $time = isset($item['time']) ? $item['time'] : null;
-                    $table_name = $wpdb->prefix . self::$table_change;
+                    $table_name = $wpdb->prefix . self::$table_change_name;
                     $existingData = $wpdb->get_row(
                         $wpdb->prepare(
                             "SELECT * FROM $table_name WHERE time = %s;",
@@ -326,7 +326,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
         public static function remove_department_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_data;
+            $table_name = $wpdb->prefix . self::$table_data_name;
             // 获取通过 Ajax POST 请求传递的对象数据
             $data = isset($_POST['data']) ? ($_POST['data']) : null;
             // 检查是否收到了正确的数据

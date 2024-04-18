@@ -13,7 +13,9 @@ export const option = {
 const data = {
   data: DemoData,
   option: option, //选项
-  ajaxurl: "/wp-admin/admin-ajax.php", //代理
-  site: "http://localhost:10048",
+  ajaxurl: "http://localhost:10048/wp-admin/admin-ajax.php", //代理
+  site: "http://localhost:10048", //网址
+  table_data_name: "npcink_device_data", //设备数据表名
+  table_change_name: "npcink_device_change", //变更表名
 };
 export default data;
