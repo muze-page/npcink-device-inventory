@@ -6,7 +6,7 @@ import { Table, Form, Input, Empty } from "antd";
 import type { InputRef } from "antd";
 import type { FormInstance } from "antd/es/form";
 
-import { changeMySqlData, searchChangeData } from "@/store/axios";
+import { changeMySqlData, searchChangeData } from "@/axios";
 
 import { ComputerChangeReturn } from "@/store/interface";
 

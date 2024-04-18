@@ -12,12 +12,8 @@ import {
   message,
   Popconfirm,
 } from "antd";
-import { defaultOption, Site,TableDataName,TableChangeName } from "@/store";
-import {
-  saveSQLData,
-  remove_department,
-  addPublicSearchPage,
-} from "@/store/axios";
+import { defaultOption, Site, TableDataName, TableChangeName } from "@/store";
+import { saveSQLData, remove_department, addPublicSearchPage } from "@/axios";
 
 import ImportExport from "@/components/config/importExport";
 import { OptionType } from "@/store/interface";

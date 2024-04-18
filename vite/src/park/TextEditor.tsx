@@ -3,7 +3,7 @@ import { useState, useContext, useEffect } from "react";
 import { Input } from "antd";
 import { EditOutlined } from "@ant-design/icons";
 import { AppContext } from "@/store/setingContext";
-import { changeMySql } from "@/store/axios";
+import { changeMySql } from "@/axios";
 
 interface PropsEditor {
   default_start?: string; // 初始值

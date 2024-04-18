@@ -1,8 +1,8 @@
 //导入导出变更数据
 import { useState } from "react";
 import { Space, Button, message } from "antd";
-import { exportSQLData, importSQLData } from "@/store/axios";
-import {TableDataName,TableChangeName} from "@/store/index";
+import { exportSQLData, importSQLData } from "@/axios";
+import { TableDataName, TableChangeName } from "@/store/index";
 interface Props {
   name: string; //数据库表名
   /**

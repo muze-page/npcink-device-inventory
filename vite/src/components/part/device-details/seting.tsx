@@ -4,7 +4,7 @@
 import { useContext, useState, useEffect } from "react";
 import { Form, Button, Input, Select, message } from "antd";
 import { AppContext } from "@/store/setingContext";
-import { deltSQLData, changeMySql } from "@/store/axios";
+import { deltSQLData, changeMySql } from "@/axios";
 import { MysqlDeviceChange } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
 import { defaultOption } from "@/store";

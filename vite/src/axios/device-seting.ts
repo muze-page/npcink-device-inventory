@@ -3,7 +3,7 @@
  */
 import { Ajaxurl } from "@/store";
 import { MysqlChange, axiosType } from "@/store/interface";
-import { instance, addParamIfDefined } from "@/store/axios/public";
+import { instance, addParamIfDefined } from "@/axios/public";
 /**
  * 修改设备数据
  */
@@ -22,17 +22,16 @@ export const changeMySql = async (uuid: string, type: string, data: string) => {
   addParamIfDefined(params, "type", type);
 
   try {
-  const res =   await instance.post(Ajaxurl, params) as axiosType;
+    const res = (await instance.post(Ajaxurl, params)) as axiosType;
 
-  //TODO:自定义返回错误形式？
- //if(res.success){
- //  return res.success//返回状态
- //} else{
- //  message.warning(res.data.message);
- //}
-  
- return res.success//返回状态
-  
+    //TODO:自定义返回错误形式？
+    //if(res.success){
+    //  return res.success//返回状态
+    //} else{
+    //  message.warning(res.data.message);
+    //}
+
+    return res.success; //返回状态
   } catch (error: any) {
     console.log("保存设置选项时出错：" + error.message);
     throw error; // 重新抛出错误
@@ -47,8 +46,6 @@ export const deltSQLData = async (uuid: string) => {
 
   try {
     await instance.post<MysqlChange>(Ajaxurl, params);
-
-   
   } catch (error: any) {
     console.log("保存设置选项时出错：" + error.message);
   } finally {

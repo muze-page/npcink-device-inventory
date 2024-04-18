@@ -9,7 +9,7 @@ import {
   ComputerChangeReturn,
   axiosType,
 } from "@/store/interface";
-import { instance, addParamIfDefined } from "@/store/axios/public";
+import { instance, addParamIfDefined } from "@/axios/public";
 
 /**
  * 增 - 添加变更数据
@@ -76,6 +76,6 @@ export const searchChangeData = async (uuid: string) => {
   params.append("action", "search_change_data_callback");
   addParamIfDefined(params, "uuid", uuid);
   const data = await axios.post(Ajaxurl, params);
-  
+
   return data;
 };

@@ -13,7 +13,7 @@ export const option = {
 const data = {
   data: DemoData,
   option: option, //选项
-  ajaxurl: "http://localhost:10048/wp-admin/admin-ajax.php", //代理
+  ajaxurl: "/wp-admin/admin-ajax.php", //这里需要配置代理，所以没有用完整地址，仅影响开发，不影响正式打包
   site: "http://localhost:10048", //网址
   table_data_name: "npcink_device_data", //设备数据表名
   table_change_name: "npcink_device_change", //变更表名
