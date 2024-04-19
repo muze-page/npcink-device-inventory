@@ -341,7 +341,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_data_name;
             // 获取通过 Ajax POST 请求传递的对象数据
-            $data = isset($_POST['data']) ? ($_POST['data']) : null;
+            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : null;
             // 检查是否收到了正确的数据
             if (empty($data)) {
                 // 发送错误响应，未收到正确的数据

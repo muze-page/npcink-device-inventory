@@ -49,8 +49,6 @@ const App: React.FC = () => {
 
   //保存选项动作
   const postData = async (optionObj: object) => {
-    //保存后设密码选项为’已设定‘
-    //后端看到密码选项为已设定，则不动
     await saveSQLData(optionObj);
     //console.log(Data);
   };
@@ -128,17 +126,21 @@ const App: React.FC = () => {
 
   //移除选中的部门
   const removeData = async (data: string) => {
-    await remove_department(data); //移除
+    await remove_department(data); //服务器端移除
     //更新数据
     const newDepartmentList = option.department.filter(
       (dep) => dep !== selectedDepartment
     );
-    setOption((prevOption) => ({
-      ...prevOption,
+    const newOption = {
+      ...option,
       department: newDepartmentList,
-    }));
+    };
+    //console.log(newOption);
+    setOption(newOption);//设定值
+    postData(newOption); //保存选项
     setSelectedDepartment(""); // 清空下拉框选中的内容
 
+    
     return;
   };
 
@@ -152,7 +154,6 @@ const App: React.FC = () => {
         message.error("保留用，请不要移除此部门");
         break;
       default:
-        saveOption(); //保存选项
         removeData(selectedDepartment); //删除操作
     }
   };

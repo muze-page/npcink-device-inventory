@@ -37,7 +37,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 		//数据变更表
 		self::device_manage_create_change();
 		//判断，所有选项都是空的，才会给初始值
-		if (get_option(self::$option) == false) {
+		if (get_option(self::$option) === false) {
 			self::device_manage_create_option();
 		}
 	}
