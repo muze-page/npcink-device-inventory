@@ -25,7 +25,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
   //以下功能做参数，由唯一函数决定输出值
 
   //存储选项值
-  const [state, setState] = useState(null); //状态
+  const [state, setState] = useState(String); //状态
 
   const [memory, setMemory] = useState(null); //内存
   //const [disk, setDisk] = useState(null); //硬盘
@@ -74,11 +74,16 @@ const App: React.FC<Props> = ({ data, onSet }) => {
     }
   }, [filteredData, isUpdating]);
 
+
   /**
    * 重置按钮
    */
   const restSelect = () => {
-    console.log("重置");
+    //重置筛选条件
+   
+    //重置列表数据
+    onSet(data);
+    //console.log("重置");
   };
 
   return (
@@ -114,7 +119,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
               <Search data={data} onSet={onSet} />
             </div>
 
-            {false && (
+            {true && (
               <div>
                 <Tooltip title="重置筛选条件">
                   <Button

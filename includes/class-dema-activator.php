@@ -62,6 +62,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 			department VARCHAR(20) NOT NULL,
 			time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             uuid VARCHAR(36) NOT NULL,
+			meta JSON,
             data JSON,
             PRIMARY KEY (id),
 			UNIQUE (number)
