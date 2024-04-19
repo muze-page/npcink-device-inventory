@@ -57,7 +57,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
             if (empty($field_name)) {
                 return wp_send_json_error(['error' => '没有找到字段名 - ' . $type], 400);
             }
-            
+
             // 查询数据库中原本的值
             $current_value = $wpdb->get_var(
                 $wpdb->prepare(
@@ -68,7 +68,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
 
             // 检查要更新的值是否与数据库中原本的值相同
             if ($current_value === $data) {
-                 wp_send_json_error(['error' => self::process_string($field_name) . '未改变，无需更新', 'reason' => $current_value], 500);
+                wp_send_json_error(['error' => self::process_string($field_name) . '未改变，无需更新', 'reason' => $current_value], 500);
             }
 
 
@@ -84,7 +84,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
             if (!is_wp_error($result) && $result != 0) {
                 return wp_send_json_success(['message' => self::process_string($field_name) . '已更新']);
             } else {
-                return wp_send_json_error(['error' => '更新失败', 'reason' => $wpdb->last_error,], 500);
+                return wp_send_json_error(['error' => '更新失败，请检查编号是否重复', 'reason' => $wpdb->last_error, 'msg' => $result,], 500);
             }
             wp_die();
         }

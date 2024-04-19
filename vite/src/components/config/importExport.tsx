@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Space, Button, message } from "antd";
 import { exportSQLData, importSQLData } from "@/axios";
-import { TableDataName, TableChangeName } from "@/store/index";
+import { TableDataName, TableChangeName,Site } from "@/store/index";
 interface Props {
   name: string; //数据库表名
   /**
@@ -12,7 +12,7 @@ interface Props {
 }
 const App: React.FC<Props> = ({ name }) => {
   //导入数据
-  const [jsonContent, setJsonContent] = useState(null);
+  const [jsonContent, setJsonContent] = useState({ data: null });
 
   //选中数据
   const handleFileChange = (event: any) => {
@@ -33,7 +33,7 @@ const App: React.FC<Props> = ({ name }) => {
       message.error("请选择文件或文件内容为空");
       return;
     } else {
-      const jsonString = JSON.stringify(jsonContent);
+      const jsonString = JSON.stringify(jsonContent.data);
       importSQLData(name, jsonString);
       return;
     }
@@ -42,12 +42,21 @@ const App: React.FC<Props> = ({ name }) => {
   //导出数据
   const downloadData = async () => {
     const jsonData = await exportSQLData(name);
-    //如果没有拿到值，就此结束
+    // 如果没有拿到值，就此结束
     if (!jsonData) {
       return;
     }
 
-    const jsonString = JSON.stringify(jsonData);
+    // 添加时间键值对
+    const currentTime = new Date().toLocaleString();
+    //添加网址
+
+    const dataWithTime = {site:Site, time: currentTime, data: jsonData };
+
+    // 将数据转换为 JSON 字符串
+    const jsonString = JSON.stringify(dataWithTime);
+
+    // 创建 Blob 对象
     const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 
@@ -56,9 +65,65 @@ const App: React.FC<Props> = ({ name }) => {
     if (name == TableDataName) {
       link.download = "硬件基础数据-导出文件.json";
     }
-
     if (name == TableChangeName) {
       link.download = "硬件变更数据-导出文件.json";
+    }
+    link.click();
+
+    // 等待一段时间后释放 URL 对象
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1000);
+  };
+  //导出表格
+  const exportTable = async () => {
+    const jsonData = await exportSQLData(name);
+    // 如果没有拿到值，就此结束
+    if (!jsonData) {
+      return;
+    }
+
+    // 创建一个表格元素
+    const table = document.createElement("table");
+
+    // 添加表头
+    const thead = document.createElement("thead");
+    const headers = Object.keys(jsonData[0]);
+    const headerRow = document.createElement("tr");
+    headers.forEach((headerText) => {
+      const th = document.createElement("th");
+      th.appendChild(document.createTextNode(headerText));
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // 添加数据行
+    const tbody = document.createElement("tbody");
+    jsonData.forEach((rowData: { [x: string]: string }) => {
+      const row = document.createElement("tr");
+      headers.forEach((header) => {
+        const cell = document.createElement("td");
+        cell.appendChild(document.createTextNode(rowData[header]));
+        row.appendChild(cell);
+      });
+      tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+
+    // 将表格转换为 Excel 文件
+    const blob = new Blob([table.outerHTML], {
+      type: "application/vnd.ms-excel",
+    });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    if (name === TableDataName) {
+      link.download = "硬件基础数据-导出文件.xlsx";
+    }
+    if (name === TableChangeName) {
+      link.download = "硬件变更数据-导出文件.xlsx";
     }
     link.click();
 
@@ -72,6 +137,7 @@ const App: React.FC<Props> = ({ name }) => {
       <input type="file" accept=".json" onChange={handleFileChange} />
       <Button onClick={importData}>导入</Button>
       <Button onClick={downloadData}>导出</Button>
+      <Button onClick={exportTable}>导出表格</Button>
     </Space>
   );
 };
