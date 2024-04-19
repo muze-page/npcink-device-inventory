@@ -56,14 +56,15 @@ class Dema_Activator extends DEMA_Admin_Interface
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
             id INT(11) NOT NULL AUTO_INCREMENT,
-			name VARCHAR(255) NOT NULL,
-			state VARCHAR(255) NOT NULL,
-			number INT(12) NOT NULL,
-			department VARCHAR(255) NOT NULL,
-			time DATETIME DEFAULT CURRENT_TIMESTAMP,
+			name VARCHAR(20) NOT NULL,
+			state VARCHAR(20) NOT NULL,
+			number VARCHAR(20) NOT NULL,
+			department VARCHAR(20) NOT NULL,
+			time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             uuid VARCHAR(36) NOT NULL,
             data JSON,
-            PRIMARY KEY (id)
+            PRIMARY KEY (id),
+			UNIQUE (number)
         );";
 
 			// 执行 SQL 语句
@@ -88,11 +89,11 @@ class Dema_Activator extends DEMA_Admin_Interface
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
             id INT NOT NULL AUTO_INCREMENT,
-            uuid TEXT,
+            uuid VARCHAR(36) NOT NULL,
             time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			user TEXT,
-			type TEXT,
-            data TEXT,
+			user VARCHAR(20) NOT NULL,
+			type VARCHAR(10) NOT NULL,
+            data VARCHAR(30) NOT NULL,
             PRIMARY KEY (id)
             
         );";
@@ -110,12 +111,12 @@ class Dema_Activator extends DEMA_Admin_Interface
 	{
 
 		$option = array(
-			"route" => "device-post-data",//默认路由
-			"password" => "9527",//默认密码
-			"device_show_number" => 10,//默认每页显示数量
-			"delete_mysql" => false,//默认是否删除数据库
-			"department" => array("开发部", "推广部", "运营部", "默认"),//默认部门
-			"public_search_route" => "public-search-page",//默认公开搜索路由
+			"route" => "device-post-data", //默认路由
+			"password" => "9527", //默认密码
+			"device_show_number" => 10, //默认每页显示数量
+			"delete_mysql" => false, //默认是否删除数据库
+			"department" => array("开发部", "推广部", "运营部", "默认"), //默认部门
+			"public_search_route" => "public-search-page", //默认公开搜索路由
 		);
 		//保存
 		update_option(self::$option, $option);

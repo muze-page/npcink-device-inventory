@@ -57,7 +57,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
             if (empty($field_name)) {
                 return wp_send_json_error(['error' => '没有找到字段名 - ' . $type], 400);
             }
-
+            
             // 查询数据库中原本的值
             $current_value = $wpdb->get_var(
                 $wpdb->prepare(
