@@ -62,7 +62,6 @@ class Dema_Activator extends DEMA_Admin_Interface
 			department VARCHAR(20) NOT NULL,
 			time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             uuid VARCHAR(36) NOT NULL,
-			meta JSON,
             data JSON,
             PRIMARY KEY (id),
 			UNIQUE (number)
@@ -90,11 +89,11 @@ class Dema_Activator extends DEMA_Admin_Interface
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
             id INT NOT NULL AUTO_INCREMENT,
-            uuid VARCHAR(36) NOT NULL,
-            time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			user VARCHAR(20) NOT NULL,
 			type VARCHAR(10) NOT NULL,
             data VARCHAR(30) NOT NULL,
+            time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			uuid VARCHAR(36) NOT NULL,
             PRIMARY KEY (id)
             
         );";

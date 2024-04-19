@@ -14,6 +14,7 @@ import {
   MysqlDeviceChange,
   ComputerRam,
   ComputerDevice,
+  ComputerNet,
 } from "@/store/interface";
 //选项
 import { defaultOption } from "@/store";
@@ -56,13 +57,16 @@ const replaceString = (input: string, obj: repType[]): string => {
   }
 };
 
-//创建函数，提取数组对象中mac的值组成新数组并输出
-//传入含有mac的数组对象
-const extractMacValues = (data: any[]) => {
-  // 遍历数组，提取每个对象的mac值，并去除为 "00-00-00-00-00-00" 的值
-  const macValues = data
-    .map((item) => item.mac.replace(/:/g, "-")) // 将冒号替换为连字符
-    .filter((mac) => mac !== "00-00-00-00-00-00"); // 过滤掉为 "00-00-00-00-00-00" 的值
+//创建函数，提取数组对象中mac的值组成新数组并输出，
+const extractMacValues = (data: ComputerNet[]) => {
+  // 遍历数组，提取每个对象的mac值，并去除为空或为 "00-00-00-00-00-00" 的值
+  const macValues = data.reduce((acc: string[], { mac }) => {
+    if (mac && mac !== "00-00-00-00-00-00") {
+      const formattedMac = mac.replace(/:/g, "-");
+      acc.push(formattedMac);
+    }
+    return acc;
+  }, []);
   return macValues;
 };
 
@@ -101,10 +105,12 @@ const App: React.FC = () => {
     data.sort((a, b) => b.id - a.id);
     return data;
   };
+
+  //ID 排序后的数据，编号不一定是数字
   const sortData = sortByIDDescending(dataMySql);
   //console.log(sortData);
 
-  //ID 排序后的数据，编号不一定是数字
+  //获取添加了meta的数据
   const updatedDataArray = updateOSType(sortData);
 
   //共享弹窗状态

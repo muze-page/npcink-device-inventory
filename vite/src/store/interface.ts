@@ -28,10 +28,10 @@ export interface MysqlDeviceChange {
 export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
   meat: {
     //为方便筛选
-    os: string; //系统型号
+    os: string; //系统
     ostype: string; //系统类型
     cpu: string; //cpu型号
-    model: string; //系统型号
+    model: string; //系统名称
     memory: number; //内存
     disk: number; //硬盘
   };
