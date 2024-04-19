@@ -1,7 +1,7 @@
 //类型
 //从数据库读取的设备信息
 export interface MysqlDevice {
-  id: string;
+  id: number;
   name: string; //姓名
   state: string; //状态
   number: string; //编号
@@ -13,7 +13,7 @@ export interface MysqlDevice {
 
 //整理后
 export interface MysqlDeviceChange {
-  id: string;
+  id: number;
   name: string; //姓名
   state: string; //状态
   number: string; //编号
@@ -35,14 +35,15 @@ export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
     memory: number; //内存
     disk: number; //硬盘
   };
+  mac: string[];
 };
 
 //选项数据类型
 export interface OptionType {
-  route?: string;
-  password?: string;
-  delete_mysql?: boolean;
-  department: string[];
+  route?: string;//路由
+  password?: string;//密码
+  delete_mysql?: boolean;//是否删除数据库
+  department: string[];//部门数组
   device_show_number: number; //设备显示数
   public_search_route: string;//前端公共搜索路由
 }

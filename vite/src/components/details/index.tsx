@@ -96,9 +96,16 @@ const updateOSType = (
 
 const App: React.FC = () => {
   //拿到数据 dataMySql
+  const sortByIDDescending = (data: MysqlDeviceChange[]) => {
+    // 使用sort方法对数组进行排序，按照对象中Number键的值从大到小排序
+    data.sort((a, b) => b.id - a.id);
+    return data;
+  };
+  const sortData = sortByIDDescending(dataMySql);
+  //console.log(sortData);
 
-  //处理后的数据
-  const updatedDataArray = updateOSType(dataMySql);
+  //ID 排序后的数据，编号不一定是数字
+  const updatedDataArray = updateOSType(sortData);
 
   //共享弹窗状态
   const [active, setActive] = useState(false);
