@@ -249,6 +249,10 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             $insert_data = array();
             if ($name == self::$table_data_name) {
                 foreach ($data as $item) {
+                    //设备信息是否为空
+                    if (empty($item['data'])||empty($item['uuid'])) {
+                        return wp_send_json_error(['error' => '设备信息为空，请检查'], 400);
+                    }
                     //是否有重复数据
                     $uuid = isset($item['uuid']) ? $item['uuid'] : null;
                     $table_name = $wpdb->prefix . self::$table_data_name;

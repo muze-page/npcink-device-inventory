@@ -36,7 +36,7 @@ const deviceArrData = (dataArrays: Computer[], key: keyof Computer) => {
 const App: React.FC = () => {
   //收集最新数据组成数组
   const combinedData = collectDataNew(dataMySql);
-
+  
   //获取CPU数组
   const cpuArrData = deviceArrData(combinedData, "cpu") as ComputerCpu[];
 
