@@ -19,7 +19,8 @@ const App: React.FC<Props> = ({ data, onSet }) => {
 
   // 配置 Fuse.js
   const options = {
-    keys: ["name", "number"], // 定义要搜索的键
+    // 定义要搜索的键
+    keys: ["name", "number","mac"], // MAC 是自己添加的
   };
 
   // 创建 Fuse 实例

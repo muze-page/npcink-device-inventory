@@ -56,6 +56,16 @@ const replaceString = (input: string, obj: repType[]): string => {
   }
 };
 
+//创建函数，提取数组对象中mac的值组成新数组并输出
+//传入含有mac的数组对象
+const extractMacValues = (data: any[]) => {
+  // 遍历数组，提取每个对象的mac值，并去除为 "00-00-00-00-00-00" 的值
+  const macValues = data
+    .map((item) => item.mac.replace(/:/g, "-")) // 将冒号替换为连字符
+    .filter((mac) => mac !== "00-00-00-00-00-00"); // 过滤掉为 "00-00-00-00-00-00" 的值
+  return macValues;
+};
+
 //添加需要的筛选标记数据
 const updateOSType = (
   dataArrays: MysqlDeviceChange[]
@@ -73,7 +83,8 @@ const updateOSType = (
       memory: Math.floor(memory), //GB 取整
       disk: Math.floor(disk), //GB 取整
     };
-    return { ...obj, meat };
+    const mac = extractMacValues(parsedData.net);
+    return { ...obj, meat, mac };
   });
   //移除多余数组
   //const updatedData = updatedData.map((obj) => {
