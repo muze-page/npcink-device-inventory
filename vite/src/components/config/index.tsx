@@ -23,6 +23,17 @@ import Header from "@/components/part/header";
 const App: React.FC = () => {
   //传来的默认选项
   const [option, setOption] = useState<OptionType>(defaultOption);
+
+  //若密码有值，则设为已设定，后端不会更新密码
+  useEffect(() => {
+    if (option.password) {
+      setOption((prevOption) => ({
+        ...prevOption,
+        password: "已设定",
+      }));
+    }
+  }, [option.password]); // 仅在 option.password 发生变化时执行
+
   /**
    * form 变量用于操作表单实例，
    * 而 formData 状态变量用于存储表单数据。
@@ -38,12 +49,15 @@ const App: React.FC = () => {
 
   //保存选项动作
   const postData = async (optionObj: object) => {
+    //保存后设密码选项为’已设定‘
+    //后端看到密码选项为已设定，则不动
     await saveSQLData(optionObj);
     //console.log(Data);
   };
 
   //数据验证成功回调
   const onFinish = (values: OptionType) => {
+    //判断
     postData(values); //保存选项
     //console.log("Received values:", values);
   };
@@ -213,9 +227,7 @@ const App: React.FC = () => {
             label="密码"
             name="password"
             rules={[{ required: true, message: "客户端传输数据时的密码" }]}
-            extra={
-              "客户端传输数据时的验证码，重新设定即可重置，展示的是加密后的，无需理会"
-            }
+            extra={"客户端传输数据时的验证码，重新设定即可重置"}
           >
             <Input.Password className="py-0" />
           </Form.Item>

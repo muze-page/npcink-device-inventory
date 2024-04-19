@@ -52,22 +52,31 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             // 获取原始密码
             $raw_password = $object->password;
 
-            // 使用 wp_hash_password 函数对密码进行加密
-            $hashed_password = wp_hash_password($raw_password);
+            //若密码的值是“已设定”，则替换为原有密码
 
-            // 将加密后的密码替换 $object 中原来的密码值
-            $object->password = $hashed_password;
+            if ($raw_password !== '已设定') {
+                // 使用 wp_hash_password 函数对密码进行加密
+                $hashed_password = wp_hash_password($raw_password);
+
+                // 将加密后的密码替换 $object 中原来的密码值
+                $object->password = $hashed_password;
+            } else {
+                //使用原密码，不更新密码
+                $object->password  = self::get_seting('password');
+            }
+
 
 
             // 尝试更新选项
             $result = update_option(self::$option, $object);
 
-            if ($result) { // 更新成功
+            if ($result !== false) {
                 // 发送成功响应
-                return wp_send_json_success(['message' => '设置选项已保存']);
-            } else { // 更新失败
-                // 发送错误响应
-                return wp_send_json_error(['error' => '保存设置选项失败', 'reason' => $wpdb->last_error,], 500);
+                return wp_send_json_success(['message' => '设置选项已保存',]);
+            } else {
+                // 选项未改变会返回false
+                //return wp_send_json_error(['error' => '已保存', 'reason' => $wpdb->last_error, 'msg' => $result, 'msg2' => $object], 500);
+                return wp_send_json_success(['message' => '已保存',]);
             }
         }
 
