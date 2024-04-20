@@ -36,10 +36,10 @@ const App: React.FC<Props> = ({ data, onSet }) => {
 
   return (
     <Search
-      placeholder="搜索名字或编号"
+      placeholder="搜索名字、编号或MAC地址"
       allowClear
       onSearch={onSearch}
-      style={{ width: 200, lineHeight: "inherit", minHeight: "10px" }}
+      style={{ width: 260, lineHeight: "inherit", minHeight: "10px" }}
       className="searchInput"
     />
   );
