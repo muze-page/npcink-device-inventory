@@ -60,11 +60,7 @@ const App: React.FC = () => {
     //console.log("Received values:", values);
   };
 
-  //手动保存当前选项
-  const saveOption = () => {
-    const fieldsValue = form.getFieldsValue(); // 获取所有字段的值
-    postData(fieldsValue); //保存选项
-  };
+
 
   //数据验证失败回调
   const onFinishFailed = (errorInfo: any) => {
@@ -136,11 +132,10 @@ const App: React.FC = () => {
       department: newDepartmentList,
     };
     //console.log(newOption);
-    setOption(newOption);//设定值
+    setOption(newOption); //设定值
     postData(newOption); //保存选项
     setSelectedDepartment(""); // 清空下拉框选中的内容
 
-    
     return;
   };
 
@@ -175,7 +170,13 @@ const App: React.FC = () => {
     }
     const state = await addPublicSearchPage(publicSearch); //添加页面
     if (state) {
-      return saveOption(); //保存选项
+      const newOption = {
+        ...option,
+        public_search_route: publicSearch,
+      };
+      setOption(newOption); //设定值
+      postData(newOption); //保存选项
+      return;
     }
   };
 

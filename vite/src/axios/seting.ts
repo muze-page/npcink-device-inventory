@@ -94,15 +94,13 @@ export const addPublicSearchPage = async (route: string) => {
   params.append("action", "add_public_search_page_callback");
   addParamIfDefined(params, "route", route);
   try {
-    const res = await instance.post(Ajaxurl, params); //执行
-    if (res.status === 200) {
-      return true;
-    }
+    const res = (await instance.post(Ajaxurl, params)) as axiosType; //执行
+    return res.success;
   } catch {
-    //console.log("添加自定义公共引导页失败");
+    console.log("添加自定义公共引导页失败");
     return false;
   } finally {
-    return false;
+   
   }
 };
 
