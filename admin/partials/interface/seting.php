@@ -139,8 +139,11 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                         }
                         break;
                     case 'password':
-                        if (!is_string($object->password)) {
-                            return 'password 属性必须是字符串类型';
+                        if ( !is_string($object->password)) {
+                            return 'password 属性必须是非空字符串类型';
+                        }
+                        if (empty($object->password) ) {
+                            return '密码不能为0';
                         }
                         break;
                     case 'delete_mysql':
@@ -250,7 +253,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             if ($name == self::$table_data_name) {
                 foreach ($data as $item) {
                     //设备信息是否为空
-                    if (empty($item['data'])||empty($item['uuid'])) {
+                    if (empty($item['data']) || empty($item['uuid'])) {
                         return wp_send_json_error(['error' => '设备信息为空，请检查'], 400);
                     }
                     //是否有重复数据
