@@ -231,7 +231,7 @@ const App: React.FC = () => {
             rules={[{ required: true, message: "客户端传输数据时的密码" }]}
             extra={"客户端传输数据时的验证码，重新设定即可重置"}
           >
-            <Input.Password className="py-0" />
+            <Input className="py-0" />
           </Form.Item>
           <Form.Item
             label="设备数量"
