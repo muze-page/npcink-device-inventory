@@ -62,7 +62,11 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                 $object->password = $hashed_password;
             } else {
                 //使用原密码，不更新密码
-                $object->password  = self::get_seting('password');
+                //TODO:不知为啥，初次使用，不修改设置内容，点击保存按钮后，可能拿不到密码，这里做个保底
+                // 生成随机字符串
+                $random_string = uniqid(mt_rand(), true);
+
+                $object->password  = self::get_seting('password') ? self::get_seting('password') : wp_hash_password($random_string);
             }
 
 
@@ -72,11 +76,11 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
 
             if ($result !== false) {
                 // 发送成功响应
-                return wp_send_json_success(['message' => '设置选项已保存',]);
+                return wp_send_json_success(['message' => '设置选项已保存', 'msg' => $object,]);
             } else {
                 // 选项未改变会返回false
                 //return wp_send_json_error(['error' => '已保存', 'reason' => $wpdb->last_error, 'msg' => $result, 'msg2' => $object], 500);
-                return wp_send_json_success(['message' => '已保存',]);
+                return wp_send_json_success(['message' => '已保存', 'msg' => $object,]);
             }
         }
 
@@ -139,10 +143,10 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                         }
                         break;
                     case 'password':
-                        if ( !is_string($object->password)) {
+                        if (!is_string($object->password)) {
                             return 'password 属性必须是非空字符串类型';
                         }
-                        if (empty($object->password) ) {
+                        if (empty($object->password)) {
                             return '密码不能为0';
                         }
                         break;

@@ -92,7 +92,7 @@ if (!class_exists('DEMA_Admin_Interface_Add_Page')) {
             //准备地址
             // $index_css = plugin_dir_url(dirname(__DIR__)) . 'search/dist/index.css';
             // wp_enqueue_style($name, $index_css, array(), $ver, false);
-            $index_js = plugin_dir_url(dirname(dirname(__DIR__))) . 'search/dist/index.js';
+            $index_js = plugin_dir_url(dirname(dirname(__DIR__))) . 'search-vite/dist/index.js';
 
 
             wp_enqueue_script($name, $index_js, array(), $ver, true);

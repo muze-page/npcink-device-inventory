@@ -109,10 +109,14 @@ class Dema_Activator extends DEMA_Admin_Interface
 	 */
 	public static function device_manage_create_option()
 	{
+		// 生成随机字符串
+		$random_string = uniqid(mt_rand(), true);
+		//再加密下
+		$pss =  wp_hash_password($random_string);
 
 		$option = array(
 			"route" => "device-post-data", //默认路由
-			"password" => "9527", //默认密码
+			"password" => $pss, //默认密码
 			"device_show_number" => 10, //默认每页显示数量
 			"delete_mysql" => false, //默认是否删除数据库
 			"department" => array("开发部", "推广部", "运营部", "默认"), //默认部门

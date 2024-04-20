@@ -1,9 +1,11 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 //配置路径
 import path from "path";
-const site = "wp-content/plugins/magick-device-manage/";
 // https://vitejs.dev/config/
+
+const site = "wp-content/plugins/magick-device-manage/";
+
 export default defineConfig({
   plugins: [react()],
   build: {
@@ -18,6 +20,7 @@ export default defineConfig({
         chunkFileNames: "[name].js",
       },
     },
+    //sourcemap: true,//保留映射关系，方便调试
   },
   //配置路径别名
   resolve: {
@@ -25,7 +28,21 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
-  
-    //媒体资源打包前缀，避免图片无法正常显示
-    base: site + "show/dist/",
-})
+
+  //媒体资源打包前缀，避免图片无法正常显示
+  base: site + "admin-vite/dist/",
+
+  //代理
+  server: {
+    //host: "0.0.0.0",
+    //port: 3000,
+    //open: true,
+    proxy: {
+      "/api": {
+        target: "http://localhost:10048/",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
+  },
+});
