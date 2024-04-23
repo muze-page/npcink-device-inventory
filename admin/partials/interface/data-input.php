@@ -309,7 +309,17 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 );
 
                 if ($result !== false) {
-                    return wp_send_json_success(['message' => '更新成功', 'data' => $result]);
+                    //姓名
+                    $user = $existingData['name'];
+                    //编号
+                    $number = $existingData['number'];
+                    return wp_send_json_success(
+                        [
+                            'message' => "姓名：$user ，编号：$number ，更新成功",
+                            'data' => $result,
+
+                        ]
+                    );
                 } else {
                     throw new Exception('更新失败');
                 }
