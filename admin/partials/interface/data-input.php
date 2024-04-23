@@ -144,9 +144,6 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
             //拿到传来的JSON对象字符串，检查字符串
             $data = isset($request['data']) ? sanitize_text_field($request['data']) : null;
 
-
-
-
             //姓名是否为空
             if (empty($name)) {
                 return wp_send_json_error([
@@ -160,7 +157,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 ], 400);
             }
             //文本转对象
-            $data_obj = json_decode(stripslashes($data));
+            $data_obj = json_decode($data);
             //是否为空
             if (empty($data_obj)) {
                 return wp_send_json_error([
@@ -192,12 +189,15 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 return self::check_Data_Change($repeatData, $data, $name);
             }
 
-
+            //生成随机编号
+            $random_string = uniqid(mt_rand(), true);
+            //只取后6位
+            $last_six_digits = substr($random_string, -6);
             // 数据不存在，插入新数据
             $insert_data = [
                 'name' => $name, // 姓名
                 'state' => 'idie', // 默认状态为启用
-                'number' => 0, // 编号
+                'number' =>  $last_six_digits, // 编号
                 'department' => '默认', // 默认部门
                 'uuid' => $uuid, // 唯一标识符
                 'data' => $data, // 数据
@@ -300,7 +300,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 $result = $wpdb->update(
                     self::$table_name,
                     [
-                        'name' => $name,
+                        //'name' => $name,//不更新名字
                         'data' => $data,
                     ],
                     ['id' => $existingData['id']],
