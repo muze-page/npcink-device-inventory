@@ -11,13 +11,13 @@ import Config from "@/components/config/index";
 const items: TabsProps["items"] = [
   {
     key: "1",
-    label: `硬件盘点`,
-    children: <Tab />,
+    label: `设备详情`,
+    children: <Details />,
   },
   {
     key: "2",
-    label: `设备详情`,
-    children: <Details />,
+    label: `硬件盘点`,
+    children: <Tab />,
   },
   {
     key: "3",

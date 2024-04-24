@@ -57,7 +57,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           </p>
 
           {/*型号*/}
-          <p className="mt-3">{data.meat.model ?? "暂无"}</p>
+          <p className="mt-3 w-full truncate">{data.meat.model ?? "暂无"}</p>
           {/*配置信息*/}
           <p className="mt-2">
             {data.meat.cpu} / {data.meat.memory} G /{" "}
