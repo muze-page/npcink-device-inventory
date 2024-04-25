@@ -60,8 +60,6 @@ const App: React.FC = () => {
     //console.log("Received values:", values);
   };
 
-
-
   //数据验证失败回调
   const onFinishFailed = (errorInfo: any) => {
     console.log("Failed:", errorInfo);
@@ -93,7 +91,7 @@ const App: React.FC = () => {
     const newDepartmentArr =
       depArr && depArr.length === 0
         ? [newDepartment]
-        : [...(depArr || []), newDepartment];
+        : [newDepartment, ...(depArr || [])];
 
     setNewDepartment(""); //清空输入框
 
