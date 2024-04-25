@@ -16,7 +16,8 @@ interface Props {
   data: ComputerBaseboard[];
 }
 const App: React.FC<Props> = ({ data }) => {
-  //统计manufacturer出现次数
+
+  //统计次数，输出数组对象
   const arr = sum_brand(data, "manufacturer");
 
   //关键词替换

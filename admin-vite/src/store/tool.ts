@@ -29,6 +29,7 @@ export const sum_brand = (data: any[], key: string): TableData[] => {
     return acc;
   }, []);
 };
+
 /**
  * 统计数组中指定容量的出现次数
  * @param data 待处理的硬件数组

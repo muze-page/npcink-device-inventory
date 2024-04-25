@@ -22,9 +22,19 @@ const App: React.FC<Props> = ({ data }) => {
     "512G": 512,
     "1T": 1024,
     "2T": 2048,
+    "4T": 4096,
   };
 
+  //统计次数，输出数组对象
   const tableData = sum_order(data, thresholds);
+
+  //顺序
+  const sortOrder = ["128G", "256G", "512G", "1T", "2T", "4T"];
+
+  //按容量大小排序
+  tableData.sort((a, b) => {
+    return sortOrder.indexOf(a.type) - sortOrder.indexOf(b.type);
+  });
 
   return (
     <>

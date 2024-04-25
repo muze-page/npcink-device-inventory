@@ -15,8 +15,11 @@ interface Props {
   data: ComputerCpu[];
 }
 const App: React.FC<Props> = ({ data }) => {
-  //分析CPU的品牌
+  //统计次数，输出数组对象
   const tableData = sum_brand(data, "manufacturer");
+
+  //从大到小，按数量排序
+  tableData.sort((a, b) => b.sum - a.sum);
 
   return (
     <>

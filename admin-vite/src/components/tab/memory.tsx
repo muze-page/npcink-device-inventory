@@ -26,8 +26,16 @@ interface Props {
   data: ComputerRam[];
 }
 const App: React.FC<Props> = ({ data }) => {
-  //进行处理
+  //统计次数，输出数组对象
   const tableData = sum_order(data, replaceMemory);
+
+  //顺序
+  const sortOrder = ["2G", "4G", "8G", "16G", "32G", "64G"];
+
+  //按容量大小排序
+  tableData.sort((a, b) => {
+    return sortOrder.indexOf(a.type) - sortOrder.indexOf(b.type);
+  });
 
   return (
     <>

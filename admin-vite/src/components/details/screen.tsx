@@ -8,7 +8,7 @@ import { ReloadOutlined } from "@ant-design/icons";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
 import { defaultOption } from "@/store";
 import { changeSelectData } from "@/store/tool";
-import { device_status, memoryScreenList } from "@/store/dataReplace";
+import { device_status } from "@/store/dataReplace";
 import Search from "@/components/details/search";
 import Header from "@/components/part/header";
 interface Props {
@@ -27,7 +27,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
   //存储选项值
   const [state, setState] = useState(String); //状态
 
-  const [memory, setMemory] = useState(null); //内存
+  const [memory, _setMemory] = useState(null); //内存
   //const [disk, setDisk] = useState(null); //硬盘
   const [department, setDepartment] = useState(null); //cpu
 
@@ -133,21 +133,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
               </div>
             )}
 
-            {false && (
-              <>
-                <div>
-                  内存：
-                  <Select
-                    defaultValue=""
-                    style={{ width: 120 }}
-                    onChange={(value: any) => {
-                      setMemory(value), setIsUpdating(true);
-                    }}
-                    options={memoryScreenList}
-                  />
-                </div>
-              </>
-            )}
+ 
           </Space>
        
       </div>
