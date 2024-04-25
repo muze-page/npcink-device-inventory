@@ -46,29 +46,38 @@ const App: React.FC<Props> = ({ data }) => {
   //接收上下文中的值
   const { changeReal } = useContext(DeviceContext);
 
+  //存储原始表单数据
+  const [initialData, _setInitialData] = useState(data);
+
   //保存设置信息
   const saveData = async () => {
     //获取表单数据
-
     const fieldsValue = form.getFieldsValue();
 
     //与默认数据对比，有变化则存入数据库
     let isChanged = false; // 标志是否有变化
-    // let isSaved = false; // 标志是否成功保存过
+    //console.log(fieldsValue);
+    //console.log(initialData);
 
     for (const key in fieldsValue) {
-     //两值是否同时存在
-      if (fieldsValue.hasOwnProperty(key) && data.hasOwnProperty(key)) {
+
+      //两值是否同时存在
+      if (fieldsValue.hasOwnProperty(key) && initialData.hasOwnProperty(key)) {
+        
         //两值是否不同
-        if (fieldsValue[key] !== data[key]) {
+        if (fieldsValue[key] !== initialData[key]) {
+          
           isChanged = true; // 一旦发现有变化，设置标志为 true
 
-          //console.log("a 对象中键值对不同:", key, fieldsValue[key]);
+          initialData[key] = fieldsValue[key]; //修改数据
 
-          await changeMySql(data.uuid, key, fieldsValue[key]);
-          changeReal(key, fieldsValue[key]);//更新上下文数据
+          await changeMySql(initialData.uuid, key, fieldsValue[key]);//发出请求
 
-          //isSaved = success; // 设置保存成功的标志为 true
+          changeReal(key, fieldsValue[key]); //更新上下文数据
+
+        } else {
+          //选项没有变化
+          // console.log("a 对象中键值对相同:", key, fieldsValue[key]);
         }
       }
     }
@@ -76,6 +85,7 @@ const App: React.FC<Props> = ({ data }) => {
     if (!isChanged) {
       // 如果循环结束后没有发现任何变化，弹出 "没有变化" 的提示
       message.warning("没有变化");
+      return;
     }
   };
 
