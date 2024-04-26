@@ -37,6 +37,9 @@ const App: React.FC<Props> = ({ data }) => {
     []
   );
 
+  //从大到小，按数量排序
+  tableData.sort((a, b) => b.sum - a.sum);
+
   return (
     <>
       <TabList meat={meat} tableData={tableData} />

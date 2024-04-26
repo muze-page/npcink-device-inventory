@@ -63,10 +63,10 @@ const App: React.FC<Props> = ({ name }) => {
     const link = document.createElement("a");
     link.href = url;
     if (name == TableDataName) {
-      link.download = "硬件基础数据-导出文件.json";
+      link.download = "硬件基础数据-导出文件-"+Site+".json";
     }
     if (name == TableChangeName) {
-      link.download = "硬件变更数据-导出文件.json";
+      link.download = "硬件变更数据-导出文件"+Site+".json";
     }
     link.click();
 
