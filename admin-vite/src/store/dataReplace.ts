@@ -5,7 +5,7 @@ import { Replacements } from "@/store/interface";
  * 主板品牌
  */
 export const replaceBaseboard: Replacements = {
-  "Apple Inc.": "Apple",
+  "Apple Inc.": "苹果",
   "Colorful Technology And Development Co.,LTD": "七彩虹",
   "Dell Inc.": "戴尔",
   "ASUSTeK COMPUTER INC.": "华硕",
@@ -18,6 +18,7 @@ export const replaceBaseboard: Replacements = {
   "Micro-Star International Co., Ltd.":"微星",
   "LENOVO":"联想",
   "Gigabyte Technology Co., Ltd.":"技嘉",
+  "KOLOE":"科脑",
   // 其他需要替换的字符串
 };
 

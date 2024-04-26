@@ -43,13 +43,10 @@ interface DataItem {
 
 type Thresholds = { [type: string]: number };
 
-interface ResultItem {
-  type: string;
-  sum: number;
-}
+
 
 export const sum_order = (data: DataItem[], thresholds: Thresholds) => {
-  const result: ResultItem[] = [];
+  const result: TableData[] = [];
 
   data.forEach(({ size }) => {
     const sizeInGB = size / 1024 ** 3;
@@ -157,42 +154,3 @@ export const findBValue = (arr: DataItemArr[], targetAValue: string) => {
   const foundObject = arr.find((obj) => obj.value === targetAValue);
   return foundObject ? foundObject.label + "中" : "无状态";
 };
-/**
- * 
- const data =[
-    {
-        "type": "Apple Inc.",
-        "sum": 1
-    },
-    {
-        "type": "Dell Inc.",
-        "sum": 1
-    },
-    {
-        "type": "Colorful Technology And Development Co.,LTD",
-        "sum": 1
-    }
-]
- 
- const rep = {
-  "Apple Inc.": "Apple",
-  "Colorful Technology": "七彩虹",
-  Dell: "戴尔",
-  // 其他需要替换的字符串
-};
-
-const old=[
-    {
-        "type": "Apple",
-        "sum": 1
-    },
-    {
-        "type": "戴尔",
-        "sum": 1
-    },
-    {
-        "type": "七彩虹",
-        "sum": 1
-    }
-]
- */

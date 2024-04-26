@@ -16,16 +16,26 @@ interface Props {
   data: ComputerBaseboard[];
 }
 const App: React.FC<Props> = ({ data }) => {
-
   //统计次数，输出数组对象
   const arr = sum_brand(data, "manufacturer");
 
   //关键词替换
-  const tableData = replaceKeyValues(
-    arr,
-    "type",
-    replaceBaseboard
-  ) as TableData[];
+  const Data = replaceKeyValues(arr, "type", replaceBaseboard) as TableData[];
+
+  //合并同类项
+
+  const tableData: TableData[] = Data.reduce(
+    (acc: TableData[], curr: TableData) => {
+      const existingObj = acc.find((obj) => obj.type === curr.type);
+      if (existingObj) {
+        existingObj.sum += curr.sum;
+      } else {
+        acc.push({ type: curr.type, sum: curr.sum });
+      }
+      return acc;
+    },
+    []
+  );
 
   return (
     <>
@@ -35,70 +45,3 @@ const App: React.FC<Props> = ({ data }) => {
 };
 
 export default App;
-//数据
-/**
- 
-const tableData = [
-  {
-    type: "Intel",
-    sum: 0,
-  },
-  {
-    type: "戴尔",
-    sum: 0,
-  },
-  {
-    type: "惠普",
-    sum: 0,
-  },
-  {
-    type: "联想",
-    sum: 0,
-  },
-  {
-    type: "AMD",
-    sum: 0,
-  },
-  {
-    type: "华硕",
-    sum: 0,
-  },
-  {
-    type: "Apple",
-    sum: 0,
-  },
-  {
-    type: "微星",
-    sum: 0,
-  },
-  {
-    type: "ROG玩家国度",
-    sum: 0,
-  },
-  {
-    type: "七彩虹",
-    sum: 0,
-  },
-  {
-    type: "华擎",
-    sum: 0,
-  },
-  {
-    type: "技嘉",
-    sum: 0,
-  },
-  {
-    type: "铭瑄",
-    sum: 0,
-  },
-  {
-    type: "昂达",
-    sum: 0,
-  },
-  {
-    type: "梅捷",
-    sum: 0,
-  },
-];
-* 
- */
