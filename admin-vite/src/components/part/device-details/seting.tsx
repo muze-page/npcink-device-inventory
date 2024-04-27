@@ -62,7 +62,7 @@ const App: React.FC<Props> = ({ data }) => {
     //与默认数据对比，有变化则存入数据库
     let isChanged = false; // 标志是否有变化
     //console.log(fieldsValue);
-    console.log(initialData.uuid);
+    //console.log(initialData.uuid);
 
     for (const key in fieldsValue) {
 
