@@ -1,7 +1,7 @@
 //类型
 //从数据库读取的设备信息
 export interface MysqlDevice {
-  id: string;
+  id: number;
   name: string; //姓名
   state: string; //状态
   number: string; //编号
@@ -13,7 +13,7 @@ export interface MysqlDevice {
 
 //整理后
 export interface MysqlDeviceChange {
-  id: string;
+  id: number;
   name: string; //姓名
   state: string; //状态
   number: string; //编号
@@ -28,22 +28,24 @@ export interface MysqlDeviceChange {
 export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
   meat: {
     //为方便筛选
-    os: string; //系统型号
+    os: string; //系统
     ostype: string; //系统类型
     cpu: string; //cpu型号
-    model: string; //系统型号
+    model: string; //系统名称
     memory: number; //内存
     disk: number; //硬盘
   };
+  mac: string[];
 };
 
 //选项数据类型
 export interface OptionType {
-  route?: string;
-  password?: string;
-  delete_mysql?: boolean;
-  department: string[];
+  route?: string;//路由
+  password?: string;//密码
+  delete_mysql?: boolean;//是否删除数据库
+  department: string[];//部门数组
   device_show_number: number; //设备显示数
+  public_search_route: string;//前端公共搜索路由
 }
 
 //替换列表
@@ -59,8 +61,10 @@ export interface TableData {
 
 //标准下拉
 export interface DataItemArr {
-  value: string;
+  key?: string;
   label: string;
+  value: string|number|null|undefined;
+  
 }
 
 //硬件变更返回值
@@ -74,9 +78,27 @@ export interface ComputerChangeReturn {
   [key: string]: string;
 }
 
+//硬件设置选项
+export interface DeviceSeting {
+  name?: string; //项目
+  number?: string; //编号
+  state?: string; //状态
+  department?: string; //部门
+  [key: string]: string|undefined;
+}
+
 /**
  * Axios 返回类型
  */
+export interface axiosType {
+  success: boolean;//状态
+  data: {
+    data?: any;//返回值
+    message?: string;//成功信息
+    error?:string;//失败信息
+  };
+};
+
 export interface MysqlChange {
   message: string;
   status: string;
@@ -188,7 +210,7 @@ export interface ComputerOS {
   logofile: string;
   platform: string;
   servicepack: string;
-  hypervisor: string;
+  hypervizor: string;
   remoteSession: string;
 }
 
@@ -232,7 +254,7 @@ export interface ComputerDishplays {
 //显卡
 export interface ComputerControllers {
   bus: string;
-  vram: number | null;
+  memoryTotal: number|null;//显存
   cores: string;
   model: string;
   vendor: string;

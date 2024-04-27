@@ -4,14 +4,12 @@
  */
 import { Table } from "antd";
 import { ComputerOS } from "@/store/interface";
-import { judge_bool } from "@/store/tool";
+import { judge_bool, removeEmpty } from "@/store/tool";
 import { columnsTable } from "@/store/dataReplace";
 interface Props {
   data: ComputerOS;
 }
 const App: React.FC<Props> = ({ data }) => {
-
-
   const Items = [
     { key: "1", label: "平台", value: data.platform },
     { key: "2", label: "发行版", value: data.distro },
@@ -27,13 +25,17 @@ const App: React.FC<Props> = ({ data }) => {
     { key: "12", label: "服务包版本", value: data.servicepack },
     { key: "13", label: "UEFI启动", value: judge_bool(data.uefi) },
     { key: "14", label: "系统序列号", value: data.serial },
-    { key: "15", label: "Hyper-V", value: judge_bool(data.hypervisor) },
-    { key: "16", label: "远程会话", value: judge_bool(data.remoteSession) },
+    { key: "15", label: "Hyper-V", value: data.hypervizor },
+    { key: "16", label: "远程会话", value: data.remoteSession },
   ];
 
   return (
     <>
-      <Table dataSource={Items} columns={columnsTable} />
+      <Table
+        dataSource={removeEmpty(Items)}
+        columns={columnsTable}
+        size="small"
+      />
     </>
   );
 };

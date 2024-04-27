@@ -5,12 +5,12 @@
 import { Table } from "antd";
 import { ComputerBios } from "@/store/interface";
 import { columnsTable } from "@/store/dataReplace";
+import { removeEmpty } from "@/store/tool";
 interface Props {
   data: ComputerBios;
 }
 const App: React.FC<Props> = ({ data }) => {
-  
-  // CPU信息的数组
+  // BIOS信息的数组
   const Items = [
     { key: "1", label: "供应商", value: data.vendor },
     { key: "2", label: "版本", value: data.version },
@@ -23,7 +23,11 @@ const App: React.FC<Props> = ({ data }) => {
 
   return (
     <>
-      <Table dataSource={Items} columns={columnsTable} />
+      <Table
+        dataSource={removeEmpty(Items)}
+        columns={columnsTable}
+        size="small"
+      />
     </>
   );
 };

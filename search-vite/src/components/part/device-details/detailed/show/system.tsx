@@ -4,14 +4,12 @@
  */
 import { Table } from "antd";
 import { ComputerSystem } from "@/store/interface";
-import { judge_bool } from "@/store/tool";
+import { judge_bool, removeEmpty } from "@/store/tool";
 import { columnsTable } from "@/store/dataReplace";
 interface Props {
   data: ComputerSystem;
 }
 const App: React.FC<Props> = ({ data }) => {
-
-
   const Items = [
     { key: "1", label: "厂家", value: data.manufacturer },
     { key: "2", label: "型号", value: data.model },
@@ -21,12 +19,20 @@ const App: React.FC<Props> = ({ data }) => {
     { key: "6", label: "虚拟机", value: judge_bool(data.virtual) },
     { key: "7", label: "UUID", value: data.uuid },
     { key: "8", label: "虚拟主机", value: judge_bool(data.virtualHost) },
-    { key: "9", label: "树莓", value: data.raspberry },
+    {
+      key: "9",
+      label: "raspberry",
+      value: data.raspberry ? JSON.stringify(data.raspberry) : "",
+    },
   ];
 
   return (
     <>
-      <Table dataSource={Items} columns={columnsTable} />
+      <Table
+        dataSource={removeEmpty(Items)}
+        columns={columnsTable}
+        size="small"
+      />
     </>
   );
 };

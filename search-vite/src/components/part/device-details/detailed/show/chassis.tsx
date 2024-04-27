@@ -5,11 +5,11 @@
 import { Table } from "antd";
 import { ComputerChassis } from "@/store/interface";
 import { columnsTable } from "@/store/dataReplace";
+import { removeEmpty } from "@/store/tool";
 interface Props {
   data: ComputerChassis;
 }
 const App: React.FC<Props> = ({ data }) => {
-
   const Items = [
     { key: "1", label: "厂家", value: data.manufacturer },
     { key: "2", label: "型号", value: data.model },
@@ -22,7 +22,11 @@ const App: React.FC<Props> = ({ data }) => {
 
   return (
     <>
-      <Table dataSource={Items} columns={columnsTable} />
+      <Table
+        dataSource={removeEmpty(Items)}
+        columns={columnsTable}
+        size="small"
+      />
     </>
   );
 };

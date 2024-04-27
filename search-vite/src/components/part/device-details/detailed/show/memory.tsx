@@ -5,12 +5,11 @@
 import { Table } from "antd";
 import { ComputerRam } from "@/store/interface";
 import { columnsTable } from "@/store/dataReplace";
-import { bytesToMB,judge_bool } from "@/store/tool";
+import { bytesToMB, judge_bool, removeEmpty } from "@/store/tool";
 interface Props {
   data: ComputerRam[];
 }
 const App: React.FC<Props> = ({ data }) => {
-
   const formattedData = (item: ComputerRam) => {
     const arr = [
       { key: "1", label: "大小", value: bytesToMB(item.size, "GB") },
@@ -26,19 +25,23 @@ const App: React.FC<Props> = ({ data }) => {
       { key: "11", label: "最小电压", value: item.voltageMin },
       { key: "12", label: "最大电压", value: item.voltageMax },
     ];
-    return arr;
+    return removeEmpty(arr);
   };
 
   return (
     <>
       {data.map((item, index) => {
         return (
-          
-            <div key={index}>
-              <p className="font-black my-2 text-xl">内存 - {index+1}</p>
-              <Table dataSource={formattedData(item)} columns={columnsTable} />
-            </div>
-          
+          <div key={index}>
+            <p className="font-black my-2 text-xl">
+              {data.length === 1 ? "内存" : `内存 - ${index + 1}`}
+            </p>
+            <Table
+              dataSource={formattedData(item)}
+              columns={columnsTable}
+              size="small"
+            />
+          </div>
         );
       })}
     </>

@@ -4,14 +4,13 @@
  */
 import { Table } from "antd";
 import { ComputerBaseboard } from "@/store/interface";
-import { bytesToMB } from "@/store/tool";
+import { bytesToMB, removeEmpty } from "@/store/tool";
 import { columnsTable } from "@/store/dataReplace";
 interface Props {
   data: ComputerBaseboard;
 }
 const App: React.FC<Props> = ({ data }) => {
-  
-  // CPU信息的数组
+  // 主板信息的数组
   const Items = [
     { key: "1", label: "制造商", value: data.manufacturer },
     { key: "2", label: "型号", value: data.model },
@@ -24,7 +23,11 @@ const App: React.FC<Props> = ({ data }) => {
 
   return (
     <>
-      <Table dataSource={Items} columns={columnsTable} />
+      <Table
+        dataSource={removeEmpty(Items)}
+        columns={columnsTable}
+        size="small"
+      />
     </>
   );
 };

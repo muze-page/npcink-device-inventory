@@ -29,6 +29,7 @@ export const sum_brand = (data: any[], key: string): TableData[] => {
     return acc;
   }, []);
 };
+
 /**
  * 统计数组中指定容量的出现次数
  * @param data 待处理的硬件数组
@@ -42,13 +43,8 @@ interface DataItem {
 
 type Thresholds = { [type: string]: number };
 
-interface ResultItem {
-  type: string;
-  sum: number;
-}
-
 export const sum_order = (data: DataItem[], thresholds: Thresholds) => {
-  const result: ResultItem[] = [];
+  const result: TableData[] = [];
 
   data.forEach(({ size }) => {
     const sizeInGB = size / 1024 ** 3;
@@ -108,16 +104,32 @@ export const bytesToMB = (bytes: number | null, type: string) => {
 /**
  * 判断布尔值
  */
-export const judge_bool = (boo: any) => {
+export const judge_bool = (boo: boolean) => {
   if (boo === true) {
     return "是";
-  }
-
-  if (boo === false) {
+  } else {
     return "否";
   }
+};
 
-  return "未知";
+/**
+ * 展示设备详细数据，去除数组对象中，值是空字符串和undefined的对象
+ *
+ */
+export const removeEmpty = (data: DataItemArr[]) => {
+  return data.filter((obj) => {
+    if (typeof obj.value === "string") {
+      if (obj.value === "Default string") {
+        return false;
+      } else {
+        return obj.value.trim() !== "";
+      }
+    } else if (typeof obj.value === "number") {
+      return true; // 如果是数字，保留该项
+    } else {
+      return false; // 其他情况均移除
+    }
+  });
 };
 
 /**
@@ -136,11 +148,16 @@ export const findOsTypeObj = (
 /**
  * 将字符串数组转换为对象，方便下拉选择
  */
-export const changeSelectData = (data: string[]) => {
-  return data.map((str) => ({
-    value: str,
-    label: str,
-  }));
+export const changeSelectData = (data: string[] | undefined) => {
+  if (data && data.length > 0) {
+    return data.map((str) => ({
+      value: str,
+      label: str,
+    }));
+  } else {
+    // 如果 defaultOption.department 不存在或为空数组，返回一个空数组或其他默认值
+    return [];
+  }
 };
 
 /**
@@ -149,44 +166,5 @@ export const changeSelectData = (data: string[]) => {
 
 export const findBValue = (arr: DataItemArr[], targetAValue: string) => {
   const foundObject = arr.find((obj) => obj.value === targetAValue);
-  return foundObject ? foundObject.label+'中' : '无状态';
+  return foundObject ? foundObject.label + "中" : "无状态";
 };
-/**
- * 
- const data =[
-    {
-        "type": "Apple Inc.",
-        "sum": 1
-    },
-    {
-        "type": "Dell Inc.",
-        "sum": 1
-    },
-    {
-        "type": "Colorful Technology And Development Co.,LTD",
-        "sum": 1
-    }
-]
- 
- const rep = {
-  "Apple Inc.": "Apple",
-  "Colorful Technology": "七彩虹",
-  Dell: "戴尔",
-  // 其他需要替换的字符串
-};
-
-const old=[
-    {
-        "type": "Apple",
-        "sum": 1
-    },
-    {
-        "type": "戴尔",
-        "sum": 1
-    },
-    {
-        "type": "七彩虹",
-        "sum": 1
-    }
-]
- */
