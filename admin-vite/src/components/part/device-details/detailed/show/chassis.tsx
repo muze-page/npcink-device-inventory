@@ -10,7 +10,6 @@ interface Props {
   data: ComputerChassis;
 }
 const App: React.FC<Props> = ({ data }) => {
-
   const Items = [
     { key: "1", label: "厂家", value: data.manufacturer },
     { key: "2", label: "型号", value: data.model },
@@ -23,7 +22,11 @@ const App: React.FC<Props> = ({ data }) => {
 
   return (
     <>
-      <Table dataSource={removeEmpty(Items)} columns={columnsTable} />
+      <Table
+        dataSource={removeEmpty(Items)}
+        columns={columnsTable}
+        size="small"
+      />
     </>
   );
 };

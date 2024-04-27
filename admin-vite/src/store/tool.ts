@@ -104,16 +104,12 @@ export const bytesToMB = (bytes: number | null, type: string) => {
 /**
  * 判断布尔值
  */
-export const judge_bool = (boo: any) => {
+export const judge_bool = (boo: boolean) => {
   if (boo === true) {
     return "是";
-  }
-
-  if (boo === false) {
+  } else {
     return "否";
   }
-
-  return "未知";
 };
 
 /**
@@ -123,7 +119,11 @@ export const judge_bool = (boo: any) => {
 export const removeEmpty = (data: DataItemArr[]) => {
   return data.filter((obj) => {
     if (typeof obj.value === "string") {
-      return obj.value.trim() !== "";
+      if (obj.value === "Default string") {
+        return false;
+      } else {
+        return obj.value.trim() !== "";
+      }
     } else if (typeof obj.value === "number") {
       return true; // 如果是数字，保留该项
     } else {

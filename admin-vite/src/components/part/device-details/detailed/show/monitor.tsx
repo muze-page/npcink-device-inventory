@@ -10,7 +10,6 @@ interface Props {
   data: ComputerDishplays[];
 }
 const App: React.FC<Props> = ({ data }) => {
-
   const formattedData = (item: ComputerDishplays) => {
     const arr = [
       { key: "1", label: "型号", value: item.model },
@@ -33,7 +32,7 @@ const App: React.FC<Props> = ({ data }) => {
 
       { key: "10", label: "显示ID", value: item.displayId },
 
-      { key: "11", label: "链接类型", value: item.connection },
+      { key: "11", label: "链接方式", value: item.connection },
       { key: "12", label: "尺寸", value: `${item.sizeX} x ${item.sizeY} 毫米` },
       { key: "13", label: "颜色深度（位）", value: `${item.pixelDepth} 位` },
 
@@ -54,8 +53,14 @@ const App: React.FC<Props> = ({ data }) => {
       {data.map((item, index) => {
         return (
           <div key={index}>
-            <p className="font-black my-2 text-xl"> {data.length === 1 ? "显示器" : `显示器 - ${index + 1}`}</p>
-            <Table dataSource={formattedData(item)} columns={columnsTable} />
+            <p className="font-black my-2 text-xl">
+              {data.length === 1 ? "显示器" : `显示器 - ${index + 1}`}
+            </p>
+            <Table
+              dataSource={formattedData(item)}
+              columns={columnsTable}
+              size="small"
+            />
           </div>
         );
       })}

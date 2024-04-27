@@ -36,7 +36,11 @@ const App: React.FC<Props> = ({ data }) => {
             <p className="font-black my-2 text-xl">
               {data.length === 1 ? "内存" : `内存 - ${index + 1}`}
             </p>
-            <Table dataSource={formattedData(item)} columns={columnsTable} />
+            <Table
+              dataSource={formattedData(item)}
+              columns={columnsTable}
+              size="small"
+            />
           </div>
         );
       })}

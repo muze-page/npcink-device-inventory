@@ -210,7 +210,7 @@ export interface ComputerOS {
   logofile: string;
   platform: string;
   servicepack: string;
-  hypervisor: string;
+  hypervizor: string;
   remoteSession: string;
 }
 

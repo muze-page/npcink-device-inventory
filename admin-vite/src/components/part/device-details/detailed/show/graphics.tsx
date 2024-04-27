@@ -24,7 +24,7 @@ const App: React.FC<Props> = ({ data }) => {
       { key: "6", label: "GPU内核", value: item.cores },
       { key: "7", label: "设备标识", value: item.deviceId },
       { key: "8", label: "外部GPU", value: judge_bool(item.external) },
-      { key: "9", label: "金属版本", value: item.metalVersion },
+      { key: "9", label: "API Metal 版本", value: item.metalVersion },
       { key: "10", label: "供应商编号", value: item.vendorId },
     ];
     return removeEmpty(arr);
@@ -38,7 +38,11 @@ const App: React.FC<Props> = ({ data }) => {
             <p className="font-black my-2 text-xl">
               {data.length === 1 ? "显卡" : `显卡 - ${index + 1}`}
             </p>
-            <Table dataSource={formattedData(item)} columns={columnsTable} />
+            <Table
+              dataSource={formattedData(item)}
+              columns={columnsTable}
+              size="small"
+            />
           </div>
         );
       })}

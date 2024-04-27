@@ -10,7 +10,6 @@ interface Props {
   data: ComputerCpu;
 }
 const App: React.FC<Props> = ({ data }) => {
-
   // CPU信息的数组
   const Items = [
     { key: "1", label: "制造者", value: data.manufacturer },
@@ -24,7 +23,7 @@ const App: React.FC<Props> = ({ data }) => {
     { key: "9", label: "性能核心", value: data.performanceCores },
     { key: "10", label: "效率核心", value: data.efficiencyCores },
     { key: "11", label: "处理器", value: data.processors },
-    { key: "12", label: "插座类型", value: data.socket },
+    { key: "12", label: "插槽类型", value: data.socket },
     { key: "13", label: "供应商", value: data.vendor },
     { key: "14", label: "系列", value: data.family },
     { key: "15", label: "型号", value: data.model },
@@ -41,7 +40,11 @@ const App: React.FC<Props> = ({ data }) => {
 
   return (
     <>
-      <Table dataSource={removeEmpty(Items)} columns={columnsTable} />
+      <Table
+        dataSource={removeEmpty(Items)}
+        columns={columnsTable}
+        size="small"
+      />
     </>
   );
 };

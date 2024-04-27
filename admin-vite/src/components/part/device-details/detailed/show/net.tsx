@@ -10,7 +10,6 @@ interface Props {
   data: ComputerNet[];
 }
 const App: React.FC<Props> = ({ data }) => {
-
   const formattedData = (item: ComputerNet) => {
     const arr = [
       { key: "1", label: "接口名", value: item.ifaceName },
@@ -24,7 +23,7 @@ const App: React.FC<Props> = ({ data }) => {
       { key: "9", label: "MAC地址", value: item.mac },
       { key: "10", label: "内部接口", value: judge_bool(item.internal) },
       { key: "11", label: "虚拟接口", value: judge_bool(item.virtual) },
-      { key: "12", label: "操作状态", value: judge_bool(item.operstate) },
+      { key: "12", label: "操作状态", value: item.operstate },
       { key: "13", label: "双工", value: item.duplex },
       { key: "14", label: "MTU最大传输单元", value: item.mtu },
       { key: "15", label: "通过DHCP获取的地址", value: judge_bool(item.dhcp) },
@@ -41,8 +40,14 @@ const App: React.FC<Props> = ({ data }) => {
       {data.map((item, index) => {
         return (
           <div key={index}>
-            <p className="font-black my-2 text-xl"> {data.length === 1 ? "网卡" : `网卡 - ${index + 1}`}</p>
-            <Table dataSource={formattedData(item)} columns={columnsTable} />
+            <p className="font-black my-2 text-xl">
+              {data.length === 1 ? "网卡" : `网卡 - ${index + 1}`}
+            </p>
+            <Table
+              dataSource={formattedData(item)}
+              columns={columnsTable}
+              size="small"
+            />
           </div>
         );
       })}

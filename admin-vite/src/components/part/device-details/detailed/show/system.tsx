@@ -21,14 +21,18 @@ const App: React.FC<Props> = ({ data }) => {
     { key: "8", label: "虚拟主机", value: judge_bool(data.virtualHost) },
     {
       key: "9",
-      label: "树莓",
+      label: "raspberry",
       value: data.raspberry ? JSON.stringify(data.raspberry) : "",
     },
   ];
 
   return (
     <>
-      <Table dataSource={removeEmpty(Items)} columns={columnsTable} />
+      <Table
+        dataSource={removeEmpty(Items)}
+        columns={columnsTable}
+        size="small"
+      />
     </>
   );
 };

@@ -10,8 +10,6 @@ interface Props {
   data: ComputerUuid;
 }
 const App: React.FC<Props> = ({ data }) => {
-  
-
   const Items = [
     { key: "1", label: "系统", value: data.os },
     { key: "2", label: "硬件", value: data.hardware },
@@ -19,7 +17,11 @@ const App: React.FC<Props> = ({ data }) => {
 
   return (
     <>
-      <Table dataSource={removeEmpty(Items)} columns={columnsTable} />
+      <Table
+        dataSource={removeEmpty(Items)}
+        columns={columnsTable}
+        size="small"
+      />
     </>
   );
 };
