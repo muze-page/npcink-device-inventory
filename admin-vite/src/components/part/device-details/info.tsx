@@ -63,11 +63,11 @@ const App: React.FC<Props> = ({ data, time }) => {
 
     {
       title: "显卡",
-      data: data.graphics.controllers[0].model,
+      data: inspectState(data.graphics.controllers[0]?.model),
     },
     {
       title: "内存",
-      data: allMemory(data.memLayout),
+      data: allMemory(data.memLayout) ? allMemory(data.memLayout) : "不存在",
     },
     {
       title: "网卡",
@@ -75,11 +75,11 @@ const App: React.FC<Props> = ({ data, time }) => {
     },
     {
       title: "显示器",
-      data:
-       
-        `${displayData.currentResX} x ${displayData.currentResY}
+      data: displayData
+        ? `${displayData.currentResX} x ${displayData.currentResY}
         （${displayData.currentRefreshRate} 赫兹）
-        <br/><small>${ displayData.model }</small> `,
+        <br/><small>${displayData.model}</small> `
+        : "不存在",
     },
     {
       title: "磁盘序列号",
@@ -129,7 +129,12 @@ interface PropsHtml {
 }
 
 const HTMLDisplay: React.FC<PropsHtml> = ({ content }) => {
-  return <div dangerouslySetInnerHTML={{ __html: content }} className="w-full  line-clamp-2"/>;
+  return (
+    <div
+      dangerouslySetInnerHTML={{ __html: content }}
+      className="w-full  line-clamp-2"
+    />
+  );
 };
 
 export default App;

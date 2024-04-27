@@ -117,15 +117,22 @@ export const judge_bool = (boo: boolean) => {
  *
  */
 export const removeEmpty = (data: DataItemArr[]) => {
+  //包含下列字符将移除
+  const defaultValues = ["Default string", "Unknown", "NULL"];
+
   return data.filter((obj) => {
     if (typeof obj.value === "string") {
-      if (obj.value === "Default string") {
+      if (defaultValues.includes(obj.value)) {
         return false;
       } else {
         return obj.value.trim() !== "";
       }
     } else if (typeof obj.value === "number") {
-      return true; // 如果是数字，保留该项
+      if (obj.value === 0) {
+        return false;
+      } else {
+        return true; // 如果是数字，保留该项
+      }
     } else {
       return false; // 其他情况均移除
     }
