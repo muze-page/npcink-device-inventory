@@ -47,7 +47,12 @@ const App: React.FC<Props> = ({ data }) => {
   const { changeReal } = useContext(DeviceContext);
 
   //存储原始表单数据
-  const [initialData, _setInitialData] = useState(data);
+  const [initialData, setInitialData] = useState(data);
+
+  //拿到最新值
+  useEffect(() => {
+    setInitialData(data);
+  }, [data]);
 
   //保存设置信息
   const saveData = async () => {
@@ -57,7 +62,7 @@ const App: React.FC<Props> = ({ data }) => {
     //与默认数据对比，有变化则存入数据库
     let isChanged = false; // 标志是否有变化
     //console.log(fieldsValue);
-    //console.log(initialData);
+    console.log(initialData.uuid);
 
     for (const key in fieldsValue) {
 
