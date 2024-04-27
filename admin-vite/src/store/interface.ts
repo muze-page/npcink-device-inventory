@@ -252,7 +252,7 @@ export interface ComputerDishplays {
 //显卡
 export interface ComputerControllers {
   bus: string;
-  vram: number | null;
+  memoryTotal: number|null;//显存
   cores: string;
   model: string;
   vendor: string;
