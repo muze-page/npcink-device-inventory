@@ -41,7 +41,7 @@ const App: React.FC<Props> = ({ data }) => {
       {data.map((item, index) => {
         return (
           <div key={index}>
-            <p className="font-black my-2 text-xl">网卡 - {index + 1}</p>
+            <p className="font-black my-2 text-xl"> {data.length === 1 ? "网卡" : `网卡 - ${index + 1}`}</p>
             <Table dataSource={formattedData(item)} columns={columnsTable} />
           </div>
         );
