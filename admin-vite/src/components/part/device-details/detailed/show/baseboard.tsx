@@ -4,7 +4,7 @@
  */
 import { Table } from "antd";
 import { ComputerBaseboard } from "@/store/interface";
-import { bytesToMB } from "@/store/tool";
+import { bytesToMB, removeEmpty } from "@/store/tool";
 import { columnsTable } from "@/store/dataReplace";
 interface Props {
   data: ComputerBaseboard;
@@ -24,7 +24,7 @@ const App: React.FC<Props> = ({ data }) => {
 
   return (
     <>
-      <Table dataSource={Items} columns={columnsTable} />
+      <Table dataSource={removeEmpty(Items)} columns={columnsTable} />
     </>
   );
 };

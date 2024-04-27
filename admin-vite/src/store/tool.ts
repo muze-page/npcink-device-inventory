@@ -43,8 +43,6 @@ interface DataItem {
 
 type Thresholds = { [type: string]: number };
 
-
-
 export const sum_order = (data: DataItem[], thresholds: Thresholds) => {
   const result: TableData[] = [];
 
@@ -116,6 +114,22 @@ export const judge_bool = (boo: any) => {
   }
 
   return "未知";
+};
+
+/**
+ * 展示设备详细数据，去除数组对象中，值是空字符串和undefined的对象
+ *
+ */
+export const removeEmpty = (data: DataItemArr[]) => {
+  return data.filter((obj) => {
+    if (typeof obj.value === "string") {
+      return obj.value.trim() !== "";
+    } else if (typeof obj.value === "number") {
+      return true; // 如果是数字，保留该项
+    } else {
+      return false; // 其他情况均移除
+    }
+  });
 };
 
 /**

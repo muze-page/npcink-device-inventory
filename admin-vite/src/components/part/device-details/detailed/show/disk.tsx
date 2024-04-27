@@ -4,7 +4,7 @@
 import { Table } from "antd";
 import { ComputerDevice } from "@/store/interface";
 import { columnsTable } from "@/store/dataReplace";
-import { bytesToMB } from "@/store/tool";
+import { bytesToMB, removeEmpty } from "@/store/tool";
 interface Props {
   data: ComputerDevice[];
 }
@@ -31,7 +31,7 @@ const App: React.FC<Props> = ({ data }) => {
       { key: "17", label: "温度", value: item.temperature },
       { key: "18", label: "智能数据", value: item.smartData },
     ];
-    return arr;
+    return removeEmpty(arr);
   };
 
   return (

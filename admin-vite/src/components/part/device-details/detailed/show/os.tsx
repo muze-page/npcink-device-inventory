@@ -4,7 +4,7 @@
  */
 import { Table } from "antd";
 import { ComputerOS } from "@/store/interface";
-import { judge_bool } from "@/store/tool";
+import { judge_bool, removeEmpty } from "@/store/tool";
 import { columnsTable } from "@/store/dataReplace";
 interface Props {
   data: ComputerOS;
@@ -33,7 +33,7 @@ const App: React.FC<Props> = ({ data }) => {
 
   return (
     <>
-      <Table dataSource={Items} columns={columnsTable} />
+      <Table dataSource={removeEmpty(Items)} columns={columnsTable} />
     </>
   );
 };

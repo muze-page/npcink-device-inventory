@@ -61,8 +61,10 @@ export interface TableData {
 
 //标准下拉
 export interface DataItemArr {
-  value: string;
+  key?: string;
   label: string;
+  value: string|number|null|undefined;
+  
 }
 
 //硬件变更返回值

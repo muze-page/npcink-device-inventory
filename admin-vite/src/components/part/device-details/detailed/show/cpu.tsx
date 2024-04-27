@@ -4,7 +4,7 @@
  */
 import { Table } from "antd";
 import { ComputerCpu } from "@/store/interface";
-import { bytesToMB, judge_bool } from "@/store/tool";
+import { bytesToMB, judge_bool, removeEmpty } from "@/store/tool";
 import { columnsTable } from "@/store/dataReplace";
 interface Props {
   data: ComputerCpu;
@@ -41,7 +41,7 @@ const App: React.FC<Props> = ({ data }) => {
 
   return (
     <>
-      <Table dataSource={Items} columns={columnsTable} />
+      <Table dataSource={removeEmpty(Items)} columns={columnsTable} />
     </>
   );
 };

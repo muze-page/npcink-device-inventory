@@ -5,7 +5,7 @@
 import { Table } from "antd";
 import { ComputerDishplays } from "@/store/interface";
 import { columnsTable } from "@/store/dataReplace";
-import { judge_bool } from "@/store/tool";
+import { judge_bool, removeEmpty } from "@/store/tool";
 interface Props {
   data: ComputerDishplays[];
 }
@@ -46,7 +46,7 @@ const App: React.FC<Props> = ({ data }) => {
       { key: "15", label: "设备名称", value: item.deviceName },
       { key: "16", label: "序列号", value: item.serial },
     ];
-    return arr;
+    return removeEmpty(arr);
   };
 
   return (

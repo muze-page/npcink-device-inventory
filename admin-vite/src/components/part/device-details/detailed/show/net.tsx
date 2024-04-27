@@ -5,7 +5,7 @@
 import { Table } from "antd";
 import { ComputerNet } from "@/store/interface";
 import { columnsTable } from "@/store/dataReplace";
-import { judge_bool } from "@/store/tool";
+import { judge_bool, removeEmpty } from "@/store/tool";
 interface Props {
   data: ComputerNet[];
 }
@@ -33,7 +33,7 @@ const App: React.FC<Props> = ({ data }) => {
       { key: "18", label: "IEEE 802.1x状态", value: item.ieee8021xState },
       { key: "19", label: "运营商变更", value: item.carrierChanges },
     ];
-    return arr;
+    return removeEmpty(arr);
   };
 
   return (
