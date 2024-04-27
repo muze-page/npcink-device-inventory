@@ -33,6 +33,16 @@ const App: React.FC<Props> = ({ data, time }) => {
     return result;
   };
 
+  //输入的值是否存在，不存在输出不存在
+
+  const inspectState = (data: any) => {
+    if (typeof data === "undefined") {
+      return "不存在";
+    } else {
+      return data;
+    }
+  };
+
   const handleData = [
     {
       title: "计算机型号",
@@ -48,7 +58,7 @@ const App: React.FC<Props> = ({ data, time }) => {
     },
     {
       title: "主硬盘",
-      data: data.diskLayout[0].name,
+      data: inspectState(data.diskLayout[0]?.name),
     },
 
     {
@@ -61,19 +71,19 @@ const App: React.FC<Props> = ({ data, time }) => {
     },
     {
       title: "网卡",
-      data: data.net[0].ifaceName,
+      data: inspectState(data.net[0]?.ifaceName),
     },
     {
       title: "显示器",
       data:
-        displayData.model +
-        `(${displayData.currentResX}x${displayData.currentResY}
-        ${displayData.currentRefreshRate}
-        ) `,
+       
+        `${displayData.currentResX} x ${displayData.currentResY}
+        （${displayData.currentRefreshRate} 赫兹）
+        <br/><small>${ displayData.model }</small> `,
     },
     {
       title: "磁盘序列号",
-      data: data.diskLayout[0].serialNum,
+      data: inspectState(data.diskLayout[0]?.serialNum),
     },
     {
       title: "添加时间",
@@ -119,7 +129,7 @@ interface PropsHtml {
 }
 
 const HTMLDisplay: React.FC<PropsHtml> = ({ content }) => {
-  return <div dangerouslySetInnerHTML={{ __html: content }} />;
+  return <div dangerouslySetInnerHTML={{ __html: content }} className="w-full  line-clamp-2"/>;
 };
 
 export default App;
