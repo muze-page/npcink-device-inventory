@@ -10,7 +10,6 @@ import {
   axiosType,
 } from "@/store/interface";
 import { instance, addParamIfDefined } from "@/axios/public";
-
 /**
  * 增 - 添加变更数据
  */
@@ -60,7 +59,7 @@ export const changeMySqlData = async (
   addParamIfDefined(params, "type", type);
 
   try {
-    await instance.post<MysqlChange>(Ajaxurl, params);
+    await instance.post<MysqlChange>(Ajaxurl, params) ;
   } catch (error: any) {
     console.log("保存设置选项时出错：" + error.message);
   } finally {
@@ -72,10 +71,15 @@ export const changeMySqlData = async (
  * 查
  */
 export const searchChangeData = async (uuid: string) => {
-  const params = new URLSearchParams();
-  params.append("action", "search_change_data_callback");
-  addParamIfDefined(params, "uuid", uuid);
-  const data = await axios.post(Ajaxurl, params);
-
-  return data;
+  try {
+    const params = new URLSearchParams({
+      action: "search_change_data_callback",
+      uuid,
+    });
+    const response = await axios.post(Ajaxurl, params) as axiosType;
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    throw error;
+  }
 };

@@ -158,7 +158,6 @@ const App: React.FC<Props> = ({ uuid }) => {
   const [errorData, setErrorData] = useState(""); //报错
 
   // 获取数据并处理
-  // 获取数据并处理
   const getData = async (uuid: string) => {
     setLoading(true); // 开始加载
     try {

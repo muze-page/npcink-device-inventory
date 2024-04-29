@@ -14,7 +14,11 @@ import { instance, addParamIfDefined } from "@/axios/public";
  * @param data 修改后的值
  * @param type 修改的字段名
  */
-export const changeMySql = async (uuid: string, type: string, data: string) => {
+export const changeMySql = async (
+  uuid: string,
+  type: string,
+  data: string
+) => {
   const params = new URLSearchParams();
   params.append("action", "modify_device_callback");
   addParamIfDefined(params, "uuid", uuid);
