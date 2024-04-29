@@ -23,18 +23,11 @@ export const changeMySql = async (uuid: string, type: string, data: string) => {
 
   try {
     const res = (await instance.post(Ajaxurl, params)) as axiosType;
-
-    //TODO:自定义返回错误形式？
-    //if(res.success){
-    //  return res.success//返回状态
-    //} else{
-    //  message.warning(res.data.message);
-    //}
-
     return res.success; //返回状态
   } catch (error: any) {
     console.log("保存设置选项时出错：" + error.message);
-    throw error; // 重新抛出错误
+    //throw error; // 重新抛出错误
+    return false;
   }
 };
 

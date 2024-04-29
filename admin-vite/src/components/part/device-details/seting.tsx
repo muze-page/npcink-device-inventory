@@ -65,21 +65,25 @@ const App: React.FC<Props> = ({ data }) => {
     //console.log(initialData.uuid);
 
     for (const key in fieldsValue) {
-
       //两值是否同时存在
       if (fieldsValue.hasOwnProperty(key) && initialData.hasOwnProperty(key)) {
-        
         //两值是否不同
         if (fieldsValue[key] !== initialData[key]) {
-          
           isChanged = true; // 一旦发现有变化，设置标志为 true
 
-          initialData[key] = fieldsValue[key]; //修改数据
+          //拿到请求成败状态
+          const state = await changeMySql(
+            initialData.uuid,
+            key,
+            fieldsValue[key]
+          ); //发出请求
 
-          await changeMySql(initialData.uuid, key, fieldsValue[key]);//发出请求
-
-          changeReal(key, fieldsValue[key]); //更新上下文数据
-
+          //如果请求成功，则更新上下文数据
+          if (state) {
+            changeReal(key, fieldsValue[key]); //更新上下文数据,头部数据
+            initialData[key] = fieldsValue[key]; //修改数据
+            return;
+          }
         } else {
           //选项没有变化
           // console.log("a 对象中键值对相同:", key, fieldsValue[key]);
