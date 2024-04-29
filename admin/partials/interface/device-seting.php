@@ -71,6 +71,17 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 wp_send_json_error(['error' => self::process_string($field_name) . '未改变，无需更新', 'reason' => $current_value], 500);
             }
 
+            // 检查是否存在重复编号
+            $existing_number = $wpdb->get_var($wpdb->prepare(
+                "SELECT number FROM $table_name WHERE number = %s AND uuid != %s",
+                $data,
+                $uuid
+            ));
+
+            if ($existing_number) {
+                return wp_send_json_error(['error' => '更新失败，编号已存在', 'msg' => $existing_number], 500);
+            }
+
 
 
             // 使用预处理语句更新数据库中对应的数据
@@ -84,7 +95,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
             if (!is_wp_error($result) && $result != 0) {
                 return wp_send_json_success(['message' => self::process_string($field_name) . '已更新']);
             } else {
-                return wp_send_json_error(['error' => '更新失败，请检查编号是否重复', 'reason' => $wpdb->last_error, 'msg' => $result,], 500);
+                return wp_send_json_error(['error' => '更新失败，请检查错误原因', 'reason' => $wpdb->last_error, 'msg' => $result,], 500);
             }
             wp_die();
         }
