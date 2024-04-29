@@ -59,7 +59,7 @@ export const changeMySqlData = async (
   addParamIfDefined(params, "type", type);
 
   try {
-    await instance.post<MysqlChange>(Ajaxurl, params) ;
+    await instance.post<MysqlChange>(Ajaxurl, params);
   } catch (error: any) {
     console.log("保存设置选项时出错：" + error.message);
   } finally {
@@ -69,17 +69,13 @@ export const changeMySqlData = async (
 
 /**
  * 查
+ * TODO:优化下，使用try catch ,配和调用端
  */
 export const searchChangeData = async (uuid: string) => {
-  try {
-    const params = new URLSearchParams({
-      action: "search_change_data_callback",
-      uuid,
-    });
-    const response = await axios.post(Ajaxurl, params) as axiosType;
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    throw error;
-  }
+  const params = new URLSearchParams({
+    action: "search_change_data_callback",
+    uuid,
+  });
+  const response = await axios.post(Ajaxurl, params);
+  return response.data as axiosType;
 };

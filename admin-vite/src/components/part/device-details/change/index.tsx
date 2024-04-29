@@ -162,11 +162,11 @@ const App: React.FC<Props> = ({ uuid }) => {
     setLoading(true); // 开始加载
     try {
       const response = await searchChangeData(uuid); // 获取数据
-      //console.log(response);
-      if (response.data.success) {
+      console.log(response);
+      if (response.success) {
         // 如果成功获取数据
         // 添加 key 并倒序
-        const addKeyData = response.data.data.data
+        const addKeyData = response.data.data
           .map((obj: ComputerChangeReturn) => ({
             ...obj,
             key: obj.id,
@@ -177,12 +177,12 @@ const App: React.FC<Props> = ({ uuid }) => {
         setError(false); // 重置错误状态为 false
       } else {
         // 如果获取数据失败
-        setErrorData("获取数据时出错：" + response.data.data.error); // 设置错误消息
+        setErrorData("获取数据时出错：" + response.data.error); // 设置错误消息
         setError(true); //展示错误状态下的信息
       }
     } catch (error: any) {
       //请求数据失败
-      setErrorData(error.response.data.data.error); // 设置错误消息
+      setErrorData(error.response.data.error); // 设置错误消息
       setError(true); //展示错误状态下的信息
     } finally {
       setLoading(false); // 结束加载
