@@ -82,7 +82,6 @@ const App: React.FC<Props> = ({ data }) => {
           if (state) {
             changeReal(key, fieldsValue[key]); //更新上下文数据,头部数据
             initialData[key] = fieldsValue[key]; //修改数据
-            return;
           }
         } else {
           //选项没有变化
