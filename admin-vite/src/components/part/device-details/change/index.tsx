@@ -119,8 +119,8 @@ const columns: (ColumnTypes[number] & {
 })[] = [
   {
     title: "序号",
-    dataIndex: "id",
-    key: "id",
+    dataIndex: "key",
+    key: "key",
   },
   {
     title: "变更项目",
@@ -162,17 +162,17 @@ const App: React.FC<Props> = ({ uuid }) => {
     setLoading(true); // 开始加载
     try {
       const response = await searchChangeData(uuid); // 获取数据
-      console.log(response);
+     
       if (response.success) {
         // 如果成功获取数据
-        // 添加 key 并倒序
+        // 添加 key （提升列表性能） 并倒序
         const addKeyData = response.data.data
-          .map((obj: ComputerChangeReturn) => ({
+          .map((obj: ComputerChangeReturn, index: number) => ({
             ...obj,
-            key: obj.id,
+            key: index + 1,
           }))
           .reverse();
-
+       
         setDataAxios(addKeyData); // 传值
         setError(false); // 重置错误状态为 false
       } else {
