@@ -74,68 +74,65 @@ const App: React.FC<Props> = ({ data, onSet }) => {
     }
   }, [filteredData, isUpdating]);
 
-
   /**
    * 重置按钮
    */
   const restSelect = () => {
     //重置筛选条件
-   
+
     //重置列表数据
-    onSet(data);
+    //onSet(data);
     //console.log("重置");
+    location.reload();
   };
 
   return (
     <>
       <div className="flex justify-between items-center">
         <Header title="资产信息" />
-          <Space size={"middle"} wrap className="mb-4">
-            <div>
-              状态：
-              <Select
-                defaultValue="全部"
-                style={{ width: 80 }}
-                onChange={(value: any) => {
-                  setState(value);
-                  setIsUpdating(true);
-                }}
-                options={device_status}
-              />
-            </div>
-            <div>
-              部门：
-              <Select
-                defaultValue="全部"
-                style={{ width: 120 }}
-                onChange={(value: any) => {
-                  setDepartment(value);
-                  setIsUpdating(true);
-                }}
-                options={departmentData}
-              />
-            </div>
-            <div>
-              <Search data={data} onSet={onSet} />
-            </div>
+        <Space size={"middle"} wrap className="mb-4">
+          <div>
+            状态：
+            <Select
+              defaultValue="全部"
+              style={{ width: 80 }}
+              onChange={(value: any) => {
+                setState(value);
+                setIsUpdating(true);
+              }}
+              options={device_status}
+            />
+          </div>
+          <div>
+            部门：
+            <Select
+              defaultValue="全部"
+              style={{ width: 120 }}
+              onChange={(value: any) => {
+                setDepartment(value);
+                setIsUpdating(true);
+              }}
+              options={departmentData}
+            />
+          </div>
+          <div>
+            <Search data={data} onSet={onSet} />
+          </div>
 
-            {true && (
-              <div>
-                <Tooltip title="重置筛选条件">
-                  <Button
-                    type="primary"
-                    shape="circle"
-                    icon={<ReloadOutlined />}
-                    className="bg-[#1677ff]"
-                    onClick={restSelect}
-                  />
-                </Tooltip>
-              </div>
-            )}
-
- 
-          </Space>
-       
+          {true && (
+            <div>
+              <Tooltip title="重置筛选条件">
+                <Button
+                  type="primary"
+                  shape="circle"
+                  icon={<ReloadOutlined />}
+                  className="bg-[#1677ff]"
+                  onClick={restSelect}
+                />
+              </Tooltip>
+            </div>
+          )}
+        </Space>
       </div>
     </>
   );

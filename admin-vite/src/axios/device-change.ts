@@ -79,3 +79,14 @@ export const searchChangeData = async (uuid: string) => {
   const response = await axios.post(Ajaxurl, params);
   return response.data as axiosType;
 };
+
+/**
+ * 查全部数据
+ */
+export const searchChangeAllData = async () => {
+  const params = new URLSearchParams({
+    action: "search_change_all_data_callback",
+  });
+  const response = await axios.post(Ajaxurl, params);
+  return response.data as axiosType;
+};

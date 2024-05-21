@@ -6,6 +6,7 @@ import { Tabs } from "antd";
 import type { TabsProps } from "antd";
 import Tab from "@/components/tab/index";
 import Details from "@/components/details/index";
+import ChangeList from "@/components/changeList/index";
 import Config from "@/components/config/index";
 
 const items: TabsProps["items"] = [
@@ -14,10 +15,16 @@ const items: TabsProps["items"] = [
     label: `设备详情`,
     children: <Details />,
   },
+
   {
     key: "2",
     label: `硬件盘点`,
     children: <Tab />,
+  },
+  {
+    key: "4",
+    label: `变更记录`,
+    children: <ChangeList />,
   },
   {
     key: "3",

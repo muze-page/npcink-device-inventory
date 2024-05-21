@@ -16,6 +16,9 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
 
             //查 - 设备变更信息接口
             add_action('wp_ajax_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
+
+            //查 - 全部设备变更信息接口
+            add_action('wp_ajax_search_change_all_data_callback',  array(__CLASS__, 'search_change_all_data_callback'));
         }
 
         /**
@@ -162,6 +165,22 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
                 // 返回空数组表示没有找到符合条件的记录
                 return wp_send_json_error(['error' => '暂未查到变更记录', 'reason' => $wpdb->last_error, 'data' =>  [],], 500);
             }
+        }
+
+        //查询变更数据
+        public static function search_change_all_data_callback()
+        {
+            global $wpdb;
+            $table_name = $wpdb->prefix . self::$table_change_name;
+            // 使用 $wpdb 对象执行 SQL 查询
+            $results = $wpdb->get_results("SELECT * FROM $table_name", OBJECT);
+
+            // 将查询结果转换为数组对象
+            $data_array = array();
+            foreach ($results as $result) {
+                $data_array[] = (array) $result;
+            }
+            return wp_send_json_success(['message' => '查询成功', 'data' =>  $data_array,]);
         }
     }
 }
