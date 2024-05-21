@@ -6,13 +6,11 @@ import axios from "axios";
 //开发环境状态
 const state: boolean = import.meta.env.VITE_STATE;
 
-if (state) {
-  axios.defaults.baseURL = "/api"; //开发环境下配置代理
-}
 //输出选项值
 const getDataLocal = () => {
   if (state) {
     //开发
+    axios.defaults.baseURL = "/api"; //开发环境下配置代理
     return data;
   } else {
     //打包

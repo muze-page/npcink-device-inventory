@@ -79,8 +79,8 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                 return wp_send_json_success(['message' => '设置选项已保存', 'msg' => $object,]);
             } else {
                 // 选项未改变会返回false
-                //return wp_send_json_error(['error' => '已保存', 'reason' => $wpdb->last_error, 'msg' => $result, 'msg2' => $object], 500);
-                return wp_send_json_success(['message' => '已保存', 'msg' => $object,]);
+                return wp_send_json_error(['error' => '没有变化', 'reason' => $wpdb->last_error, 'msg' => $result, 'msg2' => $object], 500);
+                //return wp_send_json_success(['message' => '已保存', 'msg' => $object,]);
             }
         }
 

@@ -91,7 +91,7 @@ class Dema_Activator extends DEMA_Admin_Interface
             id INT NOT NULL AUTO_INCREMENT,
 			user VARCHAR(20) NOT NULL,
 			type VARCHAR(10) NOT NULL,
-            data VARCHAR(30) NOT NULL,
+            data VARCHAR(50) NOT NULL,
             time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			uuid VARCHAR(36) NOT NULL,
             PRIMARY KEY (id)
