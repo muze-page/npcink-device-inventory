@@ -8,12 +8,12 @@ import {exportTable} from "@/store/tool";
 
 const App: React.FC = () => {
   const [dataAxios, setDataAxios] = useState([]); //待渲染的值
-  // 获取数据并处理
+
+  // 获取数据并处理TODO:优化报错机制
   const getData = async () => {
     const response = await searchChangeAllData(); // 获取数据
 
     if (response.success) {
-      // const addKeyData = response.data.data;
       const addKeyData = response.data.data
         .map((obj: DeviceChangeList, index: number) => ({
           ...obj,
@@ -21,7 +21,7 @@ const App: React.FC = () => {
         }))
         .reverse();
       setDataAxios(addKeyData); // 传值
-      console.log(addKeyData);
+      //console.log(addKeyData);
     } else {
       message.error(response.data.error);
     }
@@ -39,23 +39,28 @@ const App: React.FC = () => {
       key: "key",
     },
     {
-      title: "变更姓名",
+      title: "姓名",
       dataIndex: "user",
       key: "user",
     },
+    {
+      title: "类型",
+      dataIndex: "type",
+      key: "type",
+    },
 
     {
-      title: "变更内容",
+      title: "内容",
       dataIndex: "data",
       key: "data",
     },
     {
-      title: "设备信息",
+      title: "信息",
       dataIndex: "msg",
       key: "msg",
     },
     {
-      title: "变更日期",
+      title: "日期",
       dataIndex: "time",
       key: "time",
     },
@@ -64,7 +69,7 @@ const App: React.FC = () => {
   //导出表格数据
   const exportForm =async () => {
     await getData();
-    console.log(dataAxios);
+    //console.log(dataAxios);
     exportTable(dataAxios,"硬件变更数据列表");
   };
   return (

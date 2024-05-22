@@ -18,7 +18,7 @@ export const fetchData = async (password: string, id: string) => {
         password: password,
       },
     });
-    console.log(response);
+    //console.log(response);
 
     // 更新状态以显示响应数据
     return response.data.data.data;

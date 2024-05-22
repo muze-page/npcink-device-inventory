@@ -167,7 +167,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
             }
         }
 
-        //查询变更数据
+        //查询全部变更数据
         public static function search_change_all_data_callback()
         {
             global $wpdb;
