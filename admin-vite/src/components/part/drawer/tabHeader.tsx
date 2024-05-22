@@ -1,9 +1,10 @@
 //弹窗内容头部
 import { useContext } from "react";
+import {Skeleton} from "antd";
 import { MysqlDeviceChangeMeat, OsTypeArray } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
 import { findBValue } from "@/store/tool";
-import { DeviceContext } from "@/store/setingContext";
+import { DeviceContext, AppContext } from "@/store/setingContext";
 interface Props {
   osType: OsTypeArray; //系统信息，因为后续，设备信息可能要根据设置进行修改，系统一般不会变，这里单独用比较好。
   data: MysqlDeviceChangeMeat; //设备信息
@@ -11,6 +12,9 @@ interface Props {
 
 const App: React.FC<Props> = ({ osType, data }) => {
   const { realData } = useContext(DeviceContext);
+
+  //拿到隐藏姓名状态
+  const { isName } = useContext(AppContext);
 
   //当前设备状态
   const deviceStatus = findBValue(device_status, realData.state ?? data.state);
@@ -27,7 +31,13 @@ const App: React.FC<Props> = ({ osType, data }) => {
       {/**姓名 */}
       <div className="flex justify-between">
         <div className="flex items-center text-lg">
-          {realData.name ?? data.name ?? "没有姓名"}
+          
+          {isName ? (
+              realData.name ?? data.name ?? "暂无姓名"
+            ) : (
+              <Skeleton.Input active={true} size={"small"} />
+            )}
+
         </div>
       </div>
       {/**操作系统 */}

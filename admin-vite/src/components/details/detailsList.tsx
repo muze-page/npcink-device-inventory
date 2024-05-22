@@ -1,12 +1,14 @@
 /**
  * 设备详情
  */
-import { Tooltip } from "antd";
+import { useContext } from "react";
+import { AppContext } from "@/store/setingContext";
+import { Tooltip, Skeleton } from "antd";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
 import Mac from "@/assets/mac.png";
 import Win from "@/assets/windows_ico.png";
-import { findOsTypeObj,findBValue } from "@/store/tool";
+import { findOsTypeObj, findBValue } from "@/store/tool";
 
 interface Props {
   data: MysqlDeviceChangeMeat;
@@ -14,6 +16,9 @@ interface Props {
   onDrawerData: () => void; //保存值
 }
 const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
+  //拿到隐藏姓名状态
+  const { isName } = useContext(AppContext);
+
   //点击打开弹窗
   const showDrawer = () => {
     onActive(); //打开弹窗
@@ -27,7 +32,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
   ];
 
   //当前设备状态
-  const deviceStatus =findBValue(device_status,data.state);
+  const deviceStatus = findBValue(device_status, data.state);
 
   //找到需要的系统对象
   const osTypeObj = findOsTypeObj(osTypeArray, data);
@@ -52,12 +57,19 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         {/**底部数据 */}
         <div className="p-4 text-xs text-zinc-500  bg-white rounded whitespace-nowrap min-h-[190px]">
           {/*姓名*/}
-          <p className="text-sm font-bold text-zinc-800 leading-5 m-0 ">
-            {data.name ?? "暂无"}
+          <p className="text-sm font-bold text-zinc-800 leading-8 m-0  ">
+            {/** <div className={isName ? "" : "hideName"}> */}
+            {isName ? (
+              data.name ?? "暂无"
+            ) : (
+              <Skeleton.Input active={true} size={"small"} />
+            )}
+
+            {/** </div> */}
           </p>
 
           {/*型号*/}
-          <p className="mt-3 w-full truncate">{data.meat.model ?? "暂无"}</p>
+          <p className="mt-2 w-full truncate">{data.meat.model ?? "暂无"}</p>
           {/*配置信息*/}
           <p className="mt-2">
             {data.meat.cpu} / {data.meat.memory} G /{" "}
@@ -66,7 +78,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
               : data.meat.disk + " G"}
           </p>
           {/*编号*/}
-          <p className="grid gap-y-2 items-center  mt-4">
+          <p className="grid gap-y-2 items-center  mt-2">
             <Tooltip title={"设备编号：" + data.number}>
               <span>编号 ： {data.number}</span>
             </Tooltip>

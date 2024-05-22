@@ -2,7 +2,7 @@
  * 设备详情 - 顶部筛选
  * TODO:搜索备注名或编号
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect,useContext } from "react";
 import { Space, Select, Button, Tooltip } from "antd";
 import {
   ReloadOutlined,
@@ -19,6 +19,7 @@ interface Props {
   data: MysqlDeviceChangeMeat[]; //筛选用数据
   onSet: Function; //传递筛选后的数据
 }
+import { AppContext } from "@/store/setingContext";
 
 /**
  * 准备部门
@@ -90,12 +91,8 @@ const App: React.FC<Props> = ({ data, onSet }) => {
     location.reload();
   };
 
-  //隐藏姓名
-  const [isName, setIsName] = useState(true);
-
-  const toggleStyle = () => {
-    setIsName((prevIsActive) => !prevIsActive);
-  };
+  //拿到需要的状态和方法
+  const { isName,toggleStyle } = useContext(AppContext);
 
   return (
     <>
@@ -152,7 +149,6 @@ const App: React.FC<Props> = ({ data, onSet }) => {
               className="bg-[#1677ff]"
               onClick={toggleStyle}
             />
-            {isName ? "Active" : "Inactive"}
           </Tooltip>
         </Space>
       </div>

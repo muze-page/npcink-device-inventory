@@ -5,6 +5,8 @@ interface AppContextType {
   //修改当前选中设备的状态
   handleTypeUpdate?: (type: string, newType: string) => void; //修改状态
   deltArrData?: () => void; //删除数据
+  isName?: boolean;//是否显示姓名
+  toggleStyle?: () => void; //隐藏姓名
 }
 
 export const AppContext = createContext<AppContextType>({});

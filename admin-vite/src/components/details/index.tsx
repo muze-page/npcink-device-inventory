@@ -152,6 +152,13 @@ const App: React.FC = () => {
     changeActive(); //关闭弹窗
   };
 
+    //隐藏姓名
+    const [isName, setIsName] = useState(true);
+
+    const toggleStyle = () => {
+      setIsName((prevIsActive) => !prevIsActive);
+    };
+
   //当前页码
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -170,7 +177,7 @@ const App: React.FC = () => {
   );
 
   return (
-    <AppContext.Provider value={{ handleTypeUpdate, deltArrData }}>
+    <AppContext.Provider value={{ handleTypeUpdate, deltArrData,toggleStyle,isName }}>
       <div className="pb-6 px-5">
         <Screen data={updatedDataArray} onSet={setScreenData} />
         <div className="flex content-start items-center flex-wrap w-full">
