@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { searchChangeAllData } from "@/axios";
 import { Table, message } from "antd";
+import { DeviceChangeList } from "@/store/interface";
 const App: React.FC = () => {
   const [dataAxios, setDataAxios] = useState([]); //待渲染的值
   // 获取数据并处理
@@ -10,7 +11,7 @@ const App: React.FC = () => {
     if (response.success) {
       // const addKeyData = response.data.data;
       const addKeyData = response.data.data
-        .map((obj: any, index: number) => ({
+        .map((obj: DeviceChangeList, index: number) => ({
           ...obj,
           key: index + 1,
         }))

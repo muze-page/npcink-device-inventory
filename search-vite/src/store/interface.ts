@@ -40,12 +40,12 @@ export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
 
 //选项数据类型
 export interface OptionType {
-  route?: string;//路由
-  password?: string;//密码
-  delete_mysql?: boolean;//是否删除数据库
-  department: string[];//部门数组
+  route?: string; //路由
+  password?: string; //密码
+  delete_mysql?: boolean; //是否删除数据库
+  department: string[]; //部门数组
   device_show_number: number; //设备显示数
-  public_search_route: string;//前端公共搜索路由
+  public_search_route: string; //前端公共搜索路由
 }
 
 //替换列表
@@ -63,8 +63,7 @@ export interface TableData {
 export interface DataItemArr {
   key?: string;
   label: string;
-  value: string|number|null|undefined;
-  
+  value: string | number | null | undefined;
 }
 
 //硬件变更返回值
@@ -84,20 +83,20 @@ export interface DeviceSeting {
   number?: string; //编号
   state?: string; //状态
   department?: string; //部门
-  [key: string]: string|undefined;
+  [key: string]: string | undefined;
 }
 
 /**
  * Axios 返回类型
  */
 export interface axiosType {
-  success: boolean;//状态
+  success: boolean; //状态
   data: {
-    data?: any;//返回值
-    message?: string;//成功信息
-    error?:string;//失败信息
+    data?: any; //返回值
+    message?: string; //成功信息
+    error?: string; //失败信息
   };
-};
+}
 
 export interface MysqlChange {
   message: string;
@@ -254,7 +253,7 @@ export interface ComputerDishplays {
 //显卡
 export interface ComputerControllers {
   bus: string;
-  memoryTotal: number|null;//显存
+  memoryTotal: number | null; //显存
   cores: string;
   model: string;
   vendor: string;
