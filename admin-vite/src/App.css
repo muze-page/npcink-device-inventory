@@ -78,8 +78,12 @@
 }
 
 /*隐藏姓名*/
-.hideName {
-  background-color: rgb(39 39 42 / var(--tw-text-opacity));
+.hideName .ant-table-row .ant-table-cell:nth-child(2) {
+  background-color: #fafafa;
   border-radius: 3px;
-  opacity: 0.1;
+  color: #fafafa;
+}
+.hideName .ant-table-row .ant-table-cell:nth-child(2)::before {
+  content: "不给看";
+ color: #454545;
 }

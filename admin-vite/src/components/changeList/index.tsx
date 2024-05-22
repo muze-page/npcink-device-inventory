@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { searchChangeAllData } from "@/axios";
-import { Button, Table, message } from "antd";
+import {Space, Button, Table, message } from "antd";
 import type { TableColumnsType } from "antd";
 import { DeviceChangeList } from "@/store/interface";
 import { exportTable } from "@/store/tool";
@@ -52,6 +52,7 @@ const App: React.FC = () => {
       title: "序号",
       dataIndex: "key",
       sorter: (a, b) => a.key - b.key,
+      width: "10%",
     },
     {
       title: "姓名",
@@ -60,7 +61,7 @@ const App: React.FC = () => {
       filterMode: "tree",
       filterSearch: true,
       onFilter: (value, record) => record.user.startsWith(value as string),
-      width: "10%",
+      width: "15%",
     },
     {
       title: "类型",
@@ -76,17 +77,19 @@ const App: React.FC = () => {
       title: "内容",
       dataIndex: "data",
       key: "data",
-      width: "30%",
+      width: "35%",
     },
     {
       title: "信息",
       dataIndex: "msg",
       key: "msg",
+      width: "15%",
     },
     {
       title: "日期",
       dataIndex: "time",
       key: "time",
+      width: "15%",
     },
   ];
 
@@ -96,11 +99,26 @@ const App: React.FC = () => {
     //console.log(dataAxios);
     exportTable(dataAxios, "硬件变更数据列表");
   };
+
+  //隐藏姓名
+  const [isActive, setIsActive] = useState(false);
+
+  const toggleStyle = () => {
+    setIsActive((prevIsActive) => !prevIsActive);
+  };
   return (
     <>
-      <Table dataSource={dataAxios} columns={columns} />
+      <Table
+        dataSource={dataAxios}
+        columns={columns}
+        className={isActive ? "hideName" : ""}
+      />
       <br />
+     
+      <Space>
       <Button onClick={exportForm}>下载表格</Button>
+        <Button onClick={toggleStyle}>{isActive ? "展示" : "隐藏"}姓名</Button>{" "}
+      </Space>
     </>
   );
 };
