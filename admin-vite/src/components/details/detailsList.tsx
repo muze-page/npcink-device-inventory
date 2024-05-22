@@ -36,6 +36,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
 
   //找到需要的系统对象
   const osTypeObj = findOsTypeObj(osTypeArray, data);
+  console.log(data.meat.model);
 
   return (
     <>
@@ -60,7 +61,11 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           <p className="text-sm font-bold text-zinc-800 leading-8 m-0  ">
             {/** <div className={isName ? "" : "hideName"}> */}
             {isName ? (
-              data.name ?? "暂无"
+              data.name ? (
+                data.name
+              ) : (
+                "暂无"
+              )
             ) : (
               <Skeleton.Input active={true} size={"small"} />
             )}
@@ -69,7 +74,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           </p>
 
           {/*型号*/}
-          <p className="mt-2 w-full truncate">{data.meat.model ?? "暂无"}</p>
+          <p className="mt-2 w-full truncate">
+            {data.meat.model ? data.meat.model : "暂无"}
+          </p>
           {/*配置信息*/}
           <p className="mt-2">
             {data.meat.cpu} / {data.meat.memory} G /{" "}
