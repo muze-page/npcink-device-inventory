@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { Space, Button, message } from "antd";
 import { exportSQLData, importSQLData } from "@/axios";
-import { TableDataName, TableChangeName,Site } from "@/store/index";
+import { TableDataName, TableChangeName, Site } from "@/store/index";
+import { exportTable } from "@/store/tool";
 interface Props {
   name: string; //数据库表名
   /**
@@ -51,7 +52,7 @@ const App: React.FC<Props> = ({ name }) => {
     const currentTime = new Date().toLocaleString();
     //添加网址
 
-    const dataWithTime = {site:Site, time: currentTime, data: jsonData };
+    const dataWithTime = { site: Site, time: currentTime, data: jsonData };
 
     // 将数据转换为 JSON 字符串
     const jsonString = JSON.stringify(dataWithTime);
@@ -63,10 +64,10 @@ const App: React.FC<Props> = ({ name }) => {
     const link = document.createElement("a");
     link.href = url;
     if (name == TableDataName) {
-      link.download = "硬件基础数据-导出文件-"+Site+".json";
+      link.download = "硬件基础数据-导出文件-" + Site + ".json";
     }
     if (name == TableChangeName) {
-      link.download = "硬件变更数据-导出文件"+Site+".json";
+      link.download = "硬件变更数据-导出文件" + Site + ".json";
     }
     link.click();
 
@@ -76,68 +77,27 @@ const App: React.FC<Props> = ({ name }) => {
     }, 1000);
   };
   //导出表格
-  const exportTable = async () => {
+  const exportTableData = async () => {
     const jsonData = await exportSQLData(name);
-    // 如果没有拿到值，就此结束
-    if (!jsonData) {
-      return;
-    }
 
-    // 创建一个表格元素
-    const table = document.createElement("table");
+    //准备导出文件名
+    let tableName="暂无";
 
-    // 添加表头
-    const thead = document.createElement("thead");
-    const headers = Object.keys(jsonData[0]);
-    const headerRow = document.createElement("tr");
-    headers.forEach((headerText) => {
-      const th = document.createElement("th");
-      th.appendChild(document.createTextNode(headerText));
-      headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    // 添加数据行
-    const tbody = document.createElement("tbody");
-    jsonData.forEach((rowData: { [x: string]: string }) => {
-      const row = document.createElement("tr");
-      headers.forEach((header) => {
-        const cell = document.createElement("td");
-        cell.appendChild(document.createTextNode(rowData[header]));
-        row.appendChild(cell);
-      });
-      tbody.appendChild(row);
-    });
-    table.appendChild(tbody);
-
-    // 将表格转换为 Excel 文件
-    const blob = new Blob([table.outerHTML], {
-      type: "application/vnd.ms-excel",
-    });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
     if (name === TableDataName) {
-      link.download = "硬件基础数据-导出文件.xlsx";
+      tableName = "硬件基础数据-导出文件.xlsx";
     }
     if (name === TableChangeName) {
-      link.download = "硬件变更数据-导出文件.xlsx";
+      tableName = "硬件变更数据-导出文件.xlsx";
     }
-    link.click();
-
-    // 等待一段时间后释放 URL 对象
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-    }, 1000);
+    // 如果没有拿到值，就此结束
+    exportTable(jsonData, tableName);
   };
   return (
     <Space>
       <input type="file" accept=".json" onChange={handleFileChange} />
       <Button onClick={importData}>导入</Button>
       <Button onClick={downloadData}>导出</Button>
-      <Button onClick={exportTable}>导出表格</Button>
+      <Button onClick={exportTableData}>导出表格</Button>
     </Space>
   );
 };
