@@ -80,7 +80,7 @@ const App: React.FC = () => {
       width: "35%",
     },
     {
-      title: "信息",
+      title: "设备",
       dataIndex: "msg",
       key: "msg",
       width: "15%",

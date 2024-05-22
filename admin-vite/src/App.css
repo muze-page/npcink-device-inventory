@@ -84,6 +84,16 @@
   color: #fafafa;
 }
 .hideName .ant-table-row .ant-table-cell:nth-child(2)::before {
-  content: "不给看";
+  content: "隐藏";
+ color: #454545;
+}
+
+.hideName .ant-table-row .ant-table-cell:nth-child(5) {
+  background-color: #fafafa;
+  border-radius: 3px;
+  color: #fafafa;
+}
+.hideName .ant-table-row .ant-table-cell:nth-child(5)::before {
+  content: "隐藏";
  color: #454545;
 }
