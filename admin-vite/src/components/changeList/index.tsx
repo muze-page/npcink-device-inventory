@@ -68,7 +68,7 @@ const App: React.FC = () => {
       filters: typeArr,
       filterMode: "tree",
       filterSearch: true,
-      onFilter: (value, record) => record.user.startsWith(value as string),
+      onFilter: (value, record) => record.type.startsWith(value as string),
       width: "10%",
     },
 
