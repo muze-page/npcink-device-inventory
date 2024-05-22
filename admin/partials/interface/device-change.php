@@ -194,7 +194,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
                     $number = $name_result['number'];
                     $department = $name_result['department'];
                     //$data_array[$key]['number'] =  $number;
-                    $data_array[$key]['msg'] = $name . "_"  . $number  . "_"  . $department;
+                    $data_array[$key]['msg'] = $name   . " _ "  . $department . " _ "  . $number;
                 }
             }
             return wp_send_json_success(['message' => '查询成功', 'data' =>  $data_array,]);
