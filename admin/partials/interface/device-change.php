@@ -172,6 +172,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
         {
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_change_name;
+            $table_data = $wpdb->prefix . self::$table_data_name;
             // 使用 $wpdb 对象执行 SQL 查询
             $results = $wpdb->get_results("SELECT * FROM $table_name", OBJECT);
 
@@ -179,6 +180,23 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
             $data_array = array();
             foreach ($results as $result) {
                 $data_array[] = (array) $result;
+            }
+
+            // 遍历数组对象，根据UUID值查询第二张表，获取name字段的值并更新原始数组对象
+            foreach ($data_array as $key => $data) {
+                $uuid = $data['uuid'];
+
+                // 查询第二张表获取name字段的值
+                $name_result = $wpdb->get_row($wpdb->prepare("SELECT name FROM $table_data WHERE uuid = %s", $uuid), ARRAY_A);
+
+                if ($name_result) {
+                    // 更新原始数组对象中的name键名
+                    //$data_array[$key]['name'] = $name_result['name'];
+                    //$data_array[$key]['number'] = $name_result['number'];
+                    //$data_array[$key]['department'] = $name_result['department'];
+                    $data_array[$key]['msg'] = $name_result['name'] . "-"  . $name_result['number']  . "-"  . $name_result['department'];
+                    $data_array[$key]['key'] = uniqid();
+                }
             }
             return wp_send_json_success(['message' => '查询成功', 'data' =>  $data_array,]);
         }

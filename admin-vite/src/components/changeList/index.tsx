@@ -14,9 +14,35 @@ const App: React.FC = () => {
     } else {
     }
   };
+
+  
+  const columns = [
+    {
+      title: "变更姓名",
+      dataIndex: "user",
+      key: "user",
+    },
+    {
+      title: "变更日期",
+      dataIndex: "time",
+      key: "time",
+    },
+    {
+      title: "变更内容",
+      dataIndex: "data",
+      key: "data",
+    },
+    {
+      title: "设备信息",
+      dataIndex: "msg",
+      key: "msg",
+    },
+  ];
+
   return (
     <>
       <Button onClick={getData}>获取数据</Button>
+      <Table dataSource={dataAxios} columns={columns} />;
     </>
   );
 };
