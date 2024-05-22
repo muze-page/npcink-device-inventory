@@ -4,7 +4,11 @@
  */
 import { useState, useEffect } from "react";
 import { Space, Select, Button, Tooltip } from "antd";
-import { ReloadOutlined } from "@ant-design/icons";
+import {
+  ReloadOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
+} from "@ant-design/icons";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
 import { defaultOption } from "@/store";
 import { changeSelectData } from "@/store/tool";
@@ -86,6 +90,13 @@ const App: React.FC<Props> = ({ data, onSet }) => {
     location.reload();
   };
 
+  //隐藏姓名
+  const [isName, setIsName] = useState(true);
+
+  const toggleStyle = () => {
+    setIsName((prevIsActive) => !prevIsActive);
+  };
+
   return (
     <>
       <div className="flex justify-between items-center">
@@ -132,6 +143,17 @@ const App: React.FC<Props> = ({ data, onSet }) => {
               </Tooltip>
             </div>
           )}
+
+          <Tooltip title="隐藏姓名">
+            <Button
+              type="primary"
+              shape="circle"
+              icon={isName ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+              className="bg-[#1677ff]"
+              onClick={toggleStyle}
+            />
+            {isName ? "Active" : "Inactive"}
+          </Tooltip>
         </Space>
       </div>
     </>

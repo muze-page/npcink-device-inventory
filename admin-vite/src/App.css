@@ -72,7 +72,14 @@
 }
 
 /*覆盖WordPress 样式*/
-.searchInput input{
+.searchInput input {
   line-height: inherit;
   min-height: auto;
+}
+
+/*隐藏姓名*/
+.hideName {
+  background-color: rgb(39 39 42 / var(--tw-text-opacity));
+  border-radius: 3px;
+  opacity: 0.1;
 }
