@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { searchChangeAllData } from "@/axios";
 import { Button, Table, message } from "antd";
+import type { TableColumnsType } from "antd";
 import { DeviceChangeList } from "@/store/interface";
-import {exportTable} from "@/store/tool";
+import { exportTable } from "@/store/tool";
 //
 
-
 const App: React.FC = () => {
-  const [dataAxios, setDataAxios] = useState([]); //待渲染的值
+  const [dataAxios, setDataAxios] = useState<DeviceChangeList[]>([]); //待渲染的值
 
   // 获取数据并处理TODO:优化报错机制
   const getData = async () => {
@@ -32,27 +32,51 @@ const App: React.FC = () => {
     getData();
   }, []);
 
-  const columns = [
+  //准备姓名，类型数组
+  //从数组对象中，提取指定键的值，去重后输出为指定的对象数组
+  const uniqueTypess = (data: DeviceChangeList[], name: string) => {
+    const uniqueNames = [...new Set(data.map((obj) => obj[name]))];
+    return uniqueNames.map((item) => ({
+      text: item,
+      value: item,
+    }));
+  };
+
+  //姓名
+  const userArr = uniqueTypess(dataAxios, "user");
+  //类型
+  const typeArr = uniqueTypess(dataAxios, "type");
+  //筛选
+  const columns: TableColumnsType<DeviceChangeList> = [
     {
       title: "序号",
       dataIndex: "key",
-      key: "key",
+      sorter: (a, b) => a.key - b.key,
     },
     {
       title: "姓名",
       dataIndex: "user",
-      key: "user",
+      filters: userArr,
+      filterMode: "tree",
+      filterSearch: true,
+      onFilter: (value, record) => record.user.startsWith(value as string),
+      width: "10%",
     },
     {
       title: "类型",
       dataIndex: "type",
-      key: "type",
+      filters: typeArr,
+      filterMode: "tree",
+      filterSearch: true,
+      onFilter: (value, record) => record.user.startsWith(value as string),
+      width: "10%",
     },
 
     {
       title: "内容",
       dataIndex: "data",
       key: "data",
+      width: "30%",
     },
     {
       title: "信息",
@@ -67,10 +91,10 @@ const App: React.FC = () => {
   ];
 
   //导出表格数据
-  const exportForm =async () => {
+  const exportForm = async () => {
     await getData();
     //console.log(dataAxios);
-    exportTable(dataAxios,"硬件变更数据列表");
+    exportTable(dataAxios, "硬件变更数据列表");
   };
   return (
     <>

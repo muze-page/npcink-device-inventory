@@ -116,6 +116,7 @@ export interface DeviceChangeList {
   type: string; //变更类型
   user: string; //变更人
   uuid: string; //设备UUID
+  [keysx: string]: number|string;
 }
 
 /**
