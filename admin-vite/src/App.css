@@ -71,10 +71,11 @@
   width: 1200px;
 }
 
-/*覆盖WordPress 样式*/
+/*覆盖WordPress 样式 - 搜索框中的input*/
 .searchInput input {
   line-height: inherit;
   min-height: auto;
+  height: auto;
 }
 
 /*隐藏姓名*/

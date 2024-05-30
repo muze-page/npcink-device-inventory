@@ -36,7 +36,6 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
 
   //找到需要的系统对象
   const osTypeObj = findOsTypeObj(osTypeArray, data);
-  console.log(data.meat.model);
 
   return (
     <>
