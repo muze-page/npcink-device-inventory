@@ -2,7 +2,7 @@
  * 设备详情 - 设置
  */
 import { useContext, useState, useEffect } from "react";
-import { Form, Button, Input, Select, message } from "antd";
+import { Form, Button, Input,InputNumber, Select, message } from "antd";
 import { AppContext } from "@/store/setingContext";
 import { deltSQLData, changeMySql } from "@/axios";
 import { MysqlDeviceChange } from "@/store/interface";
@@ -16,6 +16,18 @@ interface Props {
 
 //下拉筛选 - 准备筛选数据
 const getSelectData = changeSelectData(defaultOption.department);
+
+// IPv4 正则表达式
+const ipv4Regex =
+  /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
+// 自定义校验规则
+const validateIPv4 = (_: any, value: string) => {
+  if (!value || ipv4Regex.test(value)) {
+    return Promise.resolve();
+  }
+  return Promise.reject(new Error("请输入正确的IP v4 地址"));
+};
 
 const App: React.FC<Props> = ({ data }) => {
   const { deltArrData } = useContext(AppContext);
@@ -119,16 +131,22 @@ const App: React.FC<Props> = ({ data }) => {
         initialValues={data}
       >
         <Form.Item label="姓名" name="name">
-          <Input placeholder="设备使用者" />
+          <Input placeholder="设备使用者" style={{ width: 180 }} />
         </Form.Item>
         <Form.Item label="编号" name="number">
-          <Input placeholder="设备唯一标识编号" />
+          <Input placeholder="设备唯一标识编号" style={{ width: 180 }} />
         </Form.Item>
         <Form.Item label="状态" name="state">
-          <Select style={{ width: 120 }} options={device_status} />
+          <Select style={{ width: 180 }} options={device_status} />
         </Form.Item>
         <Form.Item label="部门" name="department">
-          <Select style={{ width: 120 }} options={getSelectData} />
+          <Select style={{ width: 180 }} options={getSelectData} />
+        </Form.Item>
+        <Form.Item label="折旧价" name="depreciation">
+          <InputNumber style={{ width: 180 }} addonAfter="￥" placeholder="折旧后的价格" />
+        </Form.Item>
+        <Form.Item label="IP 地址" name="ip" rules={[{ validator: validateIPv4 }]}>
+          <Input placeholder="分配的唯一 IP 地址" style={{ width: 180 }} />
         </Form.Item>
         <Form.Item>
           <Button type="primary" onClick={saveData}>

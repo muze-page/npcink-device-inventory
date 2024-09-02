@@ -199,6 +199,8 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 'state' => 'idie', // 默认状态为启用
                 'number' =>  $last_six_digits, // 编号
                 'department' => '默认', // 默认部门
+                'depreciation'=> 0,//折旧价
+                'ip'=> '0',//IP地址
                 'uuid' => $uuid, // 唯一标识符
                 'data' => $data, // 数据
             ];
@@ -209,6 +211,8 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 '%s', // 状态是字符串
                 '%s', // 编号是字符串
                 '%s', // 部门是字符串
+                '%f', // 折旧价是数字
+                '%s', // ip是字符串
                 '%s', // 唯一标识符是字符串
                 '%s', // 数据是字符串
             ];

@@ -84,7 +84,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
               : data.meat.disk + " G"}
           </p>
           {/*编号*/}
-          <p className="grid gap-y-2 items-center  mt-2">
+          <p className="grid gap-y-1 items-center  mt-2">
             <Tooltip title={"设备编号：" + data.number}>
               <span>编号 ： {data.number}</span>
             </Tooltip>
@@ -94,6 +94,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             </Tooltip>
             <Tooltip title={"当前状态：" + deviceStatus + "中"}>
               <span>状态：{deviceStatus}</span>
+            </Tooltip>
+            <Tooltip title={"当前IP：" + data.ip}>
+              <span>IP：{data.ip}</span>
             </Tooltip>
           </p>
         </div>

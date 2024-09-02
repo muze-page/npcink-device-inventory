@@ -56,12 +56,14 @@ class Dema_Activator extends DEMA_Admin_Interface
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
             id INT(11) NOT NULL AUTO_INCREMENT,
-			name VARCHAR(20) NOT NULL,
-			state VARCHAR(20) NOT NULL,
-			number VARCHAR(20) NOT NULL,
-			department VARCHAR(20) NOT NULL,
+			name VARCHAR(10) NOT NULL,
+			state VARCHAR(10) NOT NULL,
+			number VARCHAR(36) NOT NULL,
+			department VARCHAR(10) NOT NULL,
 			time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             uuid VARCHAR(36) NOT NULL,
+			ip VARCHAR(15) NOT NULL, 
+			depreciation VARCHAR(10) NOT NULL, 
             data JSON,
             PRIMARY KEY (id),
 			UNIQUE (number)
@@ -89,9 +91,9 @@ class Dema_Activator extends DEMA_Admin_Interface
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
             id INT NOT NULL AUTO_INCREMENT,
-			user VARCHAR(30) NOT NULL,
-			type VARCHAR(30) NOT NULL,
-            data VARCHAR(80) NOT NULL,
+			user VARCHAR(10) NOT NULL,
+			type VARCHAR(10) NOT NULL,
+            data VARCHAR(120) NOT NULL,
             time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			uuid VARCHAR(36) NOT NULL,
             PRIMARY KEY (id)

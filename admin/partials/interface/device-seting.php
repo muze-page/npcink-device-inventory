@@ -48,6 +48,8 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 'number' => 'number', //编号
                 'state' => 'state', //状态
                 'department' => 'department', //部门
+                'depreciation' => 'depreciation', //折旧价
+                'ip' => 'ip', //IP 地址
             );
 
             // 确定要更新的字段
