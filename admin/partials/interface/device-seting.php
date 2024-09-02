@@ -110,7 +110,9 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 'name' => '姓名',
                 'number' => '编号',
                 'state' => '状态',
-                'department' => '部门'
+                'department' => '部门',
+                'depreciation' => '折旧价' ,//折旧价
+                'ip' => 'IP 地址', //IP 地址
                 // 添加更多的情况...
             ];
 
