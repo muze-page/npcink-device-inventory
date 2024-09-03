@@ -277,6 +277,9 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                             'state' => isset($item['state']) ? $item['state'] : 'apply',
                             'number' => isset($item['number']) ? $item['number'] : 0,
                             'department' => isset($item['department']) ? $item['department'] : 0,
+                            'purchase' => isset($item['purchase']) ? $item['purchase'] : 0,
+                            'depreciation' => isset($item['depreciation']) ? $item['depreciation'] : 0,
+                            'ip' => isset($item['ip']) ? $item['ip'] : '',
                             'time' => isset($item['time']) ? ($item['time']) : null,
                             'uuid' => isset($item['uuid']) ? $item['uuid'] : '',
                             'data' => isset($item['data']) ? ($item['data']) : null,
@@ -329,7 +332,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                 ]);
             } else {
                 $response = array(
-                    'error' => '导入数据时发生错误，请检查数据格式',
+                    'error' => '导入错误：停用插件，再重新启用试试',
                     'data' => ($insert_data[1]),
                     'reason' => $wpdb->last_error,
                 );
