@@ -145,8 +145,12 @@ const App: React.FC = () => {
         </p>
         <p>
           折旧率：
-          <b>{(totalPurchase !== 0) ? ((totalDepreciation / totalPurchase) * 100).toFixed(2) : '0.00'} %</b>
-          
+          <b>
+            {totalPurchase === 0 || totalDepreciation === 0
+              ? "0.00"
+              : ((totalDepreciation / totalPurchase) * 100).toFixed(2)}
+            %
+          </b>
         </p>
         {/**广告内容 */}
         <Ad />

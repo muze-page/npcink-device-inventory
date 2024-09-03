@@ -164,13 +164,14 @@ const App: React.FC<Props> = ({ data }) => {
           />
         </Form.Item>
         <Form.Item label="折旧百分比">
+          {/**TODO:为啥这里的价格是字符串 */}
           <b>
-            {initialData.purchase !== 0
-              ? (
-                  (initialData.depreciation / initialData.purchase) *
+            {Number(data.purchase) === 0 || Number(data.depreciation) === 0
+              ? "0.00"
+              : (
+                  (Number(data.depreciation) / Number(data.purchase)) *
                   100
-                ).toFixed(2)
-              : "0.00"}
+                ).toFixed(2)}
             %
           </b>
         </Form.Item>
