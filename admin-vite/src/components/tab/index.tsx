@@ -137,11 +137,15 @@ const App: React.FC = () => {
           </div>
         </div>
         <p>
-          采购总价值： <b>{totalPurchase}</b> 元
+          总采购： <b>{totalPurchase || 0}</b> 元
         </p>
         <p>
-          折旧总价值：
-          <b>{totalDepreciation}</b> 元
+          总折旧：
+          <b>{totalDepreciation || 0}</b> 元
+        </p>
+        <p>
+          折旧率：
+          <b>{((totalDepreciation / totalPurchase) * 100).toFixed(2) || 0} %</b>
         </p>
         {/**广告内容 */}
         <Ad />

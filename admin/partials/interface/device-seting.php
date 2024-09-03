@@ -48,7 +48,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 'number' => 'number', //编号
                 'state' => 'state', //状态
                 'department' => 'department', //部门
-                'purchase' => 'purchase',//采购价
+                'purchase' => 'purchase', //采购价
                 'depreciation' => 'depreciation', //折旧价
                 'ip' => 'ip', //IP 地址
             );
@@ -74,16 +74,21 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 wp_send_json_error(['error' => self::process_string($field_name) . '未改变，无需更新', 'reason' => $current_value], 500);
             }
 
-            // 检查是否存在重复编号
-            $existing_number = $wpdb->get_var($wpdb->prepare(
-                "SELECT number FROM $table_name WHERE number = %s AND uuid != %s",
-                $data,
-                $uuid
-            ));
+            //若类型是编号的时候，检查是否存在重复编号
+            if ($type == 'number') {
+                // 检查是否存在重复编号
+                $existing_number = $wpdb->get_var($wpdb->prepare(
+                    "SELECT number FROM $table_name WHERE number = %s AND uuid != %s",
+                    $data,
+                    $uuid
+                ));
 
-            if ($existing_number) {
-                return wp_send_json_error(['error' => '更新失败，编号已存在', 'msg' => $existing_number], 500);
+                if ($existing_number) {
+                    return wp_send_json_error(['error' => '更新失败，编号已存在', 'msg' => $existing_number], 500);
+                }
             }
+
+
 
 
 
@@ -113,7 +118,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 'state' => '状态',
                 'department' => '部门',
                 'purchase' => '采购价',
-                'depreciation' => '折旧价' ,//折旧价
+                'depreciation' => '折旧价', //折旧价
                 'ip' => 'IP 地址', //IP 地址
                 // 添加更多的情况...
             ];

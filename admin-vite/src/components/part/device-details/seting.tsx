@@ -163,6 +163,10 @@ const App: React.FC<Props> = ({ data }) => {
             placeholder="折旧后的价格"
           />
         </Form.Item>
+        <Form.Item label="折旧百分比">
+          <b>{((initialData.depreciation / initialData.purchase) * 100).toFixed(2) || 0} %</b>
+        </Form.Item>
+
         <Form.Item>
           <Button type="primary" onClick={saveData}>
             保存
