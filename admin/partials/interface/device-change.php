@@ -70,7 +70,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
             if ($result !== false) {
                 return wp_send_json_success(['message' => '插入变更数据成功']);
             } else {
-                return wp_send_json_error(['error' => '插入变更数据失败', 'reason' => $wpdb->last_error,], 500);
+                return wp_send_json_error(['error' => '插入变更数据失败，可能是字数太多', 'reason' => $wpdb->last_error,], 500);
             }
             // 插入成功，可以进行其他操作
             wp_die();
