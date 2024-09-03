@@ -63,6 +63,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 			time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             uuid VARCHAR(36) NOT NULL,
 			ip VARCHAR(15) NOT NULL, 
+			purchase: VARCHAR(10) NOT NULL, 
 			depreciation VARCHAR(10) NOT NULL, 
             data JSON,
             PRIMARY KEY (id),

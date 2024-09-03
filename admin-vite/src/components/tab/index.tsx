@@ -35,6 +35,12 @@ const deviceArrData = (dataArrays: Computer[], key: keyof Computer) => {
 
 //获取折旧总价
 // 使用 reduce 方法计算总和
+//购入价
+const totalPurchase = dataMySql.reduce((accumulator, item) => {
+  return accumulator + Number(item.purchase);
+}, 0);
+
+//折旧价
 const totalDepreciation = dataMySql.reduce((accumulator, item) => {
   return accumulator + Number(item.depreciation);
 }, 0);
@@ -131,7 +137,11 @@ const App: React.FC = () => {
           </div>
         </div>
         <p>
-          折旧总价值：<b>{totalDepreciation}</b> 元
+          采购总价值： <b>{totalPurchase}</b> 元
+        </p>
+        <p>
+          折旧总价值：
+          <b>{totalDepreciation}</b> 元
         </p>
         {/**广告内容 */}
         <Ad />

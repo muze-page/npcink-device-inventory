@@ -199,6 +199,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 'state' => 'idie', // 默认状态为启用
                 'number' =>  $last_six_digits, // 编号
                 'department' => '默认', // 默认部门
+                'purchase'=> 0, //采购价'
                 'depreciation'=> 0,//折旧价
                 'ip'=> '0',//IP地址
                 'uuid' => $uuid, // 唯一标识符

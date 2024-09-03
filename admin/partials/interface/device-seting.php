@@ -48,6 +48,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 'number' => 'number', //编号
                 'state' => 'state', //状态
                 'department' => 'department', //部门
+                'purchase' => 'purchase',//采购价
                 'depreciation' => 'depreciation', //折旧价
                 'ip' => 'ip', //IP 地址
             );
@@ -111,6 +112,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 'number' => '编号',
                 'state' => '状态',
                 'department' => '部门',
+                'purchase' => '采购价',
                 'depreciation' => '折旧价' ,//折旧价
                 'ip' => 'IP 地址', //IP 地址
                 // 添加更多的情况...

@@ -6,6 +6,7 @@ export interface MysqlDevice {
   state: string; //状态
   number: string; //编号
   department: string; //部门
+  purchase: number; //采购价
   depreciation: number; //折旧价
   ip: string; //ip
   time: string; //添加时间
@@ -20,6 +21,7 @@ export interface MysqlDeviceChange {
   state: string; //状态
   number: string; //编号
   department: string; //部门
+  purchase: number; //采购价
   depreciation: number; //折旧价
   ip: string; //ip
   time: string; //添加时间
@@ -120,7 +122,7 @@ export interface DeviceChangeList {
   type: string; //变更类型
   user: string; //变更人
   uuid: string; //设备UUID
-  [keysx: string]: number|string;
+  [keysx: string]: number | string;
 }
 
 /**

@@ -2,7 +2,7 @@
  * 设备详情 - 设置
  */
 import { useContext, useState, useEffect } from "react";
-import { Form, Button, Input,InputNumber, Select, message } from "antd";
+import { Form, Button, Input, InputNumber, Select, message } from "antd";
 import { AppContext } from "@/store/setingContext";
 import { deltSQLData, changeMySql } from "@/axios";
 import { MysqlDeviceChange } from "@/store/interface";
@@ -142,11 +142,26 @@ const App: React.FC<Props> = ({ data }) => {
         <Form.Item label="部门" name="department">
           <Select style={{ width: 180 }} options={getSelectData} />
         </Form.Item>
-        <Form.Item label="折旧价" name="depreciation">
-          <InputNumber style={{ width: 180 }} addonAfter="￥" placeholder="折旧后的价格" />
-        </Form.Item>
-        <Form.Item label="IP 地址" name="ip" rules={[{ validator: validateIPv4 }]}>
+        <Form.Item
+          label="IP 地址"
+          name="ip"
+          rules={[{ validator: validateIPv4 }]}
+        >
           <Input placeholder="分配的唯一 IP 地址" style={{ width: 180 }} />
+        </Form.Item>
+        <Form.Item label="采购价" name="purchase">
+          <InputNumber
+            style={{ width: 180 }}
+            addonAfter="￥"
+            placeholder="采购时的价格"
+          />
+        </Form.Item>
+        <Form.Item label="折旧价" name="depreciation">
+          <InputNumber
+            style={{ width: 180 }}
+            addonAfter="￥"
+            placeholder="折旧后的价格"
+          />
         </Form.Item>
         <Form.Item>
           <Button type="primary" onClick={saveData}>
