@@ -33,10 +33,16 @@ const deviceArrData = (dataArrays: Computer[], key: keyof Computer) => {
   return dataArrays.flatMap((obj) => obj[key]);
 };
 
+//获取折旧总价
+// 使用 reduce 方法计算总和
+const totalDepreciation = dataMySql.reduce((accumulator, item) => {
+  return accumulator + Number(item.depreciation);
+}, 0);
+
 const App: React.FC = () => {
   //收集最新数据组成数组
   const combinedData = collectDataNew(dataMySql);
-  
+
   //获取CPU数组
   const cpuArrData = deviceArrData(combinedData, "cpu") as ComputerCpu[];
 
@@ -106,14 +112,13 @@ const App: React.FC = () => {
     <>
       <div className="h-[625px] relative bg-white pb-6 px-5 rounded-r border-rose-600 max-w-3xl">
         {/**标题 */}
-       <Header title="资产盘点" />
+        <Header title="资产盘点" />
         {/**表头 */}
         <TabHeader
           items={items}
           handleTabClick={handleTabClick}
           activeTab={activeTab}
         />
-
         <div className="relative mt-4 h-80">
           {/**
              *  <div className="relative">
@@ -125,6 +130,9 @@ const App: React.FC = () => {
             <div className="content">{items[activeTab].children}</div>
           </div>
         </div>
+        <p>
+          折旧总价值：<b>{totalDepreciation}</b> 元
+        </p>
         {/**广告内容 */}
         <Ad />
       </div>

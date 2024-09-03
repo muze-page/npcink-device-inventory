@@ -6,6 +6,8 @@ export interface MysqlDevice {
   state: string; //状态
   number: string; //编号
   department: string; //部门
+  depreciation: number; //折旧价
+  ip: string; //ip
   time: string; //添加时间
   uuid: string; //唯一编号
   data: string; //数据
@@ -18,6 +20,8 @@ export interface MysqlDeviceChange {
   state: string; //状态
   number: string; //编号
   department: string; //部门
+  depreciation: number; //折旧价
+  ip: string; //ip
   time: string; //添加时间
   uuid: string; //唯一编号
   data: Computer; //数据

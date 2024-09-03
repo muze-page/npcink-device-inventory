@@ -20,7 +20,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
   // 配置 Fuse.js
   const options = {
     // 定义要搜索的键
-    keys: ["name", "number","mac"], // MAC 是自己添加的
+    keys: ["name", "number", "mac", "ip"], // MAC 是自己添加的
   };
 
   // 创建 Fuse 实例
@@ -36,7 +36,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
 
   return (
     <Search
-      placeholder="搜索名字、编号或MAC地址"
+      placeholder="搜索名字、编号、IP地址或MAC地址"
       allowClear
       onSearch={onSearch}
       style={{ width: 260, lineHeight: "inherit", minHeight: "10px" }}
