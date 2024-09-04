@@ -246,6 +246,20 @@ const App: React.FC = () => {
           >
             <Switch />
           </Form.Item>
+          <Form.Item
+            label="折旧年限"
+            name="depreciation_year"
+            extra={"例如三年共36个月，36个月后折旧完毕，用回本了"}
+          >
+            <InputNumber addonAfter="月" />
+          </Form.Item>
+          <Form.Item
+            label="残值率"
+            name="residual_value_rate"
+            extra={"例如 5% ，用了三年后，最少也值采购价的 5% "}
+          >
+            <InputNumber addonAfter="%" />
+          </Form.Item>
 
           <Form.Item wrapperCol={{ offset: 2, span: 22 }}>
             <Button type="primary" htmlType="submit" className=" bg-[#1677ff]">

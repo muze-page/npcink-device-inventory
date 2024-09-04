@@ -3,9 +3,11 @@ import {
   Replacements,
   TableData,
   OsTypeArray,
+  MysqlDeviceChange,
   MysqlDeviceChangeMeat,
   DataItemArr,
 } from "@/store/interface";
+import { defaultOption } from "@/store";
 
 /**
  *拿到指定键的值并统计该键的出现次数
@@ -176,14 +178,13 @@ export const findBValue = (arr: DataItemArr[], targetAValue: string) => {
   return foundObject ? foundObject.label + "中" : "无状态";
 };
 
-
 /**
- * 
+ *
  * @param jsonData 对象数组
  * @param tableName 下载的文件名称
  * @returns 数组对象导出为表格
  */
-export const exportTable = (jsonData: {}[],tableName:string) => {
+export const exportTable = (jsonData: {}[], tableName: string) => {
   // 如果没有拿到值，就此结束
   if (!jsonData) {
     return;
@@ -225,11 +226,74 @@ export const exportTable = (jsonData: {}[],tableName:string) => {
 
   const link = document.createElement("a");
   link.href = url;
-  link.download = tableName+".xlsx";
+  link.download = tableName + ".xlsx";
   link.click();
 
   // 等待一段时间后释放 URL 对象
   setTimeout(() => {
     URL.revokeObjectURL(url);
   }, 1000);
+};
+
+/**
+ * 提供设备信息，算出采购价和使用月数组成的数组
+ */
+
+interface ProcessedItem {
+  purchase: number;
+  monthsUsed: number;
+}
+
+const calculateMonthsDifference = (date1: Date, date2: Date): number => {
+  const diffTime = Math.abs(date2.getTime() - date1.getTime());
+  const diffMonths = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 30)); // 计算月份
+  return diffMonths;
+};
+
+const processArray = (arr: MysqlDeviceChange[]): ProcessedItem[] => {
+  const now = new Date();
+
+  return arr.map((item) => {
+    const itemDate = new Date(item.time);
+    const monthsUsed = calculateMonthsDifference(itemDate, now);
+    return {
+      purchase: item.purchase,
+      monthsUsed: monthsUsed,
+    };
+  });
+};
+
+//计算残值 输入采购价 使用月数，算出当前残值
+const calculateResidualValue = (purchasePrice: number, monthsUsed: number) => {
+  const salvageRate = defaultOption.residual_value_rate * 0.01; // 残值率（5%）
+  const totalDepreciationPeriod = defaultOption.depreciation_year ; // 折旧年限（月）
+  //console.log("残值率", salvageRate);
+  //console.log("折旧月数", totalDepreciationPeriod);
+
+  return (
+    purchasePrice -
+    ((purchasePrice * (1 - salvageRate)) / totalDepreciationPeriod) * monthsUsed
+  );
+};
+
+/**
+ *
+ * 将包含采购价和使用月数组成的对象数组，分别算出残值并累计相加输出
+ */
+const calculateTotalResidualValue = (data: ProcessedItem[]): number => {
+  return data.reduce((total, item) => {
+    const residualValue = calculateResidualValue(
+      item.purchase,
+      item.monthsUsed
+    );
+    return total + residualValue;
+  }, 0);
+};
+
+//算出总残值
+export const totalResidualValue = (data: MysqlDeviceChange[]) => {
+  //计算出采购价和使用月数组
+  const array = processArray(data);
+  //计算出总残值
+  return calculateTotalResidualValue(array);
 };
