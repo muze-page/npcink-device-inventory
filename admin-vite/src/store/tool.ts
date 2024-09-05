@@ -295,5 +295,5 @@ export const totalResidualValue = (data: MysqlDeviceChange[]) => {
   //计算出采购价和使用月数组
   const array = processArray(data);
   //计算出总残值
-  return calculateTotalResidualValue(array).toFixed(4);
+  return calculateTotalResidualValue(array).toFixed(2);
 };
