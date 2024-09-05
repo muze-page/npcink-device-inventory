@@ -141,7 +141,7 @@ const App: React.FC = () => {
         {/**广告内容 */}
         <Ad />
       </div>
-      <div className="pb-4 ml-4">
+      <div className="mt-6 pb-6 px-5">
         <table>
           <tr>
             <th className="w-[80px] text-center">总采购价</th>
@@ -165,12 +165,15 @@ const App: React.FC = () => {
             </td>
           </tr>
         </table>
-        计算方式：
-        <ul>
-          <li>残值 = 采购价-已折旧值，</li>
-          <li>已折旧值=已使用月数*每月折旧值</li>
-          <li>每月折旧值=总折旧值/总折旧月数</li>
-          <li>总折旧值=采购价*(1-残值率)</li>
+
+        <ul className="mt-4 text-xs">
+          <li> 计算方式：</li>
+          <li>残值 = 采购价 - 已折旧值</li>
+          <li>已折旧值 = 已使用月数 * 每月折旧值</li>
+          <li>每月折旧值 = 总折旧值 / 总折旧月数</li>
+          <li>总折旧值 = 采购价 * (1 - 残值率)</li>
+          <li>二手折价率 = 总二手价 / 采购价</li>
+          <li>残值率 = 总残值 / 采购价</li>
         </ul>
       </div>
     </>
