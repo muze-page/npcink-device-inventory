@@ -122,6 +122,8 @@ class Dema_Activator extends DEMA_Admin_Interface
 			"password" => $pss, //默认密码
 			"device_show_number" => 10, //默认每页显示数量
 			"delete_mysql" => false, //默认是否删除数据库
+			"depreciation_year" => 36, //折旧月限
+			"residual_value_rate" => 5, //残值率
 			"department" => array("开发部", "推广部", "运营部", "默认"), //默认部门
 			"public_search_route" => "public-search-page", //默认公开搜索路由
 		);

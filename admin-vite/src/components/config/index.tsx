@@ -12,6 +12,8 @@ import {
   message,
   Popconfirm,
 } from "antd";
+import { PlusCircleFilled, MinusCircleFilled } from "@ant-design/icons";
+
 import { defaultOption, Site, TableDataName, TableChangeName } from "@/store";
 import { saveSQLData, remove_department, addPublicSearchPage } from "@/axios";
 
@@ -220,7 +222,7 @@ const App: React.FC = () => {
               </>
             }
           >
-            <Input />
+            <Input style={{ width: "300px" }} />
           </Form.Item>
 
           <Form.Item
@@ -229,14 +231,14 @@ const App: React.FC = () => {
             rules={[{ required: true, message: "客户端传输数据时的密码" }]}
             extra={"客户端传输数据时的验证码，重新设定即可重置"}
           >
-            <Input className="py-0" />
+            <Input style={{ width: "300px" }} />
           </Form.Item>
           <Form.Item
             label="设备数量"
             name="device_show_number"
             extra={"设备详情页展示的数量，默认 8"}
           >
-            <InputNumber min={4} max={80} />
+            <InputNumber min={4} max={80} style={{ width: "120px" }} />
           </Form.Item>
           <Form.Item
             label="删除插件数据"
@@ -251,14 +253,14 @@ const App: React.FC = () => {
             name="depreciation_year"
             extra={"例如三年共36个月，36个月后折旧完毕，用回本了"}
           >
-            <InputNumber addonAfter="月" />
+            <InputNumber addonAfter="月" style={{ width: "120px" }} />
           </Form.Item>
           <Form.Item
             label="残值率"
             name="residual_value_rate"
             extra={"例如 5% ，用了三年后，最少也值采购价的 5% "}
           >
-            <InputNumber addonAfter="%" />
+            <InputNumber addonAfter="%" style={{ width: "120px" }} />
           </Form.Item>
 
           <Form.Item wrapperCol={{ offset: 2, span: 22 }}>
@@ -288,11 +290,15 @@ const App: React.FC = () => {
           >
             <div>
               <Input
-                style={{ width: "80%" }}
+                style={{ width: "180px" }}
                 value={newDepartment}
                 onChange={(e) => setNewDepartment(e.target.value)}
               />
-              <Button style={{ width: "20%" }} onClick={handleAddDepartment}>
+              <Button
+                icon={<PlusCircleFilled />}
+                style={{ width: "90px", marginLeft: "30px" }}
+                onClick={handleAddDepartment}
+              >
                 添加
               </Button>
             </div>
@@ -302,7 +308,7 @@ const App: React.FC = () => {
             <div>
               <Select
                 value={selectedDepartment}
-                style={{ width: "80%" }}
+                style={{ width: "180px" }}
                 options={getSelectData}
                 onChange={(value) => setSelectedDepartment(value)}
               />
@@ -314,7 +320,12 @@ const App: React.FC = () => {
                 okText="移除"
                 cancelText="我再想想"
               >
-                <Button style={{ width: "20%" }}>移除</Button>
+                <Button
+                  icon={<MinusCircleFilled />}
+                  style={{ width: "90px", marginLeft: "30px" }}
+                >
+                  移除
+                </Button>
               </Popconfirm>
             </div>
           </Form.Item>
@@ -330,12 +341,16 @@ const App: React.FC = () => {
           >
             <div>
               <Input
-                style={{ width: "80%" }}
+                style={{ width: "180px" }}
                 value={publicSearch}
                 placeholder="填写页面路由"
                 onChange={(e) => setPublicSearch(e.target.value)}
               />
-              <Button style={{ width: "20%" }} onClick={addPage}>
+              <Button
+                icon={<PlusCircleFilled />}
+                style={{ width: "90px", marginLeft: "30px" }}
+                onClick={addPage}
+              >
                 添加
               </Button>
             </div>
