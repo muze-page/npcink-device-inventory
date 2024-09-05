@@ -2,7 +2,7 @@
  * 资产盘点
  */
 import { useState } from "react";
-import { dataMySql, defaultOption } from "@/store";
+import { dataMySql } from "@/store";
 import { totalResidualValue } from "@/store/tool";
 import {
   Computer,
@@ -137,26 +137,27 @@ const App: React.FC = () => {
             <div className="content">{items[activeTab].children}</div>
           </div>
         </div>
-        <p>
-          总采购： <b>{totalPurchase || 0}</b> 元
-        </p>
-        <p>
-          总折旧（设置的折旧值）：
-          <b>{totalDepreciation || 0}</b> 元
-        </p>
-        <p>
-          总残值：{totalResidualValue(dataMySql)}
-          <br />
-          计算方式：总残值 = 采购价-折旧值，
-        </p>
 
         {/**广告内容 */}
         <Ad />
       </div>
-      {/**
-       * </div>
-       * </div>
-       */}
+      <div className="pb-4 ml-4">
+        <p>
+          总采购： <b>{totalPurchase || 0}</b> 元
+        </p>
+        <p>
+          总二手价：
+          <b>{totalDepreciation || 0}</b> 元
+        </p>
+        <p>总残值：{totalResidualValue(dataMySql)}元</p>
+        计算方式：
+        <ul>
+          <li>残值 = 采购价-已折旧值，</li>
+          <li>已折旧值=已使用月数*每月折旧值</li>
+          <li>每月折旧值=总折旧值/总折旧月数</li>
+          <li>总折旧值=采购价*(1-残值率)</li>
+        </ul>
+      </div>
     </>
   );
 };

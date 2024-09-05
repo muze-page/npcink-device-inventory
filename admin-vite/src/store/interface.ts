@@ -7,7 +7,7 @@ export interface MysqlDevice {
   number: string; //编号
   department: string; //部门
   purchase: number; //采购价
-  depreciation: number; //折旧价
+  depreciation: number; //二手价
   ip: string; //ip
   time: string; //添加时间
   uuid: string; //唯一编号
@@ -22,7 +22,7 @@ export interface MysqlDeviceChange {
   number: string; //编号
   department: string; //部门
   purchase: number; //采购价
-  depreciation: number; //折旧价
+  depreciation: number; //二手价
   ip: string; //ip
   time: string; //添加时间
   uuid: string; //唯一编号

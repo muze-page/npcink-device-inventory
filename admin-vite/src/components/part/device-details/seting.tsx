@@ -156,11 +156,11 @@ const App: React.FC<Props> = ({ data }) => {
             placeholder="采购时的价格"
           />
         </Form.Item>
-        <Form.Item label="折旧价" name="depreciation">
+        <Form.Item label="二手价" name="depreciation">
           <InputNumber
             style={{ width: 180 }}
             addonAfter="￥"
-            placeholder="折旧后的价格"
+            placeholder="二手市场的价格"
           />
         </Form.Item>
         <Form.Item label="折旧百分比">
