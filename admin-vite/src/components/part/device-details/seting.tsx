@@ -181,7 +181,8 @@ const App: React.FC<Props> = ({ data }) => {
 
             <tr>
               <td className="w-[80px] text-center">
-                {getPercentage(data.depreciation, data.purchase)}
+                {/* 为啥可能是字符串 */}
+                {getPercentage(Number(data.depreciation), Number(data.purchase))}
               </td>
               <td className="w-[80px] text-center">{residualValue}元</td>
               <td className="w-[80px] text-center">
