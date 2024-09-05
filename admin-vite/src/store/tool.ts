@@ -266,7 +266,7 @@ const processArray = (arr: MysqlDeviceChange[]): ProcessedItem[] => {
 //计算残值 输入采购价 使用月数，算出当前残值
 const calculateResidualValue = (purchasePrice: number, monthsUsed: number) => {
   const salvageRate = defaultOption.residual_value_rate * 0.01; // 残值率（5%）
-  const totalDepreciationPeriod = defaultOption.depreciation_year ; // 折旧年限（月）
+  const totalDepreciationPeriod = defaultOption.depreciation_year; // 折旧年限（月）
   //console.log("残值率", salvageRate);
   //console.log("折旧月数", totalDepreciationPeriod);
 
@@ -295,5 +295,12 @@ export const totalResidualValue = (data: MysqlDeviceChange[]) => {
   //计算出采购价和使用月数组
   const array = processArray(data);
   //计算出总残值
-  return calculateTotalResidualValue(array).toFixed(2);
+  return Number(calculateTotalResidualValue(array).toFixed(2));
+};
+
+//输入两个数，输出百分比
+export const getPercentage = (num1: number, num2: number) => {
+  if (num1 === 0 || num2 === 0) return "0%";
+  //计算出百分比
+  return ((num1 / num2) * 100).toFixed(2) + "%";
 };

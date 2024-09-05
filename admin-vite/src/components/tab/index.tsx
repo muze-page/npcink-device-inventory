@@ -3,7 +3,7 @@
  */
 import { useState } from "react";
 import { dataMySql } from "@/store";
-import { totalResidualValue } from "@/store/tool";
+import { totalResidualValue, getPercentage } from "@/store/tool";
 import {
   Computer,
   ComputerCpu,
@@ -142,14 +142,29 @@ const App: React.FC = () => {
         <Ad />
       </div>
       <div className="pb-4 ml-4">
-        <p>
-          总采购： <b>{totalPurchase || 0}</b> 元
-        </p>
-        <p>
-          总二手价：
-          <b>{totalDepreciation || 0}</b> 元
-        </p>
-        <p>总残值：{totalResidualValue(dataMySql)}元</p>
+        <table>
+          <tr>
+            <th className="w-[80px] text-center">总采购价</th>
+            <th className="w-[80px] text-center">总二手价</th>
+            <th className="w-[80px] text-center">二手折价率</th>
+            <th className="w-[80px] text-center">总残值</th>
+            <th className="w-[80px] text-center">残值率</th>
+          </tr>
+
+          <tr>
+            <td className="w-[80px] text-center">{totalPurchase || 0}元</td>
+            <td className="w-[80px] text-center">{totalDepreciation || 0}元</td>
+            <td className="w-[80px] text-center">
+              {getPercentage(totalDepreciation, totalPurchase)}
+            </td>
+            <td className="w-[80px] text-center">
+              {totalResidualValue(dataMySql)}元
+            </td>
+            <td className="w-[80px] text-center">
+              {getPercentage(totalResidualValue(dataMySql), totalPurchase)}
+            </td>
+          </tr>
+        </table>
         计算方式：
         <ul>
           <li>残值 = 采购价-已折旧值，</li>

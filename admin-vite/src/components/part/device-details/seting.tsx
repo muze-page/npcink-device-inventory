@@ -8,7 +8,11 @@ import { deltSQLData, changeMySql } from "@/axios";
 import { MysqlDeviceChange } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
 import { defaultOption } from "@/store";
-import { changeSelectData, totalResidualValue } from "@/store/tool";
+import {
+  changeSelectData,
+  totalResidualValue,
+  getPercentage,
+} from "@/store/tool";
 import { DeviceContext } from "@/store/setingContext";
 interface Props {
   data: MysqlDeviceChange; //UUID
@@ -123,18 +127,6 @@ const App: React.FC<Props> = ({ data }) => {
   //理论折旧值 - 根据设定的折旧年限和残值率算出
   const residualValue = totalResidualValue([data]);
 
-  /**TODO:为啥这里的价格是字符串 */
-  //理论折旧率
-  const theoryDepreciationRate =
-    Number(data.purchase) === 0 || Number(residualValue) === 0
-      ? "0.00"
-      : ((Number(residualValue) / Number(data.purchase)) * 100).toFixed(2);
-
-  //二手折旧率
-  const secondHandDepreciationRate =
-    Number(data.purchase) === 0 || Number(data.depreciation) === 0
-      ? "0.00"
-      : ((Number(data.depreciation) / Number(data.purchase)) * 100).toFixed(2);
   return (
     <>
       <Form
@@ -181,20 +173,21 @@ const App: React.FC<Props> = ({ data }) => {
         </Form.Item>
         <Form.Item label="相关参数">
           <table>
-            <thead>
-              <tr>
-                <th className="ml-2">理论折旧值</th>
-                <th>理论折旧率</th>
-                <th>二手折旧率</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>{residualValue}元</td>
-                <td>{theoryDepreciationRate}%</td>
-                <td>{secondHandDepreciationRate}%</td>
-              </tr>
-            </tbody>
+            <tr>
+              <th className="w-[80px] text-center">二手折旧率</th>
+              <th className="w-[80px] text-center">残值</th>
+              <th className="w-[80px] text-center">残值率</th>
+            </tr>
+
+            <tr>
+              <td className="w-[80px] text-center">
+                {getPercentage(data.depreciation, data.purchase)}
+              </td>
+              <td className="w-[80px] text-center">{residualValue}元</td>
+              <td className="w-[80px] text-center">
+                {getPercentage(residualValue, data.purchase)}
+              </td>
+            </tr>
           </table>
         </Form.Item>
 
