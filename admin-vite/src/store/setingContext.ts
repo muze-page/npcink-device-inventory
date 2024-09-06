@@ -19,7 +19,7 @@ interface AppContextDevice {
 }
 export const DeviceContext = createContext<AppContextDevice>({
   realData: {
-    name: "0", //项目
+    name: "0", //姓名
     number: "0", //编号
     state: "0", //状态
     department: "0", //部门
