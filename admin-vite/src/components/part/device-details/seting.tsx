@@ -174,18 +174,21 @@ const App: React.FC<Props> = ({ data }) => {
         <Form.Item label="相关参数">
           <table>
             <tr>
-              <th className="w-[80px] text-center">二手折旧率</th>
-              <th className="w-[80px] text-center">残值</th>
-              <th className="w-[80px] text-center">残值率</th>
+              <th className="w-28 text-center">二手折旧率</th>
+              <th className="w-28 text-center">残值</th>
+              <th className="w-28 text-center">残值率</th>
             </tr>
 
             <tr>
-              <td className="w-[80px] text-center">
+              <td className="w-28 text-center">
                 {/* 为啥可能是字符串 */}
-                {getPercentage(Number(data.depreciation), Number(data.purchase))}
+                {getPercentage(
+                  Number(data.depreciation),
+                  Number(data.purchase)
+                )}
               </td>
-              <td className="w-[80px] text-center">{residualValue}元</td>
-              <td className="w-[80px] text-center">
+              <td className="w-28 text-center">{residualValue}元</td>
+              <td className="w-28 text-center">
                 {getPercentage(residualValue, data.purchase)}
               </td>
             </tr>

@@ -144,23 +144,23 @@ const App: React.FC = () => {
       <div className="mt-6 pb-6 px-5">
         <table>
           <tr>
-            <th className="w-[80px] text-center">总采购价</th>
-            <th className="w-[80px] text-center">总二手价</th>
-            <th className="w-[80px] text-center">二手折价率</th>
-            <th className="w-[80px] text-center">总残值</th>
-            <th className="w-[80px] text-center">残值率</th>
+            <th className="w-28 text-center">总采购价</th>
+            <th className="w-28 text-center">总二手价</th>
+            <th className="w-28 text-center">二手折价率</th>
+            <th className="w-28 text-center">总残值</th>
+            <th className="w-28 text-center">残值率</th>
           </tr>
 
           <tr>
-            <td className="w-[80px] text-center">{totalPurchase || 0}元</td>
-            <td className="w-[80px] text-center">{totalDepreciation || 0}元</td>
-            <td className="w-[80px] text-center">
+            <td className="w-28 text-center">{totalPurchase || 0}元</td>
+            <td className="w-28 text-center">{totalDepreciation || 0}元</td>
+            <td className="w-28 text-center">
               {getPercentage(totalDepreciation, totalPurchase)}
             </td>
-            <td className="w-[80px] text-center">
+            <td className="w-28 text-center">
               {totalResidualValue(dataMySql)}元
             </td>
-            <td className="w-[80px] text-center">
+            <td className="w-28 text-center">
               {getPercentage(totalResidualValue(dataMySql), totalPurchase)}
             </td>
           </tr>
