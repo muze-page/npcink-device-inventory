@@ -92,7 +92,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             <Tooltip title={"当前部门：" + data.department}>
               <span>部门：{data.department}</span>
             </Tooltip>
-            <Tooltip title={"当前状态：" + deviceStatus + "中"}>
+            <Tooltip title={"当前状态：" + deviceStatus }>
               <span>状态：{deviceStatus}</span>
             </Tooltip>
             <Tooltip title={"当前IP：" + data.ip}>
