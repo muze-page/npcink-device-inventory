@@ -1,7 +1,7 @@
 //类型
 //从数据库读取的设备信息
 export interface MysqlDevice {
-  id: number;
+  id: number;//TODO:改为字符串
   name: string; //姓名
   state: string; //状态
   number: string; //编号
@@ -127,6 +127,28 @@ export interface DeviceChangeList {
   [keysx: string]: number | string;
 }
 
+//自定义设备类型
+export interface StyleDevice {
+  id: string; //设备ID
+  state: string; //设备状态
+  name: string; //使用人
+  time: string; //添加时间
+  uuid: string; //设备UUID
+  data: StyleDeviceData[]; //设备数据
+}
+export interface StyleDeviceData {
+  title: string; //设备名称
+  link: string; //购买链接
+  shop_name: string; //店铺名称
+  number: string; //设备数量
+  total: string; //总价
+  order_time: string; //下单时间
+  order: string; //订单号
+  purpose: string; //用途
+  pay_method: string; //支付方式
+  platform: string; //平台
+}
+
 /**
  * 列表图片内容,不同的设备不同的背景色
  */
@@ -245,7 +267,6 @@ export interface ComputerSystem {
   version: string;
   virtual: boolean;
   manufacturer: string;
-
   virtualHost: boolean;
   raspberry: object;
 }

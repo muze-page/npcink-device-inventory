@@ -40,6 +40,9 @@ class Dema_Activator extends DEMA_Admin_Interface
 		if (get_option(self::$option) === false) {
 			self::device_manage_create_option();
 		}
+
+		//创建自定义类型设备管理表
+		self::create_style_device_table();
 	}
 	//新建数据库表 - 存储数据用
 	// 在插件激活时创建数据库表
@@ -129,5 +132,34 @@ class Dema_Activator extends DEMA_Admin_Interface
 		);
 		//保存
 		update_option(self::$option, $option);
+	}
+
+	//创建自定义类型设备管理表
+	public static function create_style_device_table()
+	{
+		// 获取全局 $wpdb 对象
+		global $wpdb;
+
+		// 定义表名
+		$table_name = $wpdb->prefix .  self::$table_style_name;
+
+		// 检查是否已存在同名表
+		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+			// 创建表结构
+			$sql = "CREATE TABLE $table_name (
+            id INT NOT NULL AUTO_INCREMENT,
+			name VARCHAR(10) NOT NULL,
+			state VARCHAR(10) NOT NULL,
+            data VARCHAR(120) NOT NULL,
+            time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			uuid VARCHAR(36) NOT NULL,
+            PRIMARY KEY (id)
+            
+        );";
+
+			// 执行 SQL 语句
+			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+			dbDelta($sql);
+		}
 	}
 }
