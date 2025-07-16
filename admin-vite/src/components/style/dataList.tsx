@@ -10,23 +10,23 @@ import Mac from "@/assets/mac.png";
 
 interface Props {
   data: StyleDevice;
-  //onActive: () => void; //修改状态
-  //onDrawerData: () => void; //保存值
+  onActive: () => void; //修改状态
+  onDrawerData: () => void; //保存值
 }
-const App: React.FC<Props> = ({ data }) => {
+const App: React.FC<Props> = ({ data,onActive,onDrawerData }) => {
   //拿到隐藏姓名状态
   //const { isName } = useContext(AppContext);
   const isName = true; //
 
   //点击打开弹窗
   const showDrawer = () => {
-    // onActive(); //打开弹窗
-    // onDrawerData(); //保存值
+     onActive(); //打开弹窗
+     onDrawerData(); //保存值
   };
 
   return (
     <>
-      {/**开始循环 */}
+      {/**开始展示设备信息 */}
       <div
         className="
         cursor-pointer p-[10px] rounded mr-[2%] mb-4 w-[18.4%] h-[290px] mac
@@ -58,13 +58,11 @@ const App: React.FC<Props> = ({ data }) => {
 
             {/** </div> */}
 
-            <pre className="bg-gray-100 rounded p-2 mt-2 text-xs overflow-x-auto">
-             
-            </pre>
+           
           </p>
 
           {/*状态*/}
-          <p className="mt-2 w-full truncate">{data.state}666</p>
+          <p className="mt-2 w-full truncate">{data.state}</p>
           {/*使用人*/}
           <p className="mt-2">{data.name}</p>
           {/*时间*/}
