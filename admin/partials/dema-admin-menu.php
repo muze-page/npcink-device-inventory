@@ -1,13 +1,10 @@
 <?php
-//添加菜单
+//添加菜单，传递数据
 if (!class_exists('DEMA_Admin_Menu')) {
     class DEMA_Admin_Menu extends DEMA_Admin_Interface
     {
-
-
         public static $plugin_name; //插件名
         public static $plugin_version; //插件版本
-
         public static function run_menu($name, $version)
         {
             //传值
@@ -46,7 +43,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
             <div class="wrap">
                 <!--标题-->
                 <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-                <div id='root'>出现未知错误，请联系管理员</div>
+                <div id='root'>数据加载中，请稍等</div>
             </div>
 <?php
 
@@ -74,10 +71,12 @@ if (!class_exists('DEMA_Admin_Menu')) {
             $pf_api_translation_array = array(
                 'site' => get_home_url(), //首页网址
                 'ajaxurl' => admin_url('admin-ajax.php'),
-                'data' => self::get_device_data(), //传递变量
+                'data' => self::get_device_data(), //传递设备数据
+                'style-data' => self::get_style_device_data(), //传递自定义设备数据'
                 'option' => get_option(self::$option), //传递选项
                 'table_data_name' => self::$table_data_name, //设备数据表名
                 'table_change_name' => self::$table_change_name, //变更数据表名
+                'table_style_name' => self::$table_style_name,//自定义设备数据表名
             );
             wp_localize_script($name, 'dataLocal', $pf_api_translation_array); //传给vite项目
         }
@@ -105,6 +104,18 @@ if (!class_exists('DEMA_Admin_Menu')) {
             // 获取所有数据
             $result = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);
 
+            return $result;
+        }
+
+        /**
+         * 获取自定义设备数据表内容
+         */
+        public static function get_style_device_data()
+        {
+            global $wpdb;
+            $table_name = $wpdb->prefix . self::$table_style_name;
+            // 获取所有数据
+            $result = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);
             return $result;
         }
     }

@@ -41,6 +41,10 @@ if (!class_exists('DEMA_Admin_Interface')) {
             //添加前端公共搜索页接口
             require_once plugin_dir_path(__FILE__) . 'interface/add-page.php';
             DEMA_Admin_Interface_Add_Page::run();
+
+            //自定义设备数据增删改查接口
+            require_once plugin_dir_path(__FILE__) . 'interface/add-style-data.php';
+            DEMA_Admin_Interface_Add_Style_Data::run();
         }
 
 

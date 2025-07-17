@@ -153,7 +153,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 			state VARCHAR(10) NOT NULL,
             time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			uuid VARCHAR(36) NOT NULL,
-			data VARCHAR(120) NOT NULL,
+			data JSON,
             PRIMARY KEY (id)
             
         );";

@@ -12,6 +12,9 @@ import Drawer from "@/components/style/drawer/index";
 //拿到顶部
 import Header from "@/components/style/header";
 
+//测试数据传输
+import AxiosStyleDeviceData from "@/components/demo/axiosStyleDeviceData";
+
 const App: React.FC = () => {
   //共享弹窗状态
   const [active, setActive] = useState(false);
@@ -24,15 +27,13 @@ const App: React.FC = () => {
   const [drawerData, setDrawerData] = useState({} as StyleDevice);
 
   //当前点击选中的数组index
-  const [arrIndex, setArrIndex] = useState(0);
+  const [_arrIndex, setArrIndex] = useState(0);
 
   return (
     <>
       <div className="pb-6 px-5">
-       
-        <Header/>
+        <Header />
         <div className="flex content-start items-center flex-wrap w-full">
-          
           {/**开始循环 */}
           {DemoData.map((tab, index) => (
             <DataList
@@ -50,6 +51,7 @@ const App: React.FC = () => {
           onActive={() => changeActive()}
         />
       </div>
+      <AxiosStyleDeviceData />
     </>
   );
 };
