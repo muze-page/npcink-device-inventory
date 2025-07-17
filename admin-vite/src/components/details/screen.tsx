@@ -2,7 +2,7 @@
  * 设备详情 - 顶部筛选
  * TODO:搜索备注名或编号
  */
-import { useState, useEffect,useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Space, Select, Button, Tooltip } from "antd";
 import {
   ReloadOutlined,
@@ -14,7 +14,7 @@ import { defaultOption } from "@/store";
 import { changeSelectData } from "@/store/tool";
 import { device_status } from "@/store/dataReplace";
 import Search from "@/components/details/search";
-import Header from "@/components/part/header";
+import Header from "@/components/block/tab-header";
 interface Props {
   data: MysqlDeviceChangeMeat[]; //筛选用数据
   onSet: Function; //传递筛选后的数据
@@ -92,7 +92,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
   };
 
   //拿到需要的状态和方法
-  const { isName,toggleStyle } = useContext(AppContext);
+  const { isName, toggleStyle } = useContext(AppContext);
 
   return (
     <>

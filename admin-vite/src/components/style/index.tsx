@@ -9,6 +9,8 @@ import { StyleDevice } from "@/store/interface";
 import DemoData from "@/store/demoStyleData";
 //拿到弹窗
 import Drawer from "@/components/style/drawer/index";
+//拿到顶部
+import Header from "@/components/style/header";
 
 const App: React.FC = () => {
   //共享弹窗状态
@@ -23,25 +25,31 @@ const App: React.FC = () => {
 
   //当前点击选中的数组index
   const [arrIndex, setArrIndex] = useState(0);
-  
+
   return (
     <>
-      自定义设备类型
-      {/**开始循环 */}
-      {DemoData.map((tab, index) => (
-        <DataList
-          key={tab.id}
-          data={tab}
+      <div className="pb-6 px-5">
+       
+        <Header/>
+        <div className="flex content-start items-center flex-wrap w-full">
+          
+          {/**开始循环 */}
+          {DemoData.map((tab, index) => (
+            <DataList
+              key={tab.id}
+              data={tab}
+              onActive={() => changeActive()}
+              onDrawerData={() => (setDrawerData(tab), setArrIndex(index))}
+            />
+          ))}
+        </div>
+        {/**弹窗 */}
+        <Drawer
+          data={drawerData}
+          active={active}
           onActive={() => changeActive()}
-          onDrawerData={() => (setDrawerData(tab), setArrIndex(index))}
         />
-      ))}
-      {/**弹窗 */}
-      <Drawer
-        data={drawerData}
-        active={active}
-        onActive={() => changeActive()}
-      />
+      </div>
     </>
   );
 };

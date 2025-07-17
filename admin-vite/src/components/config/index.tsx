@@ -20,7 +20,7 @@ import { saveSQLData, remove_department, addPublicSearchPage } from "@/axios";
 import ImportExport from "@/components/config/importExport";
 import { OptionType } from "@/store/interface";
 import { changeSelectData } from "@/store/tool";
-import Header from "@/components/part/header";
+import Header from "@/components/block/tab-header";
 
 const App: React.FC = () => {
   //传来的默认选项
