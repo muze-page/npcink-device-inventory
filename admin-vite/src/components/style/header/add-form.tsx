@@ -4,21 +4,20 @@
 
 import React from "react";
 import type { FormProps } from "antd";
-import { Button, Checkbox, Form, Input } from "antd";
-
-type FieldType = {
-  username?: string;
-  password?: string;
-  remember?: string;
-};
-
-const onFinish: FormProps<FieldType>["onFinish"] = (values) => {
+import { Button, Radio, Form, Input } from "antd";
+import { device_status } from "@/store/dataReplace";
+import { StyleDevice, StyleDeviceData } from "@/store/interface";
+const onFinish: FormProps<StyleDevice>["onFinish"] = (values) => {
   console.log("Success:", values);
 };
 
-const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (errorInfo) => {
+const onFinishFailed: FormProps<StyleDevice>["onFinishFailed"] = (
+  errorInfo
+) => {
   console.log("Failed:", errorInfo);
 };
+
+//状态选项 device_status
 
 const App: React.FC = () => (
   <Form
@@ -31,29 +30,48 @@ const App: React.FC = () => (
     onFinishFailed={onFinishFailed}
     autoComplete="off"
   >
-    <Form.Item<FieldType>
-      label="Username"
-      name="username"
-      rules={[{ required: true, message: "Please input your username!" }]}
-    >
+    <Form.Item<StyleDevice> label="使用人：" name="name">
       <Input />
     </Form.Item>
-
-    <Form.Item<FieldType>
-      label="Password"
-      name="password"
-      rules={[{ required: true, message: "Please input your password!" }]}
-    >
-      <Input.Password />
+    <Form.Item<StyleDevice> label="用途：" name="purpose">
+      <Input />
     </Form.Item>
-
-    <Form.Item<FieldType> name="remember" valuePropName="checked" label={null}>
-      <Checkbox>Remember me</Checkbox>
+    <Form.Item<StyleDevice> label="状态：" name="state">
+      <Radio.Group options={device_status} defaultValue="Apple" />
     </Form.Item>
-
+    <Form.Item<StyleDeviceData> label="设备名称：" name="title">
+      <Input />
+    </Form.Item>
+    <Form.Item<StyleDeviceData> label="设备数量" name="number">
+      <Input />
+    </Form.Item>
+    <Form.Item<StyleDeviceData> label="价格" name="total">
+      <Input />
+    </Form.Item>
+    <Form.Item<StyleDeviceData> label="平台" name="platform">
+      <Input />
+    </Form.Item>
+    <Form.Item<StyleDeviceData> label="店铺名称" name="shop_name">
+      <Input />
+    </Form.Item>
+    <Form.Item<StyleDeviceData> label="购买链接：" name="link">
+      <Input />
+    </Form.Item>
+    <Form.Item<StyleDeviceData> label="下单时间" name="order_time">
+      <Input />
+    </Form.Item>
+    <Form.Item<StyleDeviceData> label="订单号" name="order">
+      <Input />
+    </Form.Item>
+    <Form.Item<StyleDeviceData> label="支付方式" name="pay_method">
+      <Input />
+    </Form.Item>
+    <Form.Item<StyleDeviceData> label="采购人" name="purchaser">
+      <Input />
+    </Form.Item>
     <Form.Item label={null}>
       <Button type="primary" htmlType="submit">
-        Submit
+        提交
       </Button>
     </Form.Item>
   </Form>

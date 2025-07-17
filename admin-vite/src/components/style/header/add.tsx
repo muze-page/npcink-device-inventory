@@ -13,8 +13,8 @@ const App: React.FC<Props> = ({ isModalOpen, handleOk, handleCancel }) => {
   return (
     <>
       <Modal
-        title="Basic Modal"
-        closable={{ "aria-label": "Custom Close Button" }}
+        title="采购信息录入"
+        closable={{ "aria-label": "自定义关闭按钮" }}
         open={isModalOpen}
         onOk={handleOk}
         onCancel={handleCancel}

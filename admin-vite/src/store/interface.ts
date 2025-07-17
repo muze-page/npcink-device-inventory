@@ -1,7 +1,7 @@
 //类型
 //从数据库读取的设备信息
 export interface MysqlDevice {
-  id: number;//TODO:改为字符串
+  id: number; //TODO:改为字符串
   name: string; //姓名
   state: string; //状态
   number: string; //编号
@@ -130,23 +130,26 @@ export interface DeviceChangeList {
 //自定义设备类型
 export interface StyleDevice {
   id: string; //设备ID
-  state: string; //设备状态
   name: string; //使用人
+  purpose: string; //用途
+  state: string; //设备状态
   time: string; //添加时间
   uuid: string; //设备UUID
-  data: StyleDeviceData[]; //设备数据
+  data: StyleDeviceData; //设备数据
 }
+
+//自定义设备数据属性
 export interface StyleDeviceData {
   title: string; //设备名称
-  link: string; //购买链接
+  number: number; //设备数量
+  total: number; //单价
+  platform: string; //平台
   shop_name: string; //店铺名称
-  number: string; //设备数量
-  total: string; //总价
+  link: string; //购买链接
   order_time: string; //下单时间
   order: string; //订单号
-  purpose: string; //用途
   pay_method: string; //支付方式
-  platform: string; //平台
+  purchaser: string; //采购人
 }
 
 /**

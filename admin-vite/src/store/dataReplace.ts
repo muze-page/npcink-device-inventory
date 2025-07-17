@@ -40,6 +40,7 @@ export const osTypeReplace = [
   { value: "linux", label: "Linux" },
 ];
 
+//用于选项录入
 export const device_status = [
   { value: "apply", label: "使用" },
   { value: "idie", label: "闲置" },

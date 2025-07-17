@@ -1,7 +1,7 @@
 /**
  * 自定义设备信息展出弹窗
  */
-import { Drawer, Tabs } from "antd";
+import { Drawer, Tabs, Card } from "antd";
 import type { TabsProps } from "antd";
 import { StyleDevice } from "@/store/interface";
 import Info from "@/components/style/drawer/data-info";
@@ -33,18 +33,31 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
   ];
   return (
     <>
-      
-          <Drawer
-            title="自定义资产详细信息"
-            placement={"right"}
-            onClose={onActive}
-            open={active}
-            width={"60%"}
-            className="pt-9"
-          >
-            <Tabs defaultActiveKey="1" items={items} />
-          </Drawer>
-       
+      <Drawer
+        title="自定义资产详细信息"
+        placement={"right"}
+        onClose={onActive}
+        open={active}
+        width={"60%"}
+        className="pt-9"
+      >
+        <Card title="设备信息" extra={""} style={{ width: 600, marginTop: 20 }}>
+          <p>
+            <b>使用人：</b>
+            {data.name}
+          </p>
+          <p>
+            <b>用途：</b>
+            {data.purpose}
+          </p>
+          <p>
+            <b>设备状态：</b>
+            {data.state}
+          </p>
+        </Card>
+
+        <Tabs defaultActiveKey="1" items={items} />
+      </Drawer>
     </>
   );
 };

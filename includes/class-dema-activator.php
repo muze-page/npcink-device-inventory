@@ -149,10 +149,11 @@ class Dema_Activator extends DEMA_Admin_Interface
 			$sql = "CREATE TABLE $table_name (
             id INT NOT NULL AUTO_INCREMENT,
 			name VARCHAR(10) NOT NULL,
+			purpose VARCHAR(10) NOT NULL,
 			state VARCHAR(10) NOT NULL,
-            data VARCHAR(120) NOT NULL,
             time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			uuid VARCHAR(36) NOT NULL,
+			data VARCHAR(120) NOT NULL,
             PRIMARY KEY (id)
             
         );";
