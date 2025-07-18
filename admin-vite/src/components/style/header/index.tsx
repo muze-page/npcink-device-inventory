@@ -2,7 +2,7 @@
  * 自定义设备信息列表 - 顶部
  */
 import { useState } from "react";
-import { Space,  Button,  } from "antd";
+import { Space, Button } from "antd";
 import Add from "@/components/style/header/add";
 //引入头部模块
 import Header from "@/components/block/tab-header";
@@ -32,10 +32,15 @@ const App: React.FC = () => {
           <Button type="primary" onClick={showModal}>
             添加
           </Button>
-          <Add isModalOpen={isModalOpen} handleOk={handleOk} handleCancel={handleCancel} />
+
           <div>状态：</div>
           <div>搜索：</div>
         </Space>
+        <Add
+          isModalOpen={isModalOpen}
+          handleOk={handleOk}
+          handleCancel={handleCancel}
+        />
       </div>
     </>
   );

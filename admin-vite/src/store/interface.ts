@@ -1,4 +1,5 @@
 //类型
+import type { Dayjs } from "dayjs";
 //从数据库读取的设备信息
 export interface MysqlDevice {
   id: number; //TODO:改为字符串
@@ -146,7 +147,7 @@ export interface StyleDeviceData {
   platform: string; //平台
   shop_name: string; //店铺名称
   link: string; //购买链接
-  order_time: string; //下单时间
+  order_time: Dayjs; //下单时间
   order: string; //订单号
   pay_method: string; //支付方式
   purchaser: string; //采购人

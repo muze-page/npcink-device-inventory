@@ -8,6 +8,7 @@ import {
   DataItemArr,
 } from "@/store/interface";
 import { defaultOption } from "@/store";
+import dayjs from "dayjs";
 
 /**
  *拿到指定键的值并统计该键的出现次数
@@ -304,3 +305,12 @@ export const getPercentage = (num1: number, num2: number) => {
   //计算出百分比
   return ((num1 / num2) * 100).toFixed(2) + "%";
 };
+
+//传入日期，返回格式化
+export const formatDate = (date: string) => {
+  const formattedTime = dayjs(date).format("YY-MM-DD");
+  //console.log("Formatted Time:", formattedTime);
+  return formattedTime;
+};
+
+//格式化时间
