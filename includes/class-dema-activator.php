@@ -161,6 +161,20 @@ class Dema_Activator extends DEMA_Admin_Interface
 			// 执行 SQL 语句
 			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 			dbDelta($sql);
+
+			// 在 dbDelta($sql); 后添加触发器
+			$trigger_sql = "
+    CREATE TRIGGER before_insert_style_device
+    BEFORE INSERT ON `$table_name`
+    FOR EACH ROW
+    BEGIN
+        IF NEW.uuid IS NULL OR NEW.uuid = '' THEN
+            SET NEW.uuid = UUID();
+        END IF;
+    END;
+";
+
+			$wpdb->query($trigger_sql);
 		}
 	}
 }

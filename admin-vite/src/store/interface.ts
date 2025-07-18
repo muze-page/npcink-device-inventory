@@ -129,12 +129,12 @@ export interface DeviceChangeList {
 
 //自定义设备类型
 export interface StyleDevice {
-  id: string; //设备ID
+  id?: string; //设备ID，数据库自动创建
   name: string; //使用人
   purpose: string; //用途
   state: string; //设备状态
   time?: string; //添加时间，此时间由数据库创建新表时自动填入
-  uuid: string; //设备UUID
+  uuid?: string; //设备UUID，数据库自动创建
   data: StyleDeviceData; //设备数据
 }
 

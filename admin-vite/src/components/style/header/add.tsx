@@ -2,7 +2,7 @@
 /**
  * 自定义设备信息列表 - 顶部，信息录入弹窗
  */
-import { Modal } from "antd";
+import { Modal, Button } from "antd";
 import AddForm from "@/components/style/header/add-form";
 interface Props {
   isModalOpen: boolean; //设备数据
@@ -15,9 +15,18 @@ const App: React.FC<Props> = ({ isModalOpen, handleOk, handleCancel }) => {
       <Modal
         title="采购信息录入"
         closable={{ "aria-label": "自定义关闭按钮" }}
+        width={600}
         open={isModalOpen}
         onOk={handleOk}
         onCancel={handleCancel}
+        footer={[
+          <Button key="back" onClick={handleCancel}>
+            取消
+          </Button>,
+          <Button key="submit" type="primary" onClick={handleOk}>
+            提交
+          </Button>,
+        ]}
       >
         <AddForm />
       </Modal>
