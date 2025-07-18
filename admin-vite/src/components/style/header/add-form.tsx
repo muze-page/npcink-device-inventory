@@ -1,7 +1,6 @@
 /**
  * 添加数据的输入表单
  */
-import React from "react";
 import type { FormProps } from "antd";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
@@ -17,6 +16,7 @@ import {
 } from "antd";
 import { addStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
+import{ StyleDevice} from "@/store/interface";
 //当前表格的数据类型
 type FormType = {
   name: string; //使用人
@@ -32,39 +32,6 @@ type FormType = {
   order: string; //订单号
   pay_method: string; //支付方式
   purchaser: string; //采购人
-};
-//提交拿到的值
-const onFinish: FormProps<FormType>["onFinish"] = async (values) => {
-  //将设备信息存入data,方便后续存入数据库
-  const data = {
-    name: values.name,
-    purpose: values.purpose,
-    state: values.state,
-    data: {
-      title: values.title,
-      number: values.number,
-      total: values.total,
-      platform: values.platform,
-      shop_name: values.shop_name,
-      link: values.link,
-      order_time: values.order_time,
-      order: values.order,
-      pay_method: values.pay_method,
-      purchaser: values.purchaser,
-    },
-  };
-
-  // 发送POST请求
-  const state = await addStyleDeviceData(data);
-
-  //成功添加则清除输入框
-  if (state) {
-    alert("添加成功");
-  } else {
-    alert("添加失败");
-  }
-  console.log("成功，表单原始值:", values);
-  console.log("整理后的设备信息：", data);
 };
 
 const onFinishFailed: FormProps<FormType>["onFinishFailed"] = (errorInfo) => {
@@ -87,85 +54,128 @@ const defaultValue: FormType = {
   pay_method: "支付宝",
   purchaser: "王五",
 };
+// 在文件顶部添加 props 类型定义
+type AddFormProps = {
+  onSubmit: (values:  StyleDevice) => void;
+};
+const App = ({ onSubmit }: AddFormProps) => {
+  //创建表单实例，方便自定义
+  const [form] = Form.useForm();
+  //提交拿到的值
+  const onFinish: FormProps<FormType>["onFinish"] = async (values) => {
+    //将设备信息存入data,方便后续存入数据库
+    const data = {
+      name: values.name,
+      purpose: values.purpose,
+      state: values.state,
+      data: {
+        title: values.title,
+        number: values.number,
+        total: values.total,
+        platform: values.platform,
+        shop_name: values.shop_name,
+        link: values.link,
+        order_time: values.order_time,
+        order: values.order,
+        pay_method: values.pay_method,
+        purchaser: values.purchaser,
+      },
+    };
 
-const App: React.FC = () => (
-  <Form
-    name="basic"
-    labelCol={{ span: 8 }}
-    wrapperCol={{ span: 16 }}
-    style={{ maxWidth: 600 }}
-    initialValues={defaultValue}
-    onFinish={onFinish}
-    onFinishFailed={onFinishFailed}
-    autoComplete="off"
-  >
-    <Form.Item<FormType> label="使用人：" name="name">
-      <Input placeholder="使用此设备的人员，部门或位置" />
-    </Form.Item>
+    // 发送POST请求
+    const state = await addStyleDeviceData(data);
 
-    <Form.Item<FormType> label="设备状态：" name="state">
-      <Radio.Group options={device_status} />
-    </Form.Item>
+    //成功添加则清除输入框
+    if (state) {
+      alert("添加成功");
+    } else {
+      alert("添加失败");
+    }
+    console.log("成功，表单原始值:", values);
+    console.log("整理后的设备信息：", data);
+    onSubmit(data);
+  };
 
-    <Form.Item<FormType> label="店铺名称" name="shop_name">
-      <Input />
-    </Form.Item>
-    <Form.Item<FormType> label="设备名称：" name="title">
-      <Input />
-    </Form.Item>
-    <Form.Item<FormType> label="购买链接：" name="link">
-      <Input />
-    </Form.Item>
+  return (
+    <Form
+      form={form}
+      name="basic"
+      labelCol={{ span: 8 }}
+      wrapperCol={{ span: 16 }}
+      style={{ maxWidth: 600 }}
+      initialValues={defaultValue}
+      onFinish={onFinish}
+      onFinishFailed={onFinishFailed}
+      autoComplete="off"
+    >
+      <Form.Item<FormType> label="使用人：" name="name">
+        <Input placeholder="使用此设备的人员，部门或位置" />
+      </Form.Item>
 
-    <Form.Item<FormType> label="设备单号" name="order">
-      <Input />
-    </Form.Item>
-    <Form.Item<FormType> label="设备用途：" name="purpose">
-      <Input placeholder="此设备的使用用途" />
-    </Form.Item>
-    <Row>
-      <Col span={12}>
-        <Form.Item<FormType> label="设备数量" name="number">
-          <InputNumber addonAfter="个" />
-        </Form.Item>
-      </Col>
-      <Col span={12}>
-        <Form.Item<FormType> label="采购价格" name="total">
-          <InputNumber addonAfter="¥" />
-        </Form.Item>
-      </Col>
-    </Row>
-    <Row>
-      <Col span={12}>
-        <Form.Item<FormType> label="采购平台" name="platform">
-          <Input placeholder="淘宝、京东、拼多多等 " />
-        </Form.Item>
-      </Col>
-      <Col span={12}>
-        <Form.Item<FormType> label="付款时间" name="order_time">
-          <DatePicker />
-        </Form.Item>
-      </Col>
-    </Row>
-    <Row>
-      <Col span={12}>
-        <Form.Item<FormType> label="支付方式" name="pay_method">
-          <Input placeholder="微信、支付宝、银联等" />
-        </Form.Item>
-      </Col>
-      <Col span={12}>
-        <Form.Item<FormType> label="采购人员" name="purchaser">
-          <Input placeholder="付款购买此设备人的姓名" />
-        </Form.Item>
-      </Col>
-    </Row>
+      <Form.Item<FormType> label="设备状态：" name="state">
+        <Radio.Group options={device_status} />
+      </Form.Item>
 
-    <Form.Item label={null}>
-      <Button type="primary" htmlType="submit">
-        提交
-      </Button>
-    </Form.Item>
-  </Form>
-);
+      <Form.Item<FormType> label="店铺名称" name="shop_name">
+        <Input />
+      </Form.Item>
+      <Form.Item<FormType> label="设备名称：" name="title">
+        <Input />
+      </Form.Item>
+      <Form.Item<FormType> label="购买链接：" name="link">
+        <Input />
+      </Form.Item>
+
+      <Form.Item<FormType> label="设备单号" name="order">
+        <Input />
+      </Form.Item>
+      <Form.Item<FormType> label="设备用途：" name="purpose">
+        <Input placeholder="此设备的使用用途" />
+      </Form.Item>
+      <Row>
+        <Col span={12}>
+          <Form.Item<FormType> label="设备数量" name="number">
+            <InputNumber addonAfter="个" />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item<FormType> label="采购价格" name="total">
+            <InputNumber addonAfter="¥" />
+          </Form.Item>
+        </Col>
+      </Row>
+      <Row>
+        <Col span={12}>
+          <Form.Item<FormType> label="采购平台" name="platform">
+            <Input placeholder="淘宝、京东、拼多多等 " />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item<FormType> label="付款时间" name="order_time">
+            <DatePicker />
+          </Form.Item>
+        </Col>
+      </Row>
+      <Row>
+        <Col span={12}>
+          <Form.Item<FormType> label="支付方式" name="pay_method">
+            <Input placeholder="微信、支付宝、银联等" />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item<FormType> label="采购人员" name="purchaser">
+            <Input placeholder="付款购买此设备人的姓名" />
+          </Form.Item>
+        </Col>
+      </Row>
+
+      <Form.Item label={null}>
+        <Button type="primary" htmlType="submit">
+          提交
+        </Button>
+      </Form.Item>
+    </Form>
+  );
+};
 
 export default App;

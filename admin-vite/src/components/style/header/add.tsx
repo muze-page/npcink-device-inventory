@@ -4,12 +4,20 @@
  */
 import { Modal, Button } from "antd";
 import AddForm from "@/components/style/header/add-form";
+import { StyleDevice } from "@/store/interface";
 interface Props {
   isModalOpen: boolean; //设备数据
   handleOk: () => void; //弹窗状态
   handleCancel: () => void; //修改弹窗状态
 }
 const App: React.FC<Props> = ({ isModalOpen, handleOk, handleCancel }) => {
+  const handleSubmit = (values: StyleDevice) => {
+    // 在这里进行数据上传或调用接口
+    console.log("准备上传:", values);
+
+    // 上传成功后关闭弹窗
+    handleCancel();
+  };
   return (
     <>
       <Modal
@@ -28,7 +36,7 @@ const App: React.FC<Props> = ({ isModalOpen, handleOk, handleCancel }) => {
           </Button>,
         ]}
       >
-        <AddForm />
+        <AddForm onSubmit={handleSubmit} />
       </Modal>
     </>
   );
