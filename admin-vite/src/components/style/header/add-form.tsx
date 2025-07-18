@@ -1,7 +1,7 @@
 /**
  * 添加数据的输入表单
  */
-import type { FormProps } from "antd";
+import type { FormProps,FormInstance } from "antd";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import {
@@ -16,7 +16,7 @@ import {
 } from "antd";
 import { addStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
-import{ StyleDevice} from "@/store/interface";
+import { StyleDevice } from "@/store/interface";
 //当前表格的数据类型
 type FormType = {
   name: string; //使用人
@@ -54,13 +54,15 @@ const defaultValue: FormType = {
   pay_method: "支付宝",
   purchaser: "王五",
 };
+
 // 在文件顶部添加 props 类型定义
 type AddFormProps = {
-  onSubmit: (values:  StyleDevice) => void;
+  onSubmit: (values: StyleDevice) => void;
+   form?: FormInstance; // 支持传入 form 实例
 };
-const App = ({ onSubmit }: AddFormProps) => {
-  //创建表单实例，方便自定义
-  const [form] = Form.useForm();
+const App = ({ onSubmit,form }: AddFormProps) => {
+ 
+  
   //提交拿到的值
   const onFinish: FormProps<FormType>["onFinish"] = async (values) => {
     //将设备信息存入data,方便后续存入数据库
@@ -169,11 +171,13 @@ const App = ({ onSubmit }: AddFormProps) => {
         </Col>
       </Row>
 
-      <Form.Item label={null}>
-        <Button type="primary" htmlType="submit">
-          提交
-        </Button>
-      </Form.Item>
+      <Row justify="end">
+        <Form.Item>
+          <Button type="primary" htmlType="submit">
+            提交
+          </Button>
+        </Form.Item>
+      </Row>
     </Form>
   );
 };
