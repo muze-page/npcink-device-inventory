@@ -72,7 +72,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
                 'site' => get_home_url(), //首页网址
                 'ajaxurl' => admin_url('admin-ajax.php'),
                 'data' => self::get_device_data(), //传递设备数据
-                'style-data' => self::get_style_device_data(), //传递自定义设备数据'
+                'styleData' => self::get_style_device_data(), //传递自定义设备数据'
                 'option' => get_option(self::$option), //传递选项
                 'table_data_name' => self::$table_data_name, //设备数据表名
                 'table_change_name' => self::$table_change_name, //变更数据表名

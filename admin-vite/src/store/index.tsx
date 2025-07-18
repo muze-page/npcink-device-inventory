@@ -1,7 +1,7 @@
 //准备初始数据
-import data from "@/store/defaultVar";
-import { MysqlDevice, OptionType } from "./interface";
 import axios from "axios";
+import data from "@/store/defaultVar";
+import { MysqlDevice, OptionType,Computer, StyleDevice, } from "@/store/interface";
 
 //开发环境状态
 const state: boolean = import.meta.env.VITE_STATE;
@@ -18,11 +18,22 @@ const getDataLocal = () => {
   }
 };
 
-//将数组中的硬件数据从json格式处理成对象
+//将数组中的硬件data数据从json格式处理成对象
 const combineData = (dataArrays: MysqlDevice[]) => {
   return dataArrays.map((item) => {
     // 解析 "data" 字符串为对象
-    const parsedData = JSON.parse(item.data);
+    const parsedData = JSON.parse(item.data) as Computer;
+    // 返回更新后的对象
+    return { ...item, data: parsedData };
+  });
+};
+
+//将自定义硬件数组中的data数据从json格式处理成对象
+const combineDataStyle = (dataArrays: StyleDevice[]) => {
+  return dataArrays.map((item) => {
+    // 解析 "data" 字符串为对象
+    //const parsedData = JSON.parse(item.data) as StyleDeviceData;
+    const parsedData = typeof item.data === 'string' ? JSON.parse(item.data) : item.data;
     // 返回更新后的对象
     return { ...item, data: parsedData };
   });
@@ -30,6 +41,9 @@ const combineData = (dataArrays: MysqlDevice[]) => {
 
 //对硬件值进行处理后传出
 export const dataMySql = combineData(getDataLocal().data);
+
+//对自定义设备值进行处理后传出
+export const dataStyle =combineDataStyle(getDataLocal().styleData);
 
 //拿到选项值并传出
 console.log("从WP获取到的数据", getDataLocal()); //测试用
@@ -44,3 +58,4 @@ export const Site: string = getDataLocal().site;
 //输出数据库表名
 export const TableDataName: string = getDataLocal().table_data_name; //数据表
 export const TableChangeName: string = getDataLocal().table_change_name; //变更表
+export const TableStyleDataName: string = getDataLocal().table_style_name; //自定义设备表

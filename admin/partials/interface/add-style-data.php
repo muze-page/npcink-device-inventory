@@ -51,6 +51,8 @@ if (!class_exists('DEMA_Admin_Interface_Add_Style_Data')) {
             if (empty($data) || !is_string($data)) {
                 return wp_send_json_error(['error' => 'data 参数为空或不是字符串'], 400);
             }
+
+            //TODO:为啥不能直接用json,非要转换一次
             //json转对象
             $json_data = json_decode(stripslashes($data), true);
 

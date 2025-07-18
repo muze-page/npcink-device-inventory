@@ -2,18 +2,23 @@
  *自定义设备类型
  */
 import { useState } from "react";
+
 import DataList from "@/components/style/dataList";
+
 //拿到自定义设备数据类型
 import { StyleDevice } from "@/store/interface";
-//拿到演示数据
-import DemoData from "@/store/demoStyleData";
+
 //拿到弹窗
 import Drawer from "@/components/style/drawer/index";
+
 //拿到顶部
 import Header from "@/components/style/header";
 
 //测试数据传输
 import AxiosStyleDeviceData from "@/components/demo/axiosStyleDeviceData";
+
+//拿到通过接口传来的数据
+import {dataStyle} from "@/store/index"
 
 const App: React.FC = () => {
   //共享弹窗状态
@@ -35,7 +40,7 @@ const App: React.FC = () => {
         <Header />
         <div className="flex content-start items-center flex-wrap w-full">
           {/**开始循环 */}
-          {DemoData.map((tab, index) => (
+          {dataStyle.map((tab, index) => (
             <DataList
               key={tab.id}
               data={tab}
