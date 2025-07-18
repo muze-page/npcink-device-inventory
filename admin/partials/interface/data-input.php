@@ -2,6 +2,8 @@
 
 /**
  * 接口 接收传来的数据
+ * 使用特定算法算出的UUID，用于校验机器唯一性，
+ * 第一张网卡的mac地址加设备UUID，再进行md5处理，得到UUID
  */
 if (!class_exists('DEMA_Admin_Interface_DataInput')) {
     class DEMA_Admin_Interface_DataInput extends DEMA_Admin_Interface
@@ -189,10 +191,12 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 return self::check_Data_Change($repeatData, $data, $name);
             }
 
-            //生成随机编号
+            //生成随机编号，充当设备默认编号
             $random_string = uniqid(mt_rand(), true);
-            //只取后6位
+
+            //只取随机编号的后6位，你不会真的要用这套系统管理数十万台设备吧？不会吧！不会吧！
             $last_six_digits = substr($random_string, -6);
+            
             // 数据不存在，插入新数据
             $insert_data = [
                 'name' => $name, // 姓名

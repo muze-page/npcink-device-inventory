@@ -46,6 +46,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 	}
 	//新建数据库表 - 存储数据用
 	// 在插件激活时创建数据库表
+	//使用特定算法算出的UUID数据做设备唯一编号，
 	public static function device_manage_create_table()
 	{
 		// 获取全局 $wpdb 对象
@@ -163,6 +164,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 			dbDelta($sql);
 
 			// 在 dbDelta($sql); 后添加触发器
+			//我太懒了，你自己生成UUID吧，
 			$trigger_sql = "
     CREATE TRIGGER before_insert_style_device
     BEFORE INSERT ON `$table_name`
