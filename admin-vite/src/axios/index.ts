@@ -14,4 +14,8 @@ export {
 export { changeMySql, deltSQLData } from "@/axios/device-seting";
 
 //自定义硬件设备数据
-export { addStyleDeviceData } from "@/axios/style-device";
+export {
+  addStyleDeviceData,
+  deleteStyleDeviceData,
+  updateStyleDeviceData,
+} from "@/axios/style-device";

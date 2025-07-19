@@ -32,6 +32,18 @@ export const addStyleDeviceData = async (
  * 删
  */
 
+export const deleteStyleDeviceData = async (uuid: string): Promise<boolean> => {
+  const params = new URLSearchParams();
+  params.append("action", "delete_style_device_data_callback");
+  addParamIfDefined(params, "uuid", uuid);
+  try {
+    const data = (await instance.post(Ajaxurl, params)) as axiosType;
+    return data.success;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+};
 /**
  * 改
  */
@@ -42,3 +54,21 @@ export const addStyleDeviceData = async (
  * @param data 修改后的值
  *
  */
+export const updateStyleDeviceData = async (
+ uuid:string, data: StyleDevice
+): Promise<boolean> => {
+  const params = new URLSearchParams();
+  params.append("action", "update_style_device_data_callback");
+  addParamIfDefined(params, "uuid", uuid);
+  addParamIfDefined(params, "name", data.name);
+  addParamIfDefined(params, "purpose", data.purpose);
+  addParamIfDefined(params, "state", data.state);
+  addParamIfDefined(params, "data", JSON.stringify(data.data));
+  try {
+    const data = (await instance.post(Ajaxurl, params)) as axiosType;
+    return data.success;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+};

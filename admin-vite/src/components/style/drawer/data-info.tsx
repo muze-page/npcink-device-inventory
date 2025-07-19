@@ -3,6 +3,7 @@
  */
 import { Card } from "antd";
 import { StyleDeviceData } from "@/store/interface";
+import { formatDate } from "@/store/tool";
 interface Props {
   data: StyleDeviceData;
 }
@@ -24,7 +25,7 @@ const App: React.FC<Props> = ({ data }) => {
         </p>
         <p>
           <b>下单时间：</b>
-          {data.order_time}
+          {formatDate(data.order_time)}
         </p>
         <p>
           <b>支付方式：</b>
