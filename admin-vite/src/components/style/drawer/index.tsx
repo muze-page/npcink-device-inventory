@@ -4,9 +4,12 @@
 import { Drawer, Tabs, Card } from "antd";
 import type { TabsProps } from "antd";
 import { StyleDevice } from "@/store/interface";
+//设备状态
+import { device_status } from "@/store/dataReplace";
 import Info from "@/components/style/drawer/data-info";
 import ChangeRecord from "@/components/style/drawer/data-change-record";
 import Seting from "@/components/style/drawer/data-seting";
+
 interface Props {
   data: StyleDevice; //设备数据
   active: boolean; //弹窗状态
@@ -20,18 +23,22 @@ const App: React.FC<Props> = ({ data, active, onActive, onDelete }) => {
       label: `设备详情`,
       children: <Info deviceData={data.data} />,
     },
-
     {
       key: "2",
-      label: `变更记录`,
-      children: <ChangeRecord />,
-    },
-    {
-      key: "3",
       label: `信息修改`,
       children: <Seting data={data} onDelete={onDelete} onActive={onActive} />,
     },
+    {
+      key: "3",
+      label: `变更记录`,
+      children: <ChangeRecord />,
+    },
   ];
+
+  //准备设备状态
+  const statusLabel = device_status.find(
+    (item) => item.value === data.state
+  )?.label;
   return (
     <>
       <Drawer
@@ -44,16 +51,16 @@ const App: React.FC<Props> = ({ data, active, onActive, onDelete }) => {
       >
         <Card title="设备信息" extra={""} style={{ width: 600, marginTop: 20 }}>
           <p>
-            <b>使用人：</b>
+            <b>设备使用：</b>
             {data.name}
           </p>
           <p>
-            <b>用途：</b>
+            <b>设备用途：</b>
             {data.purpose}
           </p>
           <p>
             <b>设备状态：</b>
-            {data.state}
+            {statusLabel}
           </p>
         </Card>
 
