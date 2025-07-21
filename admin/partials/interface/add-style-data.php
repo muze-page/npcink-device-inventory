@@ -121,6 +121,12 @@ if (!class_exists('DEMA_Admin_Interface_Add_Style_Data')) {
                 return wp_send_json_error(['error' => '缺少参数：uuid'], 400);
             }
 
+            //检查数据库是否存在传来的UUID
+            $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE uuid = %s", $uuid));
+            if ($exists == 0) {
+                return wp_send_json_error(['error' => '指定的UUID不存在'], 404);
+            }
+
             // 执行删除操作
             $result = $wpdb->delete(
                 $table_name,

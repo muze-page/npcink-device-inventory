@@ -5,44 +5,44 @@ import { Card } from "antd";
 import { StyleDeviceData } from "@/store/interface";
 import { formatDate } from "@/store/tool";
 interface Props {
-  data: StyleDeviceData;
+  deviceData: StyleDeviceData;
 }
-const App: React.FC<Props> = ({ data }) => {
+const App: React.FC<Props> = ({ deviceData }) => {
   return (
     <>
       <Card
-        title={data.title}
-        extra={<a href="{data.link}" target="_blank">{data.shop_name}</a>}
+        title={deviceData.title}
+        extra={<a href="{deviceData.link}" target="_blank">{deviceData.shop_name}</a>}
         style={{ width: 600, marginTop: 20 }}
       >
         <p>
           <b>采购总价：</b>
-          {data.total}
+          {deviceData.total}
         </p>
         <p>
           <b>采购单号：</b>
-          {data.order}
+          {deviceData.order}
         </p>
         <p>
           <b>下单时间：</b>
-          {formatDate(data.order_time)}
+          {formatDate(deviceData.order_time)}
         </p>
         <p>
           <b>支付方式：</b>
-          {data.pay_method}
+          {deviceData.pay_method}
         </p>
 
         <p>
           <b>采购平台：</b>
-          {data.platform}
+          {deviceData.platform}
         </p>
         <p>
           <b>采购数量：</b>
-          {data.number}
+          {deviceData.number}
         </p>
          <p>
           <b>采购人：</b>
-          {data.purchaser}
+          {deviceData.purchaser}
         </p>
       </Card>
     </>
