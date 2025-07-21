@@ -36,7 +36,8 @@ const App: React.FC<Props> = ({ data, onDelete, onActive }) => {
   };
   return (
     <>
-      <Button type="primary" onClick={onDeleteData}>
+    
+      <Button color="red" variant="text" onClick={onDeleteData}>
         删除
       </Button>
     </>

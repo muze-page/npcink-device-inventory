@@ -1,9 +1,6 @@
 /**
  * 添加数据的输入表单
  */
-import type { FormProps,FormInstance } from "antd";
-import dayjs from "dayjs";
-import type { Dayjs } from "dayjs";
 import {
   Button,
   Radio,
@@ -14,6 +11,9 @@ import {
   Row,
   DatePicker,
 } from "antd";
+import type { FormProps, FormInstance } from "antd";
+import dayjs from "dayjs";
+import type { Dayjs } from "dayjs";
 import { addStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
 import { StyleDevice } from "@/store/interface";
@@ -53,31 +53,33 @@ const defaultValue: FormType = {
   order: "",
   pay_method: "",
   purchaser: "",
-//name: "张三",
-//purpose: "测试用途",
-//state: "apply",
-//title: "华为路由器",
-//number: 2,
-//total: 2300,
-//platform: "淘宝",
-//shop_name: "华为路由器专卖店",
-//link: "https://www.taobao.com",
-//order_time: dayjs("2025-04-05"),
-//order: "tbasdf65616",
-//pay_method: "支付宝",
-//purchaser: "王五",
+  //name: "张三",
+  //purpose: "测试用途",
+  //state: "apply",
+  //title: "华为路由器",
+  //number: 2,
+  //total: 2300,
+  //platform: "淘宝",
+  //shop_name: "华为路由器专卖店",
+  //link: "https://www.taobao.com",
+  //order_time: dayjs("2025-04-05"),
+  //order: "tbasdf65616",
+  //pay_method: "支付宝",
+  //purchaser: "王五",
 };
 
 // 在文件顶部添加 props 类型定义
 type AddFormProps = {
   onSubmit: (values: StyleDevice) => void;
-   form?: FormInstance; // 支持传入 form 实例
+  form?: FormInstance; // 支持传入 form 实例
 };
-const App = ({ onSubmit,form }: AddFormProps) => {
- 
-  
+const App = ({ onSubmit, form }: AddFormProps) => {
   //提交拿到的值
   const onFinish: FormProps<FormType>["onFinish"] = async (values) => {
+    //添加弹窗提示，确定提交则继续，不提交则取消
+    if (!window.confirm("已检查好数据，并确定提交吗？")) {
+      return;
+    }
     //将设备信息存入data,方便后续存入数据库
     const data = {
       name: values.name,
