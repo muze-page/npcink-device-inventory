@@ -8,6 +8,8 @@ import DataList from "@/components/style/dataList";
 //拿到自定义设备数据类型
 import { StyleDevice } from "@/store/interface";
 
+//跨组件提供方法
+import { StyleContext } from "@/components/style/styleContext";
 //拿到弹窗
 import Drawer from "@/components/style/drawer/index";
 
@@ -42,14 +44,14 @@ const App: React.FC = () => {
     setDevices((prev) => [...prev, device]);
   };
   //删除指定UUID的设备
-  const handleDrawerData = (uuid: string) => {
+  const handleDeleteData = (uuid: string) => {
     setDevices((prev) => prev.filter((d) => d.uuid !== uuid));
   };
 
   return (
-    <>
+    <StyleContext.Provider value={{ handleAddDevice, handleDeleteData }}>
       <div className="pb-6 px-5">
-        <Header onAddDevice={handleAddDevice} />
+        <Header />
         <div className="flex content-start items-center flex-wrap w-full">
           {/**开始循环 */}
           {devices.map((tab, index) => (
@@ -66,11 +68,11 @@ const App: React.FC = () => {
           data={drawerData}
           active={active}
           onActive={() => changeActive()}
-          onDelete={handleDrawerData}
+          onDelete={handleDeleteData}
         />
       </div>
       <AxiosStyleDeviceData />
-    </>
+    </StyleContext.Provider>
   );
 };
 export default App;

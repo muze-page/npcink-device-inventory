@@ -4,14 +4,11 @@
 import { useState } from "react";
 import { Space, Button } from "antd";
 import Add from "@/components/style/header/add";
-import { StyleDevice } from "@/store/interface";
 //引入头部模块
 import Header from "@/components/block/tab-header";
 
-interface Props {
-  onAddDevice: (device: StyleDevice) => void; // 添加设备的回调函数
-}
-const App: React.FC<Props> = ({ onAddDevice }) => {
+
+const App: React.FC = () => {
   //信息录入弹窗状态
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -45,7 +42,6 @@ const App: React.FC<Props> = ({ onAddDevice }) => {
           isModalOpen={isModalOpen}
           handleOk={handleOk}
           handleCancel={handleCancel}
-          onAddDevice={onAddDevice} // 传递添加设备的回调函数
         />
       </div>
     </>

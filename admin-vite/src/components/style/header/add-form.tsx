@@ -17,6 +17,8 @@ import type { Dayjs } from "dayjs";
 import { addStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
 import { StyleDevice } from "@/store/interface";
+import { useContext } from 'react';
+import { StyleContext } from '@/components/style/styleContext';
 //当前表格的数据类型
 type FormType = {
   name: string; //使用人
@@ -72,9 +74,9 @@ const defaultValue: FormType = {
 type AddFormProps = {
   onSubmit: (values: StyleDevice) => void; //上传成功后关闭弹窗
   form?: FormInstance; // 支持传入 form 实例
-  onAddDevice: (device: StyleDevice) => void; // 添加设备的回调函数
 };
-const App = ({ onSubmit, form, onAddDevice }: AddFormProps) => {
+const App = ({ onSubmit, form }: AddFormProps) => {
+  const { handleAddDevice } = useContext( StyleContext);
   //提交拿到的值
   const onFinish: FormProps<FormType>["onFinish"] = async (values) => {
     //添加弹窗提示，确定提交则继续，不提交则取消
@@ -108,7 +110,7 @@ const App = ({ onSubmit, form, onAddDevice }: AddFormProps) => {
       alert("添加成功");
       form?.resetFields(); // 清除表单输入
       onSubmit(data); // 调用上传成功的回调函数
-      onAddDevice(data); // 调用添加设备的回调函数
+      handleAddDevice(data); // 调用添加设备的回调函数
     } else {
       alert("添加失败");
     }
