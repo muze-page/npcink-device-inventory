@@ -10,6 +10,8 @@ import {
 import { defaultOption } from "@/store";
 import dayjs, { Dayjs } from "dayjs";
 
+//开发环境状态,各种调试按钮用
+export const devStatus: boolean = import.meta.env.VITE_STATE;
 /**
  *拿到指定键的值并统计该键的出现次数
  * @param dataArrays 待检测数组对象

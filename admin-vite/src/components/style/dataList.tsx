@@ -5,23 +5,23 @@
 
 import { Tooltip, Skeleton } from "antd";
 import { StyleDevice } from "@/store/interface";
-
 import Mac from "@/assets/mac.png";
+import PrintData from "@/components/block/printData";
 
 interface Props {
   data: StyleDevice;
   onActive: () => void; //修改状态
   onDrawerData: () => void; //保存值
 }
-const App: React.FC<Props> = ({ data,onActive,onDrawerData }) => {
+const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
   //拿到隐藏姓名状态
   //const { isName } = useContext(AppContext);
   const isName = true; //
 
   //点击打开弹窗
   const showDrawer = () => {
-     onActive(); //打开弹窗
-     onDrawerData(); //保存值
+    onActive(); //打开弹窗
+    onDrawerData(); //保存值
   };
 
   return (
@@ -57,8 +57,6 @@ const App: React.FC<Props> = ({ data,onActive,onDrawerData }) => {
             )}
 
             {/** </div> */}
-
-           
           </p>
 
           {/*状态*/}
@@ -71,6 +69,7 @@ const App: React.FC<Props> = ({ data,onActive,onDrawerData }) => {
               <span>时间 ： {data.time}</span>
             </Tooltip>
           </p>
+          <PrintData title="打印当前设备信息" data={data} />
         </div>
       </div>
     </>

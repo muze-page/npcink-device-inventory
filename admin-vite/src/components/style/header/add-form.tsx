@@ -19,6 +19,8 @@ import type { Dayjs } from "dayjs";
 import { addStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
 import { StyleDevice } from "@/store/interface";
+import { devStatus } from "@/store/tool";
+
 //当前表格的数据类型
 type FormType = {
   name: string; //使用人
@@ -55,19 +57,6 @@ const defaultValue: FormType = {
   order: "",
   pay_method: "",
   purchaser: "",
-  //name: "张三",
-  //purpose: "测试用途",
-  //state: "apply",
-  //title: "华为路由器",
-  //number: 2,
-  //total: 2300,
-  //platform: "淘宝",
-  //shop_name: "华为路由器专卖店",
-  //link: "https://www.taobao.com",
-  //order_time: dayjs("2025-04-05"),
-  //order: "tbasdf65616",
-  //pay_method: "支付宝",
-  //purchaser: "王五",
 };
 
 // 在文件顶部添加 props 类型定义
@@ -75,6 +64,7 @@ type AddFormProps = {
   onSubmit: (values: StyleDevice) => void; //上传成功后关闭弹窗
   form?: FormInstance; // 支持传入 form 实例
 };
+
 const App = ({ onSubmit, form }: AddFormProps) => {
   //拿到添加设备的回调函数
   const { handleAddDevice } = useContext(StyleContext);
@@ -117,6 +107,25 @@ const App = ({ onSubmit, form }: AddFormProps) => {
     }
     console.log("成功，表单原始值:", values);
     console.log("整理后的设备信息：", data);
+  };
+
+  //一键填充数据，测试用
+  const fillTestData = () => {
+    form?.setFieldsValue({
+      name: "张三",
+      purpose: "测试用途",
+      state: "apply",
+      title: "华为路由器",
+      number: 2,
+      total: 2300,
+      platform: "淘宝",
+      shop_name: "华为路由器专卖店",
+      link: "https://www.taobao.com",
+      order_time: dayjs("2025-06-01"),
+      order: "tbasdf65616",
+      pay_method: "支付宝",
+      purchaser: "王五",
+    });
   };
 
   return (
@@ -192,13 +201,20 @@ const App = ({ onSubmit, form }: AddFormProps) => {
         </Col>
       </Row>
 
-      <Row justify="end">
-        <Form.Item>
-          <Button type="primary" htmlType="submit">
-            提交
+      <Form.Item>
+        <Button type="primary" htmlType="submit">
+          提交
+        </Button>
+        {devStatus && (
+          <Button
+            type="default"
+            onClick={fillTestData}
+            style={{ marginLeft: 8 }}
+          >
+            填充测试数据
           </Button>
-        </Form.Item>
-      </Row>
+        )}
+      </Form.Item>
     </Form>
   );
 };
