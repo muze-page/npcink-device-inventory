@@ -8,7 +8,6 @@ import type { FormProps } from "antd";
 import { deleteStyleDeviceData, updateStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
 interface Props {
-  
   onActive: () => void; //修改弹窗状态
 }
 const App: React.FC<Props> = ({ onActive }) => {
@@ -59,9 +58,8 @@ const App: React.FC<Props> = ({ onActive }) => {
   type FieldType = {
     name: string; //使用人
     purpose: string; //用途
-    state: string; //设备状态
+    state: "apply" | "idie" | "fault" | "scrap"; //设备状态
   };
-
   //修改数据
   const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
     //准备数据

@@ -22,12 +22,13 @@ import { StyleDevice } from "@/store/interface";
 import { devStatus } from "@/store/tool";
 
 //当前表格的数据类型
+//表单用类型
 type FormType = {
   name: string; //使用人
   purpose: string; //用途
-  state: string; //设备状态
+  state: "apply" | "idie" | "fault" | "scrap"; //设备状态
   title: string; //设备名称
-  number: number; //设备名称
+  number: number; //设备数量
   total: number; //单价
   platform: string; //平台
   shop_name: string; //店铺名称
@@ -46,7 +47,7 @@ const onFinishFailed: FormProps<FormType>["onFinishFailed"] = (errorInfo) => {
 const defaultValue: FormType = {
   name: "",
   purpose: "",
-  state: "apply",
+  state: "apply", //设备状态
   title: "",
   number: 0,
   total: 0,

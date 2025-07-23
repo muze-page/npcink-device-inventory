@@ -17,7 +17,7 @@ const App: React.FC = () => {
     id: "test-id-001",
     name: "测试设备",
     purpose: "测试用途",
-    state: "正常",
+    state: "apply",
     data: {
       title: "华为手机",
       link: "https://item.taobao.com/item.htm?id=1234567890",
