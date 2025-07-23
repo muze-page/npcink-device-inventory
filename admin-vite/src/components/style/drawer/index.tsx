@@ -14,9 +14,8 @@ interface Props {
   data: StyleDevice; //设备数据
   active: boolean; //弹窗状态
   onActive: () => void; //修改弹窗状态
-  onDelete: (uuid: string) => void; //根据指定UUID删除设备
 }
-const App: React.FC<Props> = ({ data, active, onActive, onDelete }) => {
+const App: React.FC<Props> = ({ data, active, onActive }) => {
   const items: TabsProps["items"] = [
     {
       key: "1",
@@ -26,7 +25,7 @@ const App: React.FC<Props> = ({ data, active, onActive, onDelete }) => {
     {
       key: "2",
       label: `信息修改`,
-      children: <Seting data={data} onDelete={onDelete} onActive={onActive} />,
+      children: <Seting data={data} onActive={onActive} />,
     },
     {
       key: "3",

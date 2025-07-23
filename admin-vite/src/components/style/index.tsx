@@ -68,7 +68,6 @@ const App: React.FC = () => {
           data={drawerData}
           active={active}
           onActive={() => changeActive()}
-          onDelete={handleDeleteData}
         />
       </div>
       <AxiosStyleDeviceData />

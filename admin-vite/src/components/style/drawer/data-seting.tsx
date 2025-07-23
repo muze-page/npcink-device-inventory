@@ -1,6 +1,8 @@
 /**
  * 自定义设备信息 - 设置
  */
+import { useContext } from 'react';
+import { StyleContext } from '@/components/style/styleContext';
 import { Form, Button, Input, Radio } from "antd";
 import type { FormProps } from "antd";
 import { StyleDevice } from "@/store/interface";
@@ -9,9 +11,12 @@ import { device_status } from "@/store/dataReplace";
 interface Props {
   data: StyleDevice;
   onActive: () => void; //修改弹窗状态
-  onDelete: (uuid: string) => void; //根据指定UUID删除设备
+
 }
-const App: React.FC<Props> = ({ data, onDelete, onActive }) => {
+const App: React.FC<Props> = ({ data, onActive }) => {
+
+  //拿到父组件传入的删除方法
+  const { handleDeleteData } = useContext(StyleContext);
   //拿到UUID
   const uuid = data.uuid || "";
   //删除动作
@@ -31,7 +36,7 @@ const App: React.FC<Props> = ({ data, onDelete, onActive }) => {
     //成功删除则清除输入框
     if (state) {
       alert("删除成功");
-      onDelete(uuid); //调用父组件的删除方法
+      handleDeleteData(uuid); //调用父组件的删除方法
       //1秒后关闭弹窗
       setTimeout(() => {
         onActive();
