@@ -9,14 +9,13 @@ import { StyleDevice } from "@/store/interface";
 import { deleteStyleDeviceData, updateStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
 interface Props {
-  data: StyleDevice;
+  data: StyleDevice;//设备数据
   onActive: () => void; //修改弹窗状态
-
 }
 const App: React.FC<Props> = ({ data, onActive }) => {
 
   //拿到父组件传入的删除方法
-  const { handleDeleteData } = useContext(StyleContext);
+  const { handleDeleteData,handleUpdateData } = useContext(StyleContext);
   //拿到UUID
   const uuid = data.uuid || "";
   //删除动作
@@ -73,6 +72,7 @@ const App: React.FC<Props> = ({ data, onActive }) => {
     const state = await updateStyleDeviceData(uuid, valuesData);
     if (state) {
       alert("修改成功");
+      handleUpdateData(uuid, valuesData); //调用父组件的更新方法
     } else {
       alert("修改失败");
     }

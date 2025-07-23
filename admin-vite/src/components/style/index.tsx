@@ -39,7 +39,7 @@ const App: React.FC = () => {
   //在设备展示列表和删除设备两个组件间同步设备数据（添加、删除设备后更新设备列表）
   const [devices, setDevices] = useState<StyleDevice[]>(dataStyle);
 
-  //添加设备
+  //添加自定义设备
   const handleAddDevice = (device: StyleDevice) => {
     setDevices((prev) => [...prev, device]);
   };
@@ -48,8 +48,15 @@ const App: React.FC = () => {
     setDevices((prev) => prev.filter((d) => d.uuid !== uuid));
   };
 
+  //修改自定义设备数据
+  const handleUpdateData = (uuid: string, device: StyleDevice) => {
+    setDevices((prev) => prev.map((d) => (d.uuid === uuid ? device : d)));
+  };
+
   return (
-    <StyleContext.Provider value={{ handleAddDevice, handleDeleteData }}>
+    <StyleContext.Provider
+      value={{ handleAddDevice, handleDeleteData, handleUpdateData }}
+    >
       <div className="pb-6 px-5">
         <Header />
         <div className="flex content-start items-center flex-wrap w-full">
