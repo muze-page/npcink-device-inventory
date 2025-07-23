@@ -84,6 +84,7 @@ const App: React.FC<Props> = ({ data, onDelete, onActive }) => {
     <>
       <Form
         name="update"
+        labelAlign="left"
         labelCol={{ span: 4 }}
         wrapperCol={{ span: 20 }}
         style={{ maxWidth: 600 }}
@@ -107,18 +108,17 @@ const App: React.FC<Props> = ({ data, onDelete, onActive }) => {
           <Radio.Group options={device_status} />
         </Form.Item>
 
-        <Form.Item
-          label={null}
-          style={{ display: "flex", justifyContent: "flex-end" }}
-        >
+        <Form.Item>
           <Button type="primary" htmlType="submit">
             更新信息
           </Button>
         </Form.Item>
+        <Form.Item>
+          <Button color="red" variant="text" onClick={onDeleteData}>
+            移除设备
+          </Button>
+        </Form.Item>
       </Form>
-      <Button color="red" variant="text" onClick={onDeleteData}>
-        删除设备
-      </Button>
     </>
   );
 };

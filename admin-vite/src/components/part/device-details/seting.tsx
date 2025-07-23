@@ -197,12 +197,12 @@ const App: React.FC<Props> = ({ data }) => {
 
         <Form.Item>
           <Button type="primary" onClick={saveData}>
-            保存
+            保存设置
           </Button>
         </Form.Item>
         <Form.Item>
-          <Button type="primary" danger onClick={deltData}>
-            移除此设备
+          <Button color="red" variant="text" onClick={deltData}>
+            移除设备
           </Button>
         </Form.Item>
       </Form>
