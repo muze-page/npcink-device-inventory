@@ -4,10 +4,11 @@
  */
 
 import { Tooltip, Skeleton } from "antd";
+import dayjs from "dayjs";
 import { StyleDevice } from "@/store/interface";
 import Mac from "@/assets/mac.png";
 import PrintData from "@/components/block/printData";
-
+import { statusLabel } from "@/store/tool";
 interface Props {
   data: StyleDevice;
   onActive: () => void; //修改状态
@@ -43,30 +44,28 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
 
         {/**底部数据 */}
         <div className="p-4 text-xs text-zinc-500  bg-white rounded whitespace-nowrap min-h-[190px]">
-          {/*姓名*/}
-          <p className="text-sm font-bold text-zinc-800 leading-8 m-0  ">
-            {/** <div className={isName ? "" : "hideName"}> */}
+          {/*设备名称*/}
+          <p className="text-sm font-bold text-zinc-800 leading-8 m-0 ">
             {isName ? (
-              data.name ? (
-                data.name
-              ) : (
-                "暂无"
-              )
+              data.data.title
             ) : (
               <Skeleton.Input active={true} size={"small"} />
             )}
-
             {/** </div> */}
           </p>
-
-          {/*状态*/}
-          <p className="mt-2 w-full truncate">{data.state}</p>
           {/*使用人*/}
-          <p className="mt-2">{data.name}</p>
+          <p className="mt-2">设备使用：{data.name}</p>
+          {/*设备价格*/}
+          <p className="mt-2">设备价格：{data.data.total}</p>
+          {/*状态*/}
+          <p className="mt-2 w-full truncate">
+            设备状态：{statusLabel(data.state)}
+          </p>
+
           {/*时间*/}
           <p className="grid gap-y-1 items-center  mt-2">
             <Tooltip title={"时间：" + data.time}>
-              <span>时间 ： {data.time}</span>
+              <span>记录时间 ： {dayjs(data.time).format("YY-MM-DD")}</span>
             </Tooltip>
           </p>
           <PrintData title="打印当前设备信息" data={data} />

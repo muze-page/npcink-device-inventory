@@ -4,12 +4,10 @@
 import { Drawer, Tabs, Card } from "antd";
 import type { TabsProps } from "antd";
 import { StyleDevice } from "@/store/interface";
-//设备状态
-import { device_status } from "@/store/dataReplace";
 import Info from "@/components/style/drawer/data-info";
 import ChangeRecord from "@/components/style/drawer/data-change-record";
 import Seting from "@/components/style/drawer/data-seting";
-
+import { statusLabel } from "@/store/tool";
 interface Props {
   data: StyleDevice; //设备数据
   active: boolean; //弹窗状态
@@ -34,10 +32,6 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
     },
   ];
 
-  //准备设备状态
-  const statusLabel = device_status.find(
-    (item) => item.value === data.state
-  )?.label;
   return (
     <>
       <Drawer
@@ -48,18 +42,18 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
         width={"60%"}
         className="pt-9"
       >
-        <Card title="设备信息" extra={""} style={{ width: 600, marginTop: 20 }}>
+        <Card title="设备信息" extra={""} style={{ width: 600, }}>
           <p>
             <b>设备使用：</b>
             {data.name}
           </p>
           <p>
-            <b>设备用途：</b>
-            {data.purpose}
+            <b>设备状态：</b>
+            {statusLabel(data.state)}
           </p>
           <p>
-            <b>设备状态：</b>
-            {statusLabel}
+            <b>设备用途：</b>
+            {data.purpose}
           </p>
         </Card>
 

@@ -12,7 +12,15 @@ const App: React.FC<Props> = ({ deviceData }) => {
     <>
       <Card
         title={deviceData.title}
-        extra={<a href="{deviceData.link}" target="_blank">{deviceData.shop_name}</a>}
+        extra={
+          <a
+            href="{deviceData.link}"
+            target="_blank"
+            style={{ color: "#1890ff" }}
+          >
+            {deviceData.shop_name}
+          </a>
+        }
         style={{ width: 600, marginTop: 20 }}
       >
         <p>
@@ -40,7 +48,7 @@ const App: React.FC<Props> = ({ deviceData }) => {
           <b>采购数量：</b>
           {deviceData.number}
         </p>
-         <p>
+        <p>
           <b>采购人：</b>
           {deviceData.purchaser}
         </p>

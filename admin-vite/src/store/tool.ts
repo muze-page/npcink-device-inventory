@@ -9,7 +9,8 @@ import {
 } from "@/store/interface";
 import { defaultOption } from "@/store";
 import dayjs, { Dayjs } from "dayjs";
-
+//设备状态
+import { device_status } from "@/store/dataReplace";
 //开发环境状态,各种调试按钮用
 export const devStatus: boolean = import.meta.env.VITE_STATE;
 /**
@@ -315,4 +316,11 @@ export const formatDate = (date: Dayjs) => {
   return formattedTime;
 };
 
-//格式化时间
+//设备状态
+//准备设备状态
+type DeviceStatus = "apply" | "idie" | "fault" | "scrap";
+export const statusLabel =(value: DeviceStatus) => {
+  return device_status.find(
+    (item) => item.value === value
+  )?.label;
+}
