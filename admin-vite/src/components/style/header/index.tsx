@@ -9,6 +9,7 @@ import Header from "@/components/block/tab-header";
 
 
 const App: React.FC = () => {
+
   //信息录入弹窗状态
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -22,10 +23,6 @@ const App: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  //取消
-  const handleCancel = () => {
-    setIsModalOpen(false);
-  };
   return (
     <>
       <div className="flex justify-between items-center">
@@ -41,7 +38,6 @@ const App: React.FC = () => {
         <Add
           isModalOpen={isModalOpen}
           handleOk={handleOk}
-          handleCancel={handleCancel}
         />
       </div>
     </>

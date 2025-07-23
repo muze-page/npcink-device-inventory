@@ -4,21 +4,13 @@
  */
 import { Modal, Form } from "antd";
 import AddForm from "@/components/style/header/add-form";
-import { StyleDevice } from "@/store/interface";
 interface Props {
   isModalOpen: boolean; //设备数据
-  handleOk: () => void; //弹窗状态
-  handleCancel: () => void; //修改弹窗状态
+  handleOk: () => void; //关闭弹窗
 }
-const App: React.FC<Props> = ({ isModalOpen, handleOk, handleCancel }) => {
-  const [form] = Form.useForm(); // 创建表单实例,给表单用
-  const handleSubmit = (values: StyleDevice) => {
-    // 在这里进行数据上传或调用接口
-    console.log("准备上传:", values);
-
-    // 上传成功后关闭弹窗
-    handleCancel();
-  };
+const App: React.FC<Props> = ({ isModalOpen, handleOk }) => {
+  // 创建表单实例,给表单用
+  const [form] = Form.useForm();
 
   // 自定义关闭逻辑
   const confirmCancel = () => {
@@ -29,13 +21,13 @@ const App: React.FC<Props> = ({ isModalOpen, handleOk, handleCancel }) => {
         content: "表单有未保存的内容，确定要关闭吗？",
         onOk: () => {
           form.resetFields(); // 可选：清空表单值
-          handleCancel(); // 关闭弹窗
+          handleOk(); // 关闭弹窗
         },
       });
     } else {
       // 表单无修改，直接关闭
       form.resetFields(); // 可选：清空表单值
-      handleCancel();
+      handleOk(); //关闭弹窗
     }
   };
   return (
@@ -49,7 +41,7 @@ const App: React.FC<Props> = ({ isModalOpen, handleOk, handleCancel }) => {
         onCancel={confirmCancel} // 使用自定义关闭逻辑
         footer={null}
       >
-        <AddForm onSubmit={handleSubmit} form={form}  />
+        <AddForm form={form} handleOk={handleOk} />
       </Modal>
     </>
   );

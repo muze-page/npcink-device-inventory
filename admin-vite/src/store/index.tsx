@@ -1,14 +1,18 @@
 //准备初始数据
 import axios from "axios";
 import data from "@/store/defaultVar";
-import { MysqlDevice, OptionType,Computer, StyleDevice, } from "@/store/interface";
-
+import {
+  MysqlDevice,
+  OptionType,
+  Computer,
+  StyleDevice,
+} from "@/store/interface";
 //开发环境状态
-const state: boolean = import.meta.env.VITE_STATE;
+import { devStatus } from "@/store/tool";
 
 //输出选项值
 const getDataLocal = () => {
-  if (state) {
+  if (devStatus) {
     //开发
     axios.defaults.baseURL = "/api"; //开发环境下配置代理
     return data;
@@ -33,7 +37,8 @@ const combineDataStyle = (dataArrays: StyleDevice[]) => {
   return dataArrays.map((item) => {
     // 解析 "data" 字符串为对象
     //const parsedData = JSON.parse(item.data) as StyleDeviceData;
-    const parsedData = typeof item.data === 'string' ? JSON.parse(item.data) : item.data;
+    const parsedData =
+      typeof item.data === "string" ? JSON.parse(item.data) : item.data;
     // 返回更新后的对象
     return { ...item, data: parsedData };
   });
@@ -43,10 +48,14 @@ const combineDataStyle = (dataArrays: StyleDevice[]) => {
 export const dataMySql = combineData(getDataLocal().data);
 
 //对自定义设备值进行处理后传出
-export const dataStyle =combineDataStyle(getDataLocal().styleData);
+export const dataStyle = combineDataStyle(getDataLocal().styleData);
 
+//开发环境时打印拿到的值
+if (devStatus) {
+  console.log("从WP获取到的数据", getDataLocal()); //测试用
+}
 //拿到选项值并传出
-console.log("从WP获取到的数据", getDataLocal()); //测试用
+
 export const defaultOption: OptionType = getDataLocal().option;
 
 //输出接口地址

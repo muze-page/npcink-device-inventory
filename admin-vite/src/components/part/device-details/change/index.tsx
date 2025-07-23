@@ -221,7 +221,7 @@ const App: React.FC<Props> = ({ uuid }) => {
     //哪个发生变化就更新那个
     for (let key in oldData) {
       if (oldData[key] !== row[key]) {
-        console.log(`a2.${key}: `, row[key]);
+        //console.log(`a2.${key}: `, row[key]);
         switch (key) {
           case "user":
             changeMySqlData(row.id, "user", row.user); //更新姓名

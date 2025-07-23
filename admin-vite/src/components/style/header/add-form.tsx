@@ -18,7 +18,6 @@ import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import { addStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
-import { StyleDevice } from "@/store/interface";
 import { devStatus } from "@/store/tool";
 
 //当前表格的数据类型
@@ -62,11 +61,11 @@ const defaultValue: FormType = {
 
 // 在文件顶部添加 props 类型定义
 type AddFormProps = {
-  onSubmit: (values: StyleDevice) => void; //上传成功后关闭弹窗
+  handleOk: () => void; //关闭弹窗
   form?: FormInstance; // 支持传入 form 实例
 };
 
-const App = ({ onSubmit, form }: AddFormProps) => {
+const App = ({ form, handleOk }: AddFormProps) => {
   //拿到添加设备的回调函数
   const { handleAddDevice } = useContext(StyleContext);
   //提交拿到的值
@@ -99,15 +98,15 @@ const App = ({ onSubmit, form }: AddFormProps) => {
 
     //成功添加则清除输入框
     if (state) {
-      alert("添加成功");
+      //alert("添加成功");
       form?.resetFields(); // 清除表单输入
-      onSubmit(data); // 调用上传成功的回调函数
+      handleOk(); // 关闭弹窗
       handleAddDevice(data); // 调用添加设备的回调函数
     } else {
       alert("添加失败");
     }
-    console.log("成功，表单原始值:", values);
-    console.log("整理后的设备信息：", data);
+    //console.log("成功，表单原始值:", values);
+    //console.log("整理后的设备信息：", data);
   };
 
   //一键填充数据，测试用

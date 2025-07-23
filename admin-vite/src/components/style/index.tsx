@@ -10,14 +10,12 @@ import { StyleDevice } from "@/store/interface";
 
 //跨组件提供方法
 import { StyleContext } from "@/components/style/styleContext";
+
 //拿到弹窗
 import Drawer from "@/components/style/drawer/index";
 
 //拿到顶部
 import Header from "@/components/style/header";
-
-//测试数据传输
-import AxiosStyleDeviceData from "@/components/demo/axiosStyleDeviceData";
 
 //拿到通过接口传来的数据
 import { dataStyle } from "@/store/index";
@@ -77,7 +75,6 @@ const App: React.FC = () => {
           onActive={() => changeActive()}
         />
       </div>
-      <AxiosStyleDeviceData />
     </StyleContext.Provider>
   );
 };

@@ -33,7 +33,7 @@ const App: React.FC<Props> = ({ onActive }) => {
 
     //成功删除则清除输入框
     if (state) {
-      alert("删除成功");
+      //alert("删除成功");
       handleDeleteData(uuid); //调用父组件的删除方法
       //1秒后关闭弹窗
       setTimeout(() => {
@@ -73,13 +73,12 @@ const App: React.FC<Props> = ({ onActive }) => {
 
     const state = await updateStyleDeviceData(uuid, valuesData);
     if (state) {
-      alert("修改成功");
+      //alert("修改成功");
       setDrawerData(valuesData); //更新弹窗数据
       handleUpdateData(uuid, valuesData); //调用父组件的更新方法
     } else {
       alert("修改失败");
     }
-    console.log("更新表单提交的值:", values);
   };
   //提交失败
   const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (
@@ -105,15 +104,16 @@ const App: React.FC<Props> = ({ onActive }) => {
           <Input />
         </Form.Item>
 
+        <Form.Item<FieldType> label="设备状态：" name="state">
+          <Radio.Group options={device_status} />
+        </Form.Item>
+
         <Form.Item<FieldType>
           label="用途"
           name="purpose"
           rules={[{ required: true, message: "Please input your password!" }]}
         >
           <Input />
-        </Form.Item>
-        <Form.Item<FieldType> label="设备状态：" name="state">
-          <Radio.Group options={device_status} />
         </Form.Item>
 
         <Form.Item>

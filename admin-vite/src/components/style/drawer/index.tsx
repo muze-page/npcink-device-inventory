@@ -39,7 +39,8 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
         placement={"right"}
         onClose={onActive}
         open={active}
-        width={"60%"}
+        width={"500px"}
+        size="large"
         className="pt-9"
       >
         <Card title="设备信息" extra={""} style={{ width: 600, }}>

@@ -55,7 +55,7 @@ const App: React.FC<Props> = ({ data }) => {
   htmlType="submit"
   */
   const onFinish = (values: any) => {
-    console.log("Received values:", values);
+    //console.log("Received values:", values);
     setFormData(values); // 将表单数据存储在状态中
   };
 
