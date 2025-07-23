@@ -55,7 +55,7 @@ const App: React.FC = () => {
 
   return (
     <StyleContext.Provider
-      value={{setDrawerData, handleAddDevice, handleDeleteData, handleUpdateData }}
+      value={{drawerData,setDrawerData, handleAddDevice, handleDeleteData, handleUpdateData }}
     >
       <div className="pb-6 px-5">
         <Header />

@@ -25,7 +25,7 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
     {
       key: "2",
       label: `信息修改`,
-      children: <Seting data={data} onActive={onActive} />,
+      children: <Seting onActive={onActive} />,
     },
     {
       key: "3",

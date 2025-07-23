@@ -1,23 +1,23 @@
 /**
  * 自定义设备信息 - 设置
  */
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { StyleContext } from "@/components/style/styleContext";
 import { Form, Button, Input, Radio } from "antd";
 import type { FormProps } from "antd";
-import { StyleDevice } from "@/store/interface";
 import { deleteStyleDeviceData, updateStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
 interface Props {
-  data: StyleDevice; //设备数据
+  
   onActive: () => void; //修改弹窗状态
 }
-const App: React.FC<Props> = ({ data, onActive }) => {
+const App: React.FC<Props> = ({ onActive }) => {
   //拿到父组件传入的删除方法
-  const { setDrawerData, handleDeleteData, handleUpdateData } =
+  const { drawerData, setDrawerData, handleDeleteData, handleUpdateData } =
     useContext(StyleContext);
+
   //拿到UUID
-  const uuid = data.uuid || "";
+  const uuid = drawerData.uuid || "";
   //删除动作
   const onDeleteData = async () => {
     if (!uuid) {
@@ -45,17 +45,21 @@ const App: React.FC<Props> = ({ data, onActive }) => {
     }
   };
 
+  // 创建 Form 实例
+  const [form] = Form.useForm();
+  // 当 drawerData 变化时更新表单值
+  useEffect(() => {
+    form.setFieldsValue({
+      name: drawerData.name,
+      purpose: drawerData.purpose,
+      state: drawerData.state,
+    });
+  }, [drawerData, form]);
   //准备表单数据类型
   type FieldType = {
     name: string; //使用人
     purpose: string; //用途
     state: string; //设备状态
-  };
-  //准备表单默认值
-  const defaultValue: FieldType = {
-    name: data.name,
-    purpose: data.purpose,
-    state: data.state,
   };
 
   //修改数据
@@ -66,7 +70,7 @@ const App: React.FC<Props> = ({ data, onActive }) => {
       name: values.name,
       purpose: values.purpose,
       state: values.state,
-      data: data.data, //保留原有数据
+      data: drawerData.data, //保留原有数据
     };
 
     const state = await updateStyleDeviceData(uuid, valuesData);
@@ -89,12 +93,12 @@ const App: React.FC<Props> = ({ data, onActive }) => {
   return (
     <>
       <Form
+        form={form}
         name="update"
         labelAlign="left"
         labelCol={{ span: 4 }}
         wrapperCol={{ span: 20 }}
         style={{ maxWidth: 600 }}
-        initialValues={defaultValue}
         onFinish={onFinish}
         onFinishFailed={onFinishFailed}
         autoComplete="off"
