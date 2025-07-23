@@ -70,10 +70,11 @@ const defaultValue: FormType = {
 
 // 在文件顶部添加 props 类型定义
 type AddFormProps = {
-  onSubmit: (values: StyleDevice) => void;
+  onSubmit: (values: StyleDevice) => void; //上传成功后关闭弹窗
   form?: FormInstance; // 支持传入 form 实例
+  onAddDevice: (device: StyleDevice) => void; // 添加设备的回调函数
 };
-const App = ({ onSubmit, form }: AddFormProps) => {
+const App = ({ onSubmit, form, onAddDevice }: AddFormProps) => {
   //提交拿到的值
   const onFinish: FormProps<FormType>["onFinish"] = async (values) => {
     //添加弹窗提示，确定提交则继续，不提交则取消
@@ -105,12 +106,14 @@ const App = ({ onSubmit, form }: AddFormProps) => {
     //成功添加则清除输入框
     if (state) {
       alert("添加成功");
+      form?.resetFields(); // 清除表单输入
+      onSubmit(data); // 调用上传成功的回调函数
+      onAddDevice(data); // 调用添加设备的回调函数
     } else {
       alert("添加失败");
     }
     console.log("成功，表单原始值:", values);
     console.log("整理后的设备信息：", data);
-    onSubmit(data);
   };
 
   return (

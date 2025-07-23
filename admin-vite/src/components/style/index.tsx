@@ -18,7 +18,7 @@ import Header from "@/components/style/header";
 import AxiosStyleDeviceData from "@/components/demo/axiosStyleDeviceData";
 
 //拿到通过接口传来的数据
-import {dataStyle} from "@/store/index"
+import { dataStyle } from "@/store/index";
 
 const App: React.FC = () => {
   //共享弹窗状态
@@ -34,18 +34,22 @@ const App: React.FC = () => {
   //当前点击选中的数组index
   const [_arrIndex, setArrIndex] = useState(0);
 
-  //在设备展示列表和删除设备两个组件间同步UUID数据
+  //在设备展示列表和删除设备两个组件间同步设备数据（添加、删除设备后更新设备列表）
   const [devices, setDevices] = useState<StyleDevice[]>(dataStyle);
 
+  //添加设备
+  const handleAddDevice = (device: StyleDevice) => {
+    setDevices((prev) => [...prev, device]);
+  };
   //删除指定UUID的设备
   const handleDrawerData = (uuid: string) => {
-    setDevices(prev => prev.filter(d => d.uuid !== uuid));
-  }
+    setDevices((prev) => prev.filter((d) => d.uuid !== uuid));
+  };
 
   return (
     <>
       <div className="pb-6 px-5">
-        <Header />
+        <Header onAddDevice={handleAddDevice} />
         <div className="flex content-start items-center flex-wrap w-full">
           {/**开始循环 */}
           {devices.map((tab, index) => (

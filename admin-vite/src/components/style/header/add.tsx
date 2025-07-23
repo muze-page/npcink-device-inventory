@@ -9,8 +9,9 @@ interface Props {
   isModalOpen: boolean; //设备数据
   handleOk: () => void; //弹窗状态
   handleCancel: () => void; //修改弹窗状态
+  onAddDevice: (device: StyleDevice) => void; // 添加设备的回调函数
 }
-const App: React.FC<Props> = ({ isModalOpen, handleOk, handleCancel }) => {
+const App: React.FC<Props> = ({ isModalOpen, handleOk, handleCancel,onAddDevice }) => {
   const [form] = Form.useForm(); // 创建表单实例,给表单用
   const handleSubmit = (values: StyleDevice) => {
     // 在这里进行数据上传或调用接口
@@ -49,7 +50,7 @@ const App: React.FC<Props> = ({ isModalOpen, handleOk, handleCancel }) => {
         onCancel={confirmCancel} // 使用自定义关闭逻辑
         footer={null}
       >
-        <AddForm onSubmit={handleSubmit} form={form} />
+        <AddForm onSubmit={handleSubmit} form={form} onAddDevice={onAddDevice} />
       </Modal>
     </>
   );
