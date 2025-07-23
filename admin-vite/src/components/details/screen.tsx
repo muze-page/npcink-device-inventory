@@ -14,7 +14,7 @@ import { defaultOption } from "@/store";
 import { changeSelectData } from "@/store/tool";
 import { device_status } from "@/store/dataReplace";
 import Search from "@/components/details/search";
-import Header from "@/components/block/tab-header";
+import Header from "@/block/tab-header";
 interface Props {
   data: MysqlDeviceChangeMeat[]; //筛选用数据
   onSet: Function; //传递筛选后的数据

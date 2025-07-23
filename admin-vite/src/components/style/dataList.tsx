@@ -7,7 +7,7 @@ import { Tooltip, Skeleton } from "antd";
 import dayjs from "dayjs";
 import { StyleDevice } from "@/store/interface";
 import Mac from "@/assets/mac.png";
-import PrintData from "@/components/block/printData";
+import PrintData from "@/block/printData";
 import { statusLabel } from "@/store/tool";
 interface Props {
   data: StyleDevice;

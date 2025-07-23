@@ -1,3 +1,7 @@
+/**
+ * 变更记录表
+ */
+
 import React, { useState, useEffect } from "react";
 import { searchChangeAllData } from "@/axios";
 import {Space, Button, Table, message } from "antd";
