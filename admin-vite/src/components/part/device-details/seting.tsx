@@ -5,7 +5,7 @@ import { useContext, useState, useEffect } from "react";
 import { Form, Button, Input, InputNumber, Select, message } from "antd";
 import { AppContext } from "@/store/setingContext";
 import { deltSQLData, changeMySql } from "@/axios";
-import { MysqlDeviceChange } from "@/store/interface";
+import { MysqlDeviceChange, MysqlDeviceData } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
 import { defaultOption } from "@/store";
 import {
@@ -75,6 +75,8 @@ const App: React.FC<Props> = ({ data }) => {
     //获取表单数据
     const fieldsValue = form.getFieldsValue();
 
+    //获取设置数据，一次性更新
+
     //与默认数据对比，有变化则存入数据库
     let isChanged = false; // 标志是否有变化
     //console.log(fieldsValue);
@@ -138,40 +140,40 @@ const App: React.FC<Props> = ({ data }) => {
         style={{ maxWidth: 600 }}
         initialValues={data}
       >
-        <Form.Item label="姓名" name="name">
+        <Form.Item<MysqlDeviceData> label="姓名" name="name">
           <Input placeholder="设备使用者" style={{ width: 180 }} />
         </Form.Item>
-        <Form.Item label="编号" name="number">
+        <Form.Item<MysqlDeviceData> label="编号" name="number">
           <Input placeholder="设备唯一标识编号" style={{ width: 180 }} />
         </Form.Item>
-        <Form.Item label="状态" name="state">
+        <Form.Item<MysqlDeviceData> label="状态" name="state">
           <Select style={{ width: 180 }} options={device_status} />
         </Form.Item>
-        <Form.Item label="部门" name="department">
+        <Form.Item<MysqlDeviceData> label="部门" name="department">
           <Select style={{ width: 180 }} options={getSelectData} />
         </Form.Item>
-        <Form.Item
+        <Form.Item<MysqlDeviceData>
           label="IP 地址"
           name="ip"
           rules={[{ validator: validateIPv4 }]}
         >
           <Input placeholder="分配的唯一 IP 地址" style={{ width: 180 }} />
         </Form.Item>
-        <Form.Item label="采购价" name="purchase">
+        <Form.Item<MysqlDeviceData> label="采购价" name="purchase">
           <InputNumber
             style={{ width: 180 }}
             addonAfter="￥"
             placeholder="采购时的价格"
           />
         </Form.Item>
-        <Form.Item label="二手价" name="depreciation">
+        <Form.Item<MysqlDeviceData> label="二手价" name="depreciation">
           <InputNumber
             style={{ width: 180 }}
             addonAfter="￥"
             placeholder="二手市场的价格"
           />
         </Form.Item>
-        <Form.Item label="相关参数">
+        <Form.Item<MysqlDeviceData> label="相关参数">
           <table>
             <tr>
               <th className="w-28 text-center">二手折旧率</th>

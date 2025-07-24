@@ -33,7 +33,6 @@
 - 预览时显示 CPU 型号
 - 使用 UUID 生成编码和二维码，用于搭配第三方机器黏贴
 - 电脑信息修改时，一次性更新全部信息
-- 修改信息时，及时同步本地信息
 
 #### 已制作
 
@@ -121,3 +120,7 @@ search 下是前端公共搜索页面
 4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
 5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
 6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+
+
+
+

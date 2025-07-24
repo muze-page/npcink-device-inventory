@@ -4,10 +4,10 @@
 import { Ajaxurl } from "@/store";
 import { MysqlChange, axiosType } from "@/store/interface";
 import { instance, addParamIfDefined } from "@/axios/public";
-/**
- * 修改设备数据
- */
 
+/**
+ * 修改设备数据，一次性更新
+ */
 /**
  *
  * @param uuid 唯一标识符

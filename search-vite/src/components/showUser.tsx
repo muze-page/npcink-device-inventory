@@ -5,10 +5,10 @@ import React from "react";
 import { Card, Space } from "antd";
 import {findBValue} from "@/store/tool";
 import {device_status} from "@/store/dataReplace";
-import { MysqlDevice } from "@/store/interface";
+import { MysqlDeviceChange } from "@/store/interface";
 
 interface Props {
-  data: MysqlDevice;
+  data: MysqlDeviceChange; //设备数据
 }
 const App: React.FC<Props> = ({ data }) => {
 

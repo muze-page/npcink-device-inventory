@@ -63,7 +63,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
     return (
       sizeCondition &&
       (!memory || memoryData === "" || memoryData === memory) && //内存
-      (!state || item.state === "" || item.state === state) && //状态
+      (!state  || item.state === state) && //状态
       (!department || item.department === "" || item.department === department) //
     );
   });

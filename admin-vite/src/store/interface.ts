@@ -1,35 +1,32 @@
 //类型
 import type { Dayjs } from "dayjs";
-//从数据库读取的设备信息
-export interface MysqlDevice {
-  id: number; //TODO:改为字符串
+//上传数据时需要的值
+export interface MysqlDeviceData {
   name: string; //姓名
-  state: string; //状态
+  state: "apply" | "idie" | "fault" | "scrap"; //设备状态
   number: string; //编号
   department: string; //部门
   purchase: number; //采购价
   depreciation: number; //二手价
   ip: string; //ip
+}
+
+//从数据库读取的设备信息 - 继承
+export interface MysqlDevice extends MysqlDeviceData {
+  id: number; //TODO:改为字符串
   time: string; //添加时间
   uuid: string; //唯一编号
   data: string; //数据
 }
 
-//整理后
-export interface MysqlDeviceChange {
+//整理后 交叉类型
+export type MysqlDeviceChange = MysqlDeviceData & {
   id: number;
-  name: string; //姓名
-  state: string; //状态
-  number: string; //编号
-  department: string; //部门
-  purchase: number; //采购价
-  depreciation: number; //二手价
-  ip: string; //ip
   time: string; //添加时间
   uuid: string; //唯一编号
   data: Computer; //数据
   [key: string]: any;
-}
+};
 
 //准备交叉类型
 export type MysqlDeviceChangeMeat = MysqlDeviceChange & {

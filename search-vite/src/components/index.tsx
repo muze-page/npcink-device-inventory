@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { Input, Space } from "antd";
 import { fetchData } from "./axios";
 import Detailed from "@/components/part/device-details/detailed";
-import { MysqlDevice, Computer } from "@/store/interface";
+import { MysqlDeviceChange, Computer } from "@/store/interface";
 import ShowUser from "@/components/showUser";
 import type { SearchProps } from "antd/es/input/Search";
 
 const { Search } = Input;
 const App: React.FC = () => {
-  const [responseData, setResponseData] = useState<MysqlDevice>(); // 返回值
+  const [responseData, setResponseData] = useState<MysqlDeviceChange>(); // 返回值
   const [displayData, setDisplayData] = useState<Computer>(); // 设备数据
 
   //输入框中的值
