@@ -18,7 +18,7 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
         placement={"right"}
         onClose={onActive}
         open={active}
-        width={"60%"}
+        width={"800px"}
         className="pt-9"
       >
         <Property data={data} />

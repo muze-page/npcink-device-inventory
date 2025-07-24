@@ -97,7 +97,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
   return (
     <>
       <div className="flex justify-between items-center">
-        <Header title="资产信息" />
+        <Header title="电脑设备资产信息" />
         <Space size={"middle"} wrap className="mb-4">
           <div>
             状态：
