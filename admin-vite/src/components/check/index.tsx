@@ -1,5 +1,5 @@
 /**
- * 资产盘点
+ * 电脑硬件资产盘点
  */
 import { useState } from "react";
 import { dataMySql } from "@/store";
@@ -12,13 +12,13 @@ import {
   ComputerDevice,
 } from "@/store/interface";
 
-import Ad from "@/components/tab/block/ad";
-import TabHeader from "@/components/tab/block/tableHeader";
-
-import Baseboard from "@/components/tab/baseboard";
-import Cpu from "@/components/tab/cpu";
-import Disk from "@/components/tab/disk";
-import Memory from "@/components/tab/memory";
+import Ad from "@/components/check/block/ad";
+import TabHeader from "@/components/check/block/tableHeader";
+//导入tab组件
+import Baseboard from "@/components/check/tab/baseboard";
+import Cpu from "@/components/check/tab/cpu";
+import Disk from "@/components/check/tab/disk";
+import Memory from "@/components/check/tab/memory";
 import Header from "@/block/tab-header";
 
 //收集最新数据并输出数组

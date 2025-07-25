@@ -2,7 +2,7 @@
  * CPU
  */
 
-import TabList from "@/components/tab/block/tabList";
+import TabList from "@/components/check/block/tabList";
 import { sum_brand } from "@/store/tool";
 import { ComputerCpu } from "@/store/interface";
 

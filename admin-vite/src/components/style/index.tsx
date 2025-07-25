@@ -1,5 +1,5 @@
 /**
- *自定义设备类型
+ * 自定义设备类型
  */
 import { useState } from "react";
 

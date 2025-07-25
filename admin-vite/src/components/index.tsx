@@ -4,11 +4,11 @@
 import React from "react";
 import { Tabs } from "antd";
 import type { TabsProps } from "antd";
-import Tab from "@/components/tab/index";
+import Check from "@/components/check/index";
 import Details from "@/components/details/index";
 import ChangeList from "@/components/changeList/index";
 import Config from "@/components/config/index";
-import Style from "@/components/style/index"; 
+import Style from "@/components/style/index";
 
 const items: TabsProps["items"] = [
   {
@@ -17,7 +17,7 @@ const items: TabsProps["items"] = [
     children: <Details />,
   },
 
-   {
+  {
     key: "5",
     label: `自定义设备`,
     children: <Style />,
@@ -26,7 +26,7 @@ const items: TabsProps["items"] = [
   {
     key: "2",
     label: `硬件盘点`,
-    children: <Tab />,
+    children: <Check />,
   },
   {
     key: "3",

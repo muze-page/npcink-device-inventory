@@ -2,7 +2,7 @@
  * 硬盘
  */
 
-import TabList from "@/components/tab/block/tabList";
+import TabList from "@/components/check/block/tabList";
 import { sum_order } from "@/store/tool";
 
 import { ComputerDevice } from "@/store/interface";
