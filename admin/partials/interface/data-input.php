@@ -141,8 +141,10 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
             //拿到传来的姓名，检查字符串
             $name = isset($request['name']) ? sanitize_text_field($request['name']) : null;
+
             //拿到传来的密码，检查密码
             $password = isset($request['password']) ? sanitize_text_field($request['password']) : null;
+
             //拿到传来的JSON对象字符串，检查字符串
             $data = isset($request['data']) ? sanitize_text_field($request['data']) : null;
 
@@ -152,14 +154,17 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                     'error' => '姓名为空，请填写',
                 ], 400);
             }
+
             //密码是否为空
             if (empty($password)) {
                 return wp_send_json_error([
                     'error' => '密码为空，请填写',
                 ], 400);
             }
+
             //文本转对象
             $data_obj = json_decode($data);
+            
             //是否为空
             if (empty($data_obj)) {
                 return wp_send_json_error([

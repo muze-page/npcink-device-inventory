@@ -74,6 +74,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 			UNIQUE (number)
         );";
 
+			//这里的UUID由固定算法生成，用于验证设备唯一性
 			// 执行 SQL 语句
 			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 			dbDelta($sql);
@@ -105,6 +106,7 @@ class Dema_Activator extends DEMA_Admin_Interface
             
         );";
 
+			//这里的UUID取自对应设备的UUID
 			// 执行 SQL 语句
 			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 			dbDelta($sql);
