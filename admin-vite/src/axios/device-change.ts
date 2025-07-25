@@ -12,6 +12,10 @@ import {
 import { instance, addParamIfDefined } from "@/axios/public";
 /**
  * 增 - 添加变更数据
+ * @param uuid 设备的唯一标识符
+ * @param user 变更人、
+ * @param data 变更内容
+ * @returns 返回一个Promise，表示添加操作的结果，成功返回true，否则返回false
  */
 
 export const addChangeData = async (
