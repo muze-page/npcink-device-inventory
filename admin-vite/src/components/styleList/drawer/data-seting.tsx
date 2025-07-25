@@ -2,7 +2,7 @@
  * 自定义设备信息 - 设置
  */
 import { useContext, useEffect } from "react";
-import { StyleContext } from "@/components/style/styleContext";
+import { StyleContext } from "@/components/styleList/styleContext";
 import { Form, Button, Input, Radio } from "antd";
 import type { FormProps } from "antd";
 import { deleteStyleDeviceData, updateStyleDeviceData } from "@/axios";

@@ -13,11 +13,11 @@ import {
 
 import type { TabsProps } from "antd";
 
-import TabHeader from "@/components/part/drawer/tabHeader";
-import Info from "@/components/part/device-details/info";
-import Change from "@/components/part/device-details/change";
-import Seting from "@/components/part/device-details/seting";
-import Detailed from "@/components/part/device-details/detailed/index";
+import TabHeader from "@/components/pcList/drawer/tabHeader";
+import Info from "@/components/pcList/device-details/info";
+import Change from "@/components/pcList/device-details/change";
+import Seting from "@/components/pcList/device-details/seting";
+import Detailed from "@/components/pcList/device-details/detailed/index";
 
 import MacOs from "@/assets/macos.png";
 import Win from "@/assets/windows_s.png";
@@ -44,7 +44,7 @@ const App: React.FC<Props> = ({ data }) => {
       ),
       children: <Info data={data.data} time={data.time} />,
     },
-   
+
     {
       key: "2",
       label: (

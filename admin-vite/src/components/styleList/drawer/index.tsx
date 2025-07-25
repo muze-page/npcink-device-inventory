@@ -4,9 +4,9 @@
 import { Drawer, Tabs, Card } from "antd";
 import type { TabsProps } from "antd";
 import { StyleDevice } from "@/store/interface";
-import Info from "@/components/style/drawer/data-info";
-import ChangeRecord from "@/components/style/drawer/data-change-record";
-import Seting from "@/components/style/drawer/data-seting";
+import Info from "@/components/styleList/drawer/data-info";
+import ChangeRecord from "@/components/styleList/drawer/data-change-record";
+import Seting from "@/components/styleList/drawer/data-seting";
 import { statusLabel } from "@/store/tool";
 interface Props {
   data: StyleDevice; //设备数据
@@ -43,7 +43,7 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
         size="large"
         className="pt-9"
       >
-        <Card title="设备信息" extra={""} style={{ width: 600, }}>
+        <Card title="设备信息" extra={""} style={{ width: 600 }}>
           <p>
             <b>设备使用：</b>
             {data.name}

@@ -3,7 +3,7 @@
  */
 import { useState } from "react";
 import { Space, Button } from "antd";
-import Add from "@/components/style/header/add";
+import Add from "@/components/styleList/header/add";
 //引入头部模块
 import Header from "@/block/tab-header";
 

@@ -5,10 +5,10 @@ import React from "react";
 import { Tabs } from "antd";
 import type { TabsProps } from "antd";
 import Check from "@/components/check/index";
-import Details from "@/components/details/index";
+import Details from "@/components/pcList/index";
 import ChangeList from "@/components/changeList/index";
 import Config from "@/components/config/index";
-import Style from "@/components/style/index";
+import Style from "@/components/styleList/index";
 
 const items: TabsProps["items"] = [
   {

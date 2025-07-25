@@ -3,7 +3,7 @@
  */
 
 import { Drawer } from "antd";
-import Property from "@/components/part/device-details";
+import Property from "@/components/pcList/device-details";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
 interface Props {
   data: MysqlDeviceChangeMeat;

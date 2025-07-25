@@ -13,7 +13,7 @@ import { MysqlDeviceChangeMeat } from "@/store/interface";
 import { defaultOption } from "@/store";
 import { changeSelectData } from "@/store/tool";
 import { device_status } from "@/store/dataReplace";
-import Search from "@/components/details/search";
+import Search from "@/components/pcList/search";
 import Header from "@/block/tab-header";
 interface Props {
   data: MysqlDeviceChangeMeat[]; //筛选用数据
@@ -63,7 +63,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
     return (
       sizeCondition &&
       (!memory || memoryData === "" || memoryData === memory) && //内存
-      (!state  || item.state === state) && //状态
+      (!state || item.state === state) && //状态
       (!department || item.department === "" || item.department === department) //
     );
   });

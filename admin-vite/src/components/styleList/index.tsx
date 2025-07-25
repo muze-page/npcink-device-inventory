@@ -3,19 +3,19 @@
  */
 import { useState } from "react";
 
-import DataList from "@/components/style/dataList";
+import DataList from "@/components/styleList/dataList";
 
 //拿到自定义设备数据类型
 import { StyleDevice } from "@/store/interface";
 
 //跨组件提供方法
-import { StyleContext } from "@/components/style/styleContext";
+import { StyleContext } from "@/components/styleList/styleContext";
 
 //拿到弹窗
-import Drawer from "@/components/style/drawer/index";
+import Drawer from "@/components/styleList/drawer/index";
 
 //拿到顶部
-import Header from "@/components/style/header";
+import Header from "@/components/styleList/header";
 
 //拿到通过接口传来的数据
 import { dataStyle } from "@/store/index";
@@ -53,7 +53,13 @@ const App: React.FC = () => {
 
   return (
     <StyleContext.Provider
-      value={{drawerData,setDrawerData, handleAddDevice, handleDeleteData, handleUpdateData }}
+      value={{
+        drawerData,
+        setDrawerData,
+        handleAddDevice,
+        handleDeleteData,
+        handleUpdateData,
+      }}
     >
       <div className="pb-6 px-5">
         <Header />

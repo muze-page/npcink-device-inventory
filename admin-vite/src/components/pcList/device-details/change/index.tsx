@@ -10,7 +10,7 @@ import { changeMySqlData, searchChangeData } from "@/axios";
 
 import { ComputerChangeReturn } from "@/store/interface";
 
-import AddChangeData from "@/components/part/device-details/change/add";
+import AddChangeData from "@/components/pcList/device-details/change/add";
 
 //在嵌套的组件之间传递Form实例，使得表单可以进行联动
 const EditableContext = React.createContext<FormInstance<any> | null>(null);
@@ -162,7 +162,7 @@ const App: React.FC<Props> = ({ uuid }) => {
     setLoading(true); // 开始加载
     try {
       const response = await searchChangeData(uuid); // 获取数据
-     
+
       if (response.success) {
         // 如果成功获取数据
         // 添加 key （提升列表性能） 并倒序
@@ -172,7 +172,7 @@ const App: React.FC<Props> = ({ uuid }) => {
             key: index + 1,
           }))
           .reverse();
-       
+
         setDataAxios(addKeyData); // 传值
         setError(false); // 重置错误状态为 false
       } else {
