@@ -13,7 +13,7 @@ import {
   totalResidualValue,
   getPercentage,
 } from "@/store/tool";
-import { DeviceContext } from "@/store/setingContext";
+//import { DeviceContext } from "@/store/setingContext";
 interface Props {
   data: MysqlDeviceChange; //UUID
 }
@@ -60,10 +60,10 @@ const App: React.FC<Props> = ({ data }) => {
   };
 
   //接收上下文中的值
-  const { changeReal } = useContext(DeviceContext);
+  //const { changeReal } = useContext(DeviceContext);
 
   //存储原始表单数据
-  const [initialData, setInitialData] = useState(data);
+  const [_initialData, setInitialData] = useState(data);
 
   //拿到最新值
   useEffect(() => {
@@ -74,45 +74,17 @@ const App: React.FC<Props> = ({ data }) => {
   const saveData = async () => {
     //获取表单数据
     const fieldsValue = form.getFieldsValue();
+    console.log("表单数据：" + JSON.stringify(fieldsValue));
+     const state = await changeMySql(data.uuid, fieldsValue);
+        if (state) {
+          //alert("修改成功");
+          //setDrawerData(valuesData); //更新弹窗数据
+          //handleUpdateData(uuid, valuesData); //调用父组件的更新方法
+        } else {
+          alert("修改失败");
+        }
 
     //获取设置数据，一次性更新
-
-    //与默认数据对比，有变化则存入数据库
-    let isChanged = false; // 标志是否有变化
-    //console.log(fieldsValue);
-    //console.log(initialData.uuid);
-
-    for (const key in fieldsValue) {
-      //两值是否同时存在
-      if (fieldsValue.hasOwnProperty(key) && initialData.hasOwnProperty(key)) {
-        //两值是否不同
-        if (fieldsValue[key] !== initialData[key]) {
-          isChanged = true; // 一旦发现有变化，设置标志为 true
-
-          //拿到请求成败状态
-          const state = await changeMySql(
-            initialData.uuid,
-            key,
-            fieldsValue[key]
-          ); //发出请求
-
-          //如果请求成功，则更新上下文数据
-          if (state) {
-            changeReal(key, fieldsValue[key]); //更新上下文数据,头部数据
-            initialData[key] = fieldsValue[key]; //修改数据
-          }
-        } else {
-          //选项没有变化
-          // console.log("a 对象中键值对相同:", key, fieldsValue[key]);
-        }
-      }
-    }
-
-    if (!isChanged) {
-      // 如果循环结束后没有发现任何变化，弹出 "没有变化" 的提示
-      message.warning("没有变化");
-      return;
-    }
   };
 
   //移除设备

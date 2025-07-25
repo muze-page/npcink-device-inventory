@@ -26,20 +26,46 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
             // 获取前端传递的参数并进行输入验证
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //唯一标识符
             $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : null; //修改的值
-            $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : null; //字段名
+
+            //json转对象
+            $json_data = json_decode(stripslashes($data), true);
+
+            //对象转JSON
+            //$json = json_encode($json_data, JSON_UNESCAPED_UNICODE);
 
             //是否缺少参数
             // 假设 $uuid, $user, $type, $data 是需要检查的变量
-            $variables = compact('uuid', 'data', 'type');
+            $variables = compact('uuid', 'data',);
 
             // 检查是否有参数为 null
             $null_param = array_search(null, $variables, true);
 
             // 如果有参数为 null，则返回相应的错误消息
             if ($null_param !== false) {
-                $param_names = ['uuid' => 'uuid - 设备唯一编号', 'data' => 'user - 变更的值', 'type' => 'type - 变更的字段名'];
-                return wp_send_json_error(['error' => '缺少参数：' . $param_names[$null_param]], 400);
+                $param_names = ['uuid' => 'uuid - 设备唯一编号', 'data' => 'data - 变更的值'];
+                return wp_send_json_error([
+                    'error' => '缺少参数：' . $param_names[$null_param],
+                    'reason' => $uuid,
+                    'message' => $data
+
+                ], 400);
             }
+
+            // 检查设备是否存在
+            $device_exists = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM $table_name WHERE uuid = %s",
+                $uuid
+            ));
+
+            if ($device_exists == 0) {
+                wp_send_json_error([
+                    'error' => '设备不存在',
+                    'reason' => '找不到UUID为 ' . $uuid . ' 的设备'
+                ], 404);
+                wp_die();
+            }
+
+
 
 
             // 定义字段与数据库类型的映射关系
@@ -53,58 +79,63 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 'ip' => 'ip', //IP 地址
             );
 
-            // 确定要更新的字段
-            $field_name = isset($field_map[$type]) ? $field_map[$type] : null;
+            // 构建要更新的数据数组
+            $update_data = array();
+            $update_format = array();
 
-            //检查字段是否为空
-            if (empty($field_name)) {
-                return wp_send_json_error(['error' => '没有找到字段名 - ' . $type], 400);
-            }
+            foreach ($json_data as $key => $value) {
+                // 只处理映射中存在的字段
+                if (array_key_exists($key, $field_map)) {
+                    $update_data[$field_map[$key]] = $value;
 
-            // 查询数据库中原本的值
-            $current_value = $wpdb->get_var(
-                $wpdb->prepare(
-                    "SELECT $field_name FROM $table_name WHERE uuid = %s",
-                    $uuid
-                )
-            );
-
-            // 检查要更新的值是否与数据库中原本的值相同
-            if ($current_value === $data) {
-                wp_send_json_error(['error' => self::process_string($field_name) . '未改变，无需更新', 'reason' => $current_value], 500);
-            }
-
-            //若类型是编号的时候，检查是否存在重复编号
-            if ($type == 'number') {
-                // 检查是否存在重复编号
-                $existing_number = $wpdb->get_var($wpdb->prepare(
-                    "SELECT number FROM $table_name WHERE number = %s AND uuid != %s",
-                    $data,
-                    $uuid
-                ));
-
-                if ($existing_number) {
-                    return wp_send_json_error(['error' => '更新失败，编号已存在', 'msg' => $existing_number], 500);
+                    // 根据字段类型确定格式
+                    if (in_array($key, ['purchase', 'depreciation'])) {
+                        $update_format[] = '%f'; // 浮点数
+                    } elseif (in_array($key, ['name', 'number', 'state', 'department', 'ip'])) {
+                        $update_format[] = '%s'; // 字符串
+                    } else {
+                        $update_format[] = '%s';
+                    }
                 }
             }
 
-
-
-
-
-            // 使用预处理语句更新数据库中对应的数据
-            $result = $wpdb->update(
-                $table_name,
-                array($field_name => $data),
-                array('uuid' => $uuid),
-                '%s', // 字段类型
-                '%s'  // 条件类型
-            );
-            if (!is_wp_error($result) && $result != 0) {
-                return wp_send_json_success(['message' => self::process_string($field_name) . '已更新']);
-            } else {
-                return wp_send_json_error(['error' => '更新失败，请检查错误原因', 'reason' => $wpdb->last_error, 'msg' => $result,], 500);
+            // 如果没有有效的更新字段
+            if (empty($update_data)) {
+                wp_send_json_error([
+                    'error' => '没有有效的更新字段',
+                    'reason' => '传入的数据中不包含可更新的字段'
+                ], 400);
+                wp_die();
             }
+
+
+            try {
+                // 执行更新操作
+                $result = $wpdb->update(
+                    $table_name,
+                    $update_data,
+                    array('uuid' => $uuid),
+                    $update_format,
+                    array('%s')
+                );
+
+                if ($result !== false) {
+                    wp_send_json_success([
+                        'message' => '设备信息更新成功',
+                        'updated_fields' => array_keys($update_data),
+                        'data' => $json_data
+                    ]);
+                } else {
+                    throw new Exception('更新失败');
+                }
+            } catch (Exception $e) {
+                wp_send_json_error([
+                    'error' => '更新设备信息时发生错误',
+                    'reason' => $e->getMessage(),
+                    'details' => $wpdb->last_error
+                ], 500);
+            }
+
             wp_die();
         }
 

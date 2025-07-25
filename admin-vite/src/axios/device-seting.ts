@@ -2,29 +2,21 @@
  * 硬件设置选项
  */
 import { Ajaxurl } from "@/store";
-import { MysqlChange, axiosType } from "@/store/interface";
+import { MysqlChange, axiosType, MysqlDeviceData } from "@/store/interface";
 import { instance, addParamIfDefined } from "@/axios/public";
-
 /**
  * 修改设备数据，一次性更新
  */
 /**
  *
  * @param uuid 唯一标识符
- * @param data 修改后的值
- * @param type 修改的字段名
+ * @param value 修改后的值
  */
-export const changeMySql = async (
-  uuid: string,
-  type: string,
-  data: string
-) => {
+export const changeMySql = async (uuid: string, data: MysqlDeviceData) => {
   const params = new URLSearchParams();
   params.append("action", "modify_device_callback");
   addParamIfDefined(params, "uuid", uuid);
-  addParamIfDefined(params, "data", data);
-  addParamIfDefined(params, "type", type);
-
+  addParamIfDefined(params, "data", JSON.stringify(data));
   try {
     const res = (await instance.post(Ajaxurl, params)) as axiosType;
     return res.success; //返回状态
