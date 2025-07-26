@@ -28,7 +28,7 @@ export type MysqlDeviceChange = MysqlDeviceData & {
   [key: string]: any;
 };
 
-//准备交叉类型
+//准备交叉类型，本地处理后的值
 export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
   meat: {
     //为方便筛选

@@ -19,7 +19,7 @@ import {
 //选项
 import { defaultOption } from "@/store";
 //公共方法
-import { AppContext } from "@/store/setingContext";
+import { AppContext } from "@/components/pcList/Context";
 
 //替换用数组
 import { osReplace, osTypeReplace } from "@/store/dataReplace";
@@ -101,7 +101,7 @@ const updateOSType = (
 const App: React.FC = () => {
   //拿到数据 dataMySql
   const sortByIDDescending = (data: MysqlDeviceChange[]) => {
-    // 使用sort方法对数组进行排序，按照对象中Number键的值从大到小排序
+    // 使用sort方法对数组进行排序，按照对象中Number键的值从大到小排序,新添加的设备排前面
     data.sort((a, b) => b.id - a.id);
     return data;
   };
@@ -178,7 +178,14 @@ const App: React.FC = () => {
 
   return (
     <AppContext.Provider
-      value={{ handleTypeUpdate, deltArrData, toggleStyle, isName }}
+      value={{
+        drawerData,
+        setDrawerData,
+        handleTypeUpdate,
+        deltArrData,
+        toggleStyle,
+        isName,
+      }}
     >
       <div className="pb-6 px-5">
         <Screen data={updatedDataArray} onSet={setScreenData} />
@@ -223,7 +230,6 @@ const App: React.FC = () => {
 
         {/**弹窗 */}
         <Drawer
-          data={drawerData}
           active={active}
           onActive={() => changeActive()}
         />

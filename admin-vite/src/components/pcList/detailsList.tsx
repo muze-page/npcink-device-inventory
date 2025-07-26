@@ -2,7 +2,7 @@
  * 设备详情
  */
 import { useContext } from "react";
-import { AppContext } from "@/store/setingContext";
+import { AppContext } from "@/components/pcList/Context";
 import { Tooltip, Skeleton } from "antd";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
@@ -92,7 +92,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             <Tooltip title={"当前部门：" + data.department}>
               <span>部门：{data.department}</span>
             </Tooltip>
-            <Tooltip title={"当前状态：" + deviceStatus }>
+            <Tooltip title={"当前状态：" + deviceStatus}>
               <span>状态：{deviceStatus}</span>
             </Tooltip>
             <Tooltip title={"当前IP：" + data.ip}>

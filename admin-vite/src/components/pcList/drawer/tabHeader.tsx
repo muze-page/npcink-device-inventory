@@ -1,10 +1,10 @@
 //弹窗内容头部
 import { useContext } from "react";
-import {Skeleton} from "antd";
+import { Skeleton } from "antd";
 import { MysqlDeviceChangeMeat, OsTypeArray } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
 import { findBValue } from "@/store/tool";
-import { DeviceContext, AppContext } from "@/store/setingContext";
+import { DeviceContext, AppContext } from "@/components/pcList/Context";
 interface Props {
   osType: OsTypeArray; //系统信息，因为后续，设备信息可能要根据设置进行修改，系统一般不会变，这里单独用比较好。
   data: MysqlDeviceChangeMeat; //设备信息
@@ -31,13 +31,11 @@ const App: React.FC<Props> = ({ osType, data }) => {
       {/**姓名 */}
       <div className="flex justify-between">
         <div className="flex items-center text-lg">
-          
           {isName ? (
-              realData.name ?? data.name ?? "暂无姓名"
-            ) : (
-              <Skeleton.Input active={true} size={"small"} />
-            )}
-
+            realData.name ?? data.name ?? "暂无姓名"
+          ) : (
+            <Skeleton.Input active={true} size={"small"} />
+          )}
         </div>
       </div>
       {/**操作系统 */}

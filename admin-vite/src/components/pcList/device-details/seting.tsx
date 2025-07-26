@@ -1,11 +1,11 @@
 /**
  * 设备详情 - 设置
  */
-import { useContext, useState, useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { Form, Button, Input, InputNumber, Select, message } from "antd";
-import { AppContext } from "@/store/setingContext";
+import { AppContext } from "@/components/pcList/Context";
 import { deltSQLData, changeMySql } from "@/axios";
-import { MysqlDeviceChange, MysqlDeviceData } from "@/store/interface";
+import { MysqlDeviceData } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
 import { defaultOption } from "@/store";
 import {
@@ -13,12 +13,11 @@ import {
   totalResidualValue,
   getPercentage,
 } from "@/store/tool";
-//import { DeviceContext } from "@/store/setingContext";
-interface Props {
-  data: MysqlDeviceChange; //UUID
-}
 
-//下拉筛选 - 准备筛选数据
+//调试用
+import PrintData from "@/block/printData";
+
+//部门下拉筛选 - 准备部门筛选数据
 const getSelectData = changeSelectData(defaultOption.department);
 
 // IPv4 正则表达式
@@ -33,19 +32,34 @@ const validateIPv4 = (_: any, value: string) => {
   return Promise.reject(new Error("请输入正确的IP v4 地址"));
 };
 
-const App: React.FC<Props> = ({ data }) => {
-  const { deltArrData } = useContext(AppContext);
+const App: React.FC = () => {
+  const { drawerData, setDrawerData, deltArrData } = useContext(AppContext);
 
-  /*form 变量用于操作表单实例，
-  而 formData 状态变量用于存储表单数据。
-  */
+  /*
+   * form 变量用于操作表单实例，
+   */
   const [form] = Form.useForm();
-  const [_formData, setFormData] = useState(null);
+  //const [_formData, setFormData] = useState(null);
 
-  // 当 data 发生变化时更新表单的默认值
+  /**
+   * 当 drawerData 的值发生变化时更新表单的默认值
+   * 让 Form 先挂载再调用
+   */
   useEffect(() => {
-    form.setFieldsValue(data);
-  }, [data, form]);
+    setTimeout(
+      () =>
+        form.setFieldsValue({
+          name: drawerData.name, // 姓名
+          number: drawerData.number, // 编号
+          state: drawerData.state, // 状态
+          department: drawerData.department, // 部门
+          ip: drawerData.ip, // IP 地址
+          purchase: drawerData.purchase, // 采购价
+          depreciation: drawerData.depreciation, // 二手价
+        }),
+      0
+    );
+  }, [drawerData, form]);
 
   /*
   说明：提交表单且数据验证成功后回调事件
@@ -54,35 +68,49 @@ const App: React.FC<Props> = ({ data }) => {
   以便在组件中进行进一步处理或展示。
   htmlType="submit"
   */
-  const onFinish = (values: any) => {
+  const onFinish = (_values: any) => {
     //console.log("Received values:", values);
-    setFormData(values); // 将表单数据存储在状态中
+    //setFormData(values); // 将表单数据存储在状态中
   };
 
   //接收上下文中的值
   //const { changeReal } = useContext(DeviceContext);
 
   //存储原始表单数据
-  const [_initialData, setInitialData] = useState(data);
+  //const [_initialData, setInitialData] = useState(drawerData);
 
   //拿到最新值
-  useEffect(() => {
-    setInitialData(data);
-  }, [data]);
+  //useEffect(() => {
+  //  setInitialData(drawerData);
+  //}, [drawerData]);
 
   //保存设置信息
   const saveData = async () => {
     //获取表单数据
     const fieldsValue = form.getFieldsValue();
-    console.log("表单数据：" + JSON.stringify(fieldsValue));
-     const state = await changeMySql(data.uuid, fieldsValue);
-        if (state) {
-          //alert("修改成功");
-          //setDrawerData(valuesData); //更新弹窗数据
-          //handleUpdateData(uuid, valuesData); //调用父组件的更新方法
-        } else {
-          alert("修改失败");
-        }
+    const state = await changeMySql(drawerData.uuid, fieldsValue);
+
+    //准备需要保存的数据
+    const valuesData = {
+      ...drawerData,
+      name: fieldsValue.name, // 姓名
+      number: fieldsValue.number, // 编号
+      state: fieldsValue.state, // 状态
+      department: fieldsValue.department, // 部门
+      ip: fieldsValue.ip, // IP 地址
+      purchase: fieldsValue.purchase, // 采购价
+      depreciation: fieldsValue.depreciation, // 二手价
+    };
+
+    if (state) {
+      console.log("修改成功" + JSON.stringify(fieldsValue));
+      //alert("修改成功");
+      //setDrawerData(valuesData); //更新弹窗数据
+      //handleUpdateData(uuid, valuesData); //调用父组件的更新方法
+      setDrawerData(valuesData); //更新弹窗数据
+    } else {
+      alert("修改失败");
+    }
 
     //获取设置数据，一次性更新
   };
@@ -92,14 +120,14 @@ const App: React.FC<Props> = ({ data }) => {
     //二次确认
     if (window.confirm("您确定要移除此设备吗？")) {
       deltArrData && deltArrData(), deltSQLData; //删除本地数据
-      deltSQLData(data.uuid); //删除数据库数据
+      deltSQLData(drawerData.uuid); //删除数据库数据
     } else {
       message.warning("已取消");
     }
   };
 
   //理论折旧值 - 根据设定的折旧年限和残值率算出
-  const residualValue = totalResidualValue([data]);
+  const residualValue = totalResidualValue([drawerData]);
 
   return (
     <>
@@ -110,7 +138,7 @@ const App: React.FC<Props> = ({ data }) => {
         labelCol={{ span: 4 }}
         wrapperCol={{ span: 20 }}
         style={{ maxWidth: 600 }}
-        initialValues={data}
+        initialValues={drawerData}
       >
         <Form.Item<MysqlDeviceData> label="姓名" name="name">
           <Input placeholder="设备使用者" style={{ width: 180 }} />
@@ -147,25 +175,36 @@ const App: React.FC<Props> = ({ data }) => {
         </Form.Item>
         <Form.Item<MysqlDeviceData> label="相关参数">
           <table>
-            <tr>
-              <th className="w-28 text-center">二手折旧率</th>
-              <th className="w-28 text-center">残值</th>
-              <th className="w-28 text-center">残值率</th>
-            </tr>
+            <thead>
+              <tr>
+                <th className="w-28 text-center">二手折旧率</th>
+                <th className="w-28 text-center">残值</th>
+                <th className="w-28 text-center">残值率</th>
+              </tr>
+            </thead>
 
-            <tr>
-              <td className="w-28 text-center">
-                {/* 为啥可能是字符串 */}
-                {getPercentage(
-                  Number(data.depreciation),
-                  Number(data.purchase)
-                )}
-              </td>
-              <td className="w-28 text-center">{residualValue}元</td>
-              <td className="w-28 text-center">
-                {getPercentage(residualValue, data.purchase)}
-              </td>
-            </tr>
+            <tbody>
+              <tr>
+                <td className="w-28 text-center">
+                  {/* 为啥可能是字符串 */}
+                  {getPercentage(
+                    Number(drawerData.depreciation),
+                    Number(drawerData.purchase)
+                  )}
+                </td>
+                <td className="w-28 text-center">{residualValue}元</td>
+                <td className="w-28 text-center">
+                  {getPercentage(residualValue, drawerData.purchase)}
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={3} className="text-sm text-right py-2">
+                  以上数据仅供参考
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </Form.Item>
 
@@ -179,6 +218,8 @@ const App: React.FC<Props> = ({ data }) => {
             移除设备
           </Button>
         </Form.Item>
+        {/* 打印当前表单信息 */}
+        <PrintData data={form.getFieldsValue()} title="打印当前表单信息" />
       </Form>
     </>
   );

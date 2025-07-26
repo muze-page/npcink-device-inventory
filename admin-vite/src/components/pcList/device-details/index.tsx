@@ -1,7 +1,7 @@
 /**
  * 设备详情 - 展开
  */
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Tabs } from "antd";
 
 import {
@@ -23,15 +23,16 @@ import MacOs from "@/assets/macos.png";
 import Win from "@/assets/windows_s.png";
 import { findOsTypeObj } from "@/store/tool";
 
-import { MysqlDeviceChangeMeat, OsTypeArray } from "@/store/interface";
+import {  OsTypeArray } from "@/store/interface";
 
 //公共方法
-import { DeviceContext } from "@/store/setingContext";
+import { AppContext, DeviceContext } from "@/components/pcList/Context";
 
-interface Props {
-  data: MysqlDeviceChangeMeat;
-}
-const App: React.FC<Props> = ({ data }) => {
+const App: React.FC = () => {
+  //获取数据
+  //拿到父组件传入的删除方法
+  const { drawerData } = useContext(AppContext);
+
   //Tab 栏
   const items: TabsProps["items"] = [
     {
@@ -42,7 +43,7 @@ const App: React.FC<Props> = ({ data }) => {
           硬件信息
         </span>
       ),
-      children: <Info data={data.data} time={data.time} />,
+      children: <Info data={drawerData.data} time={drawerData.time} />,
     },
 
     {
@@ -53,7 +54,7 @@ const App: React.FC<Props> = ({ data }) => {
           详细信息
         </span>
       ),
-      children: <Detailed data={data.data} />,
+      children: <Detailed data={drawerData.data} />,
     },
     {
       key: "3",
@@ -63,7 +64,7 @@ const App: React.FC<Props> = ({ data }) => {
           变更记录
         </span>
       ),
-      children: <Change uuid={data.uuid} />,
+      children: <Change uuid={drawerData.uuid} />,
     },
     {
       key: "4",
@@ -73,7 +74,7 @@ const App: React.FC<Props> = ({ data }) => {
           设置
         </span>
       ),
-      children: <Seting data={data} />,
+      children: <Seting/>,
     },
   ];
 
@@ -83,7 +84,7 @@ const App: React.FC<Props> = ({ data }) => {
   ];
 
   //找到需要的系统对象
-  const osTypeObj = findOsTypeObj(osTypeArray, data);
+  const osTypeObj = findOsTypeObj(osTypeArray, drawerData);
 
   //实时更新数据
   const [realData, setAa] = useState({});
@@ -103,7 +104,7 @@ const App: React.FC<Props> = ({ data }) => {
         {/**LOGO */}
         <Mark osType={osTypeObj!} />
         {/**详细内容 */}
-        <TabHeader osType={osTypeObj!} data={data} />
+        <TabHeader osType={osTypeObj!} data={drawerData} />
       </div>
 
       <Tabs defaultActiveKey="1" items={items} />

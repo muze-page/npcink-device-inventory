@@ -19,7 +19,7 @@ interface Props {
   data: MysqlDeviceChangeMeat[]; //筛选用数据
   onSet: Function; //传递筛选后的数据
 }
-import { AppContext } from "@/store/setingContext";
+import { AppContext } from "@/components/pcList/Context";
 
 /**
  * 准备部门
