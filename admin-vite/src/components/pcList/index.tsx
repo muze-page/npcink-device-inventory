@@ -8,110 +8,22 @@ import { dataMySql } from "@/store";
 import DetailsList from "@/components/pcList/detailsList";
 import Screen from "@/components/pcList/screen";
 import Drawer from "@/components/pcList/drawer";
-
-import {
-  MysqlDeviceChangeMeat,
-  MysqlDeviceChange,
-  ComputerRam,
-  ComputerDevice,
-  ComputerNet,
-} from "@/store/interface";
+import { MysqlDeviceChangeMeat, } from "@/store/interface";
 //选项
 import { defaultOption } from "@/store";
 //公共方法
 import { AppContext } from "@/components/pcList/Context";
 
-//替换用数组
-import { osReplace, osTypeReplace } from "@/store/dataReplace";
-
-//收集数组中的指定键值的总和，并转为GB单位
-
-type DataType = ComputerRam | ComputerDevice;
-
-const calculateTotalSize = (dataArrays: DataType[]) => {
-  const totalSize = dataArrays.reduce((sum: number, obj: { size: number }) => {
-    return sum + obj.size;
-  }, 0);
-  return totalSize / (1024 * 1024 * 1024); // 将字节转换为GB
-};
-
-/**
- * 检查是否有指定字符串，有则整段替换，没有则表示为未知
- * @param dataArrays
- * @returns
- */
-interface repType {
-  value: string;
-  label: string;
-}
-const replaceString = (input: string, obj: repType[]): string => {
-  const filteredObjects = obj.filter((item) => input.includes(item.value));
-  if (filteredObjects.length === 0) {
-    // 如果没有找到匹配项，返回 "未收录"
-    return "未收录";
-  } else {
-    // 使用map方法将符合条件的label值映射为一个字符串数组
-    const labels = filteredObjects.map((item) => item.label);
-    // 使用join方法将字符串数组连接成一个字符串，以逗号分隔
-    return labels.join(", ");
-  }
-};
-
-//创建函数，提取数组对象中mac的值组成新数组并输出，
-const extractMacValues = (data: ComputerNet[]) => {
-  // 遍历数组，提取每个对象的mac值，并去除为空或为 "00-00-00-00-00-00" 的值
-  const macValues = data.reduce((acc: string[], { mac }) => {
-    if (mac && mac !== "00-00-00-00-00-00") {
-      const formattedMac = mac.replace(/:/g, "-");
-      acc.push(formattedMac);
-    }
-    return acc;
-  }, []);
-  return macValues;
-};
-
-//添加需要的筛选标记数据
-const updateOSType = (
-  dataArrays: MysqlDeviceChange[]
-): MysqlDeviceChangeMeat[] => {
-  const updatedData = dataArrays.map((obj: MysqlDeviceChange) => {
-    const parsedData = obj.data; //拿到对象
-    const memory = calculateTotalSize(parsedData.memLayout); //内存数组
-    const disk = calculateTotalSize(parsedData.diskLayout); //硬盘数组
-    //整理添加的信息
-    const meat = {
-      os: replaceString(parsedData.os.distro, osTypeReplace), //系统型号
-      ostype: replaceString(parsedData.os.platform, osReplace), //系统版本
-      cpu: parsedData.cpu.manufacturer, //CPU
-      model: parsedData.system.model, //型号
-      memory: Math.floor(memory), //GB 取整
-      disk: Math.floor(disk), //GB 取整
-    };
-    const mac = extractMacValues(parsedData.net);
-    return { ...obj, meat, mac };
-  });
-  //移除多余数组
-  //const updatedData = updatedData.map((obj) => {
-  //  const { dataNew,dataOld, ...rest } = obj;
-  //  return rest;
-  //});
-  return updatedData;
-};
+//导入处理工具
+import { updateOSType } from "@/store/tool";
 
 const App: React.FC = () => {
-  //拿到数据 dataMySql
-  const sortByIDDescending = (data: MysqlDeviceChange[]) => {
-    // 使用sort方法对数组进行排序，按照对象中Number键的值从大到小排序,新添加的设备排前面
-    data.sort((a, b) => b.id - a.id);
-    return data;
-  };
 
-  //ID 排序后的数据，编号不一定是数字
-  const sortData = sortByIDDescending(dataMySql);
-  //console.log(sortData);
+  //将拿到的数据进行排序，再添加需要的meat信息
+  const DataMeatArray = updateOSType(dataMySql);
 
-  //获取添加了meta的数据
-  const updatedDataArray = updateOSType(sortData);
+  //数据处理
+  const [listData, setListData] = useState<MysqlDeviceChangeMeat[]>(DataMeatArray);
 
   //共享弹窗状态
   const [active, setActive] = useState(false);
@@ -125,7 +37,7 @@ const App: React.FC = () => {
   const [drawerData, setDrawerData] = useState({} as MysqlDeviceChangeMeat);
 
   //筛选后的值
-  const [screenData, setScreenData] = useState(updatedDataArray);
+  const [screenData, setScreenData] = useState(listData);
 
   //当前点击选中的数组index
   const [arrIndex, setArrIndex] = useState(0);
@@ -155,6 +67,7 @@ const App: React.FC = () => {
   //隐藏姓名
   const [isName, setIsName] = useState(true);
 
+  //切换姓名显示状态
   const toggleStyle = () => {
     setIsName((prevIsActive) => !prevIsActive);
   };
@@ -170,7 +83,10 @@ const App: React.FC = () => {
     setCurrentPage(page);
   };
 
-  //获取待渲染的数据
+  //计算需要显示的数据
+  //如果数据量大于每页大小，则进行分页处理
+  //如果数据量小于每页大小，则显示全部数据
+  const dataAxios = screenData.length > pageSize ? screenData.slice((currentPage - 1) * pageSize, currentPage * pageSize) : screenData;
   const displayData = screenData.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
@@ -179,6 +95,8 @@ const App: React.FC = () => {
   return (
     <AppContext.Provider
       value={{
+       
+        setListData,
         drawerData,
         setDrawerData,
         handleTypeUpdate,
@@ -188,10 +106,10 @@ const App: React.FC = () => {
       }}
     >
       <div className="pb-6 px-5">
-        <Screen data={updatedDataArray} onSet={setScreenData} />
+        <Screen data={listData} onSet={setScreenData} />
         <div className="flex content-start items-center flex-wrap w-full">
           {/**开始循环 */}
-          {displayData.map((tab, index) => (
+          {listData.map((tab, index) => (
             <DetailsList
               key={tab.id}
               data={tab}
@@ -229,10 +147,7 @@ const App: React.FC = () => {
         )}
 
         {/**弹窗 */}
-        <Drawer
-          active={active}
-          onActive={() => changeActive()}
-        />
+        <Drawer active={active} onActive={() => changeActive()} />
       </div>
     </AppContext.Provider>
   );

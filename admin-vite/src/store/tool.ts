@@ -6,11 +6,16 @@ import {
   MysqlDeviceChange,
   MysqlDeviceChangeMeat,
   DataItemArr,
+  ComputerRam,
+  ComputerDevice,
+  ComputerNet,
 } from "@/store/interface";
 import { defaultOption } from "@/store";
 import dayjs, { Dayjs } from "dayjs";
-//设备状态
-import { device_status } from "@/store/dataReplace";
+
+//替换用数组
+import { device_status, osReplace, osTypeReplace } from "@/store/dataReplace";
+
 //开发环境状态,各种调试按钮用
 export const devStatus: boolean = import.meta.env.VITE_STATE;
 /**
@@ -302,6 +307,90 @@ export const totalResidualValue = (data: MysqlDeviceChange[]) => {
   return Number(calculateTotalResidualValue(array).toFixed(2));
 };
 
+/**
+ * 电脑设备列表首页用
+ */
+
+//收集数组中的指定键值的总和，并转为GB单位
+type DataType = ComputerRam | ComputerDevice;
+const calculateTotalSize = (dataArrays: DataType[]) => {
+  const totalSize = dataArrays.reduce((sum: number, obj: { size: number }) => {
+    return sum + obj.size;
+  }, 0);
+  return totalSize / (1024 * 1024 * 1024); // 将字节转换为GB
+};
+
+/**
+ * 检查是否有指定字符串，有则整段替换，没有则表示为未知
+ * @param dataArrays
+ * @returns
+ */
+interface repType {
+  value: string;
+  label: string;
+}
+const replaceString = (input: string, obj: repType[]): string => {
+  const filteredObjects = obj.filter((item) => input.includes(item.value));
+  if (filteredObjects.length === 0) {
+    // 如果没有找到匹配项，返回 "未收录"
+    return "未收录";
+  } else {
+    // 使用map方法将符合条件的label值映射为一个字符串数组
+    const labels = filteredObjects.map((item) => item.label);
+    // 使用join方法将字符串数组连接成一个字符串，以逗号分隔
+    return labels.join(", ");
+  }
+};
+
+//创建函数，提取数组对象中mac的值组成新数组并输出，
+const extractMacValues = (data: ComputerNet[]) => {
+  // 遍历数组，提取每个对象的mac值，并去除为空或为 "00-00-00-00-00-00" 的值
+  const macValues = data.reduce((acc: string[], { mac }) => {
+    if (mac && mac !== "00-00-00-00-00-00") {
+      const formattedMac = mac.replace(/:/g, "-");
+      acc.push(formattedMac);
+    }
+    return acc;
+  }, []);
+  return macValues;
+};
+
+//对拿到的数据进行排序
+const sortByIDDescending = (data: MysqlDeviceChange[]) => {
+  // 使用sort方法对数组进行排序，按照对象中 Number 键的值从大到小排序,新添加的设备排前面
+  data.sort((a, b) => b.id - a.id);
+  return data;
+};
+
+//添加需要的筛选标记数据
+export const updateOSType = (
+  dataArrays: MysqlDeviceChange[]
+): MysqlDeviceChangeMeat[] => {
+  //对拿到的数据进行排序
+  const sortData = sortByIDDescending(dataArrays);
+  const updatedData = sortData.map((obj: MysqlDeviceChange) => {
+    const parsedData = obj.data; //拿到对象
+    const memory = calculateTotalSize(parsedData.memLayout); //内存数组
+    const disk = calculateTotalSize(parsedData.diskLayout); //硬盘数组
+    //整理添加的信息
+    const meat = {
+      os: replaceString(parsedData.os.distro, osTypeReplace), //系统型号
+      ostype: replaceString(parsedData.os.platform, osReplace), //系统版本
+      cpu: parsedData.cpu.manufacturer, //CPU
+      model: parsedData.system.model, //型号
+      memory: Math.floor(memory), //GB 取整
+      disk: Math.floor(disk), //GB 取整
+    };
+    const mac = extractMacValues(parsedData.net);
+    return { ...obj, meat, mac };
+  });
+  return updatedData;
+};
+
+/**
+ * 通用函数
+ */
+
 //输入两个数，输出百分比
 export const getPercentage = (num1: number, num2: number) => {
   if (num1 === 0 || num2 === 0) return "0%";
@@ -316,11 +405,8 @@ export const formatDate = (date: Dayjs) => {
   return formattedTime;
 };
 
-//设备状态
 //准备设备状态
 type DeviceStatus = "apply" | "idie" | "fault" | "scrap";
-export const statusLabel =(value: DeviceStatus) => {
-  return device_status.find(
-    (item) => item.value === value
-  )?.label;
-}
+export const statusLabel = (value: DeviceStatus) => {
+  return device_status.find((item) => item.value === value)?.label;
+};

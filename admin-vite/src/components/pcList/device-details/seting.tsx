@@ -33,7 +33,8 @@ const validateIPv4 = (_: any, value: string) => {
 };
 
 const App: React.FC = () => {
-  const { drawerData, setDrawerData, deltArrData } = useContext(AppContext);
+  const {  setListData, drawerData, setDrawerData, deltArrData } =
+    useContext(AppContext);
 
   /*
    * form 变量用于操作表单实例，
@@ -108,6 +109,13 @@ const App: React.FC = () => {
       //setDrawerData(valuesData); //更新弹窗数据
       //handleUpdateData(uuid, valuesData); //调用父组件的更新方法
       setDrawerData(valuesData); //更新弹窗数据
+      //更新列表数据
+      setListData((prevData) =>
+        prevData.map((item) =>
+          item.uuid === drawerData.uuid ? { ...item, ...valuesData } : item
+        )
+      );
+      //console.log("更新列表数据成功" + JSON.stringify(listData));
     } else {
       alert("修改失败");
     }
