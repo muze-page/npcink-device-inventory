@@ -5,8 +5,8 @@
 import { Drawer } from "antd";
 import Property from "@/components/pcList/device-details";
 interface Props {
-  active: boolean;
-  onActive: () => void;
+  active: boolean;//弹窗状态
+  onActive: () => void;//关闭弹窗的回调函数
 }
 const App: React.FC<Props> = ({ active, onActive }) => {
   return (

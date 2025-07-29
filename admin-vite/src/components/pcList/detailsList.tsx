@@ -11,15 +11,15 @@ import Win from "@/assets/windows_ico.png";
 import { findOsTypeObj, findBValue } from "@/store/tool";
 
 interface Props {
-  data: MysqlDeviceChangeMeat;
-  onActive: () => void; //修改状态
+  data: MysqlDeviceChangeMeat;//设备数据
+  onActive: () => void; //修改弹窗状态
   onDrawerData: () => void; //保存值
 }
 const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
   //拿到隐藏姓名状态
   const { isName } = useContext(AppContext);
 
-  //点击打开弹窗
+  //点击打开弹窗并保存选中的值
   const showDrawer = () => {
     onActive(); //打开弹窗
     onDrawerData(); //保存值

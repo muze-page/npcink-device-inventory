@@ -18,6 +18,7 @@ import Header from "@/block/tab-header";
 interface Props {
   data: MysqlDeviceChangeMeat[]; //筛选用数据
   onSet: Function; //传递筛选后的数据
+  onName: (value: boolean) => void; //传递隐藏姓名状态
 }
 import { AppContext } from "@/components/pcList/Context";
 
@@ -26,7 +27,7 @@ import { AppContext } from "@/components/pcList/Context";
  */
 const departmentData = changeSelectData(defaultOption.department);
 
-const App: React.FC<Props> = ({ data, onSet }) => {
+const App: React.FC<Props> = ({ data, onSet,onName }) => {
   //以下功能做参数，由唯一函数决定输出值
 
   //存储选项值
@@ -77,7 +78,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
       onSet(filteredData);
       setIsUpdating(false);
     }
-  }, [filteredData, isUpdating]);
+  }, [filteredData, isUpdating,onSet]);
 
   /**
    * 重置按钮
@@ -92,7 +93,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
   };
 
   //拿到需要的状态和方法
-  const { isName, toggleStyle } = useContext(AppContext);
+  const { isName } = useContext(AppContext);
 
   return (
     <>
@@ -147,7 +148,7 @@ const App: React.FC<Props> = ({ data, onSet }) => {
               shape="circle"
               icon={isName ? <EyeOutlined /> : <EyeInvisibleOutlined />}
               className="bg-[#1677ff]"
-              onClick={toggleStyle}
+              onClick={()=>onName(!isName)}
             />
           </Tooltip>
         </Space>

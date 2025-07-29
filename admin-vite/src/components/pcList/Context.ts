@@ -7,10 +7,8 @@ interface AppContextType {
   setListData: React.Dispatch<React.SetStateAction<MysqlDeviceChangeMeat[]>>; //设置列表数据
   drawerData: MysqlDeviceChangeMeat; //弹窗数据
   setDrawerData: React.Dispatch<React.SetStateAction<MysqlDeviceChangeMeat>>; //弹窗数据修改方法
-
-  deltArrData: () => void; //删除数据
   isName: boolean; //是否显示姓名
-  toggleStyle: () => void; //隐藏姓名
+  setActive: React.Dispatch<React.SetStateAction<boolean>>; //设置弹窗状态
 }
 
 export const AppContext = createContext<AppContextType>({
@@ -18,10 +16,8 @@ export const AppContext = createContext<AppContextType>({
   setListData: () => {},
   drawerData: {} as MysqlDeviceChangeMeat,
   setDrawerData: () => {},
-
-  deltArrData: () => {},
   isName: true,
-  toggleStyle: () => {},
+  setActive: () => {},
 });
 
 //硬件变更的设置与硬件变更头部的数据进行沟通

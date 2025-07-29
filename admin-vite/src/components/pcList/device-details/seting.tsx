@@ -33,8 +33,8 @@ const validateIPv4 = (_: any, value: string) => {
 };
 
 const App: React.FC = () => {
-  const {  setListData, drawerData, setDrawerData, deltArrData } =
-    useContext(AppContext);
+  //接收上下文中的值
+  const { setListData, drawerData, setDrawerData,setActive } = useContext(AppContext);
 
   /*
    * form 变量用于操作表单实例，
@@ -127,8 +127,11 @@ const App: React.FC = () => {
   const deltData = () => {
     //二次确认
     if (window.confirm("您确定要移除此设备吗？")) {
-      deltArrData && deltArrData(), deltSQLData; //删除本地数据
+      setListData((prevData) =>
+        prevData.filter((item) => item.uuid !== drawerData.uuid)
+      ); //更新列表数据，移除当前设备
       deltSQLData(drawerData.uuid); //删除数据库数据
+      setActive(false); //关闭弹窗
     } else {
       message.warning("已取消");
     }

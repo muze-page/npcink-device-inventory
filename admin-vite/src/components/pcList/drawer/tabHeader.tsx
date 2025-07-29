@@ -11,6 +11,8 @@ interface Props {
 }
 
 const App: React.FC<Props> = ({ osType, data }) => {
+  
+  //拿到设备设置的值
   const { realData } = useContext(DeviceContext);
 
   //拿到隐藏姓名状态
