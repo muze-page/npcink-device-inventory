@@ -1,14 +1,13 @@
 import { createContext } from "react";
 import { DeviceSeting, MysqlDeviceChangeMeat } from "@/store/interface";
-// 创建一个 Context 对象，用于存储 handleTypeUpdate 函数
+
 interface AppContextType {
   //当前选中的设备的值和修改方法
   //listData: MysqlDeviceChangeMeat[]; //列表数据
   setListData: React.Dispatch<React.SetStateAction<MysqlDeviceChangeMeat[]>>; //设置列表数据
   drawerData: MysqlDeviceChangeMeat; //弹窗数据
   setDrawerData: React.Dispatch<React.SetStateAction<MysqlDeviceChangeMeat>>; //弹窗数据修改方法
-  //修改当前选中设备的状态
-  handleTypeUpdate: (type: string, newType: string) => void; //修改状态
+
   deltArrData: () => void; //删除数据
   isName: boolean; //是否显示姓名
   toggleStyle: () => void; //隐藏姓名
@@ -19,7 +18,7 @@ export const AppContext = createContext<AppContextType>({
   setListData: () => {},
   drawerData: {} as MysqlDeviceChangeMeat,
   setDrawerData: () => {},
-  handleTypeUpdate: () => {},
+
   deltArrData: () => {},
   isName: true,
   toggleStyle: () => {},
