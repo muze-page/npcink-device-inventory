@@ -1,6 +1,5 @@
 /**
  * 设备详情 - 顶部筛选
- * TODO:搜索备注名或编号
  */
 import { useContext } from "react";
 import { Space, Select, Button, Tooltip } from "antd";
@@ -13,12 +12,14 @@ import { FilterData } from "@/store/interface";
 import { defaultOption } from "@/store";
 import { changeSelectData } from "@/store/tool";
 import { device_status } from "@/store/dataReplace";
-//import Search from "@/components/pcList/search";
+import Search from "@/components/pcList/search";
 import Header from "@/block/tab-header";
 
 interface Props {
   filterData: FilterData; //当前筛选条件
   onChange: (next: FilterData) => void; //更新筛选条件
+  keyword: string; //搜索关键字
+  setKeyword: (value: string) => void; //修改搜索关键字
   onName: (value: boolean) => void; //传递隐藏姓名状态
 }
 import { AppContext } from "@/components/pcList/Context";
@@ -28,7 +29,13 @@ import { AppContext } from "@/components/pcList/Context";
  */
 const departmentData = changeSelectData(defaultOption.department);
 
-const App: React.FC<Props> = ({ filterData, onChange, onName }) => {
+const App: React.FC<Props> = ({
+  filterData,
+  onChange,
+  keyword,
+  setKeyword,
+  onName,
+}) => {
   //拿到是否隐藏姓名的状态
   const { isName } = useContext(AppContext);
 
@@ -46,6 +53,7 @@ const App: React.FC<Props> = ({ filterData, onChange, onName }) => {
    */
   const restSelect = () => {
     //传递筛选用
+    setKeyword("");
     onChange({
       //筛选条件默认值
       state: "all", //状态
@@ -61,7 +69,7 @@ const App: React.FC<Props> = ({ filterData, onChange, onName }) => {
           <div>
             状态：
             <Select
-              value={filterData.state || "all"}  // 使用value属性，从filterData获取当前值
+              value={filterData.state || "all"} // 使用value属性，从filterData获取当前值
               style={{ width: 80 }}
               onChange={(value: any) => {
                 onChange({ ...filterData, state: value });
@@ -72,7 +80,7 @@ const App: React.FC<Props> = ({ filterData, onChange, onName }) => {
           <div>
             部门：
             <Select
-              value={filterData.department || "all"}  // 使用value属性，从filterData获取当前值
+              value={filterData.department || "all"} // 使用value属性，从filterData获取当前值
               style={{ width: 120 }}
               onChange={(value: any) => {
                 onChange({ ...filterData, department: value });
@@ -81,9 +89,12 @@ const App: React.FC<Props> = ({ filterData, onChange, onName }) => {
             />
           </div>
           <div>
-            {/**
-             * <Search data={data} onSet={onSet} />
-             */}
+            <Search
+              value={keyword}
+              onChange={(kw) => {
+                setKeyword(kw);
+              }}
+            />
           </div>
 
           {true && (

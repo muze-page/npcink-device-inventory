@@ -21,13 +21,21 @@ import Drawer from "@/components/pcList/drawer";
 import { AppContext } from "@/components/pcList/Context";
 
 //导入处理工具
-import { updateOSType } from "@/store/tool";
+import { updateOSType, devStatus } from "@/store/tool";
 
 import Demo from "@/demo/parent";
 
 const App: React.FC = () => {
   //将拿到的数据进行排序，再添加需要的meat信息
   const DataMeatArray = updateOSType(dataMySql);
+
+  //打印对象数据
+  if (devStatus) {
+    console.log("原始数据：");
+    console.dir(dataMySql);
+    console.log("处理后的数据：");
+    console.dir(DataMeatArray);
+  }
 
   //设置列表数据
   const [listData, setListData] =
@@ -39,6 +47,9 @@ const App: React.FC = () => {
     state: "all", //状态
     department: "all", //部门
   });
+
+  /* 搜索关键字 */
+  const [keyword, setKeyword] = useState("");
 
   //每页展示数量TODO:从配置中获取,去除此选项，改用分页器设置
   //const PAGE_SIZE = defaultOption.device_show_number;
@@ -58,11 +69,28 @@ const App: React.FC = () => {
     //筛选部门
     if (filter.department && filter.department != "all")
       data = data.filter((v) => v.department === filter.department);
+
+    //筛选姓名、编号、MAC地址、IP地址
+    if (keyword.trim()) {
+      const k = keyword.toLowerCase();
+      console.log("拿到的K值：" + k);
+
+      //mac地址处理成字符串，方便查找
+      data = data.filter(
+        (v) =>
+          v.name.toLowerCase().includes(k) ||
+          v.number.toLowerCase().includes(k) ||
+          v.mac.some((mac) => mac.toLowerCase().includes(k)) || // 优化点：逐个检查 MAC 地址
+          v.ip.toLowerCase().includes(k)
+      );
+      //console.log("筛选后的data值：" + data);
+    }
+
     /* 3-3 分页切片 */
     const startIndex = (pageNumber - 1) * PAGE_SIZE;
     //截取数据
     return data.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [listData, filter, pageNumber, PAGE_SIZE]);
+  }, [listData, filter, pageNumber, PAGE_SIZE, keyword]);
 
   //设置当前页码
   const handlePageChange = (page: SetStateAction<number>) => {
@@ -107,7 +135,13 @@ const App: React.FC = () => {
       }}
     >
       <div className="pb-6 px-5">
-        <Screen filterData={filter} onChange={setFilter} onName={setIsName} />
+        <Screen
+          filterData={filter}
+          onChange={setFilter}
+          keyword={keyword}
+          setKeyword={setKeyword}
+          onName={setIsName}
+        />
         <div className="flex content-start items-center flex-wrap w-full">
           {/**开始循环 */}
           {filteredList.map((tab: MysqlDeviceChangeMeat) => (
@@ -154,8 +188,6 @@ const App: React.FC = () => {
         <Drawer active={active} onActive={() => changeActive()} />
       </div>
       <Demo />
-       
-     
     </AppContext.Provider>
   );
 };

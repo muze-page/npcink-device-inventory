@@ -50,10 +50,6 @@ export const dataMySql = combineData(getDataLocal().data);
 //对自定义设备值进行处理后传出
 export const dataStyle = combineDataStyle(getDataLocal().styleData);
 
-//开发环境时打印拿到的值
-if (devStatus) {
-  console.log("从WP获取到的数据", getDataLocal()); //测试用
-}
 //拿到选项值并传出
 
 export const defaultOption: OptionType = getDataLocal().option;
