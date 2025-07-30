@@ -12,10 +12,10 @@ import {
 } from "@ant-design/icons";
 
 import type { TabsProps } from "antd";
-import Info from "@/components/pcList/device-details/info";
-import Change from "@/components/pcList/device-details/change";
-import Seting from "@/components/pcList/device-details/seting";
-import Detailed from "@/components/pcList/device-details/detailed";
+import Info from "@/components/pcList/device-details/TabInfo";
+import Change from "@/components/pcList/device-details/TabChange";
+import Seting from "@/components/pcList/device-details/TabSeting";
+import Detailed from "@/components/pcList/device-details/TabDetailed";
 
 //公共方法
 import { AppContext, DeviceContext } from "@/components/pcList/Context";
