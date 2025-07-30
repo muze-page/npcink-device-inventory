@@ -4,9 +4,10 @@
 
 import { Drawer } from "antd";
 import Property from "@/components/pcList/device-details";
+import TabHeader from "@/components/pcList/drawer/tabHeader";
 interface Props {
-  active: boolean;//弹窗状态
-  onActive: () => void;//关闭弹窗的回调函数
+  active: boolean; //弹窗状态
+  onActive: () => void; //关闭弹窗的回调函数
 }
 const App: React.FC<Props> = ({ active, onActive }) => {
   return (
@@ -19,6 +20,9 @@ const App: React.FC<Props> = ({ active, onActive }) => {
         width={"800px"}
         className="pt-9"
       >
+        {/**标识栏 */}
+        <TabHeader/>
+         {/**Tab栏 */}
         <Property />
       </Drawer>
     </>

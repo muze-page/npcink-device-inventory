@@ -160,8 +160,10 @@ export const findOsTypeObj = (
   array: OsTypeArray[],
   data: MysqlDeviceChangeMeat
 ) => {
-  return array.find((item) => item.name === data.meat.ostype);
-};
+  const result = array.find((item) => item.name === data.meat.ostype);
+  // 返回默认对象，避免返回 undefined
+  return result || { id:0,name: 'unknown',image: 'unknown.png' /* 其他默认属性 */ };
+}
 
 /**
  * 将字符串数组转换为对象，方便下拉选择
