@@ -1,5 +1,5 @@
-// PaginationTable.tsx
-import { FC, useState } from "react";
+// src/PaginationTable.tsx
+import { FC } from 'react';
 
 interface Item {
   id: number;
@@ -9,19 +9,24 @@ interface Item {
 }
 
 interface Props {
-  list: Item[]; // 已筛选排序完的完整列表
-  total: number;
+  list: Item[];        // 已筛选排序后的完整列表
+  total: number;       // 总条数
   pageSize: number;
+  page: number;        // 当前页
+  setPage: (p: number) => void;
   onUpdate: (id: number, patch: Partial<Item>) => void;
 }
 
-const PaginationTable: FC<Props> = ({ list, total, pageSize, onUpdate }) => {
-  const [page, setPage] = useState(1);
-
-  /* 当前页数据 */
-  const start = (page - 1) * pageSize;
-  const pageData = list.slice(start, start + pageSize);
-
+const PaginationTable: FC<Props> = ({
+  list,
+  total,
+  pageSize,
+  page,
+  setPage,
+  onUpdate,
+}) => {
+  const startIndex = (page - 1) * pageSize;
+  const pageData = list.slice(startIndex, startIndex + pageSize);
   const totalPages = Math.ceil(total / pageSize);
 
   return (
@@ -37,7 +42,7 @@ const PaginationTable: FC<Props> = ({ list, total, pageSize, onUpdate }) => {
           </tr>
         </thead>
         <tbody>
-          {pageData.map((v) => (
+          {pageData.map(v => (
             <tr key={v.id}>
               <td>{v.id}</td>
               <td>{v.name}</td>
@@ -53,21 +58,25 @@ const PaginationTable: FC<Props> = ({ list, total, pageSize, onUpdate }) => {
         </tbody>
       </table>
 
-      {/* 分页按钮 */}
-      <div style={{ marginTop: 8 }}>
-        <button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-          上一页
-        </button>
-        <span style={{ margin: "0 8px" }}>
-          第 {page} / {totalPages} 页
-        </span>
-        <button
-          disabled={page >= totalPages}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          下一页
-        </button>
-      </div>
+      {totalPages > 1 && (
+        <div style={{ marginTop: 8 }}>
+          <button
+            disabled={page === 1}
+            onClick={() => setPage(page - 1)}
+          >
+            上一页
+          </button>
+          <span style={{ margin: '0 8px' }}>
+            {page} / {totalPages}
+          </span>
+          <button
+            disabled={page >= totalPages}
+            onClick={() => setPage(page + 1)}
+          >
+            下一页
+          </button>
+        </div>
+      )}
     </>
   );
 };

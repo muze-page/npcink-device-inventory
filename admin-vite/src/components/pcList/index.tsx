@@ -23,7 +23,7 @@ import { AppContext } from "@/components/pcList/Context";
 //导入处理工具
 import { updateOSType } from "@/store/tool";
 
-//import Demo from "@/demo/parent";
+import Demo from "@/demo/parent";
 
 const App: React.FC = () => {
   //将拿到的数据进行排序，再添加需要的meat信息
@@ -153,11 +153,8 @@ const App: React.FC = () => {
         {/**弹窗 */}
         <Drawer active={active} onActive={() => changeActive()} />
       </div>
-      {
-        /**
-         *  <Demo />
-         */
-      }
+      <Demo />
+       
      
     </AppContext.Provider>
   );

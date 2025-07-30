@@ -1,10 +1,10 @@
-// FilterSortBar.tsx
-import { FC } from "react";
+// src/FilterSortBar.tsx
+import { FC } from 'react';
 
 interface Filter {
   category: string;
-  sortKey: "name" | "score";
-  sortOrder: "asc" | "desc";
+  sortKey: 'name' | 'score';
+  sortOrder: 'asc' | 'desc';
 }
 
 interface Props {
@@ -13,16 +13,17 @@ interface Props {
 }
 
 const FilterSortBar: FC<Props> = ({ value, onChange }) => (
-  <div style={{ marginBottom: 16 }}>
+  <div style={{ margin: '16px 0' }}>
     <label>
       类别：
       <select
         value={value.category}
-        onChange={(e) => onChange({ ...value, category: e.target.value })}
+        onChange={e => onChange({ ...value, category: e.target.value })}
       >
         <option value="">全部</option>
         <option value="cat1">类别1</option>
         <option value="cat2">类别2</option>
+        <option value="cat3">类别3</option>
       </select>
     </label>
 
@@ -30,8 +31,8 @@ const FilterSortBar: FC<Props> = ({ value, onChange }) => (
       排序：
       <select
         value={`${value.sortKey}-${value.sortOrder}`}
-        onChange={(e) => {
-          const [k, o] = e.target.value.split("-");
+        onChange={e => {
+          const [k, o] = e.target.value.split('-');
           onChange({ ...value, sortKey: k as any, sortOrder: o as any });
         }}
       >
