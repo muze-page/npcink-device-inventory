@@ -6,17 +6,24 @@ import { SetStateAction, useState, useMemo } from "react";
 import { Pagination, Empty } from "antd";
 import type { PaginationProps } from "antd";
 import { dataMySql } from "@/store";
-import DetailsList from "@/components/pcList/detailsList";
-import Screen from "@/components/pcList/screen";
-import Drawer from "@/components/pcList/drawer";
 import { MysqlDeviceChangeMeat } from "@/store/interface";
+
+//展示列表
+import DetailsList from "@/components/pcList/detailsList";
+
+//筛选
+import Screen from "@/components/pcList/screen";
+
+//弹窗
+import Drawer from "@/components/pcList/drawer";
+
 //公共方法
 import { AppContext } from "@/components/pcList/Context";
 
 //导入处理工具
 import { updateOSType } from "@/store/tool";
 
-import Demo from "@/demo/fabox";
+import Demo from "@/demo/parent";
 
 const App: React.FC = () => {
   //将拿到的数据进行排序，再添加需要的meat信息
