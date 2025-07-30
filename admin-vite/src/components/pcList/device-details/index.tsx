@@ -14,6 +14,7 @@ import {
 import type { TabsProps } from "antd";
 
 import TabHeader from "@/components/pcList/drawer/tabHeader";
+
 import Info from "@/components/pcList/device-details/info";
 import Change from "@/components/pcList/device-details/change";
 import Seting from "@/components/pcList/device-details/seting";
