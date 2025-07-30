@@ -42,6 +42,12 @@ export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
   mac: string[];
 };
 
+//筛选数据类型
+export interface FilterData {
+  state: "apply" | "idie" | "fault" | "scrap"|"all"; //筛选用设备状态
+  department: string; //部门
+}
+
 //选项数据类型
 export interface OptionType {
   route?: string; //路由

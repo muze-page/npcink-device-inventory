@@ -2,22 +2,23 @@
  * 设备详情 - 顶部筛选
  * TODO:搜索备注名或编号
  */
-import { useState, useEffect, useContext } from "react";
+import { useContext } from "react";
 import { Space, Select, Button, Tooltip } from "antd";
 import {
   ReloadOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
 } from "@ant-design/icons";
-import { MysqlDeviceChangeMeat } from "@/store/interface";
+import { FilterData } from "@/store/interface";
 import { defaultOption } from "@/store";
 import { changeSelectData } from "@/store/tool";
 import { device_status } from "@/store/dataReplace";
-import Search from "@/components/pcList/search";
+//import Search from "@/components/pcList/search";
 import Header from "@/block/tab-header";
+
 interface Props {
-  data: MysqlDeviceChangeMeat[]; //筛选用数据
-  onSet: Function; //传递筛选后的数据
+  filterData: FilterData; //当前筛选条件
+  onChange: (next: FilterData) => void; //更新筛选条件
   onName: (value: boolean) => void; //传递隐藏姓名状态
 }
 import { AppContext } from "@/components/pcList/Context";
@@ -27,73 +28,30 @@ import { AppContext } from "@/components/pcList/Context";
  */
 const departmentData = changeSelectData(defaultOption.department);
 
-const App: React.FC<Props> = ({ data, onSet,onName }) => {
-  //以下功能做参数，由唯一函数决定输出值
+const App: React.FC<Props> = ({ filterData, onChange, onName }) => {
+  //拿到是否隐藏姓名的状态
+  const { isName } = useContext(AppContext);
 
-  //存储选项值
-  const [state, setState] = useState(String); //状态
+  //处理状态选项，添加全部选项
+  const stateOptions = [{ label: "全部", value: "all" }, ...device_status];
 
-  const [memory, _setMemory] = useState(null); //内存
-  //const [disk, setDisk] = useState(null); //硬盘
-  const [department, setDepartment] = useState(null); //cpu
-
-  //根据条件对原始数据进行筛选
-  const filteredData = data.filter((item) => {
-    //let meatDisk = item.meat.disk;
-    let sizeCondition = true;
-
-    //if (disk) {
-    //  if (disk === "120") {
-    //    sizeCondition = meatDisk <= 120;
-    //  } else if (disk === "250") {
-    //    sizeCondition = meatDisk > 120 && meatDisk <= 250;
-    //  } else if (disk === "512") {
-    //    sizeCondition = meatDisk > 250 && meatDisk <= 512;
-    //  } else if (disk === "1024") {
-    //    sizeCondition = meatDisk > 512 && meatDisk <= 1024;
-    //  } else if (disk === "2048") {
-    //    sizeCondition = meatDisk > 1024 && meatDisk <= 2048;
-    //  } else if (disk === "other") {
-    //    sizeCondition = meatDisk > 2048;
-    //  }
-    //}
-
-    //处理内存
-    const memoryData = item.meat.memory.toString();
-
-    return (
-      sizeCondition &&
-      (!memory || memoryData === "" || memoryData === memory) && //内存
-      (!state || item.state === state) && //状态
-      (!department || item.department === "" || item.department === department) //
-    );
-  });
-
-  //避免死循环
-  const [isUpdating, setIsUpdating] = useState(false);
-
-  //监听，更新最新值
-  useEffect(() => {
-    if (isUpdating) {
-      onSet(filteredData);
-      setIsUpdating(false);
-    }
-  }, [filteredData, isUpdating,onSet]);
+  //处理部门选项，添加全部选项
+  const departmentOptions = [
+    { label: "全部", value: "all" },
+    ...departmentData,
+  ];
 
   /**
-   * 重置按钮
+   * 重置按钮,
    */
   const restSelect = () => {
-    //重置筛选条件
-
-    //重置列表数据
-    //onSet(data);
-    //console.log("重置");
-    location.reload();
+    //传递筛选用
+    onChange({
+      //筛选条件默认值
+      state: "all", //状态
+      department: "all", //部门
+    });
   };
-
-  //拿到需要的状态和方法
-  const { isName } = useContext(AppContext);
 
   return (
     <>
@@ -103,29 +61,29 @@ const App: React.FC<Props> = ({ data, onSet,onName }) => {
           <div>
             状态：
             <Select
-              defaultValue="全部"
+              value={filterData.state || "all"}  // 使用value属性，从filterData获取当前值
               style={{ width: 80 }}
               onChange={(value: any) => {
-                setState(value);
-                setIsUpdating(true);
+                onChange({ ...filterData, state: value });
               }}
-              options={device_status}
+              options={stateOptions}
             />
           </div>
           <div>
             部门：
             <Select
-              defaultValue="全部"
+              value={filterData.department || "all"}  // 使用value属性，从filterData获取当前值
               style={{ width: 120 }}
               onChange={(value: any) => {
-                setDepartment(value);
-                setIsUpdating(true);
+                onChange({ ...filterData, department: value });
               }}
-              options={departmentData}
+              options={departmentOptions}
             />
           </div>
           <div>
-            <Search data={data} onSet={onSet} />
+            {/**
+             * <Search data={data} onSet={onSet} />
+             */}
           </div>
 
           {true && (
@@ -148,7 +106,7 @@ const App: React.FC<Props> = ({ data, onSet,onName }) => {
               shape="circle"
               icon={isName ? <EyeOutlined /> : <EyeInvisibleOutlined />}
               className="bg-[#1677ff]"
-              onClick={()=>onName(!isName)}
+              onClick={() => onName(!isName)}
             />
           </Tooltip>
         </Space>

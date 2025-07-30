@@ -237,7 +237,7 @@ const data = [
   {
     id: "19",
     name: "曹鑫",
-    state: "apply",
+    state: "scrap",
     number: "117",
     department: "开发部",
     ip: "192.168.1.1",
@@ -250,7 +250,7 @@ const data = [
   {
     id: "20",
     name: "缺少参数测试",
-    state: "apply",
+    state: "fault",
     number: "0",
     department: "0",
     ip: "192.168.1.1",
@@ -263,7 +263,7 @@ const data = [
   {
     id: "21",
     name: "测试",
-    state: "apply",
+    state: "idie",
     number: "0",
     department: "0",
     ip: "192.168.1.2",

@@ -6,7 +6,7 @@ import { SetStateAction, useState, useMemo } from "react";
 import { Pagination, Empty } from "antd";
 import type { PaginationProps } from "antd";
 import { dataMySql } from "@/store";
-import { MysqlDeviceChangeMeat } from "@/store/interface";
+import { MysqlDeviceChangeMeat, FilterData } from "@/store/interface";
 
 //展示列表
 import DetailsList from "@/components/pcList/detailsList";
@@ -23,7 +23,7 @@ import { AppContext } from "@/components/pcList/Context";
 //导入处理工具
 import { updateOSType } from "@/store/tool";
 
-import Demo from "@/demo/parent";
+//import Demo from "@/demo/parent";
 
 const App: React.FC = () => {
   //将拿到的数据进行排序，再添加需要的meat信息
@@ -33,40 +33,36 @@ const App: React.FC = () => {
   const [listData, setListData] =
     useState<MysqlDeviceChangeMeat[]>(DataMeatArray);
 
-  //共享弹窗状态
-  const [active, setActive] = useState(false);
-
-  //修改弹窗状态
-  const changeActive = () => {
-    setActive(!active);
-  };
-
-  //当前选中弹窗的数据
-  const [drawerData, setDrawerData] = useState({} as MysqlDeviceChangeMeat);
-
-  //筛选后的值
-  const [screenData, setScreenData] = useState(listData);
-
-  //隐藏姓名
-  const [isName, setIsName] = useState(true);
+  //筛选条件
+  const [filter, setFilter] = useState<FilterData>({
+    //筛选条件默认值
+    state: "all", //状态
+    department: "all", //部门
+  });
 
   //每页展示数量TODO:从配置中获取,去除此选项，改用分页器设置
   //const PAGE_SIZE = defaultOption.device_show_number;
-
   const [PAGE_SIZE, setPAGE_SIZE] = useState(10); //每页展示数量
 
   //当前页码
   const [pageNumber, setPageNumber] = useState(1); // 当前页码（从 1 开始）
 
   /* 3. 计算最终展示页数据（useMemo 避免重复计算） */
-  const displayData = useMemo(() => {
+  const filteredList = useMemo(() => {
     let data = [...listData];
+
+    //筛选状态
+    if (filter.state && filter.state != "all")
+      data = data.filter((v) => v.state === filter.state);
+
+    //筛选部门
+    if (filter.department && filter.department != "all")
+      data = data.filter((v) => v.department === filter.department);
     /* 3-3 分页切片 */
     const startIndex = (pageNumber - 1) * PAGE_SIZE;
-
     //截取数据
     return data.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [listData, pageNumber, PAGE_SIZE]);
+  }, [listData, filter, pageNumber, PAGE_SIZE]);
 
   //设置当前页码
   const handlePageChange = (page: SetStateAction<number>) => {
@@ -84,9 +80,21 @@ const App: React.FC = () => {
 
   //console.log("当前页码", pageNumber);
   //console.log("每页展示数量", PAGE_SIZE);
-  //console.log("数据总数", displayData.length);
-  //console.log("筛选后的数据", screenData);
-  //console.log("当前展示数据", displayData);
+  //console.log("未筛选的数据总数", listData.length);
+  //console.log("筛选后的数据总数", filteredList.length);
+  //共享弹窗状态
+  const [active, setActive] = useState(false);
+
+  //修改弹窗状态
+  const changeActive = () => {
+    setActive(!active);
+  };
+
+  //当前选中弹窗的数据
+  const [drawerData, setDrawerData] = useState({} as MysqlDeviceChangeMeat);
+
+  //隐藏姓名
+  const [isName, setIsName] = useState(true);
 
   return (
     <AppContext.Provider
@@ -98,12 +106,11 @@ const App: React.FC = () => {
         setActive,
       }}
     >
-      <Demo />
       <div className="pb-6 px-5">
-        <Screen data={displayData} onSet={setScreenData} onName={setIsName} />
+        <Screen filterData={filter} onChange={setFilter} onName={setIsName} />
         <div className="flex content-start items-center flex-wrap w-full">
           {/**开始循环 */}
-          {displayData.map((tab) => (
+          {filteredList.map((tab: MysqlDeviceChangeMeat) => (
             <DetailsList
               key={tab.id}
               data={tab}
@@ -113,7 +120,7 @@ const App: React.FC = () => {
           ))}
         </div>
         {/**没有数据 */}
-        {screenData.length === 0 && (
+        {filteredList.length === 0 && (
           <Empty
             className="mt-10"
             description={
@@ -146,6 +153,12 @@ const App: React.FC = () => {
         {/**弹窗 */}
         <Drawer active={active} onActive={() => changeActive()} />
       </div>
+      {
+        /**
+         *  <Demo />
+         */
+      }
+     
     </AppContext.Provider>
   );
 };
