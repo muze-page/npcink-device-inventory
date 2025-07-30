@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { DeviceSeting, MysqlDeviceChangeMeat } from "@/store/interface";
+import { MysqlDeviceChangeMeat } from "@/store/interface";
 
 interface AppContextType {
   //当前选中的设备的值和修改方法
@@ -20,18 +20,3 @@ export const AppContext = createContext<AppContextType>({
   setActive: () => {},
 });
 
-//硬件变更的设置与硬件变更头部的数据进行沟通
-
-interface AppContextDevice {
-  realData: DeviceSeting;
-  changeReal: (key: string, value: string) => void;
-}
-export const DeviceContext = createContext<AppContextDevice>({
-  realData: {
-    name: "0", //姓名
-    number: "0", //编号
-    state: "0", //状态
-    department: "0", //部门
-  },
-  changeReal: () => {},
-});
