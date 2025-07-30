@@ -15,7 +15,7 @@ import type { TabsProps } from "antd";
 import Info from "@/components/pcList/device-details/info";
 import Change from "@/components/pcList/device-details/change";
 import Seting from "@/components/pcList/device-details/seting";
-import Detailed from "@/components/pcList/device-details/detailed/index";
+import Detailed from "@/components/pcList/device-details/detailed";
 
 //公共方法
 import { AppContext, DeviceContext } from "@/components/pcList/Context";
