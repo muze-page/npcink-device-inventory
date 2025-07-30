@@ -17,6 +17,8 @@ import { AppContext } from "@/components/pcList/Context";
 //导入处理工具
 import { updateOSType } from "@/store/tool";
 
+import Demo from "@/demo/fabox";
+
 const App: React.FC = () => {
   //将拿到的数据进行排序，再添加需要的meat信息
   const DataMeatArray = updateOSType(dataMySql);
@@ -38,7 +40,6 @@ const App: React.FC = () => {
 
   //筛选后的值
   const [screenData, setScreenData] = useState(listData);
-
 
   //隐藏姓名
   const [isName, setIsName] = useState(true);
@@ -70,6 +71,7 @@ const App: React.FC = () => {
         setActive,
       }}
     >
+      <Demo />
       <div className="pb-6 px-5">
         <Screen data={listData} onSet={setScreenData} onName={setIsName} />
         <div className="flex content-start items-center flex-wrap w-full">
@@ -79,7 +81,7 @@ const App: React.FC = () => {
               key={tab.id}
               data={tab}
               onActive={() => changeActive()}
-              onDrawerData={() => (setDrawerData(tab))}
+              onDrawerData={() => setDrawerData(tab)}
             />
           ))}
         </div>
