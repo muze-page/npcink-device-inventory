@@ -3,7 +3,10 @@
  */
 import { useState } from "react";
 import { Space, Button } from "antd";
+
+//引入数据填写弹窗表单
 import Add from "@/components/styleList/header/add";
+
 //引入头部模块
 import Header from "@/block/tab-header";
 
@@ -11,12 +14,12 @@ const App: React.FC = () => {
   //信息录入弹窗状态
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  //展示
+  //展示弹窗
   const showModal = () => {
     setIsModalOpen(true);
   };
 
-  //隐藏
+  //隐藏弹窗
   const handleOk = () => {
     setIsModalOpen(false);
   };

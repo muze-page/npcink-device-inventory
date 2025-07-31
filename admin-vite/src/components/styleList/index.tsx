@@ -6,6 +6,7 @@ import { useState, useMemo, SetStateAction } from "react";
 import { Pagination } from "antd";
 import type { PaginationProps } from "antd";
 
+//数据渲染组件
 import DataList from "@/components/styleList/dataList";
 
 //拿到自定义设备数据类型
@@ -14,10 +15,10 @@ import { StyleDevice, FilterStyleData } from "@/store/interface";
 //跨组件提供方法
 import { StyleContext } from "@/components/styleList/styleContext";
 
-//拿到弹窗
+//拿到弹窗组件
 import Drawer from "@/components/styleList/drawer/index";
 
-//拿到顶部
+//拿到顶部组件
 import Header from "@/components/styleList/header";
 
 //拿到通过接口传来的数据
@@ -58,13 +59,13 @@ const App: React.FC = () => {
    * 筛选
    */
   //筛选条件
-  const [filter, setFilter] = useState<FilterStyleData>({
+  const [filter, _setFilter] = useState<FilterStyleData>({
     //筛选条件默认值
     state: "all", //状态
   });
 
   /* 搜索关键字 */
-  const [keyword, setKeyword] = useState("");
+  const [keyword, _setKeyword] = useState("");
 
   //每页展示数量
   const [PAGE_SIZE, setPAGE_SIZE] = useState(10); //每页展示数量

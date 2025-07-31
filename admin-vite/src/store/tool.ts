@@ -18,6 +18,49 @@ import { device_status, osReplace, osTypeReplace } from "@/store/dataReplace";
 
 //开发环境状态,各种调试按钮用
 export const devStatus: boolean = import.meta.env.VITE_STATE;
+
+//传入日期，返回格式化
+export const formatDate = (date: Dayjs) => {
+  const formattedTime = dayjs(date).format("YY-MM-DD");
+  //console.log("Formatted Time:", formattedTime);
+  return formattedTime;
+};
+
+//准备设备状态
+type DeviceStatus = "apply" | "idie" | "fault" | "scrap";
+export const statusLabel = (value: DeviceStatus) => {
+  return device_status.find((item) => item.value === value)?.label;
+};
+
+/**
+ * 判断布尔值
+ */
+export const judge_bool = (boo: boolean) => {
+  if (boo === true) {
+    return "是";
+  } else {
+    return "否";
+  }
+};
+
+/**
+ * 字节转换单位
+ */
+export const bytesToMB = (bytes: number | null, type: string) => {
+  if (bytes === null) {
+    return "0";
+  }
+  if (type == "MB") {
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  }
+  if (type == "GB") {
+    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+  }
+  if (type == "TB") {
+    return (bytes / (1024 * 1024 * 1024 * 1024)).toFixed(2) + " TB";
+  }
+};
+
 /**
  *拿到指定键的值并统计该键的出现次数
  * @param dataArrays 待检测数组对象
@@ -95,35 +138,6 @@ export const replaceKeyValues = (
 };
 
 /**
- * 字节转mb
- */
-export const bytesToMB = (bytes: number | null, type: string) => {
-  if (bytes === null) {
-    return "0";
-  }
-  if (type == "MB") {
-    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
-  }
-  if (type == "GB") {
-    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
-  }
-  if (type == "TB") {
-    return (bytes / (1024 * 1024 * 1024 * 1024)).toFixed(2) + " TB";
-  }
-};
-
-/**
- * 判断布尔值
- */
-export const judge_bool = (boo: boolean) => {
-  if (boo === true) {
-    return "是";
-  } else {
-    return "否";
-  }
-};
-
-/**
  * 展示设备详细数据，去除数组对象中，值是空字符串和undefined的对象
  *
  */
@@ -162,8 +176,14 @@ export const findOsTypeObj = (
 ) => {
   const result = array.find((item) => item.name === data.meat.ostype);
   // 返回默认对象，避免返回 undefined
-  return result || { id:0,name: 'unknown',image: 'unknown.png' /* 其他默认属性 */ };
-}
+  return (
+    result || {
+      id: 0,
+      name: "unknown",
+      image: "unknown.png" /* 其他默认属性 */,
+    }
+  );
+};
 
 /**
  * 将字符串数组转换为对象，方便下拉选择
@@ -400,15 +420,17 @@ export const getPercentage = (num1: number, num2: number) => {
   return ((num1 / num2) * 100).toFixed(2) + "%";
 };
 
-//传入日期，返回格式化
-export const formatDate = (date: Dayjs) => {
-  const formattedTime = dayjs(date).format("YY-MM-DD");
-  //console.log("Formatted Time:", formattedTime);
-  return formattedTime;
-};
-
-//准备设备状态
-type DeviceStatus = "apply" | "idie" | "fault" | "scrap";
-export const statusLabel = (value: DeviceStatus) => {
-  return device_status.find((item) => item.value === value)?.label;
-};
+/**
+ * 处理搜索 MAC 地址的场景
+ * 兼容大小写 + 容错空格
+ * @param v 输入框的值
+ * @returns 若搜索的值类似这样的da:b1:99:04:29:42，则处理成这样的：da-b1-99-04-29-42
+ */
+export const normalize = (v: string) =>
+  v
+    .trim()
+    .toLowerCase()
+    .replace(
+      /^([0-9a-f]{2}):([0-9a-f]{2}):([0-9a-f]{2}):([0-9a-f]{2}):([0-9a-f]{2}):([0-9a-f]{2})$/i,
+      "$1-$2-$3-$4-$5-$6"
+    );

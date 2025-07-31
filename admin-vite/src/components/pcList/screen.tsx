@@ -1,8 +1,9 @@
 /**
  * 设备详情 - 顶部筛选
  */
-import { useContext } from "react";
-import { Space, Select, Button, Tooltip } from "antd";
+import { useContext, useState, useEffect } from "react";
+import { Space, Select, Button, Tooltip, Input } from "antd";
+import type { SearchProps } from "antd/es/input/Search";
 import {
   ReloadOutlined,
   EyeOutlined,
@@ -10,11 +11,10 @@ import {
 } from "@ant-design/icons";
 import { FilterData } from "@/store/interface";
 import { defaultOption } from "@/store";
-import { changeSelectData } from "@/store/tool";
+import { changeSelectData, normalize } from "@/store/tool";
 import { device_status } from "@/store/dataReplace";
-import Search from "@/components/pcList/search";
 import Header from "@/block/tab-header";
-
+import { AppContext } from "@/components/pcList/Context";
 interface Props {
   filterData: FilterData; //当前筛选条件
   onChange: (next: FilterData) => void; //更新筛选条件
@@ -22,12 +22,18 @@ interface Props {
   setKeyword: (value: string) => void; //修改搜索关键字
   onName: (value: boolean) => void; //传递隐藏姓名状态
 }
-import { AppContext } from "@/components/pcList/Context";
 
-/**
- * 准备部门
- */
+//准备搜索框
+const { Search } = Input;
+
+// 准备部门
 const departmentData = changeSelectData(defaultOption.department);
+
+//处理状态选项，添加全部选项
+const stateOptions = [{ label: "全部", value: "all" }, ...device_status];
+
+//处理部门选项，添加全部选项
+const departmentOptions = [{ label: "全部", value: "all" }, ...departmentData];
 
 const App: React.FC<Props> = ({
   filterData,
@@ -39,26 +45,40 @@ const App: React.FC<Props> = ({
   //拿到是否隐藏姓名的状态
   const { isName } = useContext(AppContext);
 
-  //处理状态选项，添加全部选项
-  const stateOptions = [{ label: "全部", value: "all" }, ...device_status];
-
-  //处理部门选项，添加全部选项
-  const departmentOptions = [
-    { label: "全部", value: "all" },
-    ...departmentData,
-  ];
-
-  /**
-   * 重置按钮,
-   */
+  //重置按钮,
   const restSelect = () => {
-    //传递筛选用
+    //重置输入框
     setKeyword("");
+    //重置筛选条件
     onChange({
       //筛选条件默认值
       state: "all", //状态
       department: "all", //部门
     });
+  };
+
+  /**
+   * 搜索关键字
+   */
+  //存储输入框中的值
+  const [inputValue, setInputValue] = useState<string>(keyword);
+
+  // 同步外部输入内容变化
+  useEffect(() => {
+    setInputValue(keyword);
+  }, [keyword]);
+  //搜索动作
+  const onSearch: SearchProps["onSearch"] = (value, _e, _info) => {
+    //正则处理，处理 mac 地址格式，方便搜索
+    let data = normalize(value);
+    setKeyword(data); //搜索
+    //console.log("搜索的值：" + data);
+  };
+
+  //同步输入框变化
+  const handleChange: SearchProps["onChange"] = (e) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
   };
 
   return (
@@ -88,14 +108,16 @@ const App: React.FC<Props> = ({
               options={departmentOptions}
             />
           </div>
-          <div>
-            <Search
-              value={keyword}
-              onChange={(kw) => {
-                setKeyword(kw);
-              }}
-            />
-          </div>
+
+          <Search
+            placeholder="搜索名字、编号、IP地址或MAC地址" //添加说明
+            allowClear // 可以点击清除图标删除内容
+            value={inputValue} // 使用本地状态
+            onChange={handleChange} // 输入回调
+            onSearch={onSearch} //搜索回调
+            style={{ width: 260, lineHeight: "inherit", minHeight: "10px" }}
+            className="searchInput"
+          />
 
           {true && (
             <div>
