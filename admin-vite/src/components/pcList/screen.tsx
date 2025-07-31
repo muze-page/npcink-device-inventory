@@ -10,8 +10,12 @@ import {
   EyeInvisibleOutlined,
 } from "@ant-design/icons";
 import { FilterData } from "@/store/interface";
+
+//默认选项
 import { defaultOption } from "@/store";
 import { changeSelectData, normalize } from "@/store/tool";
+
+//设备状态
 import { device_status } from "@/store/dataReplace";
 import Header from "@/block/tab-header";
 import { AppContext } from "@/components/pcList/Context";

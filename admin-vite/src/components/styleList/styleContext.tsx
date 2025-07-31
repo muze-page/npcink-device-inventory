@@ -8,6 +8,7 @@ interface StyleContextType {
   handleAddDevice: (device: StyleDevice) => void; //添加自定义设备
   handleDeleteData: (uuid: string) => void; //删除指定UUID的自定义设备
   handleUpdateData: (uuid: string, device: StyleDevice) => void; //修改自定义设备数据
+  isName: boolean;//是否隐藏隐私
 }
 export const StyleContext = createContext<StyleContextType>({
   drawerData: {} as StyleDevice, //默认空对象
@@ -15,4 +16,5 @@ export const StyleContext = createContext<StyleContextType>({
   handleAddDevice: () => {},
   handleDeleteData: () => {},
   handleUpdateData: () => {}, //默认空函数
+  isName: false,
 });

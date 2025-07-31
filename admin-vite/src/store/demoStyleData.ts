@@ -37,7 +37,7 @@ const data = [
     data: DataOne,
   },
   {
-    id: "12",
+    id: "2",
     state: "scrap",
     name: "布局",
     purpose: "测试使用",
@@ -46,7 +46,7 @@ const data = [
     data: DateTwo,
   },
   {
-    id: "1",
+    id: "3",
     state: "apply",
     name: "管理员",
     purpose: "测试使用",
@@ -55,7 +55,7 @@ const data = [
     data: DataOne,
   },
   {
-    id: "12",
+    id: "4",
     state: "scrap",
     name: "布局",
     purpose: "测试使用",
@@ -64,7 +64,7 @@ const data = [
     data: DateTwo,
   },
   {
-    id: "1",
+    id: "5",
     state: "apply",
     name: "管理员",
     purpose: "测试使用",
@@ -73,7 +73,7 @@ const data = [
     data: DataOne,
   },
   {
-    id: "12",
+    id: "6",
     state: "scrap",
     name: "布局",
     purpose: "测试使用",
@@ -82,7 +82,7 @@ const data = [
     data: DateTwo,
   },
   {
-    id: "1",
+    id: "7",
     state: "apply",
     name: "管理员",
     purpose: "测试使用",
@@ -91,7 +91,7 @@ const data = [
     data: DataOne,
   },
   {
-    id: "12",
+    id: "8",
     state: "scrap",
     name: "布局",
     purpose: "测试使用",
@@ -100,7 +100,7 @@ const data = [
     data: DateTwo,
   },
   {
-    id: "1",
+    id: "9",
     state: "apply",
     name: "管理员",
     purpose: "测试使用",
@@ -109,7 +109,7 @@ const data = [
     data: DataOne,
   },
   {
-    id: "12",
+    id: "10",
     state: "scrap",
     name: "布局",
     purpose: "测试使用",
@@ -118,7 +118,7 @@ const data = [
     data: DateTwo,
   },
   {
-    id: "1",
+    id: "11",
     state: "apply",
     name: "管理员",
     purpose: "测试使用",

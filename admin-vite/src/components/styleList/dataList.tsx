@@ -2,12 +2,21 @@
  * 自定义设备详情
  *  {JSON.stringify(data, null, 2)}
  */
-
+import { useContext } from "react";
 import { Tooltip, Skeleton } from "antd";
+
+//时间处理
 import dayjs from "dayjs";
+
+//跨组件提供方法
+import { StyleContext } from "@/components/styleList/styleContext";
 import { StyleDevice } from "@/store/interface";
 import Mac from "@/assets/mac.png";
+
+//调试打印
 import PrintData from "@/block/printData";
+
+//工具函数
 import { statusLabel } from "@/store/tool";
 interface Props {
   data: StyleDevice;
@@ -15,9 +24,8 @@ interface Props {
   onDrawerData: () => void; //保存值
 }
 const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
-  //拿到隐藏姓名状态
-  //const { isName } = useContext(AppContext);
-  const isName = true; //
+  //拿到是否隐藏姓名的状态
+  const { isName } = useContext(StyleContext);
 
   //点击打开弹窗
   const showDrawer = () => {

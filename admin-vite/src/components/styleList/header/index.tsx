@@ -1,8 +1,22 @@
 /**
  * 自定义设备信息列表 - 顶部
  */
-import { useState } from "react";
-import { Space, Button } from "antd";
+import { useState, useContext, useEffect } from "react";
+import { Space, Select, Button, Tooltip, Input } from "antd";
+import type { SearchProps } from "antd/es/input/Search";
+import {
+  ReloadOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
+} from "@ant-design/icons";
+//导入类型
+import { FilterStyleData } from "@/store/interface";
+
+//导入设备状态类型
+import { device_status } from "@/store/dataReplace";
+
+//跨组件提供方法
+import { StyleContext } from "@/components/styleList/styleContext";
 
 //引入数据填写弹窗表单
 import Add from "@/components/styleList/header/add";
@@ -10,7 +24,30 @@ import Add from "@/components/styleList/header/add";
 //引入头部模块
 import Header from "@/block/tab-header";
 
-const App: React.FC = () => {
+interface Props {
+  filterData: FilterStyleData; //当前筛选条件
+  onChange: (next: FilterStyleData) => void; //更新筛选条件
+  keyword: string; //搜索关键字
+  setKeyword: (value: string) => void; //修改搜索关键字
+  onName: (value: boolean) => void; //传递隐藏姓名状态
+}
+
+//准备搜索框
+const { Search } = Input;
+
+//处理状态选项，添加全部选项
+const stateOptions = [{ label: "全部", value: "all" }, ...device_status];
+
+const App: React.FC<Props> = ({
+  filterData,
+  onChange,
+  keyword,
+  setKeyword,
+  onName,
+}) => {
+  //拿到是否隐藏姓名的状态
+  const { isName } = useContext(StyleContext);
+
   //信息录入弹窗状态
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -24,6 +61,42 @@ const App: React.FC = () => {
     setIsModalOpen(false);
   };
 
+  /**
+   * 筛选和搜索
+   */
+  //重置按钮,
+  const restSelect = () => {
+    //重置输入框
+    setKeyword("");
+    //重置筛选条件
+    onChange({
+      //筛选条件默认值
+      state: "all", //状态
+    });
+  };
+
+  /**
+   * 搜索关键字
+   */
+  //存储输入框中的值
+  const [inputValue, setInputValue] = useState<string>(keyword);
+
+  // 同步外部输入内容变化
+  useEffect(() => {
+    setInputValue(keyword);
+  }, [keyword]);
+  //搜索动作
+  const onSearch: SearchProps["onSearch"] = (value, _e, _info) => {
+    setKeyword(value); //搜索
+    //console.log("搜索的值：" + data);
+  };
+
+  //同步输入框变化
+  const handleChange: SearchProps["onChange"] = (e) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+  };
+
   return (
     <>
       <div className="flex justify-between items-center">
@@ -33,8 +106,49 @@ const App: React.FC = () => {
             添加
           </Button>
 
-          <div>状态：</div>
-          <div>搜索：</div>
+          <div>
+            状态：
+            <Select
+              value={filterData.state || "all"} // 使用value属性，从filterData获取当前值
+              style={{ width: 80 }}
+              onChange={(value: any) => {
+                onChange({ ...filterData, state: value });
+              }}
+              options={stateOptions}
+            />
+          </div>
+          <Search
+            placeholder="搜索名字、编号、IP地址或MAC地址" //添加说明
+            allowClear // 可以点击清除图标删除内容
+            value={inputValue} // 使用本地状态
+            onChange={handleChange} // 输入回调
+            onSearch={onSearch} //搜索回调
+            style={{ width: 260, lineHeight: "inherit", minHeight: "10px" }}
+            className="searchInput"
+          />
+          {true && (
+            <div>
+              <Tooltip title="重置筛选条件">
+                <Button
+                  type="primary"
+                  shape="circle"
+                  icon={<ReloadOutlined />}
+                  className="bg-[#1677ff]"
+                  onClick={restSelect}
+                />
+              </Tooltip>
+            </div>
+          )}
+
+          <Tooltip title="隐藏姓名">
+            <Button
+              type="primary"
+              shape="circle"
+              icon={isName ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+              className="bg-[#1677ff]"
+              onClick={() => onName(!isName)}
+            />
+          </Tooltip>
         </Space>
         <Add isModalOpen={isModalOpen} handleOk={handleOk} />
       </div>

@@ -21,6 +21,9 @@ import Drawer from "@/components/styleList/drawer/index";
 //拿到顶部组件
 import Header from "@/components/styleList/header";
 
+//筛序和搜索无结果时的提示
+import SearchNoData from "@/block/searchNoData";
+
 //拿到通过接口传来的数据
 import { dataStyle } from "@/store/index";
 
@@ -59,13 +62,13 @@ const App: React.FC = () => {
    * 筛选
    */
   //筛选条件
-  const [filter, _setFilter] = useState<FilterStyleData>({
+  const [filter, setFilter] = useState<FilterStyleData>({
     //筛选条件默认值
     state: "all", //状态
   });
 
   /* 搜索关键字 */
-  const [keyword, _setKeyword] = useState("");
+  const [keyword, setKeyword] = useState("");
 
   //每页展示数量
   const [PAGE_SIZE, setPAGE_SIZE] = useState(10); //每页展示数量
@@ -81,18 +84,21 @@ const App: React.FC = () => {
     if (filter.state && filter.state != "all")
       data = data.filter((v) => v.state === filter.state);
 
-    //筛选姓名、编号、MAC地址、IP地址
+    //筛选平台
+
+    //筛选姓名、产品名称、订单号
     if (keyword.trim()) {
       const k = keyword.toLowerCase();
-      console.log("拿到的K值：" + k);
 
-      //查找设备名称，使用人名称
+      //查找使用人名称、设备名称、订单号、采购人、TODO:加入模糊搜索
       data = data.filter(
         (v) =>
           v.name.toLowerCase().includes(k) ||
-          v.data.title.toLowerCase().includes(k)
+          v.data.title.toLowerCase().includes(k) ||
+          v.data.order.toLowerCase().includes(k) ||
+          v.data.purchaser.toLowerCase().includes(k)
       );
-      //console.log("筛选后的data值：" + data);
+      console.log("筛选后的data值：" + data);
     }
     return data;
   }, [devices, filter, keyword]);
@@ -119,6 +125,9 @@ const App: React.FC = () => {
     //console.log(current, pageSize);
   };
 
+  //隐藏姓名
+  const [isName, setIsName] = useState(true);
+
   return (
     <StyleContext.Provider
       value={{
@@ -127,10 +136,17 @@ const App: React.FC = () => {
         handleAddDevice,
         handleDeleteData,
         handleUpdateData,
+        isName,
       }}
     >
       <div className="pb-6 px-5">
-        <Header />
+        <Header
+          filterData={filter}
+          onChange={setFilter}
+          keyword={keyword}
+          setKeyword={setKeyword}
+          onName={setIsName}
+        />
         <div className="flex content-start items-center flex-wrap w-full">
           {/**开始循环 */}
           {pagedFilteredList.map((tab, index) => (
@@ -142,6 +158,9 @@ const App: React.FC = () => {
             />
           ))}
         </div>
+
+        {/**没有数据 */}
+        {pagedFilteredList.length === 0 && <SearchNoData />}
 
         {/**分页 */}
         {filteredList.length > PAGE_SIZE && (

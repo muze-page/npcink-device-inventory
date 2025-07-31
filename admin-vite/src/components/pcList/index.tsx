@@ -3,7 +3,7 @@
  * TODO:翻页时才获取数据，一开始仅获取两页的数据
  */
 import { SetStateAction, useState, useMemo } from "react";
-import { Pagination, Empty } from "antd";
+import { Pagination } from "antd";
 import type { PaginationProps } from "antd";
 import { dataMySql } from "@/store";
 import { MysqlDeviceChangeMeat, FilterData } from "@/store/interface";
@@ -16,6 +16,9 @@ import Screen from "@/components/pcList/screen";
 
 //弹窗
 import Drawer from "@/components/pcList/drawer";
+
+//筛序和搜索无结果时的提示
+import SearchNoData from "@/block/searchNoData";
 
 //公共方法
 import { AppContext } from "@/components/pcList/Context";
@@ -157,20 +160,7 @@ const App: React.FC = () => {
           ))}
         </div>
         {/**没有数据 */}
-        {pagedFilteredList.length === 0 && (
-          <Empty
-            className="mt-10"
-            description={
-              <span>
-                暂无数据
-                <br />
-                请更换筛选条件
-                <br />
-                或搜索内容试试
-              </span>
-            }
-          />
-        )}
+        {pagedFilteredList.length === 0 && <SearchNoData />}
 
         {/**分页 */}
         {filteredList.length > PAGE_SIZE && (

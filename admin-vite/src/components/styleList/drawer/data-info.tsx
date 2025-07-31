@@ -1,13 +1,20 @@
 /**
  * 自定义设备信息展示
  */
-import { Card } from "antd";
+import { useContext } from "react";
+import { Card, Skeleton } from "antd";
 import { StyleDeviceData } from "@/store/interface";
+
+//跨组件提供方法
+import { StyleContext } from "@/components/styleList/styleContext";
+
 import { formatDate } from "@/store/tool";
 interface Props {
   deviceData: StyleDeviceData;
 }
 const App: React.FC<Props> = ({ deviceData }) => {
+  //拿到是否隐藏姓名的状态
+  const { isName } = useContext(StyleContext);
   return (
     <>
       <Card
@@ -29,7 +36,11 @@ const App: React.FC<Props> = ({ deviceData }) => {
         </p>
         <p>
           <b>采购单号：</b>
-          {deviceData.order}
+          {isName ? (
+            deviceData.order
+          ) : (
+            <Skeleton.Input active={true} size={"small"} />
+          )}
         </p>
         <p>
           <b>下单时间：</b>
@@ -50,7 +61,11 @@ const App: React.FC<Props> = ({ deviceData }) => {
         </p>
         <p>
           <b>采购人：</b>
-          {deviceData.purchaser}
+          {isName ? (
+            deviceData.purchaser
+          ) : (
+            <Skeleton.Input active={true} size={"small"} />
+          )}
         </p>
       </Card>
     </>

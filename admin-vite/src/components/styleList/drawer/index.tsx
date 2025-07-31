@@ -1,8 +1,11 @@
 /**
  * 自定义设备信息展出弹窗
  */
-import { Drawer, Tabs, Card } from "antd";
+import { useContext } from "react";
+import { Drawer, Tabs, Card, Skeleton } from "antd";
 import type { TabsProps } from "antd";
+//跨组件提供方法
+import { StyleContext } from "@/components/styleList/styleContext";
 import { StyleDevice } from "@/store/interface";
 import Info from "@/components/styleList/drawer/data-info";
 import ChangeRecord from "@/components/styleList/drawer/data-change-record";
@@ -14,6 +17,10 @@ interface Props {
   onActive: () => void; //修改弹窗状态
 }
 const App: React.FC<Props> = ({ data, active, onActive }) => {
+  //拿到是否隐藏姓名的状态
+  const { isName } = useContext(StyleContext);
+
+  //准备 Tab 栏
   const items: TabsProps["items"] = [
     {
       key: "1",
@@ -46,7 +53,11 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
         <Card title="设备信息" extra={""} style={{ width: 600 }}>
           <p>
             <b>设备使用：</b>
-            {data.name}
+            {isName ? (
+              data.name
+            ) : (
+              <Skeleton.Input active={true} size={"small"} />
+            )}
           </p>
           <p>
             <b>设备状态：</b>
