@@ -29,6 +29,13 @@ const App: React.FC = ({}) => {
   //找到需要的系统对象
   const osTypeObj = findOsTypeObj(osTypeArray, drawerData);
 
+  //准备CPU、主板、显卡参数
+  const msgData = {
+    cpu: drawerData.data.cpu.brand, //CPU
+    model: drawerData.data.baseboard.model, //主板
+    graphics: drawerData.data.graphics.controllers[0].model, //显卡
+  };
+
   return (
     <>
       {/**品牌标志 */}
@@ -60,10 +67,13 @@ const App: React.FC = ({}) => {
           <p className="mt-2">{drawerData.meat.model}</p>
           {/*大概配置信息 */}
           <p>
-            {drawerData.meat.cpu} / {drawerData.meat.memory} G /{" "}
+            {drawerData.meat.cpu} / {msgData.cpu} / {drawerData.meat.memory} G /{" "}
             {drawerData.meat.disk > 1024
               ? (drawerData.meat.disk / 1024).toFixed(2) + " T"
               : drawerData.meat.disk + " G"}
+          </p>
+          <p>
+            {msgData.model} / {msgData.graphics}
           </p>
           {/**编号 状态 */}
           <div className="mt-5 flex items-center">

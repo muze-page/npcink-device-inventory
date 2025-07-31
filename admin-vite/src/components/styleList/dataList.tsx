@@ -54,26 +54,28 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         <div className="p-4 text-xs text-zinc-500  bg-white rounded whitespace-nowrap min-h-[190px]">
           {/*设备名称*/}
           <p className="text-sm font-bold text-zinc-800 leading-8 m-0 ">
+            {data.data.title}
+          </p>
+          {/*使用人*/}
+          <p className="mt-2">
+            使用人：
             {isName ? (
-              data.data.title
+              data.name
             ) : (
               <Skeleton.Input active={true} size={"small"} />
             )}
-            {/** </div> */}
           </p>
-          {/*使用人*/}
-          <p className="mt-2">设备使用：{data.name}</p>
           {/*设备价格*/}
-          <p className="mt-2">设备价格：{data.data.total}</p>
+          <p className="mt-2">价格：{data.data.total}</p>
           {/*状态*/}
           <p className="mt-2 w-full truncate">
-            设备状态：{statusLabel(data.state)}
+            状态：{statusLabel(data.state)}
           </p>
 
           {/*时间*/}
           <p className="grid gap-y-1 items-center  mt-2">
             <Tooltip title={"时间：" + data.time}>
-              <span>记录时间 ： {dayjs(data.time).format("YY-MM-DD")}</span>
+              <span>时间 ： {dayjs(data.time).format("YY-MM-DD")}</span>
             </Tooltip>
           </p>
           <PrintData title="打印当前设备信息" data={data} />
