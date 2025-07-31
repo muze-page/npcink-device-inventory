@@ -23,7 +23,7 @@ import { AppContext } from "@/components/pcList/Context";
 //导入处理工具
 import { updateOSType, devStatus } from "@/store/tool";
 
-import Demo from "@/demo/parent";
+//import Demo from "@/demo/parent";
 
 const App: React.FC = () => {
   //将拿到的数据进行排序，再添加需要的meat信息
@@ -86,11 +86,21 @@ const App: React.FC = () => {
       //console.log("筛选后的data值：" + data);
     }
 
+    return data;
+
+    /* 3-3 分页切片 */
+    //const startIndex = (pageNumber - 1) * PAGE_SIZE;
+    //截取数据
+    //return data.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [listData, filter, keyword]);
+
+  // 计算分页后的数据
+  const pagedFilteredList = useMemo(() => {
     /* 3-3 分页切片 */
     const startIndex = (pageNumber - 1) * PAGE_SIZE;
     //截取数据
-    return data.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [listData, filter, pageNumber, PAGE_SIZE, keyword]);
+    return filteredList.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [filteredList, pageNumber, PAGE_SIZE]);
 
   //设置当前页码
   const handlePageChange = (page: SetStateAction<number>) => {
@@ -144,7 +154,7 @@ const App: React.FC = () => {
         />
         <div className="flex content-start items-center flex-wrap w-full">
           {/**开始循环 */}
-          {filteredList.map((tab: MysqlDeviceChangeMeat) => (
+          {pagedFilteredList.map((tab: MysqlDeviceChangeMeat) => (
             <DetailsList
               key={tab.id}
               data={tab}
@@ -154,7 +164,7 @@ const App: React.FC = () => {
           ))}
         </div>
         {/**没有数据 */}
-        {filteredList.length === 0 && (
+        {pagedFilteredList.length === 0 && (
           <Empty
             className="mt-10"
             description={
@@ -170,12 +180,12 @@ const App: React.FC = () => {
         )}
 
         {/**分页 */}
-        {listData.length > PAGE_SIZE && (
+        {filteredList.length > PAGE_SIZE && (
           <div className="mt-4 float-right">
             <Pagination
               current={pageNumber} //当前页数
               pageSize={PAGE_SIZE} //每页条数
-              total={listData.length} //数据总数
+              total={filteredList.length} //数据总数
               onChange={handlePageChange} //页码或 pageSize 改变的回调，参数是改变后的页码及每页条数
               showSizeChanger //显示每页展示数据数量切换器
               onShowSizeChange={onShowSizeChange} //每页数量改变的回调
@@ -187,7 +197,9 @@ const App: React.FC = () => {
         {/**弹窗 */}
         <Drawer active={active} onActive={() => changeActive()} />
       </div>
-      <Demo />
+      {/**
+       * <Demo />
+       */}
     </AppContext.Provider>
   );
 };
