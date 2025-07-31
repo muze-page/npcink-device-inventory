@@ -9,16 +9,16 @@ export const replaceBaseboard: Replacements = {
   "Colorful Technology And Development Co.,LTD": "七彩虹",
   "Dell Inc.": "戴尔",
   "ASUSTeK COMPUTER INC.": "华硕",
-  "HUANANZHI": "华南金牌",
-  "Galaxy Microsystems Ltd.":"影驰",
-  "GALAXY":"影驰",
-  "HUAWEI":"华为",
-  "HP":"惠普",
-  "AOC":"冠捷",
-  "Micro-Star International Co., Ltd.":"微星",
-  "LENOVO":"联想",
-  "Gigabyte Technology Co., Ltd.":"技嘉",
-  "KOLOE":"科脑",
+  HUANANZHI: "华南金牌",
+  "Galaxy Microsystems Ltd.": "影驰",
+  GALAXY: "影驰",
+  HUAWEI: "华为",
+  HP: "惠普",
+  AOC: "冠捷",
+  "Micro-Star International Co., Ltd.": "微星",
+  LENOVO: "联想",
+  "Gigabyte Technology Co., Ltd.": "技嘉",
+  KOLOE: "科脑",
   // 其他需要替换的字符串
 };
 
@@ -48,8 +48,27 @@ export const device_status = [
   { value: "scrap", label: "报废" },
 ];
 
+//自定义产品购买平台
+export const stylePlatform = [
+  { value: "jd", label: "京东" },
+  { value: "tb", label: "淘宝" },
+  { value: "pdd", label: "拼多多" },
+  { value: "mt", label: "美团" },
+  { value: "xy", label: "闲鱼" },
+  { value: "dy", label: "抖音" },
+  { value: "about", label: "其他" },
+  { value: "snyg", label: "苏宁易购" },
+  { value: "yms", label: "亚马逊" },
+  { value: "ebay", label: "ebay" },
+];
 
-
+//自定义产品支付方式
+export const stylePayType = [
+  { value: "wx", label: "微信" },
+  { value: "zfb", label: "支付宝" },
+  { value: "jd", label: "银行卡" },
+  { value: "about", label: "其他" },
+]
 
 //硬件详细配置表头
 export const columnsTable = [

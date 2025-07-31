@@ -8,8 +8,8 @@ const DataOne = {
   order_time: "2023-11-09",
   total: 19999.0,
   order: "TB1234567890",
-  pay_method: "支付宝",
-  platform: "淘宝",
+  pay_method: "zfb",
+  platform: "tb",
   purchaser: "张三",
 };
 
@@ -21,8 +21,8 @@ const DateTwo = {
   order_time: "2025-11-09",
   total: 39999.0,
   order: "JD1234567890",
-  pay_method: "信用卡",
-  platform: "微信",
+  pay_method: "wx",
+  platform: "xy",
   purchaser: "李四",
 };
 

@@ -51,6 +51,8 @@ export interface FilterData {
 //筛选数据类型 - 自定义设备
 export interface FilterStyleData {
   state: "apply" | "idie" | "fault" | "scrap"|"all"; //筛选自定义设备状态
+  platform: string;//筛选采购平台
+  payMethod: string;//付款方式
 }
 
 //选项数据类型

@@ -18,6 +18,9 @@ import { device_status } from "@/store/dataReplace";
 //跨组件提供方法
 import { StyleContext } from "@/components/styleList/styleContext";
 
+//准备采购平台,付款方式
+import { stylePlatform, stylePayType } from "@/store/dataReplace";
+
 //引入数据填写弹窗表单
 import Add from "@/components/styleList/header/add";
 
@@ -37,6 +40,15 @@ const { Search } = Input;
 
 //处理状态选项，添加全部选项
 const stateOptions = [{ label: "全部", value: "all" }, ...device_status];
+
+//处理采购平台选项，添加全部选项
+const stylePlatformOptions = [
+  { label: "全部", value: "all" },
+  ...stylePlatform,
+];
+
+//处理付款平台
+const payPlatformOptions = [{ label: "全部", value: "all" }, ...stylePayType];
 
 const App: React.FC<Props> = ({
   filterData,
@@ -72,6 +84,8 @@ const App: React.FC<Props> = ({
     onChange({
       //筛选条件默认值
       state: "all", //状态
+      platform: "all", //平台
+      payMethod: "all", //付款方式
     });
   };
 
@@ -107,7 +121,7 @@ const App: React.FC<Props> = ({
           </Button>
 
           <div>
-            状态：
+            设备状态：
             <Select
               value={filterData.state || "all"} // 使用value属性，从filterData获取当前值
               style={{ width: 80 }}
@@ -117,8 +131,31 @@ const App: React.FC<Props> = ({
               options={stateOptions}
             />
           </div>
+
+          <div>
+            采购平台：
+            <Select
+              value={filterData.platform || "all"} // 使用value属性，从filterData获取当前值
+              style={{ width: 80 }}
+              onChange={(value: string) => {
+                onChange({ ...filterData, platform: value });
+              }}
+              options={stylePlatformOptions}
+            />
+          </div>
+          <div>
+            付款方式
+            <Select
+              value={filterData.payMethod || "all"} // 使用value属性，从filterData获取当前值
+              style={{ width: 80 }}
+              onChange={(value: string) => {
+                onChange({ ...filterData, payMethod: value });
+              }}
+              options={payPlatformOptions}
+            />
+          </div>
           <Search
-            placeholder="搜索名字、编号、IP地址或MAC地址" //添加说明
+            placeholder="搜索姓名、订单号、产品名称" //添加说明
             allowClear // 可以点击清除图标删除内容
             value={inputValue} // 使用本地状态
             onChange={handleChange} // 输入回调

@@ -64,7 +64,9 @@ const App: React.FC = () => {
   //筛选条件
   const [filter, setFilter] = useState<FilterStyleData>({
     //筛选条件默认值
-    state: "all", //状态
+    state: "all", //设备状态
+    platform: "all",//采购平台
+    payMethod: "all",//支付方式
   });
 
   /* 搜索关键字 */
@@ -84,13 +86,19 @@ const App: React.FC = () => {
     if (filter.state && filter.state != "all")
       data = data.filter((v) => v.state === filter.state);
 
-    //筛选平台
+    //筛选采购平台
+    if (filter.platform && filter.platform != "all")
+      data = data.filter((v) => v.data.platform === filter.platform);
+
+    //筛选付款方式
+    if (filter.payMethod && filter.payMethod != "all")
+      data = data.filter((v) => v.data.pay_method === filter.payMethod);
 
     //筛选姓名、产品名称、订单号
     if (keyword.trim()) {
       const k = keyword.toLowerCase();
 
-      //查找使用人名称、设备名称、订单号、采购人、TODO:加入模糊搜索
+      //查找使用人姓名、设备名称、订单号、采购人姓名、TODO:加入模糊搜索
       data = data.filter(
         (v) =>
           v.name.toLowerCase().includes(k) ||
@@ -98,7 +106,7 @@ const App: React.FC = () => {
           v.data.order.toLowerCase().includes(k) ||
           v.data.purchaser.toLowerCase().includes(k)
       );
-      console.log("筛选后的data值：" + data);
+      //console.log("筛选后的data值：" + data);
     }
     return data;
   }, [devices, filter, keyword]);
