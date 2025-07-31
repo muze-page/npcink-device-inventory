@@ -1,12 +1,15 @@
 /**
  * 自定义设备类型
  */
-import { useState } from "react";
+import { useState, useMemo, SetStateAction } from "react";
+
+import { Pagination } from "antd";
+import type { PaginationProps } from "antd";
 
 import DataList from "@/components/styleList/dataList";
 
 //拿到自定义设备数据类型
-import { StyleDevice } from "@/store/interface";
+import { StyleDevice, FilterStyleData } from "@/store/interface";
 
 //跨组件提供方法
 import { StyleContext } from "@/components/styleList/styleContext";
@@ -21,6 +24,9 @@ import Header from "@/components/styleList/header";
 import { dataStyle } from "@/store/index";
 
 const App: React.FC = () => {
+  //在设备展示列表和删除设备两个组件间同步设备数据（添加、删除设备后更新设备列表）
+  const [devices, setDevices] = useState<StyleDevice[]>(dataStyle);
+
   //共享弹窗状态
   const [active, setActive] = useState(false);
   //修改弹窗状态
@@ -34,9 +40,6 @@ const App: React.FC = () => {
   //当前点击选中的数组index
   const [_arrIndex, setArrIndex] = useState(0);
 
-  //在设备展示列表和删除设备两个组件间同步设备数据（添加、删除设备后更新设备列表）
-  const [devices, setDevices] = useState<StyleDevice[]>(dataStyle);
-
   //添加自定义设备
   const handleAddDevice = (device: StyleDevice) => {
     setDevices((prev) => [...prev, device]);
@@ -49,6 +52,70 @@ const App: React.FC = () => {
   //修改自定义设备数据
   const handleUpdateData = (uuid: string, device: StyleDevice) => {
     setDevices((prev) => prev.map((d) => (d.uuid === uuid ? device : d)));
+  };
+
+  /**
+   * 筛选
+   */
+  //筛选条件
+  const [filter, setFilter] = useState<FilterStyleData>({
+    //筛选条件默认值
+    state: "all", //状态
+  });
+
+  /* 搜索关键字 */
+  const [keyword, setKeyword] = useState("");
+
+  //每页展示数量
+  const [PAGE_SIZE, setPAGE_SIZE] = useState(10); //每页展示数量
+
+  //当前页码
+  const [pageNumber, setPageNumber] = useState(1); // 当前页码（从 1 开始）
+
+  /* 3. 计算最终展示页数据（useMemo 避免重复计算） */
+  const filteredList = useMemo(() => {
+    let data = [...devices];
+
+    //筛选状态
+    if (filter.state && filter.state != "all")
+      data = data.filter((v) => v.state === filter.state);
+
+    //筛选姓名、编号、MAC地址、IP地址
+    if (keyword.trim()) {
+      const k = keyword.toLowerCase();
+      console.log("拿到的K值：" + k);
+
+      //查找设备名称，使用人名称
+      data = data.filter(
+        (v) =>
+          v.name.toLowerCase().includes(k) ||
+          v.data.title.toLowerCase().includes(k)
+      );
+      //console.log("筛选后的data值：" + data);
+    }
+    return data;
+  }, [devices, filter, keyword]);
+
+  // 计算分页后的数据
+  const pagedFilteredList = useMemo(() => {
+    /* 3-3 分页切片 */
+    const startIndex = (pageNumber - 1) * PAGE_SIZE;
+    //截取数据
+    return filteredList.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [filteredList, pageNumber, PAGE_SIZE]);
+
+  //设置当前页码
+  const handlePageChange = (page: SetStateAction<number>) => {
+    setPageNumber(page); // 设置当前页码
+  };
+
+  //设置每页展示数量
+  const onShowSizeChange: PaginationProps["onShowSizeChange"] = (
+    _current, //当前页码
+    pageSize //每页展示数量
+  ) => {
+    setPAGE_SIZE(pageSize); // 设置每页展示的数量
+    //console.log(current, pageSize);
   };
 
   return (
@@ -65,7 +132,7 @@ const App: React.FC = () => {
         <Header />
         <div className="flex content-start items-center flex-wrap w-full">
           {/**开始循环 */}
-          {devices.map((tab, index) => (
+          {pagedFilteredList.map((tab, index) => (
             <DataList
               key={tab.id}
               data={tab}
@@ -74,6 +141,22 @@ const App: React.FC = () => {
             />
           ))}
         </div>
+
+        {/**分页 */}
+        {filteredList.length > PAGE_SIZE && (
+          <div className="mt-4 float-right">
+            <Pagination
+              current={pageNumber} //当前页数
+              pageSize={PAGE_SIZE} //每页条数
+              total={filteredList.length} //数据总数
+              onChange={handlePageChange} //页码或 pageSize 改变的回调，参数是改变后的页码及每页条数
+              showSizeChanger //显示每页展示数据数量切换器
+              onShowSizeChange={onShowSizeChange} //每页数量改变的回调
+              showQuickJumper //显示快速跳转
+            />
+          </div>
+        )}
+
         {/**弹窗 */}
         <Drawer
           data={drawerData}

@@ -84,13 +84,7 @@ const App: React.FC = () => {
       );
       //console.log("筛选后的data值：" + data);
     }
-
     return data;
-
-    /* 3-3 分页切片 */
-    //const startIndex = (pageNumber - 1) * PAGE_SIZE;
-    //截取数据
-    //return data.slice(startIndex, startIndex + PAGE_SIZE);
   }, [listData, filter, keyword]);
 
   // 计算分页后的数据

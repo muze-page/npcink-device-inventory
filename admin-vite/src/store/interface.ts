@@ -42,10 +42,15 @@ export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
   mac: string[];
 };
 
-//筛选数据类型
+//筛选数据类型 - 电脑设备
 export interface FilterData {
-  state: "apply" | "idie" | "fault" | "scrap"|"all"; //筛选用设备状态
+  state: "apply" | "idie" | "fault" | "scrap"|"all"; //筛选电脑设备状态
   department: string; //部门
+}
+
+//筛选数据类型 - 自定义设备
+export interface FilterStyleData {
+  state: "apply" | "idie" | "fault" | "scrap"|"all"; //筛选自定义设备状态
 }
 
 //选项数据类型
