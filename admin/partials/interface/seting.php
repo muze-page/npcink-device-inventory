@@ -110,7 +110,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             }
 
             // 需要验证的属性列表
-            $required_properties = ['route', 'password', 'delete_mysql', 'department', 'device_show_number', 'public_search_route'];
+            $required_properties = ['route', 'password', 'delete_mysql', 'department',  'public_search_route'];
 
             //提示
             $prompt = array(
@@ -119,7 +119,6 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                 'public_search_route' => '请输入路由',
                 'delete_mysql' => '请选择删除数据库的状态',
                 'department' => '请提供部门',
-                'device_show_number' => '请选择显示设备数量',
                 'public_search_route' => '请输入公共查询页面路由',
             );
 
@@ -160,16 +159,6 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                             return 'department 属性必须是字符串数组类型';
                         }
                         break;
-
-                    case 'device_show_number':
-                        if (is_numeric($object->device_show_number)) {
-                            if (is_string($object->device_show_number)) {
-                                return 'device_show_number 属性必须是数字类型';
-                            }
-                        }
-
-                        break;
-
                     case 'public_search_route':
                         if (!is_string($object->public_search_route)) {
                             return 'public_search_route 属性必须是字符串类型';

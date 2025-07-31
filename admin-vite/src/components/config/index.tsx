@@ -234,13 +234,6 @@ const App: React.FC = () => {
             <Input style={{ width: "300px" }} />
           </Form.Item>
           <Form.Item
-            label="设备数量"
-            name="device_show_number"
-            extra={"设备详情页展示的数量，默认 8"}
-          >
-            <InputNumber min={4} max={80} style={{ width: "120px" }} />
-          </Form.Item>
-          <Form.Item
             label="删除插件数据"
             name="delete_mysql"
             valuePropName="checked"

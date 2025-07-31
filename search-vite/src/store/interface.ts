@@ -44,7 +44,6 @@ export interface OptionType {
   password?: string; //密码
   delete_mysql?: boolean; //是否删除数据库
   department: string[]; //部门数组
-  device_show_number: number; //设备显示数
   public_search_route: string; //前端公共搜索路由
 }
 

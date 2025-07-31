@@ -51,8 +51,7 @@ const App: React.FC = () => {
   /* 搜索关键字 */
   const [keyword, setKeyword] = useState("");
 
-  //每页展示数量TODO:从配置中获取,去除此选项，改用分页器设置
-  //const PAGE_SIZE = defaultOption.device_show_number;
+  //每页展示数量
   const [PAGE_SIZE, setPAGE_SIZE] = useState(10); //每页展示数量
 
   //当前页码

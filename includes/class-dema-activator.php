@@ -126,7 +126,6 @@ class Dema_Activator extends DEMA_Admin_Interface
 		$option = array(
 			"route" => "device-post-data", //默认路由
 			"password" => $pss, //默认密码
-			"device_show_number" => 10, //默认每页显示数量
 			"delete_mysql" => false, //默认是否删除数据库
 			"depreciation_year" => 36, //折旧月限
 			"residual_value_rate" => 5, //残值率

@@ -9,7 +9,6 @@ export const option = {
   depreciation_year: 36, //折旧月限
   residual_value_rate: 5, //残值率 %
   department: ["开发部", "推广部", "运营部", "默认"],
-  device_show_number: 10, //设备显示
   public_search_route: "publicsearchroute",
 };
 
