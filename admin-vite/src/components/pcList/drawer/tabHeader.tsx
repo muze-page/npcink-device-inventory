@@ -29,11 +29,21 @@ const App: React.FC = ({}) => {
   //找到需要的系统对象
   const osTypeObj = findOsTypeObj(osTypeArray, drawerData);
 
-  //准备CPU、主板、显卡参数
+  //准备样式
+  const styleClassName = `${
+    (osTypeObj.name === "Windows" && "Windows_content_background_color") ||
+    (osTypeObj.name === "Mac" && "Mac_content_background_color")
+  }`;
+
+  //准备CPU、主板、显卡、硬盘参数
   const msgData = {
     cpu: drawerData.data.cpu.brand, //CPU
     model: drawerData.data.baseboard.model, //主板
     graphics: drawerData.data.graphics.controllers[0].model, //显卡
+    disk:
+      drawerData.meat.disk > 1024
+        ? (drawerData.meat.disk / 1024).toFixed(2) + " T"
+        : drawerData.meat.disk + " G",
   };
 
   return (
@@ -45,13 +55,7 @@ const App: React.FC = ({}) => {
         <Mark osType={osTypeObj} />
         {/**内容 */}
         <div
-          className={`pt-6 pr-[17px] pb-6 pl-[23px] text-white text-sm flex-1 
-  ${
-    (osTypeObj.name === "Windows" && "Windows_content_background_color") ||
-    (osTypeObj.name === "Mac" && "Mac_content_background_color")
-  }
-  
-  `}
+          className={`pt-6 pr-[17px] pb-6 pl-[23px] text-white text-sm flex-1 ${styleClassName}`}
         >
           {/**姓名 */}
           <div className="flex justify-between">
@@ -68,9 +72,7 @@ const App: React.FC = ({}) => {
           {/*大概配置信息 */}
           <p>
             {drawerData.meat.cpu} / {msgData.cpu} / {drawerData.meat.memory} G /{" "}
-            {drawerData.meat.disk > 1024
-              ? (drawerData.meat.disk / 1024).toFixed(2) + " T"
-              : drawerData.meat.disk + " G"}
+            {msgData.disk}
           </p>
           <p>
             {msgData.model} / {msgData.graphics}

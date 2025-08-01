@@ -10,7 +10,11 @@ import dayjs from "dayjs";
 
 //跨组件提供方法
 import { StyleContext } from "@/components/styleList/styleContext";
+
+//准备类型
 import { StyleDevice } from "@/store/interface";
+
+//准备图标
 import Mac from "@/assets/mac.png";
 
 //调试打印

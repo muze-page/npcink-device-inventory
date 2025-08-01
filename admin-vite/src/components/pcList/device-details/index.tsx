@@ -12,6 +12,8 @@ import {
 } from "@ant-design/icons";
 
 import type { TabsProps } from "antd";
+
+//准备四个菜单模块
 import Info from "@/components/pcList/device-details/TabInfo";
 import Change from "@/components/pcList/device-details/TabChange";
 import Seting from "@/components/pcList/device-details/TabSeting";

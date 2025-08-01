@@ -57,7 +57,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         {/**底部数据 */}
         <div className="p-4 text-xs text-zinc-500  bg-white rounded whitespace-nowrap min-h-[190px]">
           {/*姓名*/}
-          <p className="text-sm font-bold text-zinc-800 leading-8 m-0  ">
+          <div className="text-sm font-bold text-zinc-800 leading-8 m-0  ">
             {/** <div className={isName ? "" : "hideName"}> */}
             {isName ? (
               data.name ? (
@@ -70,7 +70,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             )}
 
             {/** </div> */}
-          </p>
+          </div>
 
           {/*型号*/}
           <p className="mt-2 w-full truncate">
