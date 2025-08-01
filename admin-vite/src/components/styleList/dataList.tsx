@@ -66,7 +66,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             {isName ? (
               data.name
             ) : (
-              <Skeleton.Input active={true} size={"small"} />
+              <Skeleton.Input active={true} size={"small"} className="!h-4" />
             )}
           </p>
           {/*设备价格*/}

@@ -87,9 +87,9 @@ const App: React.FC<Props> = ({
 
   return (
     <>
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-4">
         <Header title="电脑设备资产信息" />
-        <Space size={"middle"} wrap className="mb-4">
+        <Space size={"middle"} wrap>
           <div>
             状态：
             <Select
@@ -123,20 +123,6 @@ const App: React.FC<Props> = ({
             className="searchInput"
           />
 
-          {true && (
-            <div>
-              <Tooltip title="重置筛选条件">
-                <Button
-                  type="primary"
-                  shape="circle"
-                  icon={<ReloadOutlined />}
-                  className="bg-[#1677ff]"
-                  onClick={restSelect}
-                />
-              </Tooltip>
-            </div>
-          )}
-
           <Tooltip title="隐藏姓名">
             <Button
               type="primary"
@@ -144,6 +130,15 @@ const App: React.FC<Props> = ({
               icon={isName ? <EyeOutlined /> : <EyeInvisibleOutlined />}
               className="bg-[#1677ff]"
               onClick={() => onName(!isName)}
+            />
+          </Tooltip>
+          <Tooltip title="重置筛选条件">
+            <Button
+              type="primary"
+              shape="circle"
+              icon={<ReloadOutlined />}
+              className="bg-[#1677ff]"
+              onClick={restSelect}
             />
           </Tooltip>
         </Space>

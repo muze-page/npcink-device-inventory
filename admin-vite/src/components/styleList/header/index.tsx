@@ -8,6 +8,7 @@ import {
   ReloadOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
 //导入类型
 import { FilterStyleData } from "@/store/interface";
@@ -113,13 +114,9 @@ const App: React.FC<Props> = ({
 
   return (
     <>
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-4">
         <Header title="自定义资产信息" />
-        <Space size={"middle"} wrap className="mb-4">
-          <Button type="primary" onClick={showModal}>
-            添加
-          </Button>
-
+        <Space align="center" size={"middle"} wrap>
           <div>
             设备状态：
             <Select
@@ -144,7 +141,7 @@ const App: React.FC<Props> = ({
             />
           </div>
           <div>
-            付款方式
+            付款方式：
             <Select
               value={filterData.payMethod || "all"} // 使用value属性，从filterData获取当前值
               style={{ width: 80 }}
@@ -163,19 +160,6 @@ const App: React.FC<Props> = ({
             style={{ width: 260, lineHeight: "inherit", minHeight: "10px" }}
             className="searchInput"
           />
-          {true && (
-            <div>
-              <Tooltip title="重置筛选条件">
-                <Button
-                  type="primary"
-                  shape="circle"
-                  icon={<ReloadOutlined />}
-                  className="bg-[#1677ff]"
-                  onClick={restSelect}
-                />
-              </Tooltip>
-            </div>
-          )}
 
           <Tooltip title="隐藏姓名">
             <Button
@@ -184,6 +168,26 @@ const App: React.FC<Props> = ({
               icon={isName ? <EyeOutlined /> : <EyeInvisibleOutlined />}
               className="bg-[#1677ff]"
               onClick={() => onName(!isName)}
+            />
+          </Tooltip>
+
+          <Tooltip title="添加设备">
+            <Button
+              type="primary"
+              shape="circle"
+              icon={<PlusOutlined />}
+              className="bg-[#1677ff]"
+              onClick={showModal}
+            />
+          </Tooltip>
+
+          <Tooltip title="重置筛选">
+            <Button
+              type="primary"
+              shape="circle"
+              icon={<ReloadOutlined />}
+              className="bg-[#1677ff]"
+              onClick={restSelect}
             />
           </Tooltip>
         </Space>

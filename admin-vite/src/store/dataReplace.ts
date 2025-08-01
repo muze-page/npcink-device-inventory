@@ -57,16 +57,13 @@ export const stylePlatform = [
   { value: "xy", label: "闲鱼" },
   { value: "dy", label: "抖音" },
   { value: "about", label: "其他" },
-  { value: "snyg", label: "苏宁易购" },
-  { value: "yms", label: "亚马逊" },
-  { value: "ebay", label: "ebay" },
 ];
 
 //自定义产品支付方式
 export const stylePayType = [
   { value: "wx", label: "微信" },
   { value: "zfb", label: "支付宝" },
-  { value: "jd", label: "银行卡" },
+  { value: "yhk", label: "银行卡" },
   { value: "about", label: "其他" },
 ]
 

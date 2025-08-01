@@ -12,13 +12,17 @@ import {
   Col,
   Row,
   DatePicker,
+  Select,
 } from "antd";
 import type { FormProps, FormInstance } from "antd";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import { addStyleDeviceData } from "@/axios";
+
 import { device_status } from "@/store/dataReplace";
 import { devStatus } from "@/store/tool";
+//准备采购平台,付款方式
+import { stylePlatform, stylePayType } from "@/store/dataReplace";
 
 //当前表格的数据类型
 //表单用类型
@@ -118,12 +122,12 @@ const App = ({ form, handleOk }: AddFormProps) => {
       title: "华为路由器",
       number: 2,
       total: 2300,
-      platform: "淘宝",
+      platform: "tb",
       shop_name: "华为路由器专卖店",
       link: "https://www.taobao.com",
       order_time: dayjs("2025-06-01"),
       order: "tbasdf65616",
-      pay_method: "支付宝",
+      pay_method: "zfb",
       purchaser: "王五",
     });
   };
@@ -178,8 +182,8 @@ const App = ({ form, handleOk }: AddFormProps) => {
       </Row>
       <Row>
         <Col span={12}>
-          <Form.Item<FormType> label="采购平台" name="platform">
-            <Input placeholder="淘宝、京东、拼多多等 " />
+          <Form.Item<FormType> label="采购人员" name="purchaser">
+            <Input placeholder="付款购买此设备人的姓名" />
           </Form.Item>
         </Col>
         <Col span={12}>
@@ -190,13 +194,13 @@ const App = ({ form, handleOk }: AddFormProps) => {
       </Row>
       <Row>
         <Col span={12}>
-          <Form.Item<FormType> label="支付方式" name="pay_method">
-            <Input placeholder="微信、支付宝、银联等" />
+          <Form.Item<FormType> label="采购平台" name="platform">
+            <Select options={stylePlatform} />
           </Form.Item>
         </Col>
         <Col span={12}>
-          <Form.Item<FormType> label="采购人员" name="purchaser">
-            <Input placeholder="付款购买此设备人的姓名" />
+          <Form.Item<FormType> label="支付方式" name="pay_method">
+            <Select options={stylePayType} />
           </Form.Item>
         </Col>
       </Row>
