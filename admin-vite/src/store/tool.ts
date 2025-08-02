@@ -15,7 +15,12 @@ import { defaultOption } from "@/store";
 import dayjs, { Dayjs } from "dayjs";
 
 //替换用数组
-import { device_status, osReplace, osTypeReplace } from "@/store/dataReplace";
+import {
+  device_status,
+  osReplace,
+  osTypeReplace,
+  excludeGraphics,
+} from "@/store/dataReplace";
 
 //开发环境状态,各种调试按钮用
 export const devStatus: boolean = import.meta.env.VITE_STATE;
@@ -405,6 +410,10 @@ export const handleMemoryAndDisk = (data: number) => {
 
 //处理多张显卡情况  输入显卡数组
 export const handleGraphics = (data: ComputerControllers[]) => {
+  //对值进行处理，出现如下字符串的，去掉
+  data = data.filter(
+    (item) => !excludeGraphics.some((str) => item.model.includes(str))
+  );
   const value = data.map((item) => item.model).join("_");
   return value;
 };
@@ -416,22 +425,23 @@ export const updateOSType = (
   const sortData = sortByIDDescending(dataArrays);
   //添加meat值，方便使用
   const updatedData = sortData.map((obj: MysqlDeviceChange) => {
-    const parsedData = obj.data; //拿到对象
-    const memory = calculateTotalSize(parsedData.memLayout); //内存数组
-    const disk = calculateTotalSize(parsedData.diskLayout); //硬盘数组TODO:要不要分固态和机械硬盘
+    const value = obj.data; //拿到对象
+    const memory = calculateTotalSize(value.memLayout); //内存数组
+    const disk = calculateTotalSize(value.diskLayout); //硬盘数组TODO:要不要分固态和机械硬盘
     //整理添加的信息
     const meat = {
-      os: replaceString(parsedData.os.distro, osTypeReplace), //系统版本 Windows 10
-      ostype: replaceString(parsedData.os.platform, osReplace), //系统类型，windows linux macos
-      cpu: parsedData.cpu.manufacturer, //CPU品牌 Intel
-      cpuModel: parsedData.cpu.brand, //CPU型号 Core™ i5-9400F
-      model: parsedData.system.model, //设备型号
-      motherboard: parsedData.baseboard.model, //主板型号
-      graphics: handleGraphics(parsedData.graphics.controllers), //显卡型号，处理有多张显卡的情况
-      memory: handleMemoryAndDisk(Math.floor(memory)), //内存容量
-      disk: handleMemoryAndDisk(Math.floor(disk)), //硬盘容量
+      os: replaceString(value.os.distro, osTypeReplace), //系统版本 Windows 10
+      ostype: replaceString(value.os.platform, osReplace), //系统类型，windows linux macos
+      cpu: value.cpu.manufacturer || "暂无 CPU 品牌", //CPU品牌 Intel
+      cpuModel: value.cpu.brand || "暂无 CPU 型号", //CPU型号 Core™ i5-9400F
+      model: value.system.model || "暂无设备型号", //设备型号
+      motherboard: value.baseboard.model || "暂无主板型号", //主板型号
+      graphics:
+        handleGraphics(value.graphics.controllers) || "暂无显卡型号", //显卡型号，处理有多张显卡的情况
+      memory: handleMemoryAndDisk(Math.floor(memory)) || "暂无内存容量", //内存容量
+      disk: handleMemoryAndDisk(Math.floor(disk)) || "暂无硬盘容量", //硬盘容量
     };
-    const mac = extractMacValues(parsedData.net);
+    const mac = extractMacValues(value.net);
     return { ...obj, meat, mac };
   });
   return updatedData;

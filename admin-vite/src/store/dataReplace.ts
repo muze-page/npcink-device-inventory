@@ -65,7 +65,15 @@ export const stylePayType = [
   { value: "zfb", label: "支付宝" },
   { value: "yhk", label: "银行卡" },
   { value: "about", label: "其他" },
-]
+];
+
+//排除的显卡
+export const excludeGraphics = [
+  "Parsec Virtual Display Adapter",
+  "OrayIddDriver Device",
+  "System Product Name",
+  "OrayIddDriver Device",
+];
 
 //硬件详细配置表头
 export const columnsTable = [

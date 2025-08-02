@@ -17,9 +17,6 @@ import { StyleDevice } from "@/store/interface";
 //准备图标
 import Mac from "@/assets/mac.png";
 
-//调试打印
-import PrintData from "@/block/printData";
-
 //工具函数
 import { statusLabel } from "@/store/tool";
 interface Props {
@@ -55,7 +52,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         </div>
 
         {/**底部数据 */}
-        <div className="p-4 text-xs text-zinc-500  bg-white rounded whitespace-nowrap min-h-[190px]">
+        <div className="p-4 text-xs text-zinc-500  rounded whitespace-nowrap min-h-[190px]">
           {/*设备名称*/}
           <p className="text-sm font-bold text-zinc-800 leading-8 m-0 ">
             {data.data.title}
@@ -82,7 +79,6 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
               <span>时间 ： {dayjs(data.time).format("YY-MM-DD")}</span>
             </Tooltip>
           </p>
-          <PrintData title="打印当前设备信息" data={data} />
         </div>
       </div>
     </>

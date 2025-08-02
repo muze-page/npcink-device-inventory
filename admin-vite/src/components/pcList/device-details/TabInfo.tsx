@@ -1,6 +1,7 @@
 /**
  * 设备详情 - 大概信息
  */
+import { handleGraphics } from "@/store/tool";
 import { Computer } from "@/store/interface";
 interface Props {
   data: Computer;
@@ -33,45 +34,42 @@ const App: React.FC<Props> = ({ data, time }) => {
     return result;
   };
 
-  //输入的值是否存在，不存在输出不存在
-
-  const inspectState = (data: any) => {
-    if (typeof data === "undefined") {
-      return "不存在";
-    } else {
-      return data;
-    }
+  //一个数组中有若干对象，对象中有多个属性，将指定的属性进行拼接，返回一个字符串
+  const handleArrayData = (arr: any[], key: string) => {
+    const value = arr.map((item) => item[key]).join("<br/>");
+    return value;
   };
 
   const handleData = [
     {
+      title: "中央处理器(CPU)型号",
+      data: data.cpu.brand||"未找到 CPU 型号",
+    },
+    {
+      title: "显卡型号",
+      data: handleGraphics(data.graphics.controllers) || "未找到显卡",
+    },
+    {
       title: "计算机型号",
-      data: data.system.manufacturer + data.system.model,
+      data: data.system.manufacturer + " / " + data.system.model,
     },
     {
-      title: "主板",
-      data: data.baseboard.manufacturer + data.baseboard.model,
-    },
-    {
-      title: "中央处理器(CPU)",
-      data: data.cpu.brand,
-    },
-    {
-      title: "主硬盘",
-      data: inspectState(data.diskLayout[0]?.name),
+      title: "主板型号",
+      data: data.baseboard.manufacturer + " / " + data.baseboard.model,
     },
 
     {
-      title: "显卡",
-      data: inspectState(data.graphics.controllers[0]?.model),
+      title: "主硬盘",
+      data: handleArrayData(data.diskLayout, "name") || "未找到硬盘",
+    },
+
+    {
+      title: "内存信息",
+      data: allMemory(data.memLayout) || "未找到内存",
     },
     {
-      title: "内存",
-      data: allMemory(data.memLayout) ? allMemory(data.memLayout) : "不存在",
-    },
-    {
-      title: "网卡",
-      data: inspectState(data.net[0]?.ifaceName),
+      title: "网卡型号",
+      data: handleArrayData(data.net, "ifaceName") || "未找到网卡",
     },
     {
       title: "显示器",
@@ -83,7 +81,7 @@ const App: React.FC<Props> = ({ data, time }) => {
     },
     {
       title: "磁盘序列号",
-      data: inspectState(data.diskLayout[0]?.serialNum),
+      data: handleArrayData(data.diskLayout, "serialNum") || "未找到磁盘序列号",
     },
     {
       title: "添加时间",

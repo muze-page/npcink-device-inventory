@@ -55,7 +55,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         </div>
 
         {/**底部数据 */}
-        <div className="p-4 text-xs text-zinc-500  bg-white rounded whitespace-nowrap min-h-[190px]">
+        <div className="p-4 text-xs text-zinc-500   rounded whitespace-nowrap min-h-[190px]">
           {/*姓名*/}
           <div className="text-sm font-bold text-zinc-800 leading-8 m-0  ">
             {/** <div className={isName ? "" : "hideName"}> */}
@@ -68,12 +68,16 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             {/** </div> */}
           </div>
 
-          {/*型号*/}
-          <p className="mt-2 w-full truncate">{data.meat.model}</p>
+          {/*设备型号*/}
+          <Tooltip title={"设备型号：" + data.meat.model} className="mt-2 w-full truncate">
+            {data.meat.model}
+          </Tooltip>
+          <br/>
           {/*配置信息*/}
-          <p className="mt-2">
+          <Tooltip title={"CPU  / 内存容量 / 硬盘容量"} className="mt-2">
             {data.meat.cpu} / {data.meat.memory} / {data.meat.disk}
-          </p>
+          </Tooltip>
+
           {/*编号*/}
           <p className="grid gap-y-1 items-center  mt-2">
             <Tooltip title={"设备编号：" + data.number}>

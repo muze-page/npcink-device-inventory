@@ -13,7 +13,7 @@ const App: React.FC<Props> = ({ title, data }) => {
   return (
     <>
       {devStatus && (
-        <Button type="default" onClick={printData} style={{ marginLeft: 8 }}>
+        <Button type="default" onClick={printData} className="m-4" style={{ marginLeft: 8 }}>
           {title}
         </Button>
       )}

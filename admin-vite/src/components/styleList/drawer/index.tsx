@@ -11,6 +11,8 @@ import Info from "@/components/styleList/drawer/data-info";
 import ChangeRecord from "@/components/styleList/drawer/data-change-record";
 import Seting from "@/components/styleList/drawer/data-seting";
 import { statusLabel } from "@/store/tool";
+//调试打印
+import PrintData from "@/block/printData";
 interface Props {
   data: StyleDevice; //设备数据
   active: boolean; //弹窗状态
@@ -70,6 +72,7 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
         </Card>
 
         <Tabs defaultActiveKey="1" items={items} />
+        <PrintData title="打印当前设备信息" data={data} />
       </Drawer>
     </>
   );

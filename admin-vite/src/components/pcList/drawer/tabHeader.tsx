@@ -1,6 +1,6 @@
 //弹窗内容头部
 import { useContext } from "react";
-import { Skeleton, Space } from "antd";
+import { Skeleton, Space, Tooltip } from "antd";
 import { OsTypeArray } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
 import { findBValue } from "@/store/tool";
@@ -49,7 +49,9 @@ const App: React.FC = ({}) => {
           {/**姓名 */}
           <div className="flex justify-between">
             <div className="flex items-center text-lg">
-              {isName ? (drawerData.name) : (
+              {isName ? (
+                drawerData.name
+              ) : (
                 <Skeleton.Input active={true} size={"small"} />
               )}
             </div>
@@ -62,11 +64,10 @@ const App: React.FC = ({}) => {
           {/*大概配置信息 */}
           <ul>
             <li className="mt-2">
-              {drawerData.meat.cpu} / {drawerData.meat.cpuModel} /{" "}
-              {drawerData.meat.memory}/ {drawerData.meat.disk}
-            </li>
-            <li className="mt-2">
-              {drawerData.meat.graphics} / {drawerData.meat.model}
+              <Tooltip title="CPU 厂家 / 内存容量 / 硬盘容量">
+                {drawerData.meat.cpu} / {drawerData.meat.memory} /{" "}
+                {drawerData.meat.disk}
+              </Tooltip>
             </li>
             <li className="mt-2">
               <Space size={"large"} align="baseline">
