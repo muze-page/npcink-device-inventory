@@ -1,6 +1,6 @@
 //弹窗内容头部
 import { useContext } from "react";
-import { Skeleton } from "antd";
+import { Skeleton, Space } from "antd";
 import { OsTypeArray } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
 import { findBValue } from "@/store/tool";
@@ -37,13 +37,13 @@ const App: React.FC = ({}) => {
 
   //准备CPU、主板、显卡、硬盘参数
   const msgData = {
-    cpu: drawerData.data.cpu.brand, //CPU
-    model: drawerData.data.baseboard.model, //主板
-    graphics: drawerData.data.graphics.controllers[0].model, //显卡
+    cpu: drawerData?.data?.cpu?.brand || "未知CPU", //CPU
+    model: drawerData?.data?.baseboard?.model || "未知主板", //主板
+    graphics: drawerData?.data?.graphics?.controllers?.[0]?.model || "未知显卡", //显卡
     disk:
-      drawerData.meat.disk > 1024
+      drawerData?.meat?.disk > 1024
         ? (drawerData.meat.disk / 1024).toFixed(2) + " T"
-        : drawerData.meat.disk + " G",
+        : (drawerData?.meat?.disk || 0) + " G",
   };
 
   return (
@@ -67,31 +67,33 @@ const App: React.FC = ({}) => {
               )}
             </div>
           </div>
-          {/**操作系统 */}
-          <p className="mt-2">{drawerData.meat.model}</p>
-          {/*大概配置信息 */}
-          <p>
-            {drawerData.meat.cpu} / {msgData.cpu} / {drawerData.meat.memory} G /{" "}
-            {msgData.disk}
-          </p>
-          <p>
-            {msgData.model} / {msgData.graphics}
-          </p>
-          {/**编号 状态 */}
-          <div className="mt-5 flex items-center">
-            <div className="flex items-center">
-              编号：{drawerData.number ?? drawerData.number ?? "没有编号"}
-            </div>
+          {/**
+           * 操作系统
+           *   <p className="mt-2">{drawerData.meat.model}</p>
+           */}
 
-            <div className="flex items-center ml-8 m-0">
-              状态：
-              {deviceStatus}
-            </div>
-            <div className="flex items-center ml-8 m-0">
-              部门：
-              {drawerData.department ?? drawerData.department ?? "未定"}
-            </div>
-          </div>
+          {/*大概配置信息 */}
+          <ul>
+            <li className="mt-2">
+              {drawerData.meat.cpu} / {msgData.cpu} / {drawerData.meat.memory} G
+              / {msgData.disk}
+            </li>
+            <li className="mt-2">
+              {msgData.graphics} / {msgData.model}
+            </li>
+            <li className="mt-2">
+              <Space size={"large"} align="baseline">
+                <span>
+                  部门：
+                  {drawerData.department ?? drawerData.department ?? "未定"}
+                </span>
+                <span>状态：{deviceStatus}</span>
+                <span>
+                  编号：{drawerData.number ?? drawerData.number ?? "没有编号"}
+                </span>
+              </Space>
+            </li>
+          </ul>
         </div>
       </div>
       {/** 测试用 */}

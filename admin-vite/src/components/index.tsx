@@ -12,34 +12,34 @@ import Style from "@/components/styleList/index";
 
 const items: TabsProps["items"] = [
   {
-    key: "1",
+    key: "sbxq",
     label: `设备详情`,
     children: <Details />,
   },
 
   {
-    key: "5",
+    key: "style",
     label: `自定义设备`,
     children: <Style />,
   },
 
   {
-    key: "2",
+    key: "yjpd",
     label: `硬件盘点`,
     children: <Check />,
   },
   {
-    key: "3",
+    key: "bgjl",
     label: `变更记录`,
     children: <ChangeList />,
   },
   {
-    key: "4",
+    key: "sz",
     label: `设置`,
     children: <Config />,
   },
 ];
 
-const App: React.FC = () => <Tabs defaultActiveKey="5" items={items} />;
+const App: React.FC = () => <Tabs defaultActiveKey="sbxq" items={items} />;
 
 export default App;

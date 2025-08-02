@@ -61,6 +61,18 @@ export const bytesToMB = (bytes: number | null, type: string) => {
   }
 };
 
+// IPv4 正则表达式
+const ipv4Regex =
+  /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
+// 自定义校验规则
+export const validateIPv4 = (_: any, value: string) => {
+  if (!value || ipv4Regex.test(value)) {
+    return Promise.resolve();
+  }
+  return Promise.reject(new Error("请输入正确的IP v4 地址"));
+};
+
 /**
  *拿到指定键的值并统计该键的出现次数
  * @param dataArrays 待检测数组对象

@@ -12,35 +12,21 @@ import {
   changeSelectData,
   totalResidualValue,
   getPercentage,
+  validateIPv4,
 } from "@/store/tool";
-
-//调试用
-import PrintData from "@/block/printData";
 
 //部门下拉筛选 - 准备部门筛选数据
 const getSelectData = changeSelectData(defaultOption.department);
 
-// IPv4 正则表达式
-const ipv4Regex =
-  /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-
-// 自定义校验规则
-const validateIPv4 = (_: any, value: string) => {
-  if (!value || ipv4Regex.test(value)) {
-    return Promise.resolve();
-  }
-  return Promise.reject(new Error("请输入正确的IP v4 地址"));
-};
-
 const App: React.FC = () => {
   //接收上下文中的值
-  const { setListData, drawerData, setDrawerData,setActive } = useContext(AppContext);
+  const { setListData, drawerData, setDrawerData, setActive } =
+    useContext(AppContext);
 
   /*
    * form 变量用于操作表单实例，
    */
   const [form] = Form.useForm();
-  //const [_formData, setFormData] = useState(null);
 
   /**
    * 当 drawerData 的值发生变化时更新表单的默认值
@@ -67,47 +53,25 @@ const App: React.FC = () => {
   在 onFinish 回调函数中，通过调用 
   setFormData 函数将表单数据存储在 formData 状态变量中，
   以便在组件中进行进一步处理或展示。
-  htmlType="submit"
+  保存设置信息
   */
-  const onFinish = (_values: any) => {
-    //console.log("Received values:", values);
-    //setFormData(values); // 将表单数据存储在状态中
-  };
-
-  //接收上下文中的值
-  //const { changeReal } = useContext(DeviceContext);
-
-  //存储原始表单数据
-  //const [_initialData, setInitialData] = useState(drawerData);
-
-  //拿到最新值
-  //useEffect(() => {
-  //  setInitialData(drawerData);
-  //}, [drawerData]);
-
-  //保存设置信息
-  const saveData = async () => {
-    //获取表单数据
-    const fieldsValue = form.getFieldsValue();
-    const state = await changeMySql(drawerData.uuid, fieldsValue);
+  const onFinish = async (values: MysqlDeviceData) => {
+    const state = await changeMySql(drawerData.uuid, values);
 
     //准备需要保存的数据
     const valuesData = {
       ...drawerData,
-      name: fieldsValue.name, // 姓名
-      number: fieldsValue.number, // 编号
-      state: fieldsValue.state, // 状态
-      department: fieldsValue.department, // 部门
-      ip: fieldsValue.ip, // IP 地址
-      purchase: fieldsValue.purchase, // 采购价
-      depreciation: fieldsValue.depreciation, // 二手价
+      name: values.name, // 姓名
+      state: values.state, // 状态
+      number: values.number, // 编号
+      department: values.department, // 部门
+      purchase: values.purchase, // 采购价
+      depreciation: values.depreciation, // 二手价
+      ip: values.ip, // IP 地址
     };
 
     if (state) {
-      console.log("修改成功" + JSON.stringify(fieldsValue));
-      //alert("修改成功");
-      //setDrawerData(valuesData); //更新弹窗数据
-      //handleUpdateData(uuid, valuesData); //调用父组件的更新方法
+      //console.log("修改成功" + JSON.stringify(values));
       setDrawerData(valuesData); //更新弹窗数据
       //更新列表数据
       setListData((prevData) =>
@@ -119,8 +83,6 @@ const App: React.FC = () => {
     } else {
       alert("修改失败");
     }
-
-    //获取设置数据，一次性更新
   };
 
   //移除设备
@@ -220,7 +182,7 @@ const App: React.FC = () => {
         </Form.Item>
 
         <Form.Item>
-          <Button type="primary" onClick={saveData}>
+          <Button type="primary" htmlType="submit">
             保存设置
           </Button>
         </Form.Item>
@@ -229,8 +191,6 @@ const App: React.FC = () => {
             移除设备
           </Button>
         </Form.Item>
-        {/* 打印当前表单信息 */}
-        <PrintData data={form.getFieldsValue()} title="打印当前表单信息" />
       </Form>
     </>
   );
