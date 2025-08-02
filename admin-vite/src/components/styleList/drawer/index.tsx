@@ -52,7 +52,7 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
         size="large"
         className="pt-9"
       >
-        <Card title="设备信息" extra={""} style={{ width: 600 }}>
+        <Card title="设备信息" extra={""} style={{ width: 450 }}>
           <p>
             <b>设备使用：</b>
             {isName ? (

@@ -3,13 +3,16 @@
  */
 
 import { Drawer } from "antd";
+import { MysqlDeviceChangeMeat } from "@/store/interface";
 import Property from "@/components/pcList/device-details";
 import TabHeader from "@/components/pcList/drawer/tabHeader";
+import PrintData from "@/block/printData";
 interface Props {
   active: boolean; //弹窗状态
   onActive: () => void; //关闭弹窗的回调函数
+  data: MysqlDeviceChangeMeat; //传来的设备信息
 }
-const App: React.FC<Props> = ({ active, onActive }) => {
+const App: React.FC<Props> = ({ active, onActive,data }) => {
   return (
     <>
       <Drawer
@@ -21,9 +24,11 @@ const App: React.FC<Props> = ({ active, onActive }) => {
         className="pt-9"
       >
         {/**标识栏 */}
-        <TabHeader/>
-         {/**Tab栏 */}
+        <TabHeader />
+        {/**Tab栏 */}
         <Property />
+        {/** 测试用 */}
+        <PrintData data={data} title="打印当前设备信息" />
       </Drawer>
     </>
   );

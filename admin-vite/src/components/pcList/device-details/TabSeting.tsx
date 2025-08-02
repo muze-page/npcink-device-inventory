@@ -173,7 +173,7 @@ const App: React.FC = () => {
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={3} className="text-sm text-right py-2">
+                <td colSpan={3} className="text-sm text-right py-2 text-zinc-400">
                   以上数据仅供参考
                 </td>
               </tr>

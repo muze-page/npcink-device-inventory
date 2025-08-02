@@ -5,7 +5,6 @@ import { OsTypeArray } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
 import { findBValue } from "@/store/tool";
 import { AppContext } from "@/components/pcList/Context";
-import PrintData from "@/block/printData";
 import MacOs from "@/assets/macos.png";
 import Win from "@/assets/windows_s.png";
 import { findOsTypeObj } from "@/store/tool";
@@ -84,8 +83,6 @@ const App: React.FC = ({}) => {
           </ul>
         </div>
       </div>
-      {/** 测试用 */}
-      <PrintData data={drawerData} title="打印当前设备信息" />
     </>
   );
 };

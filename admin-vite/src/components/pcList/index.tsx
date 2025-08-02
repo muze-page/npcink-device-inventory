@@ -178,7 +178,7 @@ const App: React.FC = () => {
         )}
 
         {/**弹窗 */}
-        <Drawer active={active} onActive={() => changeActive()} />
+        <Drawer active={active} onActive={() => changeActive()} data={drawerData} />
       </div>
       {/**
        * <Demo />
