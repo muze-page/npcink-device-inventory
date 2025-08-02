@@ -14,8 +14,9 @@ import { StyleContext } from "@/components/styleList/styleContext";
 //准备类型
 import { StyleDevice } from "@/store/interface";
 
-//准备图标
-import Mac from "@/assets/mac.png";
+//准备采购平台类型
+import { findOsTypeObj } from "@/store/tool";
+import { platformArray } from "@/store/dataReplace";
 
 //工具函数
 import { statusLabel } from "@/store/tool";
@@ -34,6 +35,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
     onDrawerData(); //保存值
   };
 
+  //找到需要的平台对象
+  const platformObj = findOsTypeObj(platformArray, data.data.platform);
+
   return (
     <>
       {/**开始展示设备信息 */}
@@ -48,7 +52,11 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
       >
         {/**顶部标志 */}
         <div className="mt-2 mb-3 ml-3">
-          <img src={Mac} className="h-10" />
+          <img
+            key={platformObj.name}
+            src={platformObj.image}
+            className="h-10"
+          />
         </div>
 
         {/**底部数据 */}

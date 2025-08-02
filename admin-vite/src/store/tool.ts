@@ -185,14 +185,11 @@ export const removeEmpty = (data: DataItemArr[]) => {
 /**
  * 找到需要的系统对象
  * @param array  存储图片的数组对象
- * @param data 系统类型
+ * @param value 系统或平台类型
  * @returns 包含图片的对象
  */
-export const findOsTypeObj = (
-  array: OsTypeArray[],
-  data: MysqlDeviceChangeMeat
-) => {
-  const result = array.find((item) => item.name === data.meat.ostype);
+export const findOsTypeObj = (array: OsTypeArray[], value: string) => {
+  const result = array.find((item) => item.name === value);
   // 返回默认对象，避免返回 undefined
   return (
     result || {
@@ -436,8 +433,7 @@ export const updateOSType = (
       cpuModel: value.cpu.brand || "暂无 CPU 型号", //CPU型号 Core™ i5-9400F
       model: value.system.model || "暂无设备型号", //设备型号
       motherboard: value.baseboard.model || "暂无主板型号", //主板型号
-      graphics:
-        handleGraphics(value.graphics.controllers) || "暂无显卡型号", //显卡型号，处理有多张显卡的情况
+      graphics: handleGraphics(value.graphics.controllers) || "暂无显卡型号", //显卡型号，处理有多张显卡的情况
       memory: handleMemoryAndDisk(Math.floor(memory)) || "暂无内存容量", //内存容量
       disk: handleMemoryAndDisk(Math.floor(disk)) || "暂无硬盘容量", //硬盘容量
     };

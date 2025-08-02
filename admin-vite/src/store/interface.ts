@@ -156,7 +156,14 @@ export interface StyleDeviceData {
   title: string; //设备名称
   number: number; //设备数量
   total: number; //单价
-  platform: string; //平台
+  platform:
+    | "JingDong"
+    | "TaoBao"
+    | "PingDuoDuo"
+    | "MeiTuan"
+    | "XianYu"
+    | "DouYin"
+    | "About"; //采购平台
   shop_name: string; //店铺名称
   link: string; //购买链接
   order_time: Dayjs; //下单时间
@@ -166,10 +173,9 @@ export interface StyleDeviceData {
 }
 
 /**
- * 列表图片内容,不同的设备不同的背景色
+ * 列表图片内容,不同的设备不同的背景图片
  */
 export interface OsTypeArray {
-  id: number;
   name: string;
   image: string;
 }

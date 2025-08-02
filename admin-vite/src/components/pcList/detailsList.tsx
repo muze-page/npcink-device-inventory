@@ -35,7 +35,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
   const deviceStatus = findBValue(device_status, data.state);
 
   //找到需要的系统对象
-  const osTypeObj = findOsTypeObj(osTypeArray, data);
+  const osTypeObj = findOsTypeObj(osTypeArray, data.meat.ostype);
 
   return (
     <>
@@ -51,7 +51,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
       >
         {/**顶部标志 */}
         <div className="mt-2 mb-3 ml-3">
-          <img key={osTypeObj?.id} src={osTypeObj?.image} className="h-10" />
+          <img key={osTypeObj.name} src={osTypeObj.image} className="h-10" />
         </div>
 
         {/**底部数据 */}

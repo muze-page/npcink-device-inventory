@@ -50,13 +50,13 @@ export const device_status = [
 
 //自定义产品购买平台
 export const stylePlatform = [
-  { value: "jd", label: "京东" },
-  { value: "tb", label: "淘宝" },
-  { value: "pdd", label: "拼多多" },
-  { value: "mt", label: "美团" },
-  { value: "xy", label: "闲鱼" },
-  { value: "dy", label: "抖音" },
-  { value: "about", label: "其他" },
+  { value: "JingDong", label: "京东" },
+  { value: "TaoBao", label: "淘宝" },
+  { value: "PingDuoDuo", label: "拼多多" },
+  { value: "MeiTuan", label: "美团" },
+  { value: "XianYu", label: "闲鱼" },
+  { value: "DouYin", label: "抖音" },
+  { value: "About", label: "其他" },
 ];
 
 //自定义产品支付方式
@@ -92,4 +92,23 @@ export const columnsTable = [
     dataIndex: "value",
     key: "value",
   },
+];
+
+//准备图标
+import JD from "@/assets/platform/京东.png";
+import MeiTuan from "@/assets/platform/美团.png";
+import TaoBao from "@/assets/platform/淘宝.png";
+import XianYu from "@/assets/platform/闲鱼.png";
+import PDD from "@/assets/platform/拼多多.png";
+import DouYin from "@/assets/platform/抖音.png";
+import About from "@/assets/platform/其他.png";
+//采购平台展示图片
+export const platformArray = [
+  { name: "JingDong", image: JD },
+  { name: "TaoBao", image: TaoBao },
+  { name: "PingDuoDuo", image: PDD },
+  { name: "MeiTuan", image: MeiTuan },
+  { name: "XianYu", image: XianYu },
+  { name: "DouYin", image: DouYin },
+  { name: "About", image: About },
 ];

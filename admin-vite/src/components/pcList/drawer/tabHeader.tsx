@@ -26,7 +26,7 @@ const App: React.FC = ({}) => {
   ];
 
   //找到需要的系统对象
-  const osTypeObj = findOsTypeObj(osTypeArray, drawerData);
+  const osTypeObj = findOsTypeObj(osTypeArray, drawerData.meat.ostype);
 
   //准备样式
   const styleClassName = `${

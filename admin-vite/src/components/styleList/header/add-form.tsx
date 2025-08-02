@@ -15,33 +15,26 @@ import {
 } from "antd";
 import type { FormProps, FormInstance } from "antd";
 import dayjs from "dayjs";
-import type { Dayjs } from "dayjs";
 import { addStyleDeviceData } from "@/axios";
 
-import { device_status } from "@/store/dataReplace";
+import {
+  device_status,
+  stylePlatform,
+  stylePayType,
+} from "@/store/dataReplace";
 import { devStatus } from "@/store/tool";
 
 //准备采购平台,付款方式
-import { stylePlatform, stylePayType } from "@/store/dataReplace";
+import { StyleDeviceData } from "@/store/interface";
 
 //准备输入框
 const { TextArea } = Input;
 
 //当前表格的数据类型
-type FormType = {
+type FormType = StyleDeviceData & {
   name: string; //使用人
   purpose: string; //用途
   state: "apply" | "idie" | "fault" | "scrap"; //设备状态
-  title: string; //设备名称
-  number: number; //设备数量
-  total: number; //单价
-  platform: string; //平台
-  shop_name: string; //店铺名称
-  link: string; //购买链接
-  order_time: Dayjs; //下单时间
-  order: string; //订单号
-  pay_method: string; //支付方式
-  purchaser: string; //采购人
 };
 
 const onFinishFailed: FormProps<FormType>["onFinishFailed"] = (errorInfo) => {
@@ -56,7 +49,7 @@ const defaultValue: FormType = {
   title: "",
   number: 1,
   total: 0,
-  platform: "",
+  platform: "TaoBao",
   shop_name: "",
   link: "",
   order_time: dayjs(), //当天日期
@@ -124,7 +117,7 @@ const App = ({ form, handleOk }: AddFormProps) => {
       title: "华为路由器",
       number: 2,
       total: 2300,
-      platform: "tb",
+      platform: "TaoBao",
       shop_name: "华为路由器专卖店",
       link: "https://www.taobao.com",
       order_time: dayjs(),
@@ -151,21 +144,21 @@ const App = ({ form, handleOk }: AddFormProps) => {
         name="shop_name"
         rules={[{ required: true, message: "请填写此信息" }]}
       >
-        <Input allowClear/>
+        <Input allowClear />
       </Form.Item>
       <Form.Item<FormType>
         label="订单单号"
         name="order"
         rules={[{ required: true, message: "请填写此信息" }]}
       >
-        <Input allowClear/>
+        <Input allowClear />
       </Form.Item>
       <Form.Item<FormType>
         label="设备名称："
         name="title"
         rules={[{ required: true, message: "请填写此信息" }]}
       >
-        <Input allowClear/>
+        <Input allowClear />
       </Form.Item>
 
       <Form.Item<FormType>
@@ -173,14 +166,14 @@ const App = ({ form, handleOk }: AddFormProps) => {
         name="purpose"
         rules={[{ required: true, message: "请填写此信息" }]}
       >
-        <Input  allowClear/>
+        <Input allowClear />
       </Form.Item>
       <Form.Item<FormType>
         label="购买链接："
         name="link"
         rules={[{ required: true, message: "请填写此信息" }]}
       >
-        <TextArea rows={2} allowClear/>
+        <TextArea rows={2} allowClear />
       </Form.Item>
       <Row>
         <Col span={8}>

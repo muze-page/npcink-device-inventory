@@ -9,7 +9,7 @@ const DataOne = {
   total: 19999.0,
   order: "TB1234567890",
   pay_method: "zfb",
-  platform: "tb",
+  platform: "JingDong",
   purchaser: "张三",
 };
 
@@ -22,9 +22,61 @@ const DateTwo = {
   total: 39999.0,
   order: "JD1234567890",
   pay_method: "wx",
-  platform: "xy",
+  platform: "TaoBao",
   purchaser: "李四",
 };
+
+const DateThree = {
+  title: "苹果手机",
+  link: "https://item.taobao.com/item.htm?id=1234567890",
+  shop_name: "苹果官方旗舰店",
+  number: 1,
+  order_time: "2025-11-09",
+  total: 19999.0,
+  order: "PDD1234567890",
+  pay_method: "wx",
+  platform: "PingDuoDuo",
+  purchaser: "李四",
+}
+
+const DateFour = {
+  title: "小米手机",
+  link: "https://item.taobao.com/item.htm?id=1234567890",
+  shop_name: "小米官方旗舰店",
+  number: 1,
+  order_time: "2025-11-09",
+  total: 9999.0,
+  order: "XM1234567890",
+  pay_method: "wx",
+  platform: "XianYu",
+  purchaser: "李四",
+}
+
+const DateFive = {
+  title: "小米手机",
+  link: "https://item.taobao.com/item.htm?id=1234567890",
+  shop_name: "小米官方旗舰店",
+  number: 1,
+  order_time: "2025-11-09",
+  total: 9999.0,
+  order: "XM1234567890",
+  pay_method: "wx",
+  platform: "DouYin",
+  purchaser: "李四",
+}
+const DateSix = {
+  title: "小米手机",
+  link: "https://item.taobao.com/item.htm?id=1234567890",
+  shop_name: "小米官方旗舰店",
+  number: 1,
+  order_time: "2025-11-09",
+  total: 9999.0,
+  order: "XM1234567890",
+  pay_method: "wx",
+  platform: "About",
+  purchaser: "李四",
+}
+
 
 const data = [
   {
@@ -52,7 +104,7 @@ const data = [
     purpose: "测试使用",
     time: "2023-11-09 18:13:02",
     uuid: "4b60abe878f60c54a04dc1ed9ecead7c",
-    data: DataOne,
+    data: DateThree,
   },
   {
     id: "4",
@@ -61,7 +113,7 @@ const data = [
     purpose: "测试使用",
     time: "2025-11-09 18:13:02",
     uuid: "4b60abe878f60c54a04dc1ed9ecead7s",
-    data: DateTwo,
+    data: DateFour,
   },
   {
     id: "5",
@@ -70,7 +122,7 @@ const data = [
     purpose: "测试使用",
     time: "2023-11-09 18:13:02",
     uuid: "4b60abe878f60c54a04dc1ed9ecead7c",
-    data: DataOne,
+    data: DateFive,
   },
   {
     id: "6",
@@ -79,7 +131,7 @@ const data = [
     purpose: "测试使用",
     time: "2025-11-09 18:13:02",
     uuid: "4b60abe878f60c54a04dc1ed9ecead7s",
-    data: DateTwo,
+    data: DateSix,
   },
   {
     id: "7",

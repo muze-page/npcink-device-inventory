@@ -27,7 +27,7 @@ const App: React.FC = () => {
       total: 39999.0,
       order: "JD1234567890",
       pay_method: "信用卡",
-      platform: "微信",
+      platform: "XianYu",
       purchaser: "李四",
     }, // 根据实际接口补充字段
   };
