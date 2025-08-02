@@ -41,12 +41,9 @@ const App: React.FC = () => {
   //当前选中弹窗的数据
   const [drawerData, setDrawerData] = useState({} as StyleDevice);
 
-  //当前点击选中的数组index
-  const [_arrIndex, setArrIndex] = useState(0);
-
   //添加自定义设备
   const handleAddDevice = (device: StyleDevice) => {
-    setDevices((prev) => [...prev, device]);
+    setDevices((prev) => [device, ...prev]);
   };
   //删除指定UUID的设备
   const handleDeleteData = (uuid: string) => {
@@ -65,8 +62,8 @@ const App: React.FC = () => {
   const [filter, setFilter] = useState<FilterStyleData>({
     //筛选条件默认值
     state: "all", //设备状态
-    platform: "all",//采购平台
-    payMethod: "all",//支付方式
+    platform: "all", //采购平台
+    payMethod: "all", //支付方式
   });
 
   /* 搜索关键字 */
@@ -157,12 +154,12 @@ const App: React.FC = () => {
         />
         <div className="flex content-start items-center flex-wrap w-full">
           {/**开始循环 */}
-          {pagedFilteredList.map((tab, index) => (
+          {pagedFilteredList.map((tab) => (
             <DataList
               key={tab.id}
               data={tab}
               onActive={() => changeActive()}
-              onDrawerData={() => (setDrawerData(tab), setArrIndex(index))}
+              onDrawerData={() => setDrawerData(tab)}
             />
           ))}
         </div>

@@ -264,7 +264,7 @@ const data = [
     id: "21",
     name: "测试",
     state: "idie",
-    number: "0",
+    number: "1911",
     department: "0",
     ip: "192.168.1.2",
     purchase: 0,

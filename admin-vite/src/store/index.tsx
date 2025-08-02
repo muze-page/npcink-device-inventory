@@ -24,24 +24,28 @@ const getDataLocal = () => {
 
 //将数组中的硬件data数据从json格式处理成对象
 const combineData = (dataArrays: MysqlDevice[]) => {
-  return dataArrays.map((item) => {
-    // 解析 "data" 字符串为对象
-    const parsedData = JSON.parse(item.data) as Computer;
-    // 返回更新后的对象
-    return { ...item, data: parsedData };
-  });
+  return dataArrays
+    .map((item) => {
+      // 解析 "data" 字符串为对象
+      const parsedData = JSON.parse(item.data) as Computer;
+      // 返回更新后的对象
+      return { ...item, data: parsedData };
+    })
+    .reverse(); //倒序;
 };
 
 //将自定义硬件数组中的data数据从json格式处理成对象
 const combineDataStyle = (dataArrays: StyleDevice[]) => {
-  return dataArrays.map((item) => {
-    // 解析 "data" 字符串为对象
-    //const parsedData = JSON.parse(item.data) as StyleDeviceData;
-    const parsedData =
-      typeof item.data === "string" ? JSON.parse(item.data) : item.data;
-    // 返回更新后的对象
-    return { ...item, data: parsedData };
-  });
+  return dataArrays
+    .map((item) => {
+      // 解析 "data" 字符串为对象
+      //const parsedData = JSON.parse(item.data) as StyleDeviceData;
+      const parsedData =
+        typeof item.data === "string" ? JSON.parse(item.data) : item.data;
+      // 返回更新后的对象
+      return { ...item, data: parsedData };
+    })
+    .reverse(); //倒序
 };
 
 //对硬件值进行处理后传出

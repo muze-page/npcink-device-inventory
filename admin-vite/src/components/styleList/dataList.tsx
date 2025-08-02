@@ -21,7 +21,7 @@ import { platformArray } from "@/store/dataReplace";
 //工具函数
 import { statusLabel } from "@/store/tool";
 interface Props {
-  data: StyleDevice;
+  data: StyleDevice;//拿到自定义设备数据
   onActive: () => void; //修改状态
   onDrawerData: () => void; //保存值
 }

@@ -391,13 +391,6 @@ const extractMacValues = (data: ComputerNet[]) => {
   return macValues;
 };
 
-//对拿到的数据进行排序
-const sortByIDDescending = (data: MysqlDeviceChange[]) => {
-  // 使用sort方法对数组进行排序，按照对象中 Number 键的值从大到小排序,新添加的设备排前面
-  data.sort((a, b) => b.id - a.id);
-  return data;
-};
-
 //处理大容量内存和硬盘
 export const handleMemoryAndDisk = (data: number) => {
   const value =
@@ -418,10 +411,8 @@ export const handleGraphics = (data: ComputerControllers[]) => {
 export const updateOSType = (
   dataArrays: MysqlDeviceChange[]
 ): MysqlDeviceChangeMeat[] => {
-  //对拿到的数据进行排序
-  const sortData = sortByIDDescending(dataArrays);
   //添加meat值，方便使用
-  const updatedData = sortData.map((obj: MysqlDeviceChange) => {
+  const updatedData = dataArrays.map((obj: MysqlDeviceChange) => {
     const value = obj.data; //拿到对象
     const memory = calculateTotalSize(value.memLayout); //内存数组
     const disk = calculateTotalSize(value.diskLayout); //硬盘数组TODO:要不要分固态和机械硬盘
