@@ -226,8 +226,8 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             global $wpdb;
 
             // 获取前端传递的参数并进行输入验证
-            $text_data = isset($_POST['data']) ? ($_POST['data']) : null;
-            $name = isset($_POST['name']) ? ($_POST['name']) : null;
+            $text_data = isset($_POST['data']) ? ($_POST['data']) : null; //获取数据
+            $name = isset($_POST['name']) ? ($_POST['name']) : null; //获取表名
 
             //拿到解析后的值
             $data = json_decode(stripslashes($text_data), true);
@@ -236,13 +236,14 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             if (empty($data)) {
                 return wp_send_json_error(['error' => '传递的数据为空，请检查文件'], 400);
             }
-            // 检查传来的姓名是否为空
+            // 检查传来的数据库表名是否为空
             if (empty($name)) {
-                return wp_send_json_error(['error' => '传递的表名为空，请检查'], 400);
+                return wp_send_json_error(['error' => '传递的数据库表名为空，请检查'], 400);
             }
 
             // 构建插入数据的数组
             $insert_data = array();
+            //电脑设备数据
             if ($name == self::$table_data_name) {
                 foreach ($data as $item) {
                     //设备信息是否为空
@@ -276,6 +277,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     }
                 }
             }
+            //变更数据
             if ($name == self::$table_change_name) {
                 foreach ($data as $item) {
                     //是否有重复数据
@@ -300,6 +302,34 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     }
                 }
             }
+
+            //自定义设备数据
+            if ($name == self::$table_style_name) {
+                foreach ($data as $item) {
+                    //是否有重复数据
+                    $uuid = isset($item['uuid']) ? $item['uuid'] : null; //唯一标识符
+                    $table_name = $wpdb->prefix . self::$table_style_name;
+                    $existingData = $wpdb->get_row(
+                        $wpdb->prepare(
+                            "SELECT * FROM $table_name WHERE uuid = %s;",
+                            $uuid
+                        ),
+                        ARRAY_A
+                    );
+                    //没有重复数据，插入数据
+                    if (!$existingData) {
+                        $insert_data[] = array(
+                            'name' => isset($item['name']) ? $item['name'] :  null,
+                            'purpose' => isset($item['purpose']) ? $item['purpose'] :  null,
+                            'state' => isset($item['state']) ? $item['state'] :  null,
+                            'time' => isset($item['time']) ? $item['time'] :  0,
+                            'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
+                            'data' => isset($item['data']) ? $item['data'] :  null,
+                        );
+                    }
+                }
+            }
+
 
             //检查是否有可更新的数据
             if (empty($insert_data)) {

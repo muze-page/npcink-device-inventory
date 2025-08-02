@@ -2,13 +2,19 @@
 import { useState } from "react";
 import { Space, Button, message } from "antd";
 import { exportSQLData, importSQLData } from "@/axios";
-import { TableDataName, TableChangeName, Site } from "@/store/index";
+import {
+  TableDataName,
+  TableChangeName,
+  TableStyleDataName,
+  Site,
+} from "@/store/index";
 import { exportTable } from "@/store/tool";
 interface Props {
   name: string; //数据库表名
   /**
    * 基础数据：npcink_device_data
    * 变更数据：npcink_device_change
+   * 自定义设备数据：npcink_mdm_style_data
    */
 }
 const App: React.FC<Props> = ({ name }) => {
@@ -64,11 +70,15 @@ const App: React.FC<Props> = ({ name }) => {
     const link = document.createElement("a");
     link.href = url;
     if (name == TableDataName) {
-      link.download = "硬件基础数据-导出文件-" + Site + ".json";
+      link.download = "硬件基础数据_导出文件_" + Site + ".json";
+    }
+    if (name == TableStyleDataName) {
+      link.download = "自定义设备数据_导出文件_" + Site + ".json";
     }
     if (name == TableChangeName) {
-      link.download = "硬件变更数据-导出文件" + Site + ".json";
+      link.download = "硬件变更数据_导出文件_" + Site + ".json";
     }
+
     link.click();
 
     // 等待一段时间后释放 URL 对象
@@ -81,13 +91,17 @@ const App: React.FC<Props> = ({ name }) => {
     const jsonData = await exportSQLData(name);
 
     //准备导出文件名
-    let tableName="暂无";
+    let tableName = "暂无";
 
     if (name === TableDataName) {
-      tableName = "硬件基础数据-导出文件.xlsx";
+      tableName = "硬件基础数据_导出文件";
     }
+    if (name === TableStyleDataName) {
+      tableName = "自定义设备基础数据_导出文件";
+    }
+
     if (name === TableChangeName) {
-      tableName = "硬件变更数据-导出文件.xlsx";
+      tableName = "硬件变更数据_导出文件";
     }
     // 如果没有拿到值，就此结束
     exportTable(jsonData, tableName);

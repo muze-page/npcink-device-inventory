@@ -14,7 +14,13 @@ import {
 } from "antd";
 import { PlusCircleFilled, MinusCircleFilled } from "@ant-design/icons";
 
-import { defaultOption, Site, TableDataName, TableChangeName } from "@/store";
+import {
+  defaultOption,
+  Site,
+  TableDataName,
+  TableChangeName,
+  TableStyleDataName,
+} from "@/store";
 import { saveSQLData, remove_department, addPublicSearchPage } from "@/axios";
 
 import ImportExport from "@/components/config/importExport";
@@ -262,19 +268,7 @@ const App: React.FC = () => {
             </Button>
           </Form.Item>
 
-          <Form.Item
-            label="基础数据"
-            extra={"仅导入当前没有的设备数据，导出全部数据"}
-          >
-            <ImportExport name={TableDataName} />
-          </Form.Item>
-          <Form.Item
-            label="变更数据"
-            extra={"仅导入当前没有的设备数据，导出全部数据"}
-          >
-            <ImportExport name={TableChangeName} />
-          </Form.Item>
-
+          <Header title="其他设置" />
           <Form.Item
             label="添加部门"
             style={{ width: "100%" }}
@@ -347,6 +341,28 @@ const App: React.FC = () => {
                 添加
               </Button>
             </div>
+          </Form.Item>
+
+          <Header title="导入导出" />
+          <p>仅导入当前不存在的新数据，导入数据成功后，需刷新页面可见新数据</p>
+          <br />
+          <Form.Item
+            label="基础数据"
+            extra={"仅导入当前没有的设备数据，导出全部数据"}
+          >
+            <ImportExport name={TableDataName} />
+          </Form.Item>
+          <Form.Item
+            label="自定义数据"
+            extra={"仅导入当前没有的自定义设备数据，导出全部自定义设备数据"}
+          >
+            <ImportExport name={TableStyleDataName} />
+          </Form.Item>
+          <Form.Item
+            label="变更数据"
+            extra={"仅导入当前没有的设备变更数据，导出全部变更数据"}
+          >
+            <ImportExport name={TableChangeName} />
           </Form.Item>
         </Form>
       </div>
