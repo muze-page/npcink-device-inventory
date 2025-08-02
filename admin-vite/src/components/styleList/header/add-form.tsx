@@ -5,7 +5,6 @@ import { useContext } from "react";
 import { StyleContext } from "@/components/styleList/styleContext";
 import {
   Button,
-  Radio,
   Form,
   Input,
   InputNumber,
@@ -21,11 +20,14 @@ import { addStyleDeviceData } from "@/axios";
 
 import { device_status } from "@/store/dataReplace";
 import { devStatus } from "@/store/tool";
+
 //准备采购平台,付款方式
 import { stylePlatform, stylePayType } from "@/store/dataReplace";
 
+//准备输入框
+const { TextArea } = Input;
+
 //当前表格的数据类型
-//表单用类型
 type FormType = {
   name: string; //使用人
   purpose: string; //用途
@@ -52,12 +54,12 @@ const defaultValue: FormType = {
   purpose: "",
   state: "apply", //设备状态
   title: "",
-  number: 0,
+  number: 1,
   total: 0,
   platform: "",
   shop_name: "",
   link: "",
-  order_time: dayjs("2025-07-01"),
+  order_time: dayjs(), //当天日期
   order: "",
   pay_method: "",
   purchaser: "",
@@ -125,7 +127,7 @@ const App = ({ form, handleOk }: AddFormProps) => {
       platform: "tb",
       shop_name: "华为路由器专卖店",
       link: "https://www.taobao.com",
-      order_time: dayjs("2025-06-01"),
+      order_time: dayjs(),
       order: "tbasdf65616",
       pay_method: "zfb",
       purchaser: "王五",
@@ -136,71 +138,127 @@ const App = ({ form, handleOk }: AddFormProps) => {
     <Form
       form={form}
       name="basic"
-      labelCol={{ span: 8 }}
-      wrapperCol={{ span: 16 }}
+      labelCol={{ span: 7 }}
+      wrapperCol={{ span: 17 }}
       style={{ maxWidth: 600 }}
       initialValues={defaultValue}
       onFinish={onFinish}
       onFinishFailed={onFinishFailed}
       autoComplete="off"
     >
-      <Form.Item<FormType> label="使用人：" name="name">
-        <Input placeholder="使用此设备的人员，部门或位置" />
+      <Form.Item<FormType>
+        label="店铺名称"
+        name="shop_name"
+        rules={[{ required: true, message: "请填写此信息" }]}
+      >
+        <Input allowClear/>
+      </Form.Item>
+      <Form.Item<FormType>
+        label="订单单号"
+        name="order"
+        rules={[{ required: true, message: "请填写此信息" }]}
+      >
+        <Input allowClear/>
+      </Form.Item>
+      <Form.Item<FormType>
+        label="设备名称："
+        name="title"
+        rules={[{ required: true, message: "请填写此信息" }]}
+      >
+        <Input allowClear/>
       </Form.Item>
 
-      <Form.Item<FormType> label="设备状态：" name="state">
-        <Radio.Group options={device_status} />
+      <Form.Item<FormType>
+        label="设备用途："
+        name="purpose"
+        rules={[{ required: true, message: "请填写此信息" }]}
+      >
+        <Input  allowClear/>
       </Form.Item>
-
-      <Form.Item<FormType> label="店铺名称" name="shop_name">
-        <Input />
-      </Form.Item>
-      <Form.Item<FormType> label="设备名称：" name="title">
-        <Input />
-      </Form.Item>
-      <Form.Item<FormType> label="购买链接：" name="link">
-        <Input />
-      </Form.Item>
-
-      <Form.Item<FormType> label="设备单号" name="order">
-        <Input />
-      </Form.Item>
-      <Form.Item<FormType> label="设备用途：" name="purpose">
-        <Input placeholder="此设备的使用用途" />
+      <Form.Item<FormType>
+        label="购买链接："
+        name="link"
+        rules={[{ required: true, message: "请填写此信息" }]}
+      >
+        <TextArea rows={2} allowClear/>
       </Form.Item>
       <Row>
-        <Col span={12}>
-          <Form.Item<FormType> label="设备数量" name="number">
-            <InputNumber addonAfter="个" />
+        <Col span={8}>
+          <Form.Item<FormType>
+            label="数量"
+            name="number"
+            rules={[{ required: true, message: "请填写此信息" }]}
+          >
+            <InputNumber addonAfter="个" style={{ width: 122 }} />
           </Form.Item>
         </Col>
-        <Col span={12}>
-          <Form.Item<FormType> label="采购价格" name="total">
-            <InputNumber addonAfter="¥" />
+        <Col span={8}>
+          <Form.Item<FormType>
+            label="价格"
+            name="total"
+            rules={[{ required: true, message: "请填写此信息" }]}
+          >
+            <InputNumber addonAfter="¥" style={{ width: 122 }} />
           </Form.Item>
         </Col>
-      </Row>
-      <Row>
-        <Col span={12}>
-          <Form.Item<FormType> label="采购人员" name="purchaser">
-            <Input placeholder="付款购买此设备人的姓名" />
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item<FormType> label="付款时间" name="order_time">
+        <Col span={8}>
+          <Form.Item<FormType>
+            label="时间"
+            name="order_time"
+            rules={[{ required: true, message: "请填写此信息" }]}
+          >
             <DatePicker />
           </Form.Item>
         </Col>
       </Row>
+
+      <Row>
+        <Col span={8}>
+          <Form.Item<FormType>
+            label="采购"
+            name="platform"
+            rules={[{ required: true, message: "请填写此信息" }]}
+          >
+            <Select options={stylePlatform} style={{ width: 122 }} />
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item<FormType>
+            label="支付"
+            name="pay_method"
+            rules={[{ required: true, message: "请填写此信息" }]}
+          >
+            <Select options={stylePayType} style={{ width: 122 }} />
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item<FormType>
+            label="状态："
+            name="state"
+            rules={[{ required: true, message: "请填写此信息" }]}
+          >
+            <Select options={device_status} style={{ width: 122 }} />
+          </Form.Item>
+        </Col>
+      </Row>
+
       <Row>
         <Col span={12}>
-          <Form.Item<FormType> label="采购平台" name="platform">
-            <Select options={stylePlatform} />
+          <Form.Item<FormType>
+            label="使用人："
+            name="name"
+            rules={[{ required: true, message: "请填写此信息" }]}
+          >
+            <Input allowClear placeholder="人员，部门或位置" />
           </Form.Item>
         </Col>
         <Col span={12}>
-          <Form.Item<FormType> label="支付方式" name="pay_method">
-            <Select options={stylePayType} />
+          <Form.Item<FormType>
+            label="采购人"
+            name="purchaser"
+            rules={[{ required: true, message: "请填写此信息" }]}
+          >
+            <Input allowClear placeholder="负责购买此设备的人" />
           </Form.Item>
         </Col>
       </Row>
