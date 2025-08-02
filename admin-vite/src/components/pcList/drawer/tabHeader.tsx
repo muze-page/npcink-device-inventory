@@ -35,17 +35,6 @@ const App: React.FC = ({}) => {
     (osTypeObj.name === "Mac" && "Mac_content_background_color")
   }`;
 
-  //准备CPU、主板、显卡、硬盘参数
-  const msgData = {
-    cpu: drawerData?.data?.cpu?.brand || "未知CPU", //CPU
-    model: drawerData?.data?.baseboard?.model || "未知主板", //主板
-    graphics: drawerData?.data?.graphics?.controllers?.[0]?.model || "未知显卡", //显卡
-    disk:
-      drawerData?.meat?.disk > 1024
-        ? (drawerData.meat.disk / 1024).toFixed(2) + " T"
-        : (drawerData?.meat?.disk || 0) + " G",
-  };
-
   return (
     <>
       {/**品牌标志 */}
@@ -60,9 +49,7 @@ const App: React.FC = ({}) => {
           {/**姓名 */}
           <div className="flex justify-between">
             <div className="flex items-center text-lg">
-              {isName ? (
-                drawerData.name ?? drawerData.name ?? "暂无姓名"
-              ) : (
+              {isName ? (drawerData.name) : (
                 <Skeleton.Input active={true} size={"small"} />
               )}
             </div>
@@ -75,11 +62,11 @@ const App: React.FC = ({}) => {
           {/*大概配置信息 */}
           <ul>
             <li className="mt-2">
-              {drawerData.meat.cpu} / {msgData.cpu} / {drawerData.meat.memory} G
-              / {msgData.disk}
+              {drawerData.meat.cpu} / {drawerData.meat.cpuModel} /{" "}
+              {drawerData.meat.memory}/ {drawerData.meat.disk}
             </li>
             <li className="mt-2">
-              {msgData.graphics} / {msgData.model}
+              {drawerData.meat.graphics} / {drawerData.meat.model}
             </li>
             <li className="mt-2">
               <Space size={"large"} align="baseline">

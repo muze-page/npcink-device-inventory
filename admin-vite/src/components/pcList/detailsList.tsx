@@ -11,7 +11,7 @@ import Win from "@/assets/windows_ico.png";
 import { findOsTypeObj, findBValue } from "@/store/tool";
 
 interface Props {
-  data: MysqlDeviceChangeMeat;//设备数据
+  data: MysqlDeviceChangeMeat; //设备数据
   onActive: () => void; //修改弹窗状态
   onDrawerData: () => void; //保存值
 }
@@ -60,11 +60,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           <div className="text-sm font-bold text-zinc-800 leading-8 m-0  ">
             {/** <div className={isName ? "" : "hideName"}> */}
             {isName ? (
-              data.name ? (
-                data.name
-              ) : (
-                "暂无"
-              )
+              data.name
             ) : (
               <Skeleton.Input active={true} size={"small"} />
             )}
@@ -73,15 +69,10 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           </div>
 
           {/*型号*/}
-          <p className="mt-2 w-full truncate">
-            {data.meat.model ? data.meat.model : "暂无"}
-          </p>
+          <p className="mt-2 w-full truncate">{data.meat.model}</p>
           {/*配置信息*/}
           <p className="mt-2">
-            {data.meat.cpu} / {data.meat.memory} G /{" "}
-            {data.meat.disk > 1024
-              ? (data.meat.disk / 1024).toFixed(2) + " T"
-              : data.meat.disk + " G"}
+            {data.meat.cpu} / {data.meat.memory} / {data.meat.disk}
           </p>
           {/*编号*/}
           <p className="grid gap-y-1 items-center  mt-2">

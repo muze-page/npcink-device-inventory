@@ -32,27 +32,30 @@ export type MysqlDeviceChange = MysqlDeviceData & {
 export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
   meat: {
     //为方便筛选
-    os: string; //系统
-    ostype: string; //系统类型
-    cpu: string; //cpu型号
-    model: string; //系统名称
-    memory: number; //内存
-    disk: number; //硬盘
+    os: string; //系统版本 Windows 10
+    ostype: string; //系统类型 Windows Linux Macos
+    cpu: string; //CPU 品牌 Intel
+    cpuModel: string; //CPU 型号 Core i5-10400F
+    model: string; //设备型号
+    motherboard: string; ///主板型号
+    graphics: string; //显卡型号
+    memory: string; //内存容量
+    disk: string; //硬盘容量
   };
   mac: string[];
 };
 
 //筛选数据类型 - 电脑设备
 export interface FilterData {
-  state: "apply" | "idie" | "fault" | "scrap"|"all"; //筛选电脑设备状态
+  state: "apply" | "idie" | "fault" | "scrap" | "all"; //筛选电脑设备状态
   department: string; //部门
 }
 
 //筛选数据类型 - 自定义设备
 export interface FilterStyleData {
-  state: "apply" | "idie" | "fault" | "scrap"|"all"; //筛选自定义设备状态
-  platform: string;//筛选采购平台
-  payMethod: string;//付款方式
+  state: "apply" | "idie" | "fault" | "scrap" | "all"; //筛选自定义设备状态
+  platform: string; //筛选采购平台
+  payMethod: string; //付款方式
 }
 
 //选项数据类型

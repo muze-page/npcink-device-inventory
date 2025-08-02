@@ -9,6 +9,7 @@ import {
   ComputerRam,
   ComputerDevice,
   ComputerNet,
+  ComputerControllers,
 } from "@/store/interface";
 import { defaultOption } from "@/store";
 import dayjs, { Dayjs } from "dayjs";
@@ -312,7 +313,6 @@ const calculateResidualValue = (purchasePrice: number, monthsUsed: number) => {
   const totalDepreciationPeriod = defaultOption.depreciation_year; // 折旧年限（月）
   //console.log("残值率", salvageRate);
   //console.log("折旧月数", totalDepreciationPeriod);
-
   return (
     purchasePrice -
     ((purchasePrice * (1 - salvageRate)) / totalDepreciationPeriod) * monthsUsed
@@ -351,7 +351,7 @@ const calculateTotalSize = (dataArrays: DataType[]) => {
   const totalSize = dataArrays.reduce((sum: number, obj: { size: number }) => {
     return sum + obj.size;
   }, 0);
-  return totalSize / (1024 * 1024 * 1024); // 将字节转换为GB
+  return totalSize / (1000 * 1000 * 1000); // 将字节转换为GB
 };
 
 /**
@@ -396,24 +396,40 @@ const sortByIDDescending = (data: MysqlDeviceChange[]) => {
   return data;
 };
 
+//处理大容量内存和硬盘
+export const handleMemoryAndDisk = (data: number) => {
+  const value =
+    data > 1000 ? (data / 1000).toFixed(2) + " T" : (data || 0) + " G"; //硬盘
+  return value;
+};
+
+//处理多张显卡情况  输入显卡数组
+export const handleGraphics = (data: ComputerControllers[]) => {
+  const value = data.map((item) => item.model).join("_");
+  return value;
+};
 //添加需要的筛选标记数据
 export const updateOSType = (
   dataArrays: MysqlDeviceChange[]
 ): MysqlDeviceChangeMeat[] => {
   //对拿到的数据进行排序
   const sortData = sortByIDDescending(dataArrays);
+  //添加meat值，方便使用
   const updatedData = sortData.map((obj: MysqlDeviceChange) => {
     const parsedData = obj.data; //拿到对象
     const memory = calculateTotalSize(parsedData.memLayout); //内存数组
-    const disk = calculateTotalSize(parsedData.diskLayout); //硬盘数组
+    const disk = calculateTotalSize(parsedData.diskLayout); //硬盘数组TODO:要不要分固态和机械硬盘
     //整理添加的信息
     const meat = {
-      os: replaceString(parsedData.os.distro, osTypeReplace), //系统型号
-      ostype: replaceString(parsedData.os.platform, osReplace), //系统版本
-      cpu: parsedData.cpu.manufacturer, //CPU
-      model: parsedData.system.model, //型号
-      memory: Math.floor(memory), //GB 取整
-      disk: Math.floor(disk), //GB 取整
+      os: replaceString(parsedData.os.distro, osTypeReplace), //系统版本 Windows 10
+      ostype: replaceString(parsedData.os.platform, osReplace), //系统类型，windows linux macos
+      cpu: parsedData.cpu.manufacturer, //CPU品牌 Intel
+      cpuModel: parsedData.cpu.brand, //CPU型号 Core™ i5-9400F
+      model: parsedData.system.model, //设备型号
+      motherboard: parsedData.baseboard.model, //主板型号
+      graphics: handleGraphics(parsedData.graphics.controllers), //显卡型号，处理有多张显卡的情况
+      memory: handleMemoryAndDisk(Math.floor(memory)), //内存容量
+      disk: handleMemoryAndDisk(Math.floor(disk)), //硬盘容量
     };
     const mac = extractMacValues(parsedData.net);
     return { ...obj, meat, mac };
