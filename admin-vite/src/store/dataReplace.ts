@@ -50,8 +50,8 @@ export const device_status = [
 
 //自定义产品购买平台
 export const stylePlatform = [
-  { value: "JingDong", label: "京东" },
   { value: "TaoBao", label: "淘宝" },
+  { value: "JingDong", label: "京东" },
   { value: "PingDuoDuo", label: "拼多多" },
   { value: "MeiTuan", label: "美团" },
   { value: "XianYu", label: "闲鱼" },
