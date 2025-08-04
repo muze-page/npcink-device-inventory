@@ -67,7 +67,7 @@ export const stylePayType = [
   { value: "about", label: "其他" },
 ];
 
-//排除的显卡
+//排除出现在这里的显卡型号
 export const excludeGraphics = [
   "Parsec Virtual Display Adapter",
   "OrayIddDriver Device",
