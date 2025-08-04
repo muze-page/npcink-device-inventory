@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Input, Space } from "antd";
 import { fetchData } from "./axios";
-import Detailed from "@/components/part/device-details/detailed";
+import Detailed from "@/components/part/";
 import { MysqlDeviceChange, Computer } from "@/store/interface";
 import ShowUser from "@/components/showUser";
 import type { SearchProps } from "antd/es/input/Search";
