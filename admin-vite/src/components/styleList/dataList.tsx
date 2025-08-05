@@ -67,9 +67,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         </Space>
 
         {/**底部数据 */}
-        <div className="text-sm text-zinc-500  rounded whitespace-nowrap min-h-[190px] mt-4">
+        <div className="text-xs text-zinc-500  rounded whitespace-nowrap min-h-[190px] mt-4">
           {/*设备名称*/}
-          <p className="font-bold text-zinc-800 leading-8 m-0 ">
+          <p className="text-sm font-bold text-zinc-800 leading-8 m-0 ">
             {data.data.title}
           </p>
           {/*使用人*/}
