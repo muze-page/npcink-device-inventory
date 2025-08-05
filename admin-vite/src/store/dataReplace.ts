@@ -82,7 +82,7 @@ export const stylePlatform = [
   { value: "PingDuoDuo", label: "拼多多" },
   { value: "MeiTuan", label: "美团" },
   { value: "XianYu", label: "闲鱼" },
-  { value: "DouYin", label: "抖音" },
+  //{ value: "DouYin", label: "抖音" },
   { value: "Offline", label: "线下" },
   { value: "About", label: "其他" },
 ];

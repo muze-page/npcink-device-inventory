@@ -3,7 +3,7 @@
  *  {JSON.stringify(data, null, 2)}
  */
 import { useContext } from "react";
-import { Tooltip, Skeleton } from "antd";
+import { Tooltip, Skeleton, Space } from "antd";
 
 //时间处理
 import dayjs from "dayjs";
@@ -16,7 +16,9 @@ import { StyleDevice } from "@/store/interface";
 
 //准备采购平台类型
 import { findOsTypeObj } from "@/store/tool";
-import { platformArray } from "@/store/dataReplace";
+
+//准备采购平台列表和支付平台列表
+import { platformArray, payArray } from "@/store/dataReplace";
 
 //工具函数
 import { statusLabel } from "@/store/tool";
@@ -35,15 +37,17 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
     onDrawerData(); //保存值
   };
 
-  //找到需要的平台对象
+  //找到需要的平台对象、付款方式对象
   const platformObj = findOsTypeObj(platformArray, data.data.platform);
+
+  const payFormObj = findOsTypeObj(payArray, data.data.pay_method);
 
   return (
     <>
       {/**开始展示设备信息 */}
       <div
         className="
-        cursor-pointer p-[10px] rounded mr-[2%] mb-4 w-[18.4%] h-[290px] mac
+        cursor-pointer p-4 rounded mr-[2%] mb-4 w-[18.4%] h-[290px] mac
         hover:border-1 hover:border-blue-400 
         [&:nth-child(5n)]:mr-0"
         onClick={() => {
@@ -51,23 +55,26 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         }}
       >
         {/**顶部标志 */}
-        <div className="mt-2 ml-3">
+
+        <Space className="flex justify-between">
           <img
             key={platformObj.name}
             src={platformObj.image}
             className="h-10"
           />
-        </div>
+
+          <img key={payFormObj.name} src={payFormObj.image} className="h-10" />
+        </Space>
 
         {/**底部数据 */}
-        <div className="p-4 text-xs text-zinc-500  rounded whitespace-nowrap min-h-[190px]">
+        <div className="text-sm text-zinc-500  rounded whitespace-nowrap min-h-[190px] mt-4">
           {/*设备名称*/}
-          <p className="text-sm font-bold text-zinc-800 leading-8 m-0 ">
+          <p className="font-bold text-zinc-800 leading-8 m-0 ">
             {data.data.title}
           </p>
           {/*使用人*/}
           <p className="mt-2">
-            使用人：
+            <b> 使用人：</b>
             {isName ? (
               data.name
             ) : (
@@ -75,16 +82,22 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             )}
           </p>
           {/*设备价格*/}
-          <p className="mt-2">价格：{data.data.total}</p>
+          <p className="mt-2">
+            <b>价格：</b>
+            {data.data.total}
+          </p>
           {/*状态*/}
           <p className="mt-2 w-full truncate">
-            状态：{statusLabel(data.state)}
+            <b>状态：</b>
+            {statusLabel(data.state)}
           </p>
 
           {/*时间*/}
           <p className="grid gap-y-1 items-center  mt-2">
             <Tooltip title={"时间：" + data.time}>
-              <span>时间 ： {dayjs(data.time).format("YY-MM-DD")}</span>
+              <span>
+                <b>时间：</b> {dayjs(data.time).format("YY-MM-DD")}
+              </span>
             </Tooltip>
           </p>
         </div>

@@ -42,7 +42,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
       {/**开始循环 */}
       <div
         className="
-        cursor-pointer p-[10px] rounded mr-[2%] mb-4 w-[18.4%] h-[290px] mac
+        cursor-pointer p-4 rounded mr-[2%] mb-4 w-[18.4%] h-[290px] mac
         hover:border-1 hover:border-blue-400 
         [&:nth-child(5n)]:mr-0"
         onClick={() => {
@@ -50,14 +50,14 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         }}
       >
         {/**顶部标志 */}
-        <div className="mt-2 ml-3">
+        <div>
           <img key={osTypeObj.name} src={osTypeObj.image} className="h-10" />
         </div>
 
         {/**底部数据 */}
-        <div className="p-4 text-xs text-zinc-500   rounded whitespace-nowrap min-h-[190px]">
+        <div className="mt-4 text-sm text-zinc-500   rounded whitespace-nowrap min-h-[190px]">
           {/*姓名*/}
-          <div className="text-sm font-bold text-zinc-800 leading-8 m-0  ">
+          <div className="font-bold text-zinc-800 leading-8 m-0  ">
             {/** <div className={isName ? "" : "hideName"}> */}
             {isName ? (
               data.name
@@ -84,17 +84,28 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           {/*编号*/}
           <p className="grid gap-y-1 items-center  mt-2">
             <Tooltip title={"设备编号：" + data.number}>
-              <span>编号 ： {data.number}</span>
+              <span>
+                <b>编号 ：</b> {data.number}
+              </span>
             </Tooltip>
 
             <Tooltip title={"当前部门：" + data.department}>
-              <span>部门：{data.department}</span>
+              <span>
+                <b>部门：</b>
+                {data.department}
+              </span>
             </Tooltip>
             <Tooltip title={"当前状态：" + deviceStatus}>
-              <span>状态：{deviceStatus}</span>
+              <span>
+                <b>状态：</b>
+                {deviceStatus}
+              </span>
             </Tooltip>
             <Tooltip title={"当前IP：" + data.ip}>
-              <span>IP：{data.ip}</span>
+              <span>
+                <b>IP：</b>
+                {data.ip}
+              </span>
             </Tooltip>
           </p>
         </div>

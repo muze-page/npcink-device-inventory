@@ -13,6 +13,7 @@ import {
 } from "@/store/interface";
 import { defaultOption } from "@/store";
 import dayjs, { Dayjs } from "dayjs";
+import Unknown from "@/assets/type/unknown.png";
 
 //替换用数组
 import {
@@ -195,7 +196,7 @@ export const findOsTypeObj = (array: OsTypeArray[], value: string) => {
     result || {
       id: 0,
       name: "unknown",
-      image: "unknown.png" /* 其他默认属性 */,
+      image: Unknown /* 其他默认属性 */,
     }
   );
 };
