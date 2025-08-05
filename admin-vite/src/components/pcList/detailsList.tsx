@@ -50,7 +50,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         }}
       >
         {/**顶部标志 */}
-        <div className="mt-2 mb-3 ml-3">
+        <div className="mt-2 ml-3">
           <img key={osTypeObj.name} src={osTypeObj.image} className="h-10" />
         </div>
 
@@ -69,10 +69,13 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           </div>
 
           {/*设备型号*/}
-          <Tooltip title={"设备型号：" + data.meat.model} className="mt-2 w-full truncate">
+          <Tooltip
+            title={"设备型号：" + data.meat.model}
+            className="mt-2 w-full truncate"
+          >
             {data.meat.model}
           </Tooltip>
-          <br/>
+          <br />
           {/*配置信息*/}
           <Tooltip title={"CPU  / 内存容量 / 硬盘容量"} className="mt-2">
             {data.meat.cpu} / {data.meat.memory} / {data.meat.disk}

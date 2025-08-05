@@ -54,7 +54,7 @@ const defaultValue: FormType = {
   link: "",
   order_time: dayjs(), //当天日期
   order: "",
-  pay_method: "",
+  pay_method: "Alipay",
   purchaser: "",
 };
 

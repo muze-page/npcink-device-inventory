@@ -163,12 +163,13 @@ export interface StyleDeviceData {
     | "MeiTuan"
     | "XianYu"
     | "DouYin"
+    | "Offline"
     | "About"; //采购平台
   shop_name: string; //店铺名称
   link: string; //购买链接
   order_time: Dayjs; //下单时间
   order: string; //订单号
-  pay_method: string; //支付方式
+  pay_method: "Alipay" | "WeChat" | "Cash" | "BankCard" | "AboutPay"; //支付方式
   purchaser: string; //采购人
 }
 

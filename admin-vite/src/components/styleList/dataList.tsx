@@ -21,7 +21,7 @@ import { platformArray } from "@/store/dataReplace";
 //工具函数
 import { statusLabel } from "@/store/tool";
 interface Props {
-  data: StyleDevice;//拿到自定义设备数据
+  data: StyleDevice; //拿到自定义设备数据
   onActive: () => void; //修改状态
   onDrawerData: () => void; //保存值
 }
@@ -51,7 +51,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         }}
       >
         {/**顶部标志 */}
-        <div className="mt-2 mb-3 ml-3">
+        <div className="mt-2 ml-3">
           <img
             key={platformObj.name}
             src={platformObj.image}

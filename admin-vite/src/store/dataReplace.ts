@@ -48,25 +48,6 @@ export const device_status = [
   { value: "scrap", label: "报废" },
 ];
 
-//自定义产品购买平台
-export const stylePlatform = [
-  { value: "TaoBao", label: "淘宝" },
-  { value: "JingDong", label: "京东" },
-  { value: "PingDuoDuo", label: "拼多多" },
-  { value: "MeiTuan", label: "美团" },
-  { value: "XianYu", label: "闲鱼" },
-  { value: "DouYin", label: "抖音" },
-  { value: "About", label: "其他" },
-];
-
-//自定义产品支付方式
-export const stylePayType = [
-  { value: "wx", label: "微信" },
-  { value: "zfb", label: "支付宝" },
-  { value: "yhk", label: "银行卡" },
-  { value: "about", label: "其他" },
-];
-
 //排除出现在这里的显卡型号
 export const excludeGraphics = [
   "Parsec Virtual Display Adapter",
@@ -94,13 +75,26 @@ export const columnsTable = [
   },
 ];
 
+//自定义产品购买平台
+export const stylePlatform = [
+  { value: "TaoBao", label: "淘宝" },
+  { value: "JingDong", label: "京东" },
+  { value: "PingDuoDuo", label: "拼多多" },
+  { value: "MeiTuan", label: "美团" },
+  { value: "XianYu", label: "闲鱼" },
+  { value: "DouYin", label: "抖音" },
+  { value: "Offline", label: "线下" },
+  { value: "About", label: "其他" },
+];
+
 //准备图标
 import JD from "@/assets/platform/京东.png";
-import MeiTuan from "@/assets/platform/美团.png";
 import TaoBao from "@/assets/platform/淘宝.png";
-import XianYu from "@/assets/platform/闲鱼.png";
 import PDD from "@/assets/platform/拼多多.png";
+import MeiTuan from "@/assets/platform/美团.png";
+import XianYu from "@/assets/platform/闲鱼.png";
 import DouYin from "@/assets/platform/抖音.png";
+import Offline from "@/assets/platform/线下购买.png";
 import About from "@/assets/platform/其他.png";
 //采购平台展示图片
 export const platformArray = [
@@ -110,5 +104,28 @@ export const platformArray = [
   { name: "MeiTuan", image: MeiTuan },
   { name: "XianYu", image: XianYu },
   { name: "DouYin", image: DouYin },
+  { name: "Offline", image: Offline },
   { name: "About", image: About },
+];
+
+//自定义产品支付方式
+export const stylePayType = [
+  { value: "Wechat", label: "微信" },
+  { value: "Alipay", label: "支付宝" },
+  { value: "BankCard", label: "银行卡" },
+  { value: "Cash", label: "现金" },
+  { value: "About", label: "其他" },
+];
+//支付平台展示图片
+import Alipay from "@/assets/pay/支付宝支付.png";
+import Wechat from "@/assets/pay/微信支付.png";
+import Cash from "@/assets/pay/现金支付.png";
+import BankCard from "@/assets/pay/银行卡支付.png";
+import AboutPay from "@/assets/pay/其他支付.png";
+export const payArray = [
+  { name: "Alipay", image: Alipay },
+  { name: "Wechat", image: Wechat },
+  { name: "BankCard", image: BankCard },
+  { name: "Cash", image: Cash },
+  { name: "AboutPay", image: AboutPay },
 ];

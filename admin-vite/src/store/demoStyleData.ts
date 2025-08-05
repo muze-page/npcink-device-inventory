@@ -8,7 +8,7 @@ const DataOne = {
   order_time: "2023-11-09",
   total: 19999.0,
   order: "TB1234567890",
-  pay_method: "zfb",
+  pay_method: "Alipay",
   platform: "JingDong",
   purchaser: "张三",
 };
@@ -21,7 +21,7 @@ const DateTwo = {
   order_time: "2025-11-09",
   total: 39999.0,
   order: "JD1234567890",
-  pay_method: "wx",
+  pay_method: "WeChat",
   platform: "TaoBao",
   purchaser: "李四",
 };
@@ -34,7 +34,7 @@ const DateThree = {
   order_time: "2025-11-09",
   total: 19999.0,
   order: "PDD1234567890",
-  pay_method: "wx",
+  pay_method: "Cash",
   platform: "PingDuoDuo",
   purchaser: "李四",
 }
@@ -47,7 +47,7 @@ const DateFour = {
   order_time: "2025-11-09",
   total: 9999.0,
   order: "XM1234567890",
-  pay_method: "wx",
+  pay_method: "BankCard",
   platform: "XianYu",
   purchaser: "李四",
 }
@@ -60,7 +60,7 @@ const DateFive = {
   order_time: "2025-11-09",
   total: 9999.0,
   order: "XM1234567890",
-  pay_method: "wx",
+  pay_method: "AboutPay",
   platform: "DouYin",
   purchaser: "李四",
 }
@@ -72,7 +72,7 @@ const DateSix = {
   order_time: "2025-11-09",
   total: 9999.0,
   order: "XM1234567890",
-  pay_method: "wx",
+  pay_method: "Alipay",
   platform: "About",
   purchaser: "李四",
 }
