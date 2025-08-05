@@ -3,7 +3,7 @@
  * TODO:翻页时才获取数据，一开始仅获取两页的数据
  */
 import { SetStateAction, useState, useMemo } from "react";
-import { Pagination } from "antd";
+import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 import { dataMySql } from "@/store";
 import { MysqlDeviceChangeMeat, FilterData } from "@/store/interface";
@@ -189,14 +189,16 @@ const App: React.FC = () => {
         />
         <div className="flex content-start items-center flex-wrap w-full">
           {/**开始循环 */}
-          {pagedFilteredList.map((tab: MysqlDeviceChangeMeat) => (
-            <DetailsList
-              key={tab.id}
-              data={tab}
-              onActive={() => changeActive()}
-              onDrawerData={() => setDrawerData(tab)}
-            />
-          ))}
+          <Flex wrap gap="large">
+            {pagedFilteredList.map((tab: MysqlDeviceChangeMeat) => (
+                <DetailsList
+                  key={tab.id}
+                  data={tab}
+                  onActive={() => changeActive()}
+                  onDrawerData={() => setDrawerData(tab)}
+                />
+            ))}
+          </Flex>
         </div>
         {/**没有数据 */}
         {pagedFilteredList.length === 0 && <SearchNoData />}

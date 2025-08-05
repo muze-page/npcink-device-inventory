@@ -47,9 +47,8 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
       {/**开始展示设备信息 */}
       <div
         className="
-        cursor-pointer p-4 rounded mr-[2%] mb-4 w-[18.4%] h-[290px] mac
-        hover:border-1 hover:border-blue-400 
-        [&:nth-child(5n)]:mr-0"
+        cursor-pointer p-4 rounded  w-52 h-72 mac
+        hover:border-1 hover:border-blue-400 "
         onClick={() => {
           showDrawer();
         }}
@@ -57,29 +56,41 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         {/**顶部标志 */}
 
         <Space className="flex justify-between">
-          <img
-            key={platformObj.name}
-            src={platformObj.image}
-            className="h-10"
-          />
+          <Tooltip title={"采购平台：" + platformObj.name}>
+            <img
+              key={platformObj.name}
+              src={platformObj.image}
+              className="h-10"
+            />
+          </Tooltip>
 
-          <img key={payFormObj.name} src={payFormObj.image} className="h-10" />
+          <Tooltip title={"付款方式：" + payFormObj.name}>
+            <img
+              key={payFormObj.name}
+              src={payFormObj.image}
+              className="h-10"
+            />
+          </Tooltip>
         </Space>
 
         {/**底部数据 */}
         <div className="text-xs text-zinc-500  rounded whitespace-nowrap min-h-[190px] mt-4">
           {/*设备名称*/}
           <p className="text-sm font-bold text-zinc-800 leading-8 m-0 ">
-            {data.data.title}
+            <Tooltip title={"设备名称：" + data.data.title}>
+              {data.data.title}
+            </Tooltip>
           </p>
           {/*使用人*/}
           <p className="mt-2">
-            <b> 使用人：</b>
-            {isName ? (
-              data.name
-            ) : (
-              <Skeleton.Input active={true} size={"small"} className="!h-4" />
-            )}
+            <Tooltip title={"使用人：" + data.name}>
+              <b> 使用人：</b>
+              {isName ? (
+                data.name
+              ) : (
+                <Skeleton.Input active={true} size={"small"} className="!h-4" />
+              )}
+            </Tooltip>
           </p>
           {/*设备价格*/}
           <p className="mt-2">
@@ -94,9 +105,11 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
 
           {/*时间*/}
           <p className="grid gap-y-1 items-center  mt-2">
-            <Tooltip title={"时间：" + data.time}>
+            <Tooltip
+              title={"设备采购时间：" + dayjs(data.time).format("YYYY-MM-DD")}
+            >
               <span>
-                <b>时间：</b> {dayjs(data.time).format("YY-MM-DD")}
+                <b>时间：</b> {dayjs(data.time).format("YYYY-MM-DD")}
               </span>
             </Tooltip>
           </p>

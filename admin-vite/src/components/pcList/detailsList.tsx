@@ -42,9 +42,8 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
       {/**开始循环 */}
       <div
         className="
-        cursor-pointer p-4 rounded mr-[2%] mb-4 w-[18.4%] h-[290px] mac
-        hover:border-1 hover:border-blue-400 
-        [&:nth-child(5n)]:mr-0"
+        cursor-pointer p-4 rounded w-52 h-72 mac
+        hover:border-1 hover:border-blue-400"
         onClick={() => {
           showDrawer();
         }}

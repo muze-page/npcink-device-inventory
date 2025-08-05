@@ -3,7 +3,7 @@
  */
 import { useState, useMemo, SetStateAction } from "react";
 
-import { Pagination } from "antd";
+import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 
 //模糊搜索
@@ -191,15 +191,17 @@ const App: React.FC = () => {
           onName={setIsName}
         />
         <div className="flex content-start items-center flex-wrap w-full">
-          {/**开始循环 */}
-          {pagedFilteredList.map((tab) => (
-            <DataList
-              key={tab.id}
-              data={tab}
-              onActive={() => changeActive()}
-              onDrawerData={() => setDrawerData(tab)}
-            />
-          ))}
+          <Flex wrap gap="large">
+            {/**开始循环 */}
+            {pagedFilteredList.map((tab) => (
+              <DataList
+                key={tab.id}
+                data={tab}
+                onActive={() => changeActive()}
+                onDrawerData={() => setDrawerData(tab)}
+              />
+            ))}
+          </Flex>
         </div>
 
         {/**没有数据 */}
