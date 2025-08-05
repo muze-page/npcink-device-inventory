@@ -8,6 +8,9 @@ import type { PaginationProps } from "antd";
 import { dataMySql } from "@/store";
 import { MysqlDeviceChangeMeat, FilterData } from "@/store/interface";
 
+//模糊搜索
+import Fuse from "fuse.js";
+
 //展示列表
 import DetailsList from "@/components/pcList/detailsList";
 
@@ -72,31 +75,65 @@ const App: React.FC = () => {
     if (filter.department && filter.department != "all")
       data = data.filter((v) => v.department === filter.department);
 
-    //筛选姓名、编号、MAC地址、IP地址
-    if (keyword.trim()) {
-      const k = keyword.toLowerCase();
-      console.log("拿到的K值：" + k);
-
-      //mac地址处理成字符串，方便查找
-      data = data.filter(
-        (v) =>
-          v.name.toLowerCase().includes(k) ||
-          v.number.toLowerCase().includes(k) ||
-          v.mac.some((mac) => mac.toLowerCase().includes(k)) || // 优化点：逐个检查 MAC 地址
-          v.ip.toLowerCase().includes(k)
-      );
-      //console.log("筛选后的data值：" + data);
-    }
+    //console.log("部门筛选后的数据：");
+    //console.dir(data);
     return data;
-  }, [listData, filter, keyword]);
+  }, [listData, filter]);
+
+  /* Fuse 配置：可按需调阈值、权重等 */
+  /**
+   * 使用 useMemo 来创建 fuse 实例，这样当 filteredList 变化时，fuse 也会重新创建
+   */
+  const fuse = useMemo(
+    () =>
+      new Fuse(filteredList, {
+        keys: ["name", "number", "ip", "mac"], // 允许在这两个字段里模糊搜
+        threshold: 0.4, // 0=精确 1=极宽松
+        shouldSort: true,
+        includeScore: true,
+      }),
+    [filteredList]
+  );
+
+  /* 4. 模糊搜索（useMemo 避免重复计算） */
+  //先精确搜索，再模糊搜索
+  const searchList = useMemo(() => {
+    let data = [...filteredList];
+
+    //筛选姓名、编号、MAC地址、IP地址
+    if (keyword) {
+      //console.log("keyword", keyword);
+      //精确匹配
+      const exactMatches = data.filter(
+        (v) =>
+          v.name.toLowerCase().includes(keyword) ||
+          v.number.toLowerCase().includes(keyword) ||
+          v.mac.some((mac) => mac.toLowerCase().includes(keyword)) || // 优化点：逐个检查 MAC 地址
+          v.ip.toLowerCase().includes(keyword)
+      );
+      if (exactMatches.length > 0) {
+        data = exactMatches;
+        //console.log("精确匹配的data值：");
+        //console.dir(data);
+      } else {
+        //模糊搜索
+        data = fuse.search(keyword).map((r) => r.item); //搜索出结果
+        //console.log("模糊搜索匹配的data值：");
+        //console.dir(data);
+      }
+    }
+    //console.log("搜索结果：");
+    //console.dir(data);
+    return data;
+  }, [filteredList, filter, keyword]);
 
   // 计算分页后的数据
   const pagedFilteredList = useMemo(() => {
     /* 3-3 分页切片 */
     const startIndex = (pageNumber - 1) * PAGE_SIZE;
     //截取数据
-    return filteredList.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [filteredList, pageNumber, PAGE_SIZE]);
+    return searchList.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [searchList, pageNumber, PAGE_SIZE]);
 
   //设置当前页码
   const handlePageChange = (page: SetStateAction<number>) => {
@@ -115,7 +152,7 @@ const App: React.FC = () => {
   //console.log("当前页码", pageNumber);
   //console.log("每页展示数量", PAGE_SIZE);
   //console.log("未筛选的数据总数", listData.length);
-  //console.log("筛选后的数据总数", filteredList.length);
+  //console.log("筛选后的数据总数", searchList.length);
   //共享弹窗状态
   const [active, setActive] = useState(false);
 
@@ -163,12 +200,12 @@ const App: React.FC = () => {
         {pagedFilteredList.length === 0 && <SearchNoData />}
 
         {/**分页 */}
-        {filteredList.length > PAGE_SIZE && (
+        {searchList.length > PAGE_SIZE && (
           <div className="mt-4 float-right">
             <Pagination
               current={pageNumber} //当前页数
               pageSize={PAGE_SIZE} //每页条数
-              total={filteredList.length} //数据总数
+              total={searchList.length} //数据总数
               onChange={handlePageChange} //页码或 pageSize 改变的回调，参数是改变后的页码及每页条数
               showSizeChanger //显示每页展示数据数量切换器
               onShowSizeChange={onShowSizeChange} //每页数量改变的回调
@@ -178,7 +215,11 @@ const App: React.FC = () => {
         )}
 
         {/**弹窗 */}
-        <Drawer active={active} onActive={() => changeActive()} data={drawerData} />
+        <Drawer
+          active={active}
+          onActive={() => changeActive()}
+          data={drawerData}
+        />
       </div>
       {/**
        * <Demo />

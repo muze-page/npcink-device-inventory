@@ -236,7 +236,7 @@ const data = [
   },
   {
     id: "19",
-    name: "曹鑫",
+    name: "Interstellar",
     state: "scrap",
     number: "117",
     department: "开发部",
@@ -262,7 +262,7 @@ const data = [
   },
   {
     id: "21",
-    name: "测试",
+    name: "interstllr",
     state: "idie",
     number: "1911",
     department: "0",

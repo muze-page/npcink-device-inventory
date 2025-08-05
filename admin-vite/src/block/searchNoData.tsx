@@ -6,11 +6,9 @@ const App: React.FC = ({}) => {
       className="mt-10"
       description={
         <span>
-          暂无数据
+          未筛选或搜索到数据
           <br />
-          请更换筛选条件
-          <br />
-          或搜索内容试试
+          请更换筛选条件或搜索内容试试
         </span>
       }
     />
