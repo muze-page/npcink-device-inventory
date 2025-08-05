@@ -6,6 +6,9 @@ import { useState, useMemo, SetStateAction } from "react";
 import { Pagination } from "antd";
 import type { PaginationProps } from "antd";
 
+//模糊搜索
+import Fuse from "fuse.js";
+
 //数据渲染组件
 import DataList from "@/components/styleList/dataList";
 
@@ -91,30 +94,65 @@ const App: React.FC = () => {
     if (filter.payMethod && filter.payMethod != "all")
       data = data.filter((v) => v.data.pay_method === filter.payMethod);
 
-    //筛选姓名、产品名称、订单号
-    if (keyword.trim()) {
-      const k = keyword.toLowerCase();
+    return data;
+  }, [devices, filter]);
 
-      //查找使用人姓名、设备名称、订单号、采购人姓名、TODO:加入模糊搜索
-      data = data.filter(
-        (v) =>
-          v.name.toLowerCase().includes(k) ||
-          v.data.title.toLowerCase().includes(k) ||
-          v.data.order.toLowerCase().includes(k) ||
-          v.data.purchaser.toLowerCase().includes(k)
-      );
-      //console.log("筛选后的data值：" + data);
+  /* Fuse 配置：可按需调阈值、权重等 */
+  /**
+   * 使用 useMemo 来创建 fuse 实例，这样当 filteredList 变化时，fuse 也会重新创建
+   */
+  const fuse = useMemo(
+    () =>
+      new Fuse(filteredList, {
+        keys: ["name", "data.title", "data.order", "data.purchaser"], // 允许在这两个字段里模糊搜
+        threshold: 0.4, // 0=精确 1=极宽松
+        shouldSort: true,
+        includeScore: true,
+      }),
+    [filteredList]
+  );
+
+  /* 4. 模糊搜索（useMemo 避免重复计算） */
+  //先精确搜索，再模糊搜索
+  const searchList = useMemo(() => {
+    let data = [...filteredList];
+    //关键字转小写，减低搜索出错概率
+    const lowerKeyword = keyword.toLowerCase();
+    //console.log("拿到的列表值", data);
+    //console.dir(data);
+    //console.log("keyword", keyword);
+
+    //查找使用人姓名、设备名称、订单号、采购人姓名
+    //精确匹配
+    const exactMatches = data.filter(
+      (v) =>
+        (v.name && v.name.toLowerCase().includes(lowerKeyword)) ||
+        (v.data.title && v.data.title.toLowerCase().includes(lowerKeyword)) ||
+        (v.data.order && v.data.order.toLowerCase().includes(lowerKeyword)) ||
+        (v.data.purchaser &&
+          v.data.purchaser.toLowerCase().includes(lowerKeyword))
+    );
+
+    if (exactMatches.length > 0) {
+      data = exactMatches;
+      //console.log("精确匹配的data值：");
+      //console.dir(data);
+    } else {
+      //模糊搜索
+      data = fuse.search(keyword).map((r) => r.item); //搜索出结果
+      //console.log("模糊搜索匹配的data值：");
+      //console.dir(data);
     }
     return data;
-  }, [devices, filter, keyword]);
+  }, [filteredList, keyword]);
 
   // 计算分页后的数据
   const pagedFilteredList = useMemo(() => {
     /* 3-3 分页切片 */
     const startIndex = (pageNumber - 1) * PAGE_SIZE;
     //截取数据
-    return filteredList.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [filteredList, pageNumber, PAGE_SIZE]);
+    return searchList.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [searchList, pageNumber, PAGE_SIZE]);
 
   //设置当前页码
   const handlePageChange = (page: SetStateAction<number>) => {
@@ -168,12 +206,12 @@ const App: React.FC = () => {
         {pagedFilteredList.length === 0 && <SearchNoData />}
 
         {/**分页 */}
-        {filteredList.length > PAGE_SIZE && (
+        {searchList.length > PAGE_SIZE && (
           <div className="mt-4 float-right">
             <Pagination
               current={pageNumber} //当前页数
               pageSize={PAGE_SIZE} //每页条数
-              total={filteredList.length} //数据总数
+              total={searchList.length} //数据总数
               onChange={handlePageChange} //页码或 pageSize 改变的回调，参数是改变后的页码及每页条数
               showSizeChanger //显示每页展示数据数量切换器
               onShowSizeChange={onShowSizeChange} //每页数量改变的回调

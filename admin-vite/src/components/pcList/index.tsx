@@ -99,17 +99,19 @@ const App: React.FC = () => {
   //先精确搜索，再模糊搜索
   const searchList = useMemo(() => {
     let data = [...filteredList];
+    //关键字转小写，减低搜索出错概率
+    const lowerKeyword = keyword.toLowerCase();
 
     //筛选姓名、编号、MAC地址、IP地址
-    if (keyword) {
-      //console.log("keyword", keyword);
+    if (lowerKeyword) {
+      //console.log("lowerKeyword", lowerKeyword);
       //精确匹配
       const exactMatches = data.filter(
         (v) =>
-          v.name.toLowerCase().includes(keyword) ||
-          v.number.toLowerCase().includes(keyword) ||
-          v.mac.some((mac) => mac.toLowerCase().includes(keyword)) || // 优化点：逐个检查 MAC 地址
-          v.ip.toLowerCase().includes(keyword)
+          v.name.toLowerCase().includes(lowerKeyword) ||
+          v.number.toLowerCase().includes(lowerKeyword) ||
+          v.mac.some((mac) => mac.toLowerCase().includes(lowerKeyword)) || // 优化点：逐个检查 MAC 地址
+          v.ip.toLowerCase().includes(lowerKeyword)
       );
       if (exactMatches.length > 0) {
         data = exactMatches;
