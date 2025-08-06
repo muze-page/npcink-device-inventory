@@ -270,7 +270,11 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                             'purchase' => isset($item['purchase']) ? $item['purchase'] : 0,
                             'depreciation' => isset($item['depreciation']) ? $item['depreciation'] : 0,
                             'ip' => isset($item['ip']) ? $item['ip'] : '',
-                            'time' => isset($item['time']) ? ($item['time']) : null,
+                            // 使用空合并操作符，优先使用 time，如果没有则使用 created_at
+                            'created_at' => $item['time'] ?? $item['created_at'] ?? null, //为了兼容性过渡用
+                            //'created_at' => isset($item['created_at']) ? ($item['created_at']) : null,
+
+                            'updated_at' => isset($item['updated_at']) ? ($item['updated_at']) : null,
                             'uuid' => isset($item['uuid']) ? $item['uuid'] : '',
                             'data' => isset($item['data']) ? ($item['data']) : null,
                         );
@@ -294,7 +298,8 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     if (!$existingData) {
                         $insert_data[] = array(
                             'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
-                            'time' => isset($item['time']) ? $item['time'] :  0,
+                            // 使用空合并操作符，优先使用 time，如果没有则使用 created_at
+                            'created_at' => $item['time'] ?? $item['created_at'] ?? null, //为了兼容性过渡用
                             'user' => isset($item['user']) ? $item['user'] :  null,
                             'type' => isset($item['type']) ? $item['type'] :  null,
                             'data' => isset($item['data']) ? $item['data'] :  null,
@@ -322,7 +327,8 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                             'name' => isset($item['name']) ? $item['name'] :  null,
                             'purpose' => isset($item['purpose']) ? $item['purpose'] :  null,
                             'state' => isset($item['state']) ? $item['state'] :  null,
-                            'time' => isset($item['time']) ? $item['time'] :  0,
+                            // 使用空合并操作符，优先使用 time，如果没有则使用 created_at
+                            'created_at' => $item['time'] ?? $item['created_at'] ?? null, //为了兼容性过渡用
                             'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
                             'data' => isset($item['data']) ? $item['data'] :  null,
                         );

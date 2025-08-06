@@ -102,9 +102,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
 
           {/*时间*/}
           <p className="grid gap-y-1 items-center  mt-2">
-            <Tooltip title={"设备采购时间：" + formatDate(data.time)}>
+            <Tooltip title={"设备采购时间：" + formatDate(data.created_at)}>
               <span>
-                <b>时间：</b> {formatDate(data.time)}
+                <b>时间：</b> {formatDate(data.created_at)}
               </span>
             </Tooltip>
           </p>

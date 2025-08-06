@@ -62,7 +62,7 @@ const App: React.FC<Props> = ({ onActive }) => {
     const valuesData = {
       id: drawerData.id,
       uuid: uuid,
-      time:drawerData.time,
+      created_at:drawerData.created_at,
       name: values.name,
       purpose: values.purpose,
       state: values.state,

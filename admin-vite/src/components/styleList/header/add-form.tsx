@@ -107,7 +107,7 @@ const App = ({ form, handleOk }: AddFormProps) => {
         const deviceData = {
           uuid: state.deviceData.uuid,
           id: state.deviceData.id,
-          time: state.deviceData.time,
+          created_at: state.deviceData.created_at,
           ...data,
         };
         handleAddDevice(deviceData); // 调用添加设备的回调函数

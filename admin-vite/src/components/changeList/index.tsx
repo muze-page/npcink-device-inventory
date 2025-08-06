@@ -7,7 +7,6 @@ import { searchChangeAllData } from "@/axios";
 import { Space, Button, Table, message } from "antd";
 import type { TableColumnsType } from "antd";
 import { DeviceChangeList } from "@/store/interface";
-import { exportTable } from "@/store/tool";
 //
 
 const App: React.FC = () => {
@@ -97,12 +96,7 @@ const App: React.FC = () => {
     },
   ];
 
-  //导出表格数据
-  const exportForm = async () => {
-    await getData();
-    //console.log(dataAxios);
-    exportTable(dataAxios, "硬件变更数据列表");
-  };
+
 
   //隐藏姓名
   const [isActive, setIsActive] = useState(false);
@@ -120,7 +114,6 @@ const App: React.FC = () => {
       <br />
 
       <Space>
-        <Button onClick={exportForm}>下载表格</Button>
         <Button onClick={toggleStyle}>
           {isActive ? "展示" : "隐藏"}姓名
         </Button>{" "}
