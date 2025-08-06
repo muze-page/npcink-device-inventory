@@ -3,15 +3,14 @@
  */
 import React from "react";
 import { Card, Space } from "antd";
-import {findBValue} from "@/store/tool";
-import {device_status} from "@/store/dataReplace";
+import { findBValue, formatDate } from "@/store/tool";
+import { device_status } from "@/store/dataReplace";
 import { MysqlDeviceChange } from "@/store/interface";
 
 interface Props {
   data: MysqlDeviceChange; //设备数据
 }
 const App: React.FC<Props> = ({ data }) => {
-
   return (
     <>
       <Space direction="vertical" size={16}>
@@ -26,7 +25,7 @@ const App: React.FC<Props> = ({ data }) => {
           </p>
           <p>
             <b>时间：</b>
-            {data.time}
+            {formatDate(data.created_at)}
           </p>
           <p>
             <b>部门：</b>
@@ -34,7 +33,7 @@ const App: React.FC<Props> = ({ data }) => {
           </p>
           <p>
             <b>状态：</b>
-            {findBValue(device_status,data.state)}
+            {findBValue(device_status, data.state)}
           </p>
         </Card>
       </Space>

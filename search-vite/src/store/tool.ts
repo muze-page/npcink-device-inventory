@@ -6,6 +6,14 @@ import {
   MysqlDeviceChangeMeat,
   DataItemArr,
 } from "@/store/interface";
+import dayjs, { Dayjs } from "dayjs";
+
+//传入日期，返回格式化
+export const formatDate = (date: Dayjs) => {
+  const formattedTime = dayjs(date).format("YYYY 年 MM 月 DD 日");
+  //console.log("Formatted Time:", formattedTime);
+  return formattedTime;
+};
 
 /**
  *拿到指定键的值并统计该键的出现次数

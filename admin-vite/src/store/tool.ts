@@ -29,7 +29,7 @@ export const devStatus: boolean = import.meta.env.VITE_STATE;
 
 //传入日期，返回格式化
 export const formatDate = (date: Dayjs) => {
-  const formattedTime = dayjs(date).format("YYYY-MM-DD");
+  const formattedTime = dayjs(date).format("YYYY 年 MM 月 DD 日");
   //console.log("Formatted Time:", formattedTime);
   return formattedTime;
 };
