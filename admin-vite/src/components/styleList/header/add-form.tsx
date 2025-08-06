@@ -122,7 +122,7 @@ const App = ({ form, handleOk }: AddFormProps) => {
 
   //一键填充数据，测试用
   const fillTestData = () => {
-    form?.setFieldsValue({
+    const data: FormType = {
       name: "张三",
       purpose: "测试用途",
       state: "apply",
@@ -134,9 +134,10 @@ const App = ({ form, handleOk }: AddFormProps) => {
       link: "https://www.taobao.com",
       order_time: dayjs(),
       order: "tbasdf65616",
-      pay_method: "zfb",
+      pay_method: "Alipay",
       purchaser: "王五",
-    });
+    };
+    form?.setFieldsValue(data);
   };
 
   return (
