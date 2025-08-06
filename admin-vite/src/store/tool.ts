@@ -50,23 +50,6 @@ export const judge_bool = (boo: boolean) => {
   }
 };
 
-/**
- * 字节转换单位
- */
-export const bytesToMB = (bytes: number | null, type: string) => {
-  if (bytes === null) {
-    return "0";
-  }
-  if (type == "MB") {
-    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
-  }
-  if (type == "GB") {
-    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
-  }
-  if (type == "TB") {
-    return (bytes / (1024 * 1024 * 1024 * 1024)).toFixed(2) + " TB";
-  }
-};
 
 // IPv4 正则表达式
 const ipv4Regex =
@@ -347,7 +330,7 @@ const calculateTotalSize = (dataArrays: DataType[]) => {
   const totalSize = dataArrays.reduce((sum: number, obj: { size: number }) => {
     return sum + obj.size;
   }, 0);
-  return totalSize / (1000 * 1000 * 1000); // 将字节转换为GB
+  return totalSize / (1024 * 1024 * 1024); // 将字节转换为GB
 };
 
 /**
@@ -388,7 +371,7 @@ const extractMacValues = (data: ComputerNet[]) => {
 //处理大容量内存和硬盘
 export const handleMemoryAndDisk = (data: number) => {
   const value =
-    data > 1000 ? (data / 1000).toFixed(2) + " T" : (data || 0) + " G"; //硬盘
+    data > 1024 ? (data / 1024).toFixed(2) + " T" : (data || 0) + " G"; //硬盘
   return value;
 };
 
