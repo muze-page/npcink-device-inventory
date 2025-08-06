@@ -1,4 +1,5 @@
 //类型
+import type { Dayjs } from "dayjs";
 //从数据库读取的设备信息
 export interface MysqlDevice {
   id: number;
@@ -6,7 +7,8 @@ export interface MysqlDevice {
   state: string; //状态
   number: string; //编号
   department: string; //部门
-  time: string; //添加时间
+  created_at: Dayjs; //添加时间
+  updated_at: Dayjs; //更新时间
   uuid: string; //唯一编号
   data: string; //数据
 }
@@ -18,7 +20,8 @@ export interface MysqlDeviceChange {
   state: string; //状态
   number: string; //编号
   department: string; //部门
-  time: string; //添加时间
+  created_at: Dayjs; //添加时间
+  updated_at: Dayjs; //更新时间
   uuid: string; //唯一编号
   data: Computer; //数据
   [key: string]: any;
@@ -69,7 +72,7 @@ export interface DataItemArr {
 export interface ComputerChangeReturn {
   id: string;
   uuid: string; //变更唯一标识
-  time: string; //变更时间
+  created_at: string; //变更时间
   type: string; //变更类型
   user: string; //变更人
   data: string; //变更说明
@@ -107,7 +110,6 @@ export interface MysqlChange {
  * 列表图片内容,不同的设备不同的背景色
  */
 export interface OsTypeArray {
-  id: number;
   name: string;
   image: string;
 }
