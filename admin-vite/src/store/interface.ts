@@ -13,7 +13,7 @@ export interface MysqlDeviceData {
 
 //从数据库读取的设备信息 - 继承
 export interface MysqlDevice extends MysqlDeviceData {
-  id: number; //TODO:改为字符串
+  id: number; //设备id
   time: Dayjs; //添加时间
   uuid: string; //唯一编号
   data: string; //数据
@@ -21,7 +21,7 @@ export interface MysqlDevice extends MysqlDeviceData {
 
 //整理后 交叉类型
 export type MysqlDeviceChange = MysqlDeviceData & {
-  id: number;
+  id: number; //设备id
   time: Dayjs; //添加时间
   uuid: string; //唯一编号
   data: Computer; //数据

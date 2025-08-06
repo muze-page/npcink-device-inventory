@@ -59,16 +59,16 @@ class Dema_Activator extends DEMA_Admin_Interface
 		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
-            id INT(11) NOT NULL AUTO_INCREMENT,
-			name VARCHAR(10) NOT NULL,
-			state VARCHAR(10) NOT NULL,
-			number VARCHAR(36) NOT NULL,
-			department VARCHAR(10) NOT NULL,
-			ip VARCHAR(15) NOT NULL, 
-			purchase VARCHAR(10) NOT NULL, 
-			depreciation VARCHAR(10) NOT NULL, 
-			time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            uuid VARCHAR(36) NOT NULL,
+            id INT NOT NULL AUTO_INCREMENT,
+			name VARCHAR(64) NOT NULL  COMMENT '姓名',,
+			state VARCHAR(10) NOT NULL  COMMENT '状态',
+			number VARCHAR(64) NOT NULL COMMENT '设备编号',
+			department VARCHAR(64) NOT NULL  COMMENT '部门',
+			ip VARCHAR(39) NOT NULL COMMENT 'IP地址', 
+			purchase VARCHAR(64) NOT NULL COMMENT '采购价', 
+			depreciation VARCHAR(64) NOT NULL COMMENT '二手价', 
+			time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '时间',
+            uuid VARCHAR(36) NOT NULL COMMENT '设备唯一标识符',
             data JSON,
             PRIMARY KEY (id),
 			UNIQUE (number)
@@ -97,11 +97,11 @@ class Dema_Activator extends DEMA_Admin_Interface
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
             id INT NOT NULL AUTO_INCREMENT,
-			user VARCHAR(10) NOT NULL,
-			type VARCHAR(10) NOT NULL,
-            data VARCHAR(120) NOT NULL,
-            time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			uuid VARCHAR(36) NOT NULL,
+			user VARCHAR(64) NOT NULL  COMMENT '变更人姓名',
+			type VARCHAR(64) NOT NULL COMMENT '变更类型',
+            data VARCHAR(128) NOT NULL COMMENT '变更说明',
+            time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间',
+			uuid VARCHAR(36) NOT NULL COMMENT '变更记录唯一标识',
             PRIMARY KEY (id)
             
         );";
@@ -150,12 +150,12 @@ class Dema_Activator extends DEMA_Admin_Interface
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
             id INT NOT NULL AUTO_INCREMENT,
-			name VARCHAR(10) NOT NULL,
-			purpose VARCHAR(10) NOT NULL,
-			state VARCHAR(10) NOT NULL,
-            time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			uuid VARCHAR(36) NOT NULL,
-			data JSON,
+			name VARCHAR(64) NOT NULL  COMMENT '姓名',
+			purpose VARCHAR(128) NOT NULL  COMMENT '用途',
+			state VARCHAR(10) NOT NULL COMMENT '状态',
+            time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '时间',
+			uuid VARCHAR(36) NOT NULL COMMENT '设备唯一标识符',
+			data JSON COMMENT '数据',
             PRIMARY KEY (id)
             
         );";

@@ -20,6 +20,6 @@ const data = {
   site: "http://localhost:10048", //网址
   table_data_name: "npcink_device_data", //设备数据表名
   table_change_name: "npcink_device_change", //变更表名
-  table_style_name: "npcink_mdm_style_data", //自定义设备数据库名
+  table_style_name: "npcink_device_style", //自定义设备数据库名
 };
 export default data;

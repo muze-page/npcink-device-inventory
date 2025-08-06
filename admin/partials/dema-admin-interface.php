@@ -17,7 +17,7 @@ if (!class_exists('DEMA_Admin_Interface')) {
         public static $table_change_name = "npcink_device_change";
 
         //自定义数据表
-        public static $table_style_name = "npcink_mdm_style_data";
+        public static $table_style_name = "npcink_device_style";
 
         //运行
         public static function run()

@@ -14,7 +14,7 @@ interface Props {
   /**
    * 基础数据：npcink_device_data
    * 变更数据：npcink_device_change
-   * 自定义设备数据：npcink_mdm_style_data
+   * 自定义设备数据：npcink_device_style
    */
 }
 const App: React.FC<Props> = ({ name }) => {
