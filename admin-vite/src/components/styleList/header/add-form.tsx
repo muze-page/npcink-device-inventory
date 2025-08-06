@@ -94,10 +94,15 @@ const App = ({ form, handleOk }: AddFormProps) => {
 
     // 发送POST请求
     const state = await addStyleDeviceData(data);
+    /**
+     * 请求成功后，获取返回的UUID、ID和time,加入到data中
+     */
 
     //成功添加则清除输入框
     if (state) {
-      //alert("添加成功");
+      alert("添加成功");
+      console.log("返回的值：");
+      console.dir(state);
       form?.resetFields(); // 清除表单输入
       handleOk(); // 关闭弹窗
       handleAddDevice(data); // 调用添加设备的回调函数

@@ -14,7 +14,7 @@ export interface MysqlDeviceData {
 //从数据库读取的设备信息 - 继承
 export interface MysqlDevice extends MysqlDeviceData {
   id: number; //TODO:改为字符串
-  time: string; //添加时间
+  time: Dayjs; //添加时间
   uuid: string; //唯一编号
   data: string; //数据
 }
@@ -22,7 +22,7 @@ export interface MysqlDevice extends MysqlDeviceData {
 //整理后 交叉类型
 export type MysqlDeviceChange = MysqlDeviceData & {
   id: number;
-  time: string; //添加时间
+  time: Dayjs; //添加时间
   uuid: string; //唯一编号
   data: Computer; //数据
   [key: string]: any;
@@ -91,11 +91,11 @@ export interface DataItemArr {
 export interface ComputerChangeReturn {
   id: string;
   uuid: string; //变更唯一标识
-  time: string; //变更时间
+  time: Dayjs; //变更时间
   type: string; //变更类型
   user: string; //变更人
   data: string; //变更说明
-  [key: string]: string;
+  [key: string]: string | Dayjs;
 }
 
 //硬件设置选项
@@ -133,23 +133,27 @@ export interface DeviceChangeList {
   id: string; //列表编号
   key: number; //唯一KEY
   msg: string; //设备信息
-  time: string; //变更时间
+  time: Dayjs; //变更时间
   type: string; //变更类型
   user: string; //变更人
   uuid: string; //设备UUID
-  [keysx: string]: number | string;
+  [keysx: string]: number | string | Dayjs;
 }
 
-//自定义设备类型
-export interface StyleDevice {
-  id?: string; //设备ID，数据库自动创建
+//自定义设备设置用类型
+export interface StyleDeviceSeting {
   name: string; //使用人
   purpose: string; //用途
   state: "apply" | "idie" | "fault" | "scrap"; //设备状态
-  time?: string; //添加时间，此时间由数据库创建新表时自动填入
-  uuid?: string; //设备UUID，数据库自动创建
   data: StyleDeviceData; //设备数据
 }
+
+//自定义设备类型
+export type StyleDevice = StyleDeviceSeting & {
+  id: string; //设备ID，数据库自动创建
+  time: Dayjs; //添加时间，此时间由数据库创建新表时自动填入
+  uuid: string; //设备UUID，数据库自动创建
+};
 
 //自定义设备数据属性
 export interface StyleDeviceData {

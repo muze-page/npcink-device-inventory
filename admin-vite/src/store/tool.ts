@@ -28,7 +28,7 @@ export const devStatus: boolean = import.meta.env.VITE_STATE;
 
 //传入日期，返回格式化
 export const formatDate = (date: Dayjs) => {
-  const formattedTime = dayjs(date).format("YY-MM-DD");
+  const formattedTime = dayjs(date).format("YYYY-MM-DD");
   //console.log("Formatted Time:", formattedTime);
   return formattedTime;
 };
@@ -184,7 +184,7 @@ export const removeEmpty = (data: DataItemArr[]) => {
 };
 
 /**
- * 找到需要的系统对象
+ * 找到需要的系统对象 - 展示图片用
  * @param array  存储图片的数组对象
  * @param value 系统或平台类型
  * @returns 包含图片的对象
@@ -194,7 +194,6 @@ export const findOsTypeObj = (array: OsTypeArray[], value: string) => {
   // 返回默认对象，避免返回 undefined
   return (
     result || {
-      id: 0,
       name: "unknown",
       image: Unknown /* 其他默认属性 */,
     }
@@ -222,7 +221,7 @@ export const changeSelectData = (data: string[] | undefined) => {
 
 export const findBValue = (arr: DataItemArr[], targetAValue: string) => {
   const foundObject = arr.find((obj) => obj.value === targetAValue);
-  return foundObject ? foundObject.label + "中" : "无状态";
+  return foundObject ? foundObject.label : "未找到";
 };
 
 /**
@@ -291,18 +290,12 @@ interface ProcessedItem {
   monthsUsed: number;
 }
 
-const calculateMonthsDifference = (date1: Date, date2: Date): number => {
-  const diffTime = Math.abs(date2.getTime() - date1.getTime());
-  const diffMonths = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 30)); // 计算月份
-  return diffMonths;
-};
-
+//计算月份差
 const processArray = (arr: MysqlDeviceChange[]): ProcessedItem[] => {
-  const now = new Date();
-
+  const now = dayjs();
   return arr.map((item) => {
-    const itemDate = new Date(item.time);
-    const monthsUsed = calculateMonthsDifference(itemDate, now);
+    // 直接使用 dayjs 方法计算月份差
+    const monthsUsed = Math.abs(now.diff(item.time, "month"));
     return {
       purchase: item.purchase,
       monthsUsed: monthsUsed,

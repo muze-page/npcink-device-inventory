@@ -3,21 +3,17 @@ import { useContext } from "react";
 import { Skeleton, Space, Tooltip } from "antd";
 import { OsTypeArray } from "@/store/interface";
 import { device_status } from "@/store/dataReplace";
-import { findBValue } from "@/store/tool";
+import { findBValue,findOsTypeObj } from "@/store/tool";
 import { AppContext } from "@/components/pcList/Context";
 import MacOs from "@/assets/macos.png";
 import Win from "@/assets/windows_s.png";
-import { findOsTypeObj } from "@/store/tool";
 
 const App: React.FC = ({}) => {
   //获取数据，拿到隐藏姓名状态
   const { drawerData, isName } = useContext(AppContext);
 
   //当前设备状态
-  const deviceStatus = findBValue(
-    device_status,
-    drawerData.state ?? drawerData.state
-  );
+  const deviceStatus = findBValue(device_status, drawerData.state);
 
   //标识 - 不同的设备不同的图片
   const osTypeArray = [

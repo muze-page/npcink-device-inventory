@@ -8,13 +8,20 @@ import { StyleDeviceData } from "@/store/interface";
 //跨组件提供方法
 import { StyleContext } from "@/components/styleList/styleContext";
 
-import { formatDate } from "@/store/tool";
+import { formatDate, findBValue } from "@/store/tool";
+//导入自定义设备的采购和支付方式列表
+import { stylePlatform, stylePayType } from "@/store/dataReplace";
 interface Props {
   deviceData: StyleDeviceData;
 }
 const App: React.FC<Props> = ({ deviceData }) => {
   //拿到是否隐藏姓名的状态
   const { isName } = useContext(StyleContext);
+
+  //采购平台
+  const platfromType = findBValue(stylePlatform, deviceData.platform);
+  //支付方式
+  const payType = findBValue(stylePayType, deviceData.pay_method);
   return (
     <>
       <Card
@@ -48,12 +55,12 @@ const App: React.FC<Props> = ({ deviceData }) => {
         </p>
         <p>
           <b>支付方式：</b>
-          {deviceData.pay_method}
+          {payType}
         </p>
 
         <p>
           <b>采购平台：</b>
-          {deviceData.platform}
+          {platfromType}
         </p>
         <p>
           <b>采购数量：</b>

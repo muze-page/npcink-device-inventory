@@ -5,9 +5,6 @@
 import { useContext } from "react";
 import { Tooltip, Skeleton, Space } from "antd";
 
-//时间处理
-import dayjs from "dayjs";
-
 //跨组件提供方法
 import { StyleContext } from "@/components/styleList/styleContext";
 
@@ -15,7 +12,7 @@ import { StyleContext } from "@/components/styleList/styleContext";
 import { StyleDevice } from "@/store/interface";
 
 //准备采购平台类型
-import { findOsTypeObj } from "@/store/tool";
+import { findOsTypeObj, formatDate } from "@/store/tool";
 
 //准备采购平台列表和支付平台列表
 import { platformArray, payArray } from "@/store/dataReplace";
@@ -105,11 +102,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
 
           {/*时间*/}
           <p className="grid gap-y-1 items-center  mt-2">
-            <Tooltip
-              title={"设备采购时间：" + dayjs(data.time).format("YYYY-MM-DD")}
-            >
+            <Tooltip title={"设备采购时间：" + formatDate(data.time)}>
               <span>
-                <b>时间：</b> {dayjs(data.time).format("YYYY-MM-DD")}
+                <b>时间：</b> {formatDate(data.time)}
               </span>
             </Tooltip>
           </p>

@@ -7,6 +7,7 @@ import { Form, Button, Input, Radio } from "antd";
 import type { FormProps } from "antd";
 import { deleteStyleDeviceData, updateStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
+import { StyleDeviceSeting } from "@/store/interface";
 interface Props {
   onActive: () => void; //修改弹窗状态
 }
@@ -54,17 +55,14 @@ const App: React.FC<Props> = ({ onActive }) => {
       state: drawerData.state,
     });
   }, [drawerData, form]);
-  //准备表单数据类型
-  type FieldType = {
-    name: string; //使用人
-    purpose: string; //用途
-    state: "apply" | "idie" | "fault" | "scrap"; //设备状态
-  };
+
   //修改数据
-  const onFinish: FormProps<FieldType>["onFinish"] = async (values) => {
+  const onFinish: FormProps<StyleDeviceSeting>["onFinish"] = async (values) => {
     //准备数据
     const valuesData = {
+      id: drawerData.id,
       uuid: uuid,
+      time:drawerData.time,
       name: values.name,
       purpose: values.purpose,
       state: values.state,
@@ -81,7 +79,7 @@ const App: React.FC<Props> = ({ onActive }) => {
     }
   };
   //提交失败
-  const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (
+  const onFinishFailed: FormProps<StyleDeviceSeting>["onFinishFailed"] = (
     errorInfo
   ) => {
     console.log("Failed:", errorInfo);
@@ -100,15 +98,15 @@ const App: React.FC<Props> = ({ onActive }) => {
         onFinishFailed={onFinishFailed}
         autoComplete="off"
       >
-        <Form.Item<FieldType> label="使用人" name="name">
+        <Form.Item<StyleDeviceSeting> label="使用人" name="name">
           <Input />
         </Form.Item>
 
-        <Form.Item<FieldType> label="设备状态：" name="state">
+        <Form.Item<StyleDeviceSeting> label="设备状态：" name="state">
           <Radio.Group options={device_status} />
         </Form.Item>
 
-        <Form.Item<FieldType>
+        <Form.Item<StyleDeviceSeting>
           label="用途"
           name="purpose"
           rules={[{ required: true, message: "Please input your password!" }]}

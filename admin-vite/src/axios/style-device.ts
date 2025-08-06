@@ -3,18 +3,18 @@
  */
 
 import { Ajaxurl } from "@/store";
-import { StyleDevice, axiosType } from "@/store/interface";
+import {  StyleDeviceSeting, axiosType } from "@/store/interface";
 import { instance, addParamIfDefined } from "@/axios/public";
 /**
  * 增 - 添加自定义硬件数据
  */
 
 export const addStyleDeviceData = async (
-  data: StyleDevice
+  data: StyleDeviceSeting
 ): Promise<boolean> => {
   const params = new URLSearchParams();
   params.append("action", "add_style_device_data_callback");
-  addParamIfDefined(params, "uuid", data.uuid);
+ // addParamIfDefined(params, "uuid", data.uuid);
   addParamIfDefined(params, "name", data.name);
   addParamIfDefined(params, "purpose", data.purpose);
   addParamIfDefined(params, "state", data.state);
@@ -55,7 +55,8 @@ export const deleteStyleDeviceData = async (uuid: string): Promise<boolean> => {
  *
  */
 export const updateStyleDeviceData = async (
- uuid:string, data: StyleDevice
+  uuid: string,
+  data: StyleDeviceSeting
 ): Promise<boolean> => {
   const params = new URLSearchParams();
   params.append("action", "update_style_device_data_callback");

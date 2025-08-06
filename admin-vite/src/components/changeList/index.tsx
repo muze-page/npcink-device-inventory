@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect } from "react";
 import { searchChangeAllData } from "@/axios";
-import {Space, Button, Table, message } from "antd";
+import { Space, Button, Table, message } from "antd";
 import type { TableColumnsType } from "antd";
 import { DeviceChangeList } from "@/store/interface";
 import { exportTable } from "@/store/tool";
@@ -41,8 +41,8 @@ const App: React.FC = () => {
   const uniqueTypess = (data: DeviceChangeList[], name: string) => {
     const uniqueNames = [...new Set(data.map((obj) => obj[name]))];
     return uniqueNames.map((item) => ({
-      text: item,
-      value: item,
+      text: item.toString(),
+      value: item.toString(),
     }));
   };
 
@@ -64,7 +64,7 @@ const App: React.FC = () => {
       filters: userArr,
       filterMode: "tree",
       filterSearch: true,
-      onFilter: (value, record) => record.user.startsWith(value as string),
+      onFilter: (value, record) => record.user.startsWith(value.toString()),
       width: "15%",
     },
     {
@@ -73,7 +73,7 @@ const App: React.FC = () => {
       filters: typeArr,
       filterMode: "tree",
       filterSearch: true,
-      onFilter: (value, record) => record.type.startsWith(value as string),
+      onFilter: (value, record) => record.type.startsWith(value.toString()),
       width: "10%",
     },
 
@@ -118,10 +118,12 @@ const App: React.FC = () => {
         className={isActive ? "hideName" : ""}
       />
       <br />
-     
+
       <Space>
-      <Button onClick={exportForm}>下载表格</Button>
-        <Button onClick={toggleStyle}>{isActive ? "展示" : "隐藏"}姓名</Button>{" "}
+        <Button onClick={exportForm}>下载表格</Button>
+        <Button onClick={toggleStyle}>
+          {isActive ? "展示" : "隐藏"}姓名
+        </Button>{" "}
       </Space>
     </>
   );

@@ -1,11 +1,12 @@
 /**
  * 设备详情 - 大概信息
  */
-import { handleGraphics } from "@/store/tool";
+import { handleGraphics,formatDate } from "@/store/tool";
 import { Computer } from "@/store/interface";
+import { Dayjs } from "dayjs";
 interface Props {
   data: Computer;
-  time: string;
+  time: Dayjs;
 }
 const App: React.FC<Props> = ({ data, time }) => {
   //显示器
@@ -43,7 +44,7 @@ const App: React.FC<Props> = ({ data, time }) => {
   const handleData = [
     {
       title: "中央处理器(CPU)型号",
-      data: data.cpu.brand||"未找到 CPU 型号",
+      data: data.cpu.brand || "未找到 CPU 型号",
     },
     {
       title: "显卡型号",
@@ -85,7 +86,7 @@ const App: React.FC<Props> = ({ data, time }) => {
     },
     {
       title: "添加时间",
-      data: time,
+      data: formatDate(time),
     },
   ];
   interface itemType {
