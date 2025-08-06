@@ -36,7 +36,7 @@ const App: React.FC = () => {
           <CodepenOutlined />
           硬件信息
         </span>
-      ),//TODO:为啥这里的drawerData.created_at换成drawerData.time也是正常的？
+      ),//TODO:为啥这里的drawerData.created_at换成drawerData.time,不报类型错误？
       children: <Info data={drawerData.data} time={drawerData.created_at} />,
     },
 
