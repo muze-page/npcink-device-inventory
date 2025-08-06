@@ -10,6 +10,7 @@ import {
   ComputerDevice,
   ComputerNet,
   ComputerControllers,
+  MysqlDevice,
 } from "@/store/interface";
 import { defaultOption } from "@/store";
 import dayjs, { Dayjs } from "dayjs";
@@ -230,7 +231,10 @@ export const findBValue = (arr: DataItemArr[], targetAValue: string) => {
  * @param tableName 下载的文件名称
  * @returns 数组对象导出为表格
  */
-export const exportTable = (jsonData: {}[], tableName: string) => {
+export const exportTable = (
+  jsonData: MysqlDevice[] | undefined,
+  tableName: string
+) => {
   // 如果没有拿到值，就此结束
   if (!jsonData) {
     return;

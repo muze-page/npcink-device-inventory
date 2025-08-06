@@ -230,8 +230,8 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             $name = isset($_POST['name']) ? ($_POST['name']) : null; //获取表名
 
             //拿到解析后的值
-            $data = json_decode(stripslashes($text_data), true);
-
+            $data_php = json_decode(stripslashes($text_data), true);
+            $data = $data_php['data']; //拿到设备数据
             // 检查传来的数据是否为空
             if (empty($data)) {
                 return wp_send_json_error(['error' => '传递的数据为空，请检查文件'], 400);

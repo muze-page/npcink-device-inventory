@@ -1,14 +1,23 @@
 //类型
 import type { Dayjs } from "dayjs";
+/**
+ * 导出数据时的数据结构
+ */
+export interface ImportListData {
+  site: string; //导出站点的网址
+  time: string; //数据导出时间
+  data: MysqlDevice; //导出的数据
+}
+
 //上传数据时需要的值
 export interface MysqlDeviceData {
   name: string; //姓名
   state: "apply" | "idie" | "fault" | "scrap"; //设备状态
   number: string; //编号
   department: string; //部门
+  ip: string; //ip
   purchase: number; //采购价
   depreciation: number; //二手价
-  ip: string; //ip
 }
 
 //从数据库读取的设备信息 - 继承
@@ -17,6 +26,7 @@ export interface MysqlDevice extends MysqlDeviceData {
   time: Dayjs; //添加时间
   uuid: string; //唯一编号
   data: string; //数据
+  [key: string]: any; //索引签名
 }
 
 //整理后 交叉类型

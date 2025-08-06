@@ -2,7 +2,7 @@
  * 设置
  */
 import { Ajaxurl } from "@/store";
-import { MysqlChange, axiosType } from "@/store/interface";
+import { MysqlChange, MysqlDevice, axiosType } from "@/store/interface";
 import { instance, addParamIfDefined } from "@/axios/public";
 
 //成功响应传出的接口数据
@@ -29,11 +29,10 @@ export const exportSQLData = async (name: string) => {
   const params = new URLSearchParams();
   params.append("action", "export_data_callback");
   addParamIfDefined(params, "name", name);
-
   try {
     const response = (await instance.post(Ajaxurl, params)) as axiosType;
     if (response.success) {
-      return response.data.data;
+      return response.data.data as MysqlDevice[]; //导出设备信息
     } else {
       return;
     }
@@ -100,7 +99,6 @@ export const addPublicSearchPage = async (route: string) => {
     console.log("添加自定义公共引导页失败");
     return false;
   } finally {
-   
   }
 };
 

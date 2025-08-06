@@ -1,6 +1,6 @@
 //导入导出变更数据
 import { useState } from "react";
-import { Space, Button, message } from "antd";
+import { Space, Button, message, Modal } from "antd";
 import { exportSQLData, importSQLData } from "@/axios";
 import {
   TableDataName,
@@ -9,6 +9,7 @@ import {
   Site,
 } from "@/store/index";
 import { exportTable } from "@/store/tool";
+import { ImportListData } from "@/store/interface";
 interface Props {
   name: string; //数据库表名
   /**
@@ -19,7 +20,7 @@ interface Props {
 }
 const App: React.FC<Props> = ({ name }) => {
   //导入数据
-  const [jsonContent, setJsonContent] = useState({ data: null });
+  const [jsonContent, setJsonContent] = useState<ImportListData>();
 
   //选中数据
   const handleFileChange = (event: any) => {
@@ -36,12 +37,30 @@ const App: React.FC<Props> = ({ name }) => {
 
   //保存到数据库
   const importData = () => {
-    if (jsonContent === null) {
-      message.error("请选择文件或文件内容为空");
-      return;
+    if (jsonContent) {
+      //弹窗提示
+      Modal.confirm({
+        title: "确认导入信息",
+        content: (
+          <div>
+            <p>数据导出时间：{jsonContent.time}</p>
+            <p>数据导出网址：{jsonContent.site}</p>
+            <p className="text-red-600">确定要导入此数据吗？</p>
+          </div>
+        ),
+        onOk() {
+          //console.log("用户点击了“确定”按钮");
+          // 在这里处理确认逻辑
+          const jsonString = JSON.stringify(jsonContent); //格式化数据
+          importSQLData(name, jsonString); //传递
+        },
+        onCancel() {
+          //console.log("用户点击了“取消”按钮");
+          // 在这里处理取消逻辑
+        },
+      });
     } else {
-      const jsonString = JSON.stringify(jsonContent.data);
-      importSQLData(name, jsonString);
+      message.error("请选择文件或文件内容为空");
       return;
     }
   };
@@ -56,7 +75,7 @@ const App: React.FC<Props> = ({ name }) => {
 
     // 添加时间键值对
     const currentTime = new Date().toLocaleString();
-    
+
     //添加网址
     const dataWithTime = { site: Site, time: currentTime, data: jsonData };
 
