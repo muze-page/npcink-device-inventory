@@ -99,15 +99,22 @@ const App = ({ form, handleOk }: AddFormProps) => {
      */
 
     //成功添加则清除输入框
-    if (state) {
-      alert("添加成功");
-      console.log("返回的值：");
-      console.dir(state);
+    if (state.success) {
       form?.resetFields(); // 清除表单输入
       handleOk(); // 关闭弹窗
-      handleAddDevice(data); // 调用添加设备的回调函数
+      if (state.deviceData) {
+        //准备载入的值
+        const deviceData = {
+          uuid: state.deviceData.uuid,
+          id: state.deviceData.id,
+          time: state.deviceData.time,
+          ...data,
+        };
+        handleAddDevice(deviceData); // 调用添加设备的回调函数
+      }
     } else {
-      alert("添加失败");
+      alert("添加自定义设备失败");
+      console.log("失败原因:", state);
     }
     //console.log("成功，表单原始值:", values);
     //console.log("整理后的设备信息：", data);

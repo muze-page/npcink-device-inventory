@@ -86,11 +86,23 @@ if (!class_exists('DEMA_Admin_Interface_Add_Style_Data')) {
 
             // 检查插入是否成功
             if ($result !== false) {
+                // 插入成功后，获取自动生成的ID、UUID和time
+                $inserted_id = $wpdb->insert_id;
+
+                // 从数据库中查询刚插入的记录，获取自动生成的UUID和time
+                $inserted_record = $wpdb->get_row(
+                    $wpdb->prepare("SELECT uuid, time FROM $table_name WHERE id = %d", $inserted_id)
+                );
+
+                $inserted_uuid = $inserted_record->uuid;
+                $inserted_time = $inserted_record->time;
+
+                //返回对应的值给本地用，方便在不刷新页面的情况下获取正常的数据，便于后续设置用
                 return wp_send_json_success([
                     'message' => '添加自定义设备数据成功',
-                    // 'data-one' => $data,
-                    // 'data-two' => $json_data,
-                    //'data-three' => $json
+                    'id' => $inserted_id,
+                    'uuid' => $inserted_uuid,
+                    'time' => $inserted_time
                 ]);
             } else {
                 return wp_send_json_error([

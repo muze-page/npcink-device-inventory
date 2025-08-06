@@ -50,6 +50,23 @@ export const judge_bool = (boo: boolean) => {
   }
 };
 
+/**
+ * 字节转换单位
+ */
+export const bytesToMB = (bytes: number | null, type: string) => {
+  if (bytes === null) {
+    return "0";
+  }
+  if (type == "MB") {
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  }
+  if (type == "GB") {
+    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+  }
+  if (type == "TB") {
+    return (bytes / (1024 * 1024 * 1024 * 1024)).toFixed(2) + " TB";
+  }
+};
 
 // IPv4 正则表达式
 const ipv4Regex =
