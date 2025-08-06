@@ -36,15 +36,14 @@ class Dema_Activator extends DEMA_Admin_Interface
 		self::device_manage_create_table();
 		//数据变更表
 		self::device_manage_create_change();
+		//创建自定义类型设备管理表
+		self::device_manage_create_style();
 		//判断，所有选项都是空的，才会给初始值
 		if (get_option(self::$option) === false) {
 			self::device_manage_create_option();
 		}
-
-		//创建自定义类型设备管理表
-		self::create_style_device_table();
 	}
-	//新建数据库表 - 存储数据用
+	//新建数据库表 - 存储电脑设备数据用
 	// 在插件激活时创建数据库表
 	//使用特定算法算出的UUID数据做设备唯一编号，
 	public static function device_manage_create_table()
@@ -53,28 +52,31 @@ class Dema_Activator extends DEMA_Admin_Interface
 		global $wpdb;
 
 		// 定义表名
-		$table_name = $wpdb->prefix .  self::$table_data_name;
+		$table_name = $wpdb->prefix . self::$table_data_name;
 
 		// 检查是否已存在同名表
 		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
             id INT NOT NULL AUTO_INCREMENT,
-			name VARCHAR(64) NOT NULL  COMMENT '姓名',,
-			state VARCHAR(10) NOT NULL  COMMENT '状态',
-			number VARCHAR(64) NOT NULL COMMENT '设备编号',
-			department VARCHAR(64) NOT NULL  COMMENT '部门',
-			ip VARCHAR(39) NOT NULL COMMENT 'IP地址', 
-			purchase VARCHAR(64) NOT NULL COMMENT '采购价', 
-			depreciation VARCHAR(64) NOT NULL COMMENT '二手价', 
-			time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '时间',
+            name VARCHAR(64) NOT NULL COMMENT '姓名',
+            state VARCHAR(10) NOT NULL COMMENT '状态',
+            number VARCHAR(64) NOT NULL COMMENT '设备编号',
+            department VARCHAR(64) NOT NULL COMMENT '部门',
+            ip VARCHAR(39) NOT NULL COMMENT 'IP地址', 
+            purchase DECIMAL(10, 2) NOT NULL COMMENT '采购价', 
+            depreciation DECIMAL(10, 2) NOT NULL COMMENT '二手价', 
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
             uuid VARCHAR(36) NOT NULL COMMENT '设备唯一标识符',
-            data JSON,
+            data JSON COMMENT '设备信息',
             PRIMARY KEY (id),
-			UNIQUE (number)
-        );";
+            UNIQUE (number),
+            UNIQUE (uuid),
+            KEY idx_number (number),
+            KEY idx_uuid (uuid)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
-			//这里的UUID由固定算法生成，用于验证设备唯一性
 			// 执行 SQL 语句
 			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 			dbDelta($sql);
@@ -90,26 +92,77 @@ class Dema_Activator extends DEMA_Admin_Interface
 		global $wpdb;
 
 		// 定义表名
-		$table_name = $wpdb->prefix .  self::$table_change_name;
+		$table_name = $wpdb->prefix . self::$table_change_name;
 
 		// 检查是否已存在同名表
 		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
-            id INT NOT NULL AUTO_INCREMENT,
-			user VARCHAR(64) NOT NULL  COMMENT '变更人姓名',
-			type VARCHAR(64) NOT NULL COMMENT '变更类型',
-            data VARCHAR(128) NOT NULL COMMENT '变更说明',
-            time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间',
-			uuid VARCHAR(36) NOT NULL COMMENT '变更记录唯一标识',
-            PRIMARY KEY (id)
-            
-        );";
+            id INT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+            user VARCHAR(64) NOT NULL COMMENT '变更人姓名',
+            type VARCHAR(64) NOT NULL COMMENT '变更类型',
+            data TEXT NOT NULL COMMENT '变更说明',
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间',
+            uuid VARCHAR(36) NOT NULL COMMENT '变更记录唯一标识',
+            PRIMARY KEY (id),
+            UNIQUE (uuid),
+            KEY idx_user (user),
+            KEY idx_type (type)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
 			//这里的UUID取自对应设备的UUID
+
 			// 执行 SQL 语句
 			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 			dbDelta($sql);
+		}
+	}
+
+
+	//创建自定义类型设备管理表
+	public static function device_manage_create_style()
+	{
+		// 获取全局 $wpdb 对象
+		global $wpdb;
+
+		// 定义表名
+		$table_name = $wpdb->prefix . self::$table_style_name;
+
+		// 检查是否已存在同名表
+		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+			// 创建表结构
+			$sql = "CREATE TABLE $table_name (
+            id INT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+            name VARCHAR(64) NOT NULL COMMENT '姓名',
+            purpose VARCHAR(128) NOT NULL COMMENT '用途',
+            state VARCHAR(10) NOT NULL COMMENT '状态',
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+            uuid VARCHAR(36) NOT NULL COMMENT '设备唯一标识符',
+            data JSON COMMENT '自定义设备数据',
+            PRIMARY KEY (id),
+            UNIQUE (uuid),
+            KEY idx_name (name),
+            KEY idx_purpose (purpose)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+			// 执行 SQL 语句
+			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+			dbDelta($sql);
+
+			// 添加触发器
+			$trigger_sql = "
+            CREATE TRIGGER before_insert_style_device
+            BEFORE INSERT ON `$table_name`
+            FOR EACH ROW
+            BEGIN
+                IF NEW.uuid IS NULL OR NEW.uuid = '' THEN
+                    SET NEW.uuid = UUID();
+                END IF;
+            END;
+        ";
+
+			// 执行触发器 SQL
+			$wpdb->query($trigger_sql);
 		}
 	}
 
@@ -128,56 +181,11 @@ class Dema_Activator extends DEMA_Admin_Interface
 			"password" => $pss, //默认密码
 			"delete_mysql" => false, //默认是否删除数据库
 			"depreciation_year" => 36, //折旧月限
-			"residual_value_rate" => 5, //残值率
+			"residual_value_rate" => 5, //残值率（百分比）
 			"department" => array("开发部", "推广部", "运营部", "默认"), //默认部门
 			"public_search_route" => "public-search-page", //默认公开搜索路由
 		);
 		//保存
 		update_option(self::$option, $option);
-	}
-
-	//创建自定义类型设备管理表
-	public static function create_style_device_table()
-	{
-		// 获取全局 $wpdb 对象
-		global $wpdb;
-
-		// 定义表名
-		$table_name = $wpdb->prefix .  self::$table_style_name;
-
-		// 检查是否已存在同名表
-		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
-			// 创建表结构
-			$sql = "CREATE TABLE $table_name (
-            id INT NOT NULL AUTO_INCREMENT,
-			name VARCHAR(64) NOT NULL  COMMENT '姓名',
-			purpose VARCHAR(128) NOT NULL  COMMENT '用途',
-			state VARCHAR(10) NOT NULL COMMENT '状态',
-            time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '时间',
-			uuid VARCHAR(36) NOT NULL COMMENT '设备唯一标识符',
-			data JSON COMMENT '数据',
-            PRIMARY KEY (id)
-            
-        );";
-
-			// 执行 SQL 语句
-			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-			dbDelta($sql);
-
-			// 在 dbDelta($sql); 后添加触发器
-			//我太懒了，你自己生成UUID吧，
-			$trigger_sql = "
-    CREATE TRIGGER before_insert_style_device
-    BEFORE INSERT ON `$table_name`
-    FOR EACH ROW
-    BEGIN
-        IF NEW.uuid IS NULL OR NEW.uuid = '' THEN
-            SET NEW.uuid = UUID();
-        END IF;
-    END;
-";
-
-			$wpdb->query($trigger_sql);
-		}
 	}
 }

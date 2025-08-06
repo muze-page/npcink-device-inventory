@@ -333,7 +333,12 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
 
             //检查是否有可更新的数据
             if (empty($insert_data)) {
-                return wp_send_json_error(['error' => '没有可更新的数据'], 500);
+                return wp_send_json_error([
+                    'error' => '没有可更新的数据',
+                    //'name' => $name,
+                    //'data' => $data,
+
+                ], 500);
             }
 
             //准备数据库表名
@@ -347,7 +352,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             // 检查插入结果
             if ($result) {
                 return wp_send_json_success([
-                    'message' => '成功导入 - ' . count($insert_data) . '套设备信息',
+                    'message' => '成功导入 - ' . count($insert_data) . '套设备信息,刷新页面后查看',
                 ]);
             } else {
                 $response = array(
