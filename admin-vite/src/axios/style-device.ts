@@ -3,7 +3,7 @@
  */
 
 import { Ajaxurl } from "@/store";
-import { StyleDevice, StyleDeviceSeting, axiosType } from "@/store/interface";
+import { StyleDevice, StyleDeviceSeting, } from "@/store/interface";
 import { instance, addParamIfDefined } from "@/axios/public";
 /**
  * 增 - 添加自定义硬件数据
@@ -20,12 +20,12 @@ export const addStyleDeviceData = async (
   addParamIfDefined(params, "state", data.state);
   addParamIfDefined(params, "data", JSON.stringify(data.data));
   try {
-    const response = (await instance.post(Ajaxurl, params)) as axiosType;
-    if (response.success) {
+    const response = (await instance.post(Ajaxurl, params));
+    if (response.data.success) {
       // 如果请求成功，返回成功状态和数据
       return {
         success: true,
-        deviceData: response.data as StyleDevice,
+        deviceData: response.data.data as StyleDevice,
       };
     } else {
       // 如果请求失败，返回失败状态
@@ -50,8 +50,8 @@ export const deleteStyleDeviceData = async (uuid: string): Promise<boolean> => {
   params.append("action", "delete_style_device_data_callback");
   addParamIfDefined(params, "uuid", uuid);
   try {
-    const data = (await instance.post(Ajaxurl, params)) as axiosType;
-    return data.success;
+    const data = (await instance.post(Ajaxurl, params));
+    return data.data.success;
   } catch (error) {
     console.log(error);
     return false;
@@ -79,8 +79,8 @@ export const updateStyleDeviceData = async (
   addParamIfDefined(params, "state", data.state);
   addParamIfDefined(params, "data", JSON.stringify(data.data));
   try {
-    const data = (await instance.post(Ajaxurl, params)) as axiosType;
-    return data.success;
+    const data = (await instance.post(Ajaxurl, params));
+    return data.data.success;
   } catch (error) {
     console.log(error);
     return false;

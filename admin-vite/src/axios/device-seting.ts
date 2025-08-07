@@ -2,7 +2,7 @@
  * 硬件设置选项
  */
 import { Ajaxurl } from "@/store";
-import { MysqlChange, axiosType, MysqlDeviceData } from "@/store/interface";
+import { MysqlChange, MysqlDeviceData } from "@/store/interface";
 import { instance, addParamIfDefined } from "@/axios/public";
 /**
  * 修改设备数据，一次性更新
@@ -18,8 +18,8 @@ export const changeMySql = async (uuid: string, data: MysqlDeviceData) => {
   addParamIfDefined(params, "uuid", uuid);
   addParamIfDefined(params, "data", JSON.stringify(data));
   try {
-    const res = (await instance.post(Ajaxurl, params)) as axiosType;
-    return res.success; //返回状态
+    const res = (await instance.post(Ajaxurl, params));
+    return res.data.success; //返回状态
   } catch (error: any) {
     console.log("保存设置选项时出错：" + error.message);
     //throw error; // 重新抛出错误

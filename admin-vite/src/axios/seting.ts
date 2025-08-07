@@ -2,7 +2,7 @@
  * 设置
  */
 import { Ajaxurl } from "@/store";
-import { MysqlChange, MysqlDevice, axiosType } from "@/store/interface";
+import { MysqlChange, MysqlDevice, } from "@/store/interface";
 import { instance, addParamIfDefined } from "@/axios/public";
 
 //成功响应传出的接口数据
@@ -30,9 +30,9 @@ export const exportSQLData = async (name: string) => {
   params.append("action", "export_data_callback");
   addParamIfDefined(params, "name", name);
   try {
-    const response = (await instance.post(Ajaxurl, params)) as axiosType;
-    if (response.success) {
-      return response.data.data as MysqlDevice[]; //导出设备信息
+    const response = (await instance.post(Ajaxurl, params));
+    if (response.data.success) {
+      return response.data.data.data as MysqlDevice[]; //导出设备信息
     } else {
       return;
     }
@@ -93,8 +93,8 @@ export const addPublicSearchPage = async (route: string) => {
   params.append("action", "add_public_search_page_callback");
   addParamIfDefined(params, "route", route);
   try {
-    const res = (await instance.post(Ajaxurl, params)) as axiosType; //执行
-    return res.success;
+    const res = (await instance.post(Ajaxurl, params)); //执行
+    return res.data.success;
   } catch {
     console.log("添加自定义公共引导页失败");
     return false;

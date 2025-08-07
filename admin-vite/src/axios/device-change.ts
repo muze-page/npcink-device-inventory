@@ -29,8 +29,8 @@ export const addChangeData = async (
   addParamIfDefined(params, "type", data.type);
   addParamIfDefined(params, "data", data.data);
   try {
-    const data = (await instance.post(Ajaxurl, params)) as axiosType;
-    return data.success;
+    const data = (await instance.post(Ajaxurl, params));
+    return data.data.success;
   } catch (error) {
     console.log(error);
     return false;

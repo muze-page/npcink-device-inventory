@@ -8,13 +8,12 @@ export const instance = axios.create({
 // 响应拦截器
 instance.interceptors.response.use(
   (response) => {
-    const responseData = response.data;
-    if (responseData.success) {
-      message.success(responseData.data.message);
+    if (response.data.success) {
+      message.success(response.data.data.message);
     } else {
-      message.error(responseData.data.message);
+      message.error(response.data.data.message);
     }
-    return responseData;
+    return response;
   },
   (error) => {
     //检查，有没有返回错误信息，有的话展示，没有就做其他的
