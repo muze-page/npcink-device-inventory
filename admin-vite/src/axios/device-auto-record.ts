@@ -1,9 +1,9 @@
 /**
  * 设备变更自动记录
  */
+import axios from "axios";
 import { Ajaxurl } from "@/store";
-import {  axiosType } from "@/store/interface";
-import { instance,  } from "@/axios/public";
+import { axiosType } from "@/store/interface";
 
 /**
  * 标准接口，使用的方法是标准方法
@@ -17,10 +17,10 @@ export const changeAutoRecordAxios = async (
   params.append("action", "auto_change_data_callback");
   params.append("uuid", uuid);
   try {
-    const response = await instance.post<axiosType,axiosType>(Ajaxurl, params);
-   // console.log("返回的值");
+    const response = await axios.post<axiosType, axiosType>(Ajaxurl, params);
+    // console.log("返回的值");
     //console.log(response);
-    return response;
+    return response.data as axiosType;
   } catch (error: any) {
     // 错误已在拦截器中处理
     console.error("查询变更数据时出错：" + error);

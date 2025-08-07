@@ -13,7 +13,7 @@ interface Props {
 }
 
 const App: React.FC<Props> = ({ uuid }) => {
-  const [data, setData] = useState<ChangeAutoRecord[]>();
+  const [data, setData] = useState<ChangeAutoRecord[]>([]);
   const [loading, setLoading] = useState(false);
 
   const getData = async () => {
@@ -21,23 +21,23 @@ const App: React.FC<Props> = ({ uuid }) => {
     try {
       const res = await changeAutoRecordAxios(uuid);
       if (res.success) {
-        setData(res.data.data);
-        console.log("拿到的值：");
-        console.log(res.data.data);
+        setData(res.data.data || []);
       }
     } catch (error: any) {
+      setData([]);
       console.error("获取变更记录失败:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  //uuid变化时，自动执行
+  /**
+   * 严格模式下，这里会执行两次
+   * uuid变化时，自动执行
+   */
   useEffect(() => {
     getData();
-    console.log("uuid变化了");
   }, [uuid]);
-  
 
   const columns = [
     {
