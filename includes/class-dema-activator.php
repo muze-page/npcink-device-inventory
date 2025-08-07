@@ -34,10 +34,16 @@ class Dema_Activator extends DEMA_Admin_Interface
 	{
 		//主数据表
 		self::device_manage_create_table();
+
 		//数据变更表
 		self::device_manage_create_change();
+
 		//创建自定义类型设备管理表
 		self::device_manage_create_style();
+
+		//创建自定义类型设备管理表
+		self::device_manage_create_auto();
+
 		//判断，所有选项都是空的，才会给初始值
 		if (get_option(self::$option) === false) {
 			self::device_manage_create_option();
@@ -163,6 +169,38 @@ class Dema_Activator extends DEMA_Admin_Interface
 
 			// 执行触发器 SQL
 			$wpdb->query($trigger_sql);
+		}
+	}
+
+	/**
+	 * 创建配置信息变更记录表 - 自动记录
+	 */
+	public static function device_manage_create_auto()
+	{
+		// 获取全局 $wpdb 对象
+		global $wpdb;
+
+		// 定义表名
+		$table_name = $wpdb->prefix . self::$table_change_auto;
+
+		// 检查是否已存在同名表
+		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+			// 创建表结构
+			$sql = "CREATE TABLE $table_name (
+           id INT AUTO_INCREMENT PRIMARY KEY,
+           table_name VARCHAR(10) COMMENT '变更的表名',
+           record_uuid INT COMMENT '记录的uuid',
+           column_name VARCHAR(10) COMMENT '变更的字段名',
+           old_value VARCHAR(128) COMMENT '变更前的值',
+           new_value VARCHAR(128) COMMENT '变更后的值',
+           changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间'
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+			//这里的UUID取自对应设备的UUID
+
+			// 执行 SQL 语句
+			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+			dbDelta($sql);
 		}
 	}
 

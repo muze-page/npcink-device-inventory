@@ -13,11 +13,14 @@ if (!class_exists('DEMA_Admin_Interface')) {
         //基本数据表
         public static $table_data_name = "npcink_device_data";
 
-        //变更表
-        public static $table_change_name = "npcink_device_change";
-
         //自定义数据表
         public static $table_style_name = "npcink_device_style";
+
+        //变更手动记录表
+        public static $table_change_name = "npcink_device_change";
+
+        //变更自动记录表
+        public static $table_change_auto = "npcink_device_auto";
 
         //运行
         public static function run()
