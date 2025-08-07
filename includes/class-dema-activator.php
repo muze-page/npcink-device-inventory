@@ -69,7 +69,7 @@ class Dema_Activator extends DEMA_Admin_Interface
             number VARCHAR(64) NOT NULL COMMENT '设备编号',
             department VARCHAR(64) NOT NULL COMMENT '部门',
             ip VARCHAR(39) NOT NULL COMMENT 'IP地址', 
-			state VARCHAR(10) NOT NULL COMMENT '状态',
+			state VARCHAR(64) NOT NULL COMMENT '状态',
             purchase DECIMAL(10, 2) NOT NULL COMMENT '采购价', 
             depreciation DECIMAL(10, 2) NOT NULL COMMENT '二手价', 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -191,7 +191,7 @@ class Dema_Activator extends DEMA_Admin_Interface
             id INT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
             name VARCHAR(64) NOT NULL COMMENT '姓名',
             purpose VARCHAR(128) NOT NULL COMMENT '用途',
-            state VARCHAR(10) NOT NULL COMMENT '状态',
+            state VARCHAR(64) NOT NULL COMMENT '状态',
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
             uuid VARCHAR(36) NOT NULL COMMENT '设备唯一标识符',
             data JSON COMMENT '自定义设备数据',
@@ -267,8 +267,8 @@ class Dema_Activator extends DEMA_Admin_Interface
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
            id INT AUTO_INCREMENT PRIMARY KEY,
-		   table_name VARCHAR(10) COMMENT '变更的表名',
-           column_name VARCHAR(10) COMMENT '变更的字段名',
+		   table_name VARCHAR(64) COMMENT '变更的表名',
+           column_name VARCHAR(64) COMMENT '变更的字段名',
            old_value VARCHAR(128) COMMENT '变更前的值',
            new_value VARCHAR(128) COMMENT '变更后的值',
 		   changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间',
