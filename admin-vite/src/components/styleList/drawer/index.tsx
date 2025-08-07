@@ -8,7 +8,7 @@ import type { TabsProps } from "antd";
 import { StyleContext } from "@/components/styleList/styleContext";
 import { StyleDevice } from "@/store/interface";
 import Info from "@/components/styleList/drawer/data-info";
-import ChangeRecord from "@/components/styleList/drawer/data-change-record";
+import ChangeAutoRecord from "@/block/change-auto-record.tsx";
 import Seting from "@/components/styleList/drawer/data-seting";
 import { statusLabel } from "@/store/tool";
 //调试打印
@@ -37,7 +37,7 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
     {
       key: "3",
       label: `变更记录`,
-      children: <ChangeRecord uuid={data.uuid} />,
+      children: <ChangeAutoRecord uuid={data.uuid} />,
     },
   ];
 

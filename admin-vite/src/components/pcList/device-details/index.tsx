@@ -3,14 +3,6 @@
  */
 import { useContext } from "react";
 import { Tabs } from "antd";
-
-import {
-  CodepenOutlined,
-  ApartmentOutlined,
-  SettingOutlined,
-  RadarChartOutlined,
-} from "@ant-design/icons";
-
 import type { TabsProps } from "antd";
 
 //准备四个菜单模块
@@ -18,6 +10,7 @@ import Info from "@/components/pcList/device-details/TabInfo";
 import Change from "@/components/pcList/device-details/TabChange";
 import Seting from "@/components/pcList/device-details/TabSeting";
 import Detailed from "@/components/pcList/device-details/TabDetailed";
+import ChangeAutoRecord from "@/block/change-auto-record";
 
 //公共方法
 import { AppContext } from "@/components/pcList/Context";
@@ -33,10 +26,10 @@ const App: React.FC = () => {
       key: "1",
       label: (
         <span>
-          <CodepenOutlined />
+          
           硬件信息
         </span>
-      ),//TODO:为啥这里的drawerData.created_at换成drawerData.time,不报类型错误？
+      ), //TODO:为啥这里的drawerData.created_at换成drawerData.time,不报类型错误？
       children: <Info data={drawerData.data} time={drawerData.created_at} />,
     },
 
@@ -44,7 +37,7 @@ const App: React.FC = () => {
       key: "2",
       label: (
         <span>
-          <RadarChartOutlined />
+         
           详细信息
         </span>
       ),
@@ -54,7 +47,7 @@ const App: React.FC = () => {
       key: "3",
       label: (
         <span>
-          <ApartmentOutlined />
+         
           变更记录
         </span>
       ),
@@ -64,7 +57,17 @@ const App: React.FC = () => {
       key: "4",
       label: (
         <span>
-          <SettingOutlined />
+         
+          自动记录
+        </span>
+      ),
+      children: <ChangeAutoRecord uuid={drawerData.uuid} />,
+    },
+    {
+      key: "5",
+      label: (
+        <span>
+         
           设置
         </span>
       ),
