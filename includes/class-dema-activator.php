@@ -66,10 +66,10 @@ class Dema_Activator extends DEMA_Admin_Interface
 			$sql = "CREATE TABLE $table_name (
             id INT NOT NULL AUTO_INCREMENT,
             name VARCHAR(64) NOT NULL COMMENT '姓名',
-            state VARCHAR(10) NOT NULL COMMENT '状态',
             number VARCHAR(64) NOT NULL COMMENT '设备编号',
             department VARCHAR(64) NOT NULL COMMENT '部门',
             ip VARCHAR(39) NOT NULL COMMENT 'IP地址', 
+			state VARCHAR(10) NOT NULL COMMENT '状态',
             purchase DECIMAL(10, 2) NOT NULL COMMENT '采购价', 
             depreciation DECIMAL(10, 2) NOT NULL COMMENT '二手价', 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

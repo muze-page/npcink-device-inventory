@@ -210,7 +210,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
                 'department' => '默认', // 默认部门
                 'purchase'=> 0, //采购价'
                 'depreciation'=> 0,//二手价
-                'ip'=> '0',//IP地址
+                'ip'=> '127.0.0.1',//默认IP地址
                 'uuid' => $uuid, // 唯一标识符
                 'data' => $data, // 数据
             ];
