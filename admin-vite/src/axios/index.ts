@@ -11,6 +11,7 @@ export {
   searchChangeData,
   searchChangeAllData,
 } from "@/axios/device-change";
+
 export { changeMySql, deltSQLData } from "@/axios/device-seting";
 
 //自定义硬件设备数据
@@ -19,3 +20,6 @@ export {
   deleteStyleDeviceData,
   updateStyleDeviceData,
 } from "@/axios/style-device";
+
+//硬件设备数据变更自动记录
+export { changeAutoRecordAxios } from "@/axios/device-auto-record";

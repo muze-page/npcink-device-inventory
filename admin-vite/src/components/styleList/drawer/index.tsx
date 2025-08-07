@@ -37,7 +37,7 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
     {
       key: "3",
       label: `变更记录`,
-      children: <ChangeRecord />,
+      children: <ChangeRecord uuid={data.uuid} />,
     },
   ];
 

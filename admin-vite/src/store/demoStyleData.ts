@@ -37,7 +37,7 @@ const DateThree = {
   pay_method: "Cash",
   platform: "PingDuoDuo",
   purchaser: "李四",
-}
+};
 
 const DateFour = {
   title: "小米手机",
@@ -50,7 +50,7 @@ const DateFour = {
   pay_method: "BankCard",
   platform: "XianYu",
   purchaser: "李四",
-}
+};
 
 const DateFive = {
   title: "小米手机",
@@ -63,7 +63,7 @@ const DateFive = {
   pay_method: "AboutPay",
   platform: "DouYin",
   purchaser: "李四",
-}
+};
 const DateSix = {
   title: "小米手机",
   link: "https://item.taobao.com/item.htm?id=1234567890",
@@ -75,8 +75,7 @@ const DateSix = {
   pay_method: "Alipay",
   platform: "About",
   purchaser: "李四",
-}
-
+};
 
 const data = [
   {
@@ -181,10 +180,10 @@ const data = [
   {
     id: "12",
     state: "scrap",
-    name: "布局",
-    purpose: "测试使用",
+    name: "测试自动变更数据",
+    purpose: "测试自动变更数据",
     created_at: "2025-11-09 18:13:02",
-    uuid: "4b60abe878f60c54a04dc1ed9ecead7s",
+    uuid: "525b1a2e-7340-11f0-bc70-0a2dc553519e",
     data: DateTwo,
   },
 ];

@@ -48,6 +48,10 @@ if (!class_exists('DEMA_Admin_Interface')) {
             //自定义设备数据增删改查接口
             require_once plugin_dir_path(__FILE__) . 'interface/add-style-data.php';
             DEMA_Admin_Interface_Add_Style_Data::run();
+
+            //设备变更自动记录查询接口
+            require_once plugin_dir_path(__FILE__) . 'interface/device-auto.php';
+            DEMA_Admin_Interface_Device_Auto::run();
         }
 
 
