@@ -39,21 +39,47 @@ const App: React.FC<Props> = ({ uuid }) => {
     getData();
   }, [uuid]);
 
+  //准备翻译表
+  const changeRecordFieldNames = {
+    name: "姓名",
+    number: "设备编号",
+    department: "部门",
+    ip: "ip",
+    state: "设备状态",
+    purchase: "采购价",
+    depreciation: "二手价",
+    purpose: "用途",
+    //设备状态表
+    apply: "使用",
+    idie: "闲置",
+    fault: "故障",
+    scrap: "报废",
+  };
+
   const columns = [
     {
       title: "字段名",
       dataIndex: "column_name",
       key: "column_name",
+      render: (text: string) =>
+        changeRecordFieldNames[text as keyof typeof changeRecordFieldNames] ||
+        text,
     },
     {
       title: "变更前",
       dataIndex: "old_value",
       key: "old_value",
+      render: (text: string) =>
+        changeRecordFieldNames[text as keyof typeof changeRecordFieldNames] ||
+        text,
     },
     {
       title: "变更后",
       dataIndex: "new_value",
       key: "new_value",
+      render: (text: string) =>
+        changeRecordFieldNames[text as keyof typeof changeRecordFieldNames] ||
+        text,
     },
     {
       title: "变更时间",
