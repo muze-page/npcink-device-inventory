@@ -21,7 +21,7 @@ if (!class_exists('DEMA_Admin_Interface_Add_Style_Data')) {
         }
 
         /**
-         * 添加自定义设备数据接口
+         * 增- 添加自定义设备数据接口
          */
         public static function add_style_device_data_callback()
         {
@@ -89,20 +89,20 @@ if (!class_exists('DEMA_Admin_Interface_Add_Style_Data')) {
                 // 插入成功后，获取自动生成的ID、UUID和time
                 $inserted_id = $wpdb->insert_id;
 
-                // 从数据库中查询刚插入的记录，获取自动生成的UUID和time
+                // 从数据库中查询刚插入的记录，获取自动生成的UUID和created_at
                 $inserted_record = $wpdb->get_row(
-                    $wpdb->prepare("SELECT uuid, time FROM $table_name WHERE id = %d", $inserted_id)
+                    $wpdb->prepare("SELECT uuid, created_at FROM $table_name WHERE id = %d", $inserted_id)
                 );
 
                 $inserted_uuid = $inserted_record->uuid;
-                $inserted_time = $inserted_record->time;
+                $inserted_created_at = $inserted_record->created_at;
 
                 //返回对应的值给本地用，方便在不刷新页面的情况下获取正常的数据，便于后续设置用
                 return wp_send_json_success([
                     'message' => '添加自定义设备数据成功',
                     'id' => $inserted_id,
                     'uuid' => $inserted_uuid,
-                    'time' => $inserted_time
+                    'created_at' => $inserted_created_at
                 ]);
             } else {
                 return wp_send_json_error([
@@ -176,6 +176,11 @@ if (!class_exists('DEMA_Admin_Interface_Add_Style_Data')) {
 
             // 检查是否有参数为 null
             $null_param = array_search(null, $variables, true);
+
+            // 特别检查uuid是否为空字符串
+            if ($uuid === '' || $uuid === false) {
+                $null_param = 'uuid';
+            }
 
             // 如果有参数为 null，则返回相应的错误消息
             if ($null_param !== false) {

@@ -143,8 +143,8 @@ const columns: (ColumnTypes[number] & {
   },
   {
     title: "变更时间",
-    dataIndex: "time",
-    key: "time",
+    dataIndex: "created_at",
+    key: "created_at",
   },
 ];
 
