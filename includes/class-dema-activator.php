@@ -32,17 +32,17 @@ class Dema_Activator extends DEMA_Admin_Interface
 	 */
 	public static function run()
 	{
-		//主数据表
-		self::device_manage_create_table();
+		//创建自定义类型设备管理表
+		self::device_manage_create_auto();
 
 		//数据变更表
 		self::device_manage_create_change();
 
-		//创建自定义类型设备管理表
-		self::device_manage_create_style();
+		//主数据表
+		self::device_manage_create_table();
 
 		//创建自定义类型设备管理表
-		self::device_manage_create_auto();
+		self::device_manage_create_style();
 
 		//判断，所有选项都是空的，才会给初始值
 		if (get_option(self::$option) === false) {
@@ -87,6 +87,56 @@ class Dema_Activator extends DEMA_Admin_Interface
 			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 			dbDelta($sql);
 		}
+
+		// 创建UPDATE触发器，当name、state、number、depreciation、ip、purchase、department字段发生变化时记录到自动记录表
+		// 先删除已存在的触发器
+		//$wpdb->query("DROP TRIGGER IF EXISTS after_update_device_data");
+		$auto_table_name = $wpdb->prefix . self::$table_change_auto;
+		// 创建新的UPDATE触发器
+		$update_trigger_sql = "
+		CREATE TRIGGER after_update_device_data
+		AFTER UPDATE ON `$table_name`
+		FOR EACH ROW
+		BEGIN
+			IF OLD.name != NEW.name THEN
+				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+				VALUES ('data', NEW.uuid, 'name', OLD.name, NEW.name);
+			END IF;
+			
+			IF OLD.state != NEW.state THEN
+				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+				VALUES ('data', NEW.uuid, 'state', OLD.state, NEW.state);
+			END IF;
+			
+			IF OLD.number != NEW.number THEN
+				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+				VALUES ('data', NEW.uuid, 'number', OLD.number, NEW.number);
+			END IF;
+			
+			IF OLD.department != NEW.department THEN
+				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+				VALUES ('data', NEW.uuid, 'department', OLD.department, NEW.department);
+			END IF;
+			
+			IF OLD.ip != NEW.ip THEN
+				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+				VALUES ('data', NEW.uuid, 'ip', OLD.ip, NEW.ip);
+			END IF;
+			
+			IF OLD.purchase != NEW.purchase THEN
+				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+				VALUES ('data', NEW.uuid, 'purchase', OLD.purchase, NEW.purchase);
+			END IF;
+			
+			IF OLD.depreciation != NEW.depreciation THEN
+				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+				VALUES ('data', NEW.uuid, 'depreciation', OLD.depreciation, NEW.depreciation);
+			END IF;
+		END;
+		";
+
+		// 执行触发器 SQL
+		$wpdb->query($update_trigger_sql);
 	}
 
 	/**
@@ -170,6 +220,35 @@ class Dema_Activator extends DEMA_Admin_Interface
 			// 执行触发器 SQL
 			$wpdb->query($trigger_sql);
 		}
+		// 创建UPDATE触发器，当name、purpose或state字段发生变化时记录到自动记录表
+		$auto_table_name = $wpdb->prefix . self::$table_change_auto;
+		//$auto_table_value = self::$table_change_auto;
+		// 先删除已存在的触发器
+		//$wpdb->query("DROP TRIGGER IF EXISTS after_update_style_device");
+		$update_trigger_sql = "
+		CREATE TRIGGER after_update_style_device
+		AFTER UPDATE ON `$table_name`
+		FOR EACH ROW
+		BEGIN
+			IF OLD.name != NEW.name THEN
+				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+				VALUES ('style', OLD.uuid, 'name', OLD.name, NEW.name);
+			END IF;
+			
+			IF OLD.purpose != NEW.purpose THEN
+				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+				VALUES ('style', OLD.uuid, 'purpose', OLD.purpose, NEW.purpose);
+			END IF;
+			
+			IF OLD.state != NEW.state THEN
+				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+				VALUES ('style', OLD.uuid, 'state', OLD.state, NEW.state);
+			END IF;
+		END;
+		";
+
+		// 执行触发器 SQL
+		$wpdb->query($update_trigger_sql);
 	}
 
 	/**
@@ -188,12 +267,12 @@ class Dema_Activator extends DEMA_Admin_Interface
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
            id INT AUTO_INCREMENT PRIMARY KEY,
-           table_name VARCHAR(10) COMMENT '变更的表名',
-           record_uuid INT COMMENT '记录的uuid',
+		   table_name VARCHAR(10) COMMENT '变更的表名',
            column_name VARCHAR(10) COMMENT '变更的字段名',
            old_value VARCHAR(128) COMMENT '变更前的值',
            new_value VARCHAR(128) COMMENT '变更后的值',
-           changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间'
+		   changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间',
+           record_uuid VARCHAR(36) COMMENT '记录的uuid'
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
 			//这里的UUID取自对应设备的UUID
