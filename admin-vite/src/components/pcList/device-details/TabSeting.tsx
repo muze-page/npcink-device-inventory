@@ -88,7 +88,7 @@ const App: React.FC = () => {
   //移除设备
   const deltData = () => {
     //二次确认
-    if (window.confirm("您确定要移除此设备吗？")) {
+    if (window.confirm("您确定要移除此设备吗？<br/>相关变更记录将一并删除！")) {
       setListData((prevData) =>
         prevData.filter((item) => item.uuid !== drawerData.uuid)
       ); //更新列表数据，移除当前设备

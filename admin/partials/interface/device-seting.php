@@ -1,7 +1,7 @@
 <?php
 
 /**
- * 硬件信息设置接口 - 改
+ * 硬件信息设置接口 - 删、改
  */
 if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
     class DEMA_Admin_Interface_Device_Seting extends DEMA_Admin_Interface
@@ -168,8 +168,9 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
         public static  function delt_device_callback()
         {
             global $wpdb;
-            $data_name = $wpdb->prefix . self::$table_data_name;
-            $change_name = $wpdb->prefix . self::$table_change_name;
+            $data_name = $wpdb->prefix . self::$table_data_name; //数据表名
+            $change_name = $wpdb->prefix . self::$table_change_name; //变更记录表
+            $auto_name = $wpdb->prefix . self::$table_change_auto; //自动记录表
 
             // 获取前端传递的参数并进行输入验证
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null;
@@ -182,6 +183,7 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
             // 使用预处理语句构建SQL查询
             $sql = $wpdb->prepare("DELETE FROM $data_name WHERE uuid = %s", $uuid);
             $sql_change = $wpdb->prepare("DELETE FROM $change_name WHERE uuid = %s", $uuid);
+            $sql_auto = $wpdb->prepare("DELETE FROM $auto_name WHERE record_uuid = %s", $uuid);
 
             // 开始事务
             $wpdb->query('START TRANSACTION');
@@ -190,9 +192,10 @@ if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
                 // 执行删除操作
                 $result = $wpdb->query($sql);
                 $result_change = $wpdb->query($sql_change);
+                $result_auto = $wpdb->query($sql_auto);
 
                 // 检查删除操作是否成功
-                if ($result === false || $result_change === false) {
+                if ($result === false || $result_change === false || $result_auto === false) {
                     throw new Exception('删除数据时发生错误');
                 }
 
