@@ -3,6 +3,7 @@
  */
 import { useState, useEffect } from "react";
 import { Table, Space } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { changeAutoRecordAxios } from "@/axios/index";
 import { ChangeAutoRecord } from "@/store/interface";
 import { formatDate } from "@/store/tool";
@@ -40,7 +41,22 @@ const App: React.FC<Props> = ({ uuid }) => {
   }, [uuid]);
 
   //准备翻译表
-  const changeRecordFieldNames = {
+  type ChangeRecordFieldNames = {
+    name: string;
+    number: string;
+    department: string;
+    ip: string;
+    state: string;
+    purchase: string;
+    depreciation: string;
+    purpose: string;
+    //设备状态表
+    apply: string;
+    idie: string;
+    fault: string;
+    scrap: string;
+  };
+  const changeRecordFieldNames:ChangeRecordFieldNames = {
     name: "姓名",
     number: "设备编号",
     department: "部门",
@@ -56,11 +72,28 @@ const App: React.FC<Props> = ({ uuid }) => {
     scrap: "报废",
   };
 
+  // 获取所有唯一字段名作为筛选选项
+  const getFieldFilters = () => {
+    const uniqueFields = Array.from(
+      new Set(data.map((item) => item.column_name))
+    ).filter((field) => field !== undefined);
+
+    return uniqueFields.map((field) => ({
+      text:
+        changeRecordFieldNames[field as keyof typeof changeRecordFieldNames] ||
+        field,
+      value: field,
+    }));
+  };
+
   const columns = [
     {
       title: "字段名",
       dataIndex: "column_name",
       key: "column_name",
+      filters: getFieldFilters(),
+      onFilter: (value: string | number | boolean, record: any) =>
+        record.column_name === value,
       render: (text: string) =>
         changeRecordFieldNames[text as keyof typeof changeRecordFieldNames] ||
         text,
