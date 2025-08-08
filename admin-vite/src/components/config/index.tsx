@@ -20,6 +20,7 @@ import {
   TableDataName,
   TableChangeName,
   TableStyleDataName,
+  TableAUtoName,
 } from "@/store";
 import { saveSQLData, remove_department, addPublicSearchPage } from "@/axios";
 
@@ -210,8 +211,8 @@ const App: React.FC = () => {
         <Form
           form={form}
           onFinish={onFinish}
-          labelCol={{ span: 4 }}
-          wrapperCol={{ span: 20 }}
+          labelCol={{ span: 6 }}
+          wrapperCol={{ span: 18 }}
           style={{ maxWidth: 600 }}
           initialValues={option} //默认选项值
           onFinishFailed={onFinishFailed}
@@ -347,22 +348,29 @@ const App: React.FC = () => {
           <p>仅导入当前不存在的新数据，导入数据成功后，需刷新页面可见新数据</p>
           <br />
           <Form.Item
-            label="基础数据"
-            extra={"仅导入当前没有的设备数据，导出全部数据"}
+            label="电脑设备信息"
+            extra={"仅导入当前没有的电脑设备数据，导出全部电脑数据"}
           >
             <ImportExport name={TableDataName} />
           </Form.Item>
           <Form.Item
-            label="自定义数据"
+            label="自定义设备信息"
             extra={"仅导入当前没有的自定义设备数据，导出全部自定义设备数据"}
           >
             <ImportExport name={TableStyleDataName} />
           </Form.Item>
+
           <Form.Item
-            label="变更数据"
-            extra={"仅导入当前没有的设备变更数据，导出全部变更数据"}
+            label="手动变更数据"
+            extra={"仅导入当前没有的手动变更数据，导出全部手动变更数据"}
           >
             <ImportExport name={TableChangeName} />
+          </Form.Item>
+          <Form.Item
+            label="自动变更数据"
+            extra={"仅导入当前没有的自动变更数据，导出全部自动变更数据"}
+          >
+            <ImportExport name={TableAUtoName} />
           </Form.Item>
         </Form>
       </div>

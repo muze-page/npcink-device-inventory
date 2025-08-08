@@ -2,7 +2,7 @@
  * 设备详情 - 设置
  */
 import { useContext, useEffect } from "react";
-import { Form, Button, Input, InputNumber, Select, message } from "antd";
+import { Form, Button, Input, InputNumber, Select } from "antd";
 import { AppContext } from "@/components/pcList/Context";
 import { deltSQLData, changeMySql } from "@/axios";
 import { MysqlDeviceData } from "@/store/interface";

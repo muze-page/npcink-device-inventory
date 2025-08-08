@@ -6,6 +6,7 @@ import {
   TableDataName,
   TableChangeName,
   TableStyleDataName,
+  TableAUtoName,
   Site,
 } from "@/store/index";
 import { exportTable } from "@/store/tool";
@@ -16,6 +17,7 @@ interface Props {
    * 基础数据：npcink_device_data
    * 变更数据：npcink_device_change
    * 自定义设备数据：npcink_device_style
+   * 自动变更数据：npcink_device_auto
    */
 }
 const App: React.FC<Props> = ({ name }) => {
@@ -35,6 +37,22 @@ const App: React.FC<Props> = ({ name }) => {
     reader.readAsText(file);
   };
 
+  //数据库名称翻译
+  const translateTableName = (name: string) => {
+    switch (name) {
+      case "npcink_device_data":
+        return "电脑设备信息";
+      case "npcink_device_style":
+        return "自定义设备信息";
+      case "npcink_device_change":
+        return "手动变更信息";
+      case "npcink_device_auto":
+        return "自动变更信息";
+      default:
+        return name;
+    }
+  };
+
   //保存到数据库
   const importData = () => {
     if (jsonContent) {
@@ -45,14 +63,18 @@ const App: React.FC<Props> = ({ name }) => {
           <div>
             <p>数据导出时间：{jsonContent.time}</p>
             <p>数据导出网址：{jsonContent.site}</p>
-            <p className="text-red-600">确定要导入此数据吗？</p>
+            <p>数据导出名称：{translateTableName(jsonContent.name)}</p>
+            <p className="text-red-600">您确定要导入此数据吗？</p>
           </div>
         ),
         onOk() {
-          //console.log("用户点击了“确定”按钮");
-          // 在这里处理确认逻辑
-          const jsonString = JSON.stringify(jsonContent); //格式化数据
-          importSQLData(name, jsonString); //传递
+          //进行表格名称判断
+          if (name === jsonContent.name) {
+            const jsonString = JSON.stringify(jsonContent); //格式化数据
+            importSQLData(name, jsonString); //传递
+          } else {
+            message.error("导入的数据与导出的数据名称不一致，请检查文件名称");
+          }
         },
         onCancel() {
           //console.log("用户点击了“取消”按钮");
@@ -77,7 +99,12 @@ const App: React.FC<Props> = ({ name }) => {
     const currentTime = new Date().toLocaleString();
 
     //添加网址
-    const dataWithTime = { site: Site, time: currentTime, data: jsonData };
+    const dataWithTime = {
+      site: Site,
+      time: currentTime,
+      name: name,
+      data: jsonData,
+    };
 
     // 将数据转换为 JSON 字符串
     const jsonString = JSON.stringify(dataWithTime);
@@ -89,13 +116,16 @@ const App: React.FC<Props> = ({ name }) => {
     const link = document.createElement("a");
     link.href = url;
     if (name == TableDataName) {
-      link.download = "硬件基础数据_导出文件_" + Site + ".json";
+      link.download = "电脑设备信息_导出文件_" + Site + ".json";
     }
     if (name == TableStyleDataName) {
-      link.download = "自定义设备数据_导出文件_" + Site + ".json";
+      link.download = "自定义设备信息_导出文件_" + Site + ".json";
     }
     if (name == TableChangeName) {
-      link.download = "硬件变更数据_导出文件_" + Site + ".json";
+      link.download = "手动变更信息_导出文件_" + Site + ".json";
+    }
+    if (name == TableAUtoName) {
+      link.download = "自动变更信息_导出文件_" + Site + ".json";
     }
 
     link.click();
@@ -113,14 +143,18 @@ const App: React.FC<Props> = ({ name }) => {
     let tableName = "暂无";
 
     if (name === TableDataName) {
-      tableName = "硬件基础数据_导出文件";
+      tableName = "电脑设备信息_导出文件";
     }
     if (name === TableStyleDataName) {
-      tableName = "自定义设备基础数据_导出文件";
+      tableName = "自定义设备信息_导出文件";
     }
 
     if (name === TableChangeName) {
-      tableName = "硬件变更数据_导出文件";
+      tableName = "手动变更信息_导出文件";
+    }
+
+    if (name === TableAUtoName) {
+      tableName = "自动变更信息_导出文件";
     }
     // 如果没有拿到值，就此结束
     exportTable(jsonData, tableName);

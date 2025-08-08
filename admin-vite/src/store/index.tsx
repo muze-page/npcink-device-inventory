@@ -65,6 +65,7 @@ export const Ajaxurl: string = getDataLocal().ajaxurl;
 export const Site: string = getDataLocal().site;
 
 //输出数据库表名
-export const TableDataName: string = getDataLocal().table_data_name; //数据表
-export const TableChangeName: string = getDataLocal().table_change_name; //变更表
-export const TableStyleDataName: string = getDataLocal().table_style_name; //自定义设备表
+export const TableDataName: string = getDataLocal().table_data_name; //电脑设备表名称
+export const TableStyleDataName: string = getDataLocal().table_style_name; //自定义设备表名称
+export const TableChangeName: string = getDataLocal().table_change_name; //手动变更记录表
+export const TableAUtoName: string = getDataLocal().table_change_auto; //自动变更记录表
