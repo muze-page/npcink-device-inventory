@@ -3,16 +3,10 @@ import { useState } from "react";
 import { Space, Button, message, Modal } from "antd";
 import { exportSQLData, importSQLData } from "@/axios";
 import { Site } from "@/store/index";
-import { exportTable } from "@/store/tool";
+import { exportTable, formatDate } from "@/store/tool";
 import { ImportListData } from "@/store/interface";
 interface Props {
   name: string; //数据库表名
-  /**
-   * 基础数据：npcink_device_data
-   * 变更数据：npcink_device_change
-   * 自定义设备数据：npcink_device_style
-   * 自动变更数据：npcink_device_auto
-   */
 }
 
 /**
@@ -26,13 +20,13 @@ interface Props {
 const translateTableName = (name: string) => {
   switch (name) {
     case "npcink_device_data":
-      return "电脑设备信息";
+      return "电脑设备数据";
     case "npcink_device_style":
-      return "自定义设备信息";
+      return "自定义设备数据";
     case "npcink_device_change":
-      return "手动变更信息";
+      return "手动变更数据";
     case "npcink_device_auto":
-      return "自动变更信息";
+      return "自动变更数据";
     default:
       return name;
   }
@@ -63,10 +57,16 @@ const App: React.FC<Props> = ({ name }) => {
         title: "确认导入信息",
         content: (
           <div>
-            <p>数据导出时间：{jsonContent.time}</p>
+            <p>数据导出时间：{formatDate(jsonContent.time)}</p>
             <p>数据导出网址：{jsonContent.site}</p>
-            <p>数据导出名称：{translateTableName(jsonContent.name)}</p>
-            <p className="text-red-600">您确定要导入此数据吗？</p>
+            <p>
+              数据导出名称：<b>{translateTableName(jsonContent.name)}</b>
+            </p>
+            <p>
+              需要文件名称：<b>{translateTableName(name)}</b>
+            </p>
+            <p className="mt-4 text-zinc-400 ">仅导入当前不存在的新数据，导入成功后，需刷新页面可见</p>
+            <p className="mt-4 text-red-600 ">您确定要导入此数据吗？</p>
           </div>
         ),
         onOk() {

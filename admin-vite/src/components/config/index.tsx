@@ -338,31 +338,19 @@ const App: React.FC = () => {
           </Form.Item>
 
           <Header title="导入导出" />
-          <p>仅导入当前不存在的新数据，导入数据成功后，需刷新页面可见新数据</p>
-          <br />
-          <Form.Item
-            label="电脑设备数据"
-            extra={"仅导入当前没有的电脑设备数据，导出全部电脑数据"}
-          >
+
+         
+          <Form.Item label="电脑设备数据" className="mt-4">
             <ImportExport name={sqlTableName.pcData} />
           </Form.Item>
-          <Form.Item
-            label="自定义设备数据"
-            extra={"仅导入当前没有的自定义设备数据，导出全部自定义设备数据"}
-          >
+          <Form.Item label="自定义设备数据">
             <ImportExport name={sqlTableName.styleData} />
           </Form.Item>
 
-          <Form.Item
-            label="手动变更数据"
-            extra={"仅导入当前没有的手动变更数据，导出全部手动变更数据"}
-          >
+          <Form.Item label="手动变更数据">
             <ImportExport name={sqlTableName.changeManualData} />
           </Form.Item>
-          <Form.Item
-            label="自动变更数据"
-            extra={"仅导入当前没有的自动变更数据，导出全部自动变更数据"}
-          >
+          <Form.Item label="自动变更数据">
             <ImportExport name={sqlTableName.changeAutoData} />
           </Form.Item>
         </Form>

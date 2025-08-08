@@ -17,7 +17,7 @@ export interface ChangeAutoRecord {
  */
 export interface ImportListData {
   site: string; //导出站点的网址
-  time: string; //数据导出时间
+  time: Dayjs; //数据导出时间
   name: string; //导出的表格名
   data: MysqlDevice; //导出的数据
 }
