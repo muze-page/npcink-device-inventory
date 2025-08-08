@@ -11,6 +11,13 @@ export const option = {
   department: ["开发部", "推广部", "运营部", "默认"],
   public_search_route: "publicsearchroute",
 };
+//数据库表名
+const sqlTableNameData = {
+  changeAutoData: "npcink_device_auto",
+  changeManualData: "npcink_device_change",
+  pcData: "npcink_device_data",
+  styleData: "npcink_device_style",
+};
 
 const data = {
   data: DemoData, //演示用设备
@@ -18,8 +25,6 @@ const data = {
   option: option, //选项
   ajaxurl: "/wp-admin/admin-ajax.php", //这里需要配置代理，所以没有用完整地址，仅影响开发，不影响正式打包
   site: "http://localhost:10048", //网址
-  table_data_name: "npcink_device_data", //设备数据表名
-  table_change_name: "npcink_device_change", //变更表名
-  table_style_name: "npcink_device_style", //自定义设备数据库名
+  sqlTableName: sqlTableNameData, //数据库表名
 };
 export default data;

@@ -69,3 +69,11 @@ export const TableDataName: string = getDataLocal().table_data_name; //电脑设
 export const TableStyleDataName: string = getDataLocal().table_style_name; //自定义设备表名称
 export const TableChangeName: string = getDataLocal().table_change_name; //手动变更记录表
 export const TableAUtoName: string = getDataLocal().table_change_auto; //自动变更记录表
+
+type SqlTableNameType = {
+  pcData: string; //设备数据表名
+  styleData: string; //自定义设备数据表名
+  changeManualData: string; //手动变更记录数据表名
+  changeAutoData: string; //自动变更记录表名
+};
+export const sqlTableName: SqlTableNameType = getDataLocal().sqlTableName; //数据库列表

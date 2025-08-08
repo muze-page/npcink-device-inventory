@@ -67,6 +67,14 @@ if (!class_exists('DEMA_Admin_Menu')) {
             wp_enqueue_style($name, $index_css, array(), $ver, false);
             wp_enqueue_script($name, $index_js, array(), $ver, true);
 
+            //准备数据库名称
+            $sql_table_name = [
+                'pcData' => self::$table_data_name, //设备数据表名
+                'styleData' => self::$table_style_name, //自定义设备数据表名
+                'changeManualData' => self::$table_change_name, //手动变更记录数据表名
+                'changeAutoData' => self::$table_change_auto, //自动变更记录表名
+            ];
+
 
             $pf_api_translation_array = array(
                 'site' => get_home_url(), //首页网址
@@ -74,10 +82,8 @@ if (!class_exists('DEMA_Admin_Menu')) {
                 'data' => self::get_device_data(), //传递设备数据
                 'styleData' => self::get_style_device_data(), //传递自定义设备数据'
                 'option' => get_option(self::$option), //传递选项
-                'table_data_name' => self::$table_data_name, //设备数据表名
-                'table_change_name' => self::$table_change_name, //手动变更记录数据表名
-                'table_style_name' => self::$table_style_name, //自定义设备数据表名
-                'table_change_auto' => self::$table_change_auto, //自动变更记录表名
+                'sqlTableName' => $sql_table_name,//数据库表名
+
             );
             wp_localize_script($name, 'dataLocal', $pf_api_translation_array); //传给vite项目
         }

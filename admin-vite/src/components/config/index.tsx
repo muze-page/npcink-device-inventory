@@ -14,14 +14,7 @@ import {
 } from "antd";
 import { PlusCircleFilled, MinusCircleFilled } from "@ant-design/icons";
 
-import {
-  defaultOption,
-  Site,
-  TableDataName,
-  TableChangeName,
-  TableStyleDataName,
-  TableAUtoName,
-} from "@/store";
+import { defaultOption, Site, sqlTableName } from "@/store";
 import { saveSQLData, remove_department, addPublicSearchPage } from "@/axios";
 
 import ImportExport from "@/components/config/importExport";
@@ -348,29 +341,29 @@ const App: React.FC = () => {
           <p>仅导入当前不存在的新数据，导入数据成功后，需刷新页面可见新数据</p>
           <br />
           <Form.Item
-            label="电脑设备信息"
+            label="电脑设备数据"
             extra={"仅导入当前没有的电脑设备数据，导出全部电脑数据"}
           >
-            <ImportExport name={TableDataName} />
+            <ImportExport name={sqlTableName.pcData} />
           </Form.Item>
           <Form.Item
-            label="自定义设备信息"
+            label="自定义设备数据"
             extra={"仅导入当前没有的自定义设备数据，导出全部自定义设备数据"}
           >
-            <ImportExport name={TableStyleDataName} />
+            <ImportExport name={sqlTableName.styleData} />
           </Form.Item>
 
           <Form.Item
             label="手动变更数据"
             extra={"仅导入当前没有的手动变更数据，导出全部手动变更数据"}
           >
-            <ImportExport name={TableChangeName} />
+            <ImportExport name={sqlTableName.changeManualData} />
           </Form.Item>
           <Form.Item
             label="自动变更数据"
             extra={"仅导入当前没有的自动变更数据，导出全部自动变更数据"}
           >
-            <ImportExport name={TableAUtoName} />
+            <ImportExport name={sqlTableName.changeAutoData} />
           </Form.Item>
         </Form>
       </div>

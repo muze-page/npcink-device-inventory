@@ -2,13 +2,7 @@
 import { useState } from "react";
 import { Space, Button, message, Modal } from "antd";
 import { exportSQLData, importSQLData } from "@/axios";
-import {
-  TableDataName,
-  TableChangeName,
-  TableStyleDataName,
-  TableAUtoName,
-  Site,
-} from "@/store/index";
+import { Site } from "@/store/index";
 import { exportTable } from "@/store/tool";
 import { ImportListData } from "@/store/interface";
 interface Props {
@@ -20,6 +14,30 @@ interface Props {
    * 自动变更数据：npcink_device_auto
    */
 }
+
+/**
+ * 基础数据：npcink_device_data
+ * 变更数据：npcink_device_change
+ * 自定义设备数据：npcink_device_style
+ * 自动变更数据：npcink_device_auto
+ */
+
+//数据库名称翻译
+const translateTableName = (name: string) => {
+  switch (name) {
+    case "npcink_device_data":
+      return "电脑设备信息";
+    case "npcink_device_style":
+      return "自定义设备信息";
+    case "npcink_device_change":
+      return "手动变更信息";
+    case "npcink_device_auto":
+      return "自动变更信息";
+    default:
+      return name;
+  }
+};
+
 const App: React.FC<Props> = ({ name }) => {
   //导入数据
   const [jsonContent, setJsonContent] = useState<ImportListData>();
@@ -35,22 +53,6 @@ const App: React.FC<Props> = ({ name }) => {
       setJsonContent(jsonData); //保存数据
     };
     reader.readAsText(file);
-  };
-
-  //数据库名称翻译
-  const translateTableName = (name: string) => {
-    switch (name) {
-      case "npcink_device_data":
-        return "电脑设备信息";
-      case "npcink_device_style":
-        return "自定义设备信息";
-      case "npcink_device_change":
-        return "手动变更信息";
-      case "npcink_device_auto":
-        return "自动变更信息";
-      default:
-        return name;
-    }
   };
 
   //保存到数据库
@@ -73,7 +75,7 @@ const App: React.FC<Props> = ({ name }) => {
             const jsonString = JSON.stringify(jsonContent); //格式化数据
             importSQLData(name, jsonString); //传递
           } else {
-            message.error("导入的数据与导出的数据名称不一致，请检查文件名称");
+            message.error("需要对应导出文件，请检查文件名称");
           }
         },
         onCancel() {
@@ -115,17 +117,9 @@ const App: React.FC<Props> = ({ name }) => {
 
     const link = document.createElement("a");
     link.href = url;
-    if (name == TableDataName) {
-      link.download = "电脑设备信息_导出文件_" + Site + ".json";
-    }
-    if (name == TableStyleDataName) {
-      link.download = "自定义设备信息_导出文件_" + Site + ".json";
-    }
-    if (name == TableChangeName) {
-      link.download = "手动变更信息_导出文件_" + Site + ".json";
-    }
-    if (name == TableAUtoName) {
-      link.download = "自动变更信息_导出文件_" + Site + ".json";
+
+    if (translateTableName(name)) {
+      link.download = translateTableName(name) + "_导出文件_" + Site + ".json";
     }
 
     link.click();
@@ -141,20 +135,8 @@ const App: React.FC<Props> = ({ name }) => {
 
     //准备导出文件名
     let tableName = "暂无";
-
-    if (name === TableDataName) {
-      tableName = "电脑设备信息_导出文件";
-    }
-    if (name === TableStyleDataName) {
-      tableName = "自定义设备信息_导出文件";
-    }
-
-    if (name === TableChangeName) {
-      tableName = "手动变更信息_导出文件";
-    }
-
-    if (name === TableAUtoName) {
-      tableName = "自动变更信息_导出文件";
+    if (translateTableName(name)) {
+      tableName = translateTableName(name) + "_导出文件";
     }
     // 如果没有拿到值，就此结束
     exportTable(jsonData, tableName);
