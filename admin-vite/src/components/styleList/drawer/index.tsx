@@ -31,13 +31,13 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
     },
     {
       key: "2",
-      label: `信息修改`,
-      children: <Seting onActive={onActive} />,
+      label: `自动记录`,
+      children: <ChangeAutoRecord uuid={data.uuid} />,
     },
     {
       key: "3",
-      label: `变更记录`,
-      children: <ChangeAutoRecord uuid={data.uuid} />,
+      label: `信息修改`,
+      children: <Seting onActive={onActive} />,
     },
   ];
 
@@ -48,7 +48,7 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
         placement={"right"}
         onClose={onActive}
         open={active}
-        width={"500px"}
+        width={"600px"}
         size="large"
         className="pt-9"
       >

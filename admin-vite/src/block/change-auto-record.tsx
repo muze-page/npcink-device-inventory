@@ -94,7 +94,7 @@ const App: React.FC<Props> = ({ uuid }) => {
       width: 60,
     },
     {
-      title: "字段名",
+      title: "选项",
       dataIndex: "column_name",
       key: "column_name",
       filters: getFieldFilters(),
@@ -120,7 +120,7 @@ const App: React.FC<Props> = ({ uuid }) => {
         text,
     },
     {
-      title: "变更时间",
+      title: "时间",
       dataIndex: "changed_at",
       key: "changed_at",
       render: (text: Dayjs) => formatDate(text),

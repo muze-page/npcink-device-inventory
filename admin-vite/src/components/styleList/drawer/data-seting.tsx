@@ -8,6 +8,7 @@ import type { FormProps } from "antd";
 import { deleteStyleDeviceData, updateStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
 import { StyleDeviceSeting } from "@/store/interface";
+const { TextArea } = Input;
 interface Props {
   onActive: () => void; //修改弹窗状态
 }
@@ -111,7 +112,7 @@ const App: React.FC<Props> = ({ onActive }) => {
           name="purpose"
           rules={[{ required: true, message: "Please input your password!" }]}
         >
-          <Input />
+          <TextArea rows={3} />
         </Form.Item>
 
         <Form.Item>
