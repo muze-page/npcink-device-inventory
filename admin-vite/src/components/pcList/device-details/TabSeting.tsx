@@ -88,14 +88,12 @@ const App: React.FC = () => {
   //移除设备
   const deltData = () => {
     //二次确认
-    if (window.confirm("您确定要移除此设备吗？<br/>相关变更记录将一并删除！")) {
+    if (window.confirm("您确定要删除此设备吗？\n相关变更记录将一并删除！")) {
       setListData((prevData) =>
         prevData.filter((item) => item.uuid !== drawerData.uuid)
       ); //更新列表数据，移除当前设备
       deltSQLData(drawerData.uuid); //删除数据库数据
       setActive(false); //关闭弹窗
-    } else {
-      message.warning("已取消");
     }
   };
 
@@ -173,7 +171,10 @@ const App: React.FC = () => {
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={3} className="text-sm text-right py-2 text-zinc-400">
+                <td
+                  colSpan={3}
+                  className="text-sm text-right py-2 text-zinc-400"
+                >
                   以上数据仅供参考
                 </td>
               </tr>

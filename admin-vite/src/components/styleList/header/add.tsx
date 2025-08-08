@@ -16,14 +16,10 @@ const App: React.FC<Props> = ({ isModalOpen, handleOk }) => {
   const confirmCancel = () => {
     if (form.isFieldsTouched()) {
       // 表单有输入值，弹出确认框
-      Modal.confirm({
-        title: "确认关闭",
-        content: "表单有未保存的内容，确定要关闭吗？",
-        onOk: () => {
-          form.resetFields(); // 可选：清空表单值
-          handleOk(); // 关闭弹窗
-        },
-      });
+      if (window.confirm("表单有未保存的内容，确定要关闭吗？")) {
+        form.resetFields(); // 可选：清空表单值
+        handleOk(); // 关闭弹窗
+      }
     } else {
       // 表单无修改，直接关闭
       form.resetFields(); // 可选：清空表单值

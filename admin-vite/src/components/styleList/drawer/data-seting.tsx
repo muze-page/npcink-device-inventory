@@ -27,7 +27,7 @@ const App: React.FC<Props> = ({ onActive }) => {
     }
 
     //二次确认
-    if (!window.confirm("确定要删除此设备吗？")) {
+    if (!window.confirm("您确定要删除此设备吗？\n相关变更记录将一并删除！")) {
       return;
     }
     // 删除数据
