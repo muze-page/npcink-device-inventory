@@ -58,7 +58,7 @@ export const deleteStyleDeviceData = async (uuid: string): Promise<boolean> => {
   }
 };
 /**
- * 改
+ * 改 - 修改自定义设备数据的描述信息，设备信息不修改
  */
 /**
  *

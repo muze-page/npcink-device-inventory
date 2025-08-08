@@ -125,6 +125,7 @@ if (!class_exists('DEMA_Admin_Interface_Add_Style_Data')) {
         {
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_style_name;
+            $table_auto = $wpdb->prefix . self::$table_change_auto;
 
             // 获取前端传递的参数并进行输入验证，如果有值，肯定是字符串类型
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //生成的uuid
@@ -146,7 +147,14 @@ if (!class_exists('DEMA_Admin_Interface_Add_Style_Data')) {
                 array('%s') // uuid 类型
             );
 
-            if ($result !== false) {
+            // 同时从$table_change_auto表中删除record_uuid为相同UUID的记录
+            $result_auto = $wpdb->delete(
+                $table_auto,
+                array('record_uuid' => $uuid),
+                array('%s')
+            );
+
+            if ($result !== false && $result_auto !== false) {
                 return wp_send_json_success(['message' => '删除成功']);
             } else {
                 return wp_send_json_error(['error' => '删除失败', 'reason' => $wpdb->last_error], 500);

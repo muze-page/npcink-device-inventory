@@ -19,7 +19,7 @@ export {
   addStyleDeviceData,
   deleteStyleDeviceData,
   updateStyleDeviceData,
-} from "@/axios/style-device";
+} from "@/axios/device-style";
 
 //硬件设备数据变更自动记录
 export { changeAutoRecordAxios } from "@/axios/device-auto-record";
