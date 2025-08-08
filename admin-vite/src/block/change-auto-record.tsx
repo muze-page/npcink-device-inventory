@@ -56,11 +56,11 @@ const App: React.FC<Props> = ({ uuid }) => {
     fault: string;
     scrap: string;
   };
-  const changeRecordFieldNames:ChangeRecordFieldNames = {
+  const changeRecordFieldNames: ChangeRecordFieldNames = {
     name: "姓名",
     number: "设备编号",
     department: "部门",
-    ip: "ip",
+    ip: "IP",
     state: "设备状态",
     purchase: "采购价",
     depreciation: "二手价",
@@ -86,14 +86,19 @@ const App: React.FC<Props> = ({ uuid }) => {
     }));
   };
 
-  const columns = [
+  const columns: ColumnsType<ChangeAutoRecord> = [
+     {
+      title: "序号",
+      key: "index",
+      render: (_, __, index) => index + 1,
+      width: 60,
+    },
     {
       title: "字段名",
       dataIndex: "column_name",
       key: "column_name",
       filters: getFieldFilters(),
-      onFilter: (value: string | number | boolean, record: any) =>
-        record.column_name === value,
+      onFilter: (value, record) => record.column_name === value,
       render: (text: string) =>
         changeRecordFieldNames[text as keyof typeof changeRecordFieldNames] ||
         text,
