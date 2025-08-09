@@ -3,8 +3,8 @@
 /**
  * 硬件变更接口 - 增删改查
  */
-if (!class_exists('DEMA_Admin_Interface_Device_Change')) {
-    class DEMA_Admin_Interface_Device_Change extends DEMA_Admin_Interface
+if (!class_exists('DEMA_Admin_Interface_Change_Manual_Record')) {
+    class DEMA_Admin_Interface_Change_Manual_Record extends DEMA_Admin_Interface
     {
         public static function run()
         {

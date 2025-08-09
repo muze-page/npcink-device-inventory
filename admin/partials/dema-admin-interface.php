@@ -31,27 +31,27 @@ if (!class_exists('DEMA_Admin_Interface')) {
 
             //电脑设备数据接收
             require_once plugin_dir_path(__FILE__) . 'interface/pc-data-input.php';
-            DEMA_Admin_Interface_DataInput::run();
+            DEMA_Admin_Interface_Pc_Data_Input::run();
 
             //电脑设备设置-删改
             require_once plugin_dir_path(__FILE__) . 'interface/pc-data-seting.php';
-            DEMA_Admin_Interface_Device_Seting::run();
-
-            //电脑变更增删改查接口
-            require_once plugin_dir_path(__FILE__) . 'interface/change-manual-record.php';
-            DEMA_Admin_Interface_Device_Change::run();
+            DEMA_Admin_Interface_Pc_Data_Seting::run();
 
             //自定义设备数据增删改查接口
             require_once plugin_dir_path(__FILE__) . 'interface/style-data.php';
-            DEMA_Admin_Interface_Add_Style_Data::run();
+            DEMA_Admin_Interface_Style_Data::run();
+
+            //电脑变更增删改查接口
+            require_once plugin_dir_path(__FILE__) . 'interface/change-manual-record.php';
+            DEMA_Admin_Interface_Change_Manual_Record::run();
 
             //设备变更自动记录查询接口
             require_once plugin_dir_path(__FILE__) . 'interface/change-auto-record.php';
-            DEMA_Admin_Interface_Device_Auto::run();
+            DEMA_Admin_Interface_Change_Auto_Record::run();
 
             //添加前端公共搜索页接口
             require_once plugin_dir_path(__FILE__) . 'interface/search-page-add.php';
-            DEMA_Admin_Interface_Add_Page::run();
+            DEMA_Admin_Interface_Search_Page_Add::run();
         }
 
 

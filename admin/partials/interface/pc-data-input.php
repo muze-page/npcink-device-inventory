@@ -5,8 +5,8 @@
  * 使用特定算法算出的UUID，用于校验机器唯一性，
  * 第一张网卡的mac地址加设备UUID，再进行md5处理，得到UUID
  */
-if (!class_exists('DEMA_Admin_Interface_DataInput')) {
-    class DEMA_Admin_Interface_DataInput extends DEMA_Admin_Interface
+if (!class_exists('DEMA_Admin_Interface_Pc_Data_Input')) {
+    class DEMA_Admin_Interface_Pc_Data_Input extends DEMA_Admin_Interface
     {
         //表名
         public static $table_name;
@@ -164,7 +164,7 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
             //文本转对象
             $data_obj = json_decode($data);
-            
+
             //是否为空
             if (empty($data_obj)) {
                 return wp_send_json_error([
@@ -201,16 +201,16 @@ if (!class_exists('DEMA_Admin_Interface_DataInput')) {
 
             //只取随机编号的后6位，你不会真的要用这套系统管理数十万台设备吧？不会吧！不会吧！
             $last_six_digits = substr($random_string, -6);
-            
+
             // 数据不存在，插入新数据
             $insert_data = [
                 'name' => $name, // 姓名
                 'state' => 'idie', // 默认状态为启用
                 'number' =>  $last_six_digits, // 编号
                 'department' => '默认', // 默认部门
-                'purchase'=> 0, //采购价'
-                'depreciation'=> 0,//二手价
-                'ip'=> '127.0.0.1',//默认IP地址
+                'purchase' => 0, //采购价'
+                'depreciation' => 0, //二手价
+                'ip' => '127.0.0.1', //默认IP地址
                 'uuid' => $uuid, // 唯一标识符
                 'data' => $data, // 数据
             ];

@@ -3,8 +3,8 @@
 /**
  * 硬件信息设置接口 - 删、改
  */
-if (!class_exists('DEMA_Admin_Interface_Device_Seting')) {
-    class DEMA_Admin_Interface_Device_Seting extends DEMA_Admin_Interface
+if (!class_exists('DEMA_Admin_Interface_Pc_Data_Seting')) {
+    class DEMA_Admin_Interface_Pc_Data_Seting extends DEMA_Admin_Interface
     {
         public static function run()
         {
