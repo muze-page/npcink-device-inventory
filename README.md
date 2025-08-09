@@ -3,6 +3,14 @@
 变量名用驼峰 ，首字母小写  sqlTabelName
 类型名用驼峰，首字母大写  SqlTabelName
 
+接口返回值 参考B2
+```
+code:"",
+message:"",
+data:{
+  status:403,
+}
+```
 
 - 对数据类型进行拆分
 - 检查请求数据时，接口和使用是否规范
