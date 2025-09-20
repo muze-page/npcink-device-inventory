@@ -106,7 +106,7 @@ if (!class_exists('DEMA_Admin_Interface_Style_Data')) {
                 ]);
             } else {
                 return wp_send_json_error([
-                    'error' => '添加自定义设备数据失败，可能是字数太多',
+                    'error' => '添加自定义设备数据失败，请排查错误',
                     'reason' => $wpdb->last_error,
                     // 'data-one' => $data,
                     // 'data-two' => $json_data,

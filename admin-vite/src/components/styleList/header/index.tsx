@@ -133,7 +133,7 @@ const App: React.FC<Props> = ({
             采购平台：
             <Select
               value={filterData.platform || "all"} // 使用value属性，从filterData获取当前值
-              style={{ width: 80 }}
+              style={{ width: 100 }}
               onChange={(value: string) => {
                 onChange({ ...filterData, platform: value });
               }}
@@ -144,7 +144,7 @@ const App: React.FC<Props> = ({
             付款方式：
             <Select
               value={filterData.payMethod || "all"} // 使用value属性，从filterData获取当前值
-              style={{ width: 80 }}
+              style={{ width: 100 }}
               onChange={(value: string) => {
                 onChange({ ...filterData, payMethod: value });
               }}

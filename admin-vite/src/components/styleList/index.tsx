@@ -75,7 +75,7 @@ const App: React.FC = () => {
   const [keyword, setKeyword] = useState("");
 
   //每页展示数量
-  const [PAGE_SIZE, setPAGE_SIZE] = useState(10); //每页展示数量
+  const [PAGE_SIZE, setPAGE_SIZE] = useState(6); //每页展示数量
 
   //当前页码
   const [pageNumber, setPageNumber] = useState(1); // 当前页码（从 1 开始）
