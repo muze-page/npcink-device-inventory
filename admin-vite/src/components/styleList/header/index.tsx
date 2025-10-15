@@ -13,13 +13,13 @@ import {
 //公共值
 import { AppContext } from "@/context/AppContext";
 //导入类型
-import { FilterStyleData } from "@/store/interface";
+import { FilterStyleData } from "@/type/index";
 
 //导入设备状态类型
 import { device_status } from "@/store/dataReplace";
 
 //跨组件提供方法
-import { StyleContext } from "@/components/styleList/styleContext";
+import { StyleContext } from "@/context/StyleContext";
 
 //准备采购平台,付款方式
 import { stylePlatform } from "@/store/dataReplace";

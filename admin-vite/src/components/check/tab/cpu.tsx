@@ -4,7 +4,7 @@
 
 import TabList from "@/components/check/block/tabList";
 import { sum_brand } from "@/store/tool";
-import { ComputerCpu } from "@/store/interface";
+import { ComputerCpu } from "@/type/index";
 
 const meat = {
   thData: ["品牌", "数量（个）"], //表头

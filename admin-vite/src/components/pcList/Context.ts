@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { MysqlDeviceChangeMeat } from "@/store/interface";
+import { MysqlDeviceChangeMeat } from "@/type/index";
 
 interface AppContextType {
   //当前选中的设备的值和修改方法
@@ -19,4 +19,3 @@ export const AppContext = createContext<AppContextType>({
   isName: true,
   setActive: () => {},
 });
-

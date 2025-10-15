@@ -1,7 +1,7 @@
 //添加修改记录
 import { Form, Input, Button, message } from "antd";
 import { addChangeData } from "@/axios";
-import { ComputerChangeReturn } from "@/store/interface";
+import { ComputerChangeReturn } from "@/type/index";
 interface ACDProps {
   uuid: string; //UUID
   onUpdata: (uuid: string) => Promise<void>; // 定义onUpdata为接受uuid参数且返回Promise<void>类型的函数

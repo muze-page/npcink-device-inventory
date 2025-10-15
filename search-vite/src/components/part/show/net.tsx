@@ -3,7 +3,7 @@
  * https://systeminformation.io/network.html
  */
 import { Table } from "antd";
-import { ComputerNet } from "@/store/interface";
+import { ComputerNet } from "@/type/index";
 import { columnsTable } from "@/store/dataReplace";
 import { judge_bool, removeEmpty } from "@/store/tool";
 interface Props {

@@ -3,7 +3,7 @@
  *
  */
 import { Table } from "antd";
-import { ComputerUuid } from "@/store/interface";
+import { ComputerUuid } from "@/type/index";
 import { columnsTable } from "@/store/dataReplace";
 import { removeEmpty } from "@/store/tool";
 interface Props {

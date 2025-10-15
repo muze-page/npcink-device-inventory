@@ -2,12 +2,12 @@
  * 自定义设备信息 - 设置
  */
 import { useContext, useEffect } from "react";
-import { StyleContext } from "@/components/styleList/styleContext";
+import { StyleContext } from "@/context/StyleContext";
 import { Form, Button, Input, Radio, InputNumber, Select } from "antd";
 import type { FormProps } from "antd";
 import { deleteStyleDeviceData, updateStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
-import { StyleDeviceSeting } from "@/store/interface";
+import { StyleDeviceSeting } from "@/type/index";
 import { AppContext } from "@/context/AppContext";
 const { TextArea } = Input;
 interface Props {
@@ -68,8 +68,8 @@ const App: React.FC<Props> = ({ onActive }) => {
     //准备数据
     const valuesData = {
       id: drawerData.id,
-      number: values.number,//设备编号
-      category: values.category,//设备分类
+      number: values.number, //设备编号
+      category: values.category, //设备分类
       uuid: uuid,
       created_at: drawerData.created_at,
       name: values.name,

@@ -2,7 +2,7 @@
  * 添加数据的输入表单
  */
 import { useContext } from "react";
-import { StyleContext } from "@/components/styleList/styleContext";
+import { StyleContext } from "@/context/StyleContext";
 import { AppContext } from "@/context/AppContext";
 import {
   Button,
@@ -26,7 +26,7 @@ import {
 import { devStatus } from "@/store/tool";
 
 //准备采购平台,付款方式
-import { StyleDeviceData } from "@/store/interface";
+import { StyleDeviceData } from "@/type/index";
 
 //准备输入框
 const { TextArea } = Input;

@@ -6,7 +6,7 @@ import React, { useState, useEffect } from "react";
 import { searchChangeAllData } from "@/axios";
 import { Space, Button, Table, message } from "antd";
 import type { TableColumnsType } from "antd";
-import { DeviceChangeList } from "@/store/interface";
+import { DeviceChangeList } from "@/type/index";
 //
 
 const App: React.FC = () => {
@@ -96,8 +96,6 @@ const App: React.FC = () => {
     },
   ];
 
-
-
   //隐藏姓名
   const [isActive, setIsActive] = useState(false);
 
@@ -114,9 +112,7 @@ const App: React.FC = () => {
       <br />
 
       <Space>
-        <Button onClick={toggleStyle}>
-          {isActive ? "展示" : "隐藏"}姓名
-        </Button>{" "}
+        <Button onClick={toggleStyle}>{isActive ? "展示" : "隐藏"}姓名</Button>{" "}
       </Space>
     </>
   );

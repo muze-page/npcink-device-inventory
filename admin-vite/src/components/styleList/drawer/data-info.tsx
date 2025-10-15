@@ -3,10 +3,10 @@
  */
 import { useContext } from "react";
 import { Card, Skeleton } from "antd";
-import { StyleDeviceData } from "@/store/interface";
+import { StyleDeviceData } from "@/type/index";
 
 //跨组件提供方法
-import { StyleContext } from "@/components/styleList/styleContext";
+import { StyleContext } from "@/context/StyleContext";
 
 import { formatDate, findBValue } from "@/store/tool";
 //导入自定义设备的采购和支付方式列表

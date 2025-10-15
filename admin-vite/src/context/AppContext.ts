@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { DataItemArr } from "@/store/interface.ts";
+import { DataItemArr } from "@/type/index";
 interface AppContextType {
   styleCategoryOption: DataItemArr[]; //自定义设备分类数组
 }

@@ -6,7 +6,7 @@ import { SetStateAction, useState, useMemo } from "react";
 import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 import { dataMySql } from "@/store";
-import { MysqlDeviceChangeMeat, FilterData } from "@/store/interface";
+import { MysqlDeviceChangeMeat, FilterData } from "@/type/index";
 
 //模糊搜索
 import Fuse from "fuse.js";
@@ -191,12 +191,12 @@ const App: React.FC = () => {
           {/**开始循环 */}
           <Flex wrap gap="large">
             {pagedFilteredList.map((tab: MysqlDeviceChangeMeat) => (
-                <DetailsList
-                  key={tab.id}
-                  data={tab}
-                  onActive={() => changeActive()}
-                  onDrawerData={() => setDrawerData(tab)}
-                />
+              <DetailsList
+                key={tab.id}
+                data={tab}
+                onActive={() => changeActive()}
+                onDrawerData={() => setDrawerData(tab)}
+              />
             ))}
           </Flex>
         </div>

@@ -4,7 +4,7 @@
 import { useContext } from "react";
 import { AppContext } from "@/components/pcList/Context";
 import { Tooltip, Skeleton } from "antd";
-import { MysqlDeviceChangeMeat } from "@/store/interface";
+import { MysqlDeviceChangeMeat } from "@/type/index";
 import { device_status } from "@/store/dataReplace";
 import Mac from "@/assets/mac.png";
 import Win from "@/assets/windows_ico.png";

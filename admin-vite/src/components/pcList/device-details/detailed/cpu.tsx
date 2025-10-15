@@ -3,7 +3,7 @@
  * https://systeminformation.io/cpu.html
  */
 import { Table } from "antd";
-import { ComputerCpu } from "@/store/interface";
+import { ComputerCpu } from "@/type/index";
 import { bytesToMB, judge_bool, removeEmpty } from "@/store/tool";
 import { columnsTable } from "@/store/dataReplace";
 interface Props {

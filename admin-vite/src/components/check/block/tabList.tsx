@@ -4,7 +4,7 @@
 //颜色 表头 表数据
 
 //表头
-import { TableData } from "@/store/interface";
+import { TableData } from "@/type/index";
 
 interface Props {
   meat: {

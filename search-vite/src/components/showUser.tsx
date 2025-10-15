@@ -5,7 +5,7 @@ import React from "react";
 import { Card, Space } from "antd";
 import { findBValue, formatDate } from "@/store/tool";
 import { device_status } from "@/store/dataReplace";
-import { MysqlDeviceChange } from "@/store/interface";
+import { MysqlDeviceChange } from "@/type/index";
 
 interface Props {
   data: MysqlDeviceChange; //设备数据

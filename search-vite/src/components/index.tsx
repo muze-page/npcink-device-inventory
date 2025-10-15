@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Input, Space } from "antd";
 import { fetchData } from "./axios";
 import Detailed from "@/components/part/";
-import { MysqlDeviceChange, Computer } from "@/store/interface";
+import { MysqlDeviceChange, Computer } from "@/type/index";
 import ShowUser from "@/components/showUser";
 import type { SearchProps } from "antd/es/input/Search";
 
@@ -16,13 +16,13 @@ const App: React.FC = () => {
   const [inputValue, setInputValue] = useState("");
 
   // 处理输入框值的变化
-  const handleInputChange = (e:any) => {
+  const handleInputChange = (e: any) => {
     setInputValue(e.target.value); // 更新状态变量中的值
   };
 
   //输入框中的值
   const onSearch: SearchProps["onSearch"] = async (value, _e, _info) => {
-    const data = await fetchData(inputValue,value); //获取数据
+    const data = await fetchData(inputValue, value); //获取数据
     //空对象
     if (Object.keys(data).length === 0) {
       return;
@@ -49,11 +49,9 @@ const App: React.FC = () => {
           onChange={handleInputChange} // 处理输入框值的变化
         />
         <Search
-        
           placeholder="输入编号或者姓名"
           onSearch={onSearch}
           style={{ width: 300 }}
-          
         />
 
         {responseData && <ShowUser data={responseData} />}

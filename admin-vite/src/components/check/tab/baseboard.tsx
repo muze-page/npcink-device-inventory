@@ -5,7 +5,7 @@
 import TabList from "@/components/check/block/tabList";
 import { sum_brand, replaceKeyValues } from "@/store/tool";
 import { replaceBaseboard } from "@/store/dataReplace";
-import { ComputerBaseboard, TableData } from "@/store/interface";
+import { ComputerBaseboard, TableData } from "@/type/index";
 
 const meat = {
   thData: ["型号", "数量（个）"], //表头

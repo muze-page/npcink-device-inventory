@@ -5,7 +5,7 @@ import {
   OsTypeArray,
   MysqlDeviceChangeMeat,
   DataItemArr,
-} from "@/store/interface";
+} from "@/type/index";
 import dayjs, { Dayjs } from "dayjs";
 
 //传入日期，返回格式化

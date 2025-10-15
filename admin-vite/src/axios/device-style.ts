@@ -3,7 +3,7 @@
  */
 import axios from "axios";
 import { Ajaxurl } from "@/store";
-import { StyleDevice, StyleDeviceSeting } from "@/store/interface";
+import { StyleDevice, StyleDeviceSeting } from "@/type/index";
 import { instance, addParamIfDefined } from "@/axios/public";
 /**
  * 获取自定义设备分类数组

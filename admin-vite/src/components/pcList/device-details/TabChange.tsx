@@ -8,7 +8,7 @@ import type { FormInstance } from "antd/es/form";
 
 import { changeMySqlData, searchChangeData } from "@/axios";
 
-import { ComputerChangeReturn } from "@/store/interface";
+import { ComputerChangeReturn } from "@/type/index";
 
 import AddChangeData from "@/components/pcList/device-details/change/add";
 

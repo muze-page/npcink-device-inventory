@@ -2,7 +2,7 @@
  * 设备详情 - 硬盘
  */
 import { Table } from "antd";
-import { ComputerDevice } from "@/store/interface";
+import { ComputerDevice } from "@/type/index";
 import { columnsTable } from "@/store/dataReplace";
 import { bytesToMB, removeEmpty } from "@/store/tool";
 interface Props {

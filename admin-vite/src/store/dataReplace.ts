@@ -1,4 +1,4 @@
-import { Replacements } from "@/store/interface";
+import { Replacements } from "@/type/index";
 //替换表
 
 /**

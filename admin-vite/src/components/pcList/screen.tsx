@@ -9,7 +9,7 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined,
 } from "@ant-design/icons";
-import { FilterData } from "@/store/interface";
+import { FilterData } from "@/type/index";
 
 //默认选项
 import { defaultOption } from "@/store";

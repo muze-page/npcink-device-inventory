@@ -1,12 +1,7 @@
 //准备初始数据
 import axios from "axios";
 import data from "@/store/defaultVar";
-import {
-  MysqlDevice,
-  OptionType,
-  Computer,
-  StyleDevice,
-} from "@/store/interface";
+import { MysqlDevice, OptionType, Computer, StyleDevice } from "@/type/index";
 //开发环境状态
 import { devStatus } from "@/store/tool";
 

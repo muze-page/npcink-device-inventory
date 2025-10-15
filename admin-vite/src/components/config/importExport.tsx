@@ -4,7 +4,7 @@ import { Space, Button, message, Modal } from "antd";
 import { exportSQLData, importSQLData } from "@/axios";
 import { Site } from "@/store/index";
 import { exportTable, formatDate } from "@/store/tool";
-import { ImportListData } from "@/store/interface";
+import { ImportListData } from "@/type/index";
 interface Props {
   name: string; //数据库表名
 }
@@ -65,7 +65,9 @@ const App: React.FC<Props> = ({ name }) => {
             <p>
               需要文件名称：<b>{translateTableName(name)}</b>
             </p>
-            <p className="mt-4 text-zinc-400 ">仅导入当前不存在的新数据，导入成功后，需刷新页面可见</p>
+            <p className="mt-4 text-zinc-400 ">
+              仅导入当前不存在的新数据，导入成功后，需刷新页面可见
+            </p>
             <p className="mt-4 text-red-600 ">您确定要导入此数据吗？</p>
           </div>
         ),

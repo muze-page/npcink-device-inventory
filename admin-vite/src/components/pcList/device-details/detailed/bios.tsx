@@ -3,7 +3,7 @@
  * https://systeminformation.io/system.html
  */
 import { Table } from "antd";
-import { ComputerBios } from "@/store/interface";
+import { ComputerBios } from "@/type/index";
 import { columnsTable } from "@/store/dataReplace";
 import { removeEmpty } from "@/store/tool";
 interface Props {

@@ -5,8 +5,8 @@ import { useContext } from "react";
 import { Drawer, Tabs, Card, Skeleton } from "antd";
 import type { TabsProps } from "antd";
 //跨组件提供方法
-import { StyleContext } from "@/components/styleList/styleContext";
-import { StyleDevice } from "@/store/interface";
+import { StyleContext } from "@/context/StyleContext";
+import { StyleDevice } from "@/type/index";
 import Info from "@/components/styleList/drawer/data-info";
 import ChangeAutoRecord from "@/block/change-auto-record.tsx";
 import Seting from "@/components/styleList/drawer/data-seting";

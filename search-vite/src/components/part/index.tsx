@@ -7,7 +7,7 @@
  */
 
 import { Tabs } from "antd";
-import { Computer } from "@/store/interface";
+import { Computer } from "@/type/index";
 
 import Cpu from "@/components/part/show/cpu";
 import Memory from "@/components/part/show/memory";

@@ -5,7 +5,7 @@
 import TabList from "@/components/check/block/tabList";
 import { sum_order } from "@/store/tool";
 
-import { ComputerDevice } from "@/store/interface";
+import { ComputerDevice } from "@/type/index";
 
 const meat = {
   thData: ["型号", "数量（块）"], //表头

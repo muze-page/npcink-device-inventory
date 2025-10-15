@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { Tabs } from "antd";
 import type { TabsProps } from "antd";
 import { AppContext } from "@/context/AppContext";
-import { DataItemArr } from "@/store/interface.ts";
+import { DataItemArr } from "@/type/index";
 
 //自定义产品分类获取方法
 import { getStyleDeviceCategory } from "@/axios/index";

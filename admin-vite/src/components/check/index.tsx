@@ -10,7 +10,7 @@ import {
   ComputerBaseboard,
   ComputerRam,
   ComputerDevice,
-} from "@/store/interface";
+} from "@/type/index";
 
 import Ad from "@/components/check/block/ad";
 import TabHeader from "@/components/check/block/tableHeader";

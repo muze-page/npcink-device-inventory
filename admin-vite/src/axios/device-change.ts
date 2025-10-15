@@ -4,11 +4,7 @@
 
 import axios from "axios";
 import { Ajaxurl } from "@/store";
-import {
-  MysqlChange,
-  ComputerChangeReturn,
-  axiosType,
-} from "@/store/interface";
+import { MysqlChange, ComputerChangeReturn, axiosType } from "@/type/index";
 import { instance, addParamIfDefined } from "@/axios/public";
 /**
  * 增 - 添加变更数据
@@ -29,7 +25,7 @@ export const addChangeData = async (
   addParamIfDefined(params, "type", data.type);
   addParamIfDefined(params, "data", data.data);
   try {
-    const data = (await instance.post(Ajaxurl, params));
+    const data = await instance.post(Ajaxurl, params);
     return data.data.success;
   } catch (error) {
     console.log(error);

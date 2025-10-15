@@ -3,7 +3,7 @@
  * https://systeminformation.io/system.html
  */
 import { Table } from "antd";
-import { ComputerSystem } from "@/store/interface";
+import { ComputerSystem } from "@/type/index";
 import { judge_bool, removeEmpty } from "@/store/tool";
 import { columnsTable } from "@/store/dataReplace";
 interface Props {

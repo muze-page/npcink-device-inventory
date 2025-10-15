@@ -6,10 +6,10 @@ import { useContext } from "react";
 import { Tooltip, Skeleton, Space } from "antd";
 
 //跨组件提供方法
-import { StyleContext } from "@/components/styleList/styleContext";
+import { StyleContext } from "@/context/StyleContext";
 
 //准备类型
-import { StyleDevice } from "@/store/interface";
+import { StyleDevice } from "@/type/index";
 
 //准备采购平台类型
 import { findOsTypeObj, formatDate } from "@/store/tool";

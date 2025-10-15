@@ -18,7 +18,7 @@ import { defaultOption, Site, sqlTableName } from "@/store";
 import { saveSQLData, remove_department, addPublicSearchPage } from "@/axios";
 
 import ImportExport from "@/components/config/importExport";
-import { OptionType } from "@/store/interface";
+import { OptionType } from "@/type/index";
 import { changeSelectData } from "@/store/tool";
 import Header from "@/block/tab-header";
 
@@ -339,7 +339,6 @@ const App: React.FC = () => {
 
           <Header title="导入导出" />
 
-         
           <Form.Item label="电脑设备数据" className="mt-4">
             <ImportExport name={sqlTableName.pcData} />
           </Form.Item>

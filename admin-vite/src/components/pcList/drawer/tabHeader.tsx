@@ -1,9 +1,9 @@
 //弹窗内容头部
 import { useContext } from "react";
 import { Skeleton, Space, Tooltip } from "antd";
-import { OsTypeArray } from "@/store/interface";
+import { OsTypeArray } from "@/type/index";
 import { device_status } from "@/store/dataReplace";
-import { findBValue,findOsTypeObj } from "@/store/tool";
+import { findBValue, findOsTypeObj } from "@/store/tool";
 import { AppContext } from "@/components/pcList/Context";
 import MacOs from "@/assets/macos.png";
 import Win from "@/assets/windows_s.png";

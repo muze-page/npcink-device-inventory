@@ -3,7 +3,7 @@
  */
 import axios from "axios";
 import { Ajaxurl } from "@/store";
-import { axiosType } from "@/store/interface";
+import { axiosType } from "@/type/index";
 
 /**
  * 标准接口，使用的方法是标准方法

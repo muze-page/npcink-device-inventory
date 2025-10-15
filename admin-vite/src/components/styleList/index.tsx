@@ -2,7 +2,7 @@
  * 自定义设备类型
  */
 import { useState, useMemo, SetStateAction } from "react";
-import { Pagination, Flex, } from "antd";
+import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 
 //模糊搜索
@@ -12,13 +12,10 @@ import Fuse from "fuse.js";
 import DataList from "@/components/styleList/dataList";
 
 //拿到自定义设备数据类型
-import {
-  StyleDevice,
-  FilterStyleData,
-} from "@/store/interface";
+import { StyleDevice, FilterStyleData } from "@/type/index";
 
 //跨组件提供方法
-import { StyleContext } from "@/components/styleList/styleContext";
+import { StyleContext } from "@/context/StyleContext";
 
 //拿到弹窗组件
 import Drawer from "@/components/styleList/drawer/index";

@@ -3,7 +3,7 @@
  */
 
 import { Drawer } from "antd";
-import { MysqlDeviceChangeMeat } from "@/store/interface";
+import { MysqlDeviceChangeMeat } from "@/type/index";
 import Property from "@/components/pcList/device-details";
 import TabHeader from "@/components/pcList/drawer/tabHeader";
 import PrintData from "@/block/printData";
@@ -12,7 +12,7 @@ interface Props {
   onActive: () => void; //关闭弹窗的回调函数
   data: MysqlDeviceChangeMeat; //传来的设备信息
 }
-const App: React.FC<Props> = ({ active, onActive,data }) => {
+const App: React.FC<Props> = ({ active, onActive, data }) => {
   return (
     <>
       <Drawer
