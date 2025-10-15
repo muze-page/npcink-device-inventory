@@ -80,6 +80,8 @@ const DateSix = {
 const data = [
   {
     id: "1",
+    number: 1,
+    category: "手机",
     state: "apply",
     name: "管理员",
     purpose: "测试使用",
@@ -88,7 +90,8 @@ const data = [
     data: DataOne,
   },
   {
-    id: "2",
+    id: "2", number: 2,
+    category: "手机",
     state: "scrap",
     name: "布局",
     purpose: "测试使用",
@@ -97,7 +100,8 @@ const data = [
     data: DateTwo,
   },
   {
-    id: "3",
+    id: "3", number: 3,
+    category: "手机",
     state: "apply",
     name: "管理员",
     purpose: "测试使用",
@@ -106,7 +110,8 @@ const data = [
     data: DateThree,
   },
   {
-    id: "4",
+    id: "4", number: 4,
+    category: "手机",
     state: "scrap",
     name: "布局",
     purpose: "测试使用",
@@ -115,7 +120,8 @@ const data = [
     data: DateFour,
   },
   {
-    id: "5",
+    id: "5", number: 5,
+    category: "手机",
     state: "apply",
     name: "管理员",
     purpose: "测试使用",
@@ -124,7 +130,8 @@ const data = [
     data: DateFive,
   },
   {
-    id: "6",
+    id: "6", number: 6,
+    category: "手机",
     state: "scrap",
     name: "布局",
     purpose: "测试使用",
@@ -133,7 +140,8 @@ const data = [
     data: DateSix,
   },
   {
-    id: "7",
+    id: "7", number: 7,
+    category: "手机",
     state: "apply",
     name: "管理员",
     purpose: "测试使用",
@@ -142,7 +150,8 @@ const data = [
     data: DataOne,
   },
   {
-    id: "8",
+    id: "8", number: 8,
+    category: "手机",
     state: "scrap",
     name: "布局",
     purpose: "测试使用",
@@ -151,7 +160,8 @@ const data = [
     data: DateTwo,
   },
   {
-    id: "9",
+    id: "9", number: 9,
+    category: "手机",
     state: "apply",
     name: "管理员",
     purpose: "测试使用",
@@ -160,7 +170,8 @@ const data = [
     data: DataOne,
   },
   {
-    id: "10",
+    id: "10", number: 10,
+    category: "手机",
     state: "scrap",
     name: "布局",
     purpose: "测试使用",
@@ -169,7 +180,8 @@ const data = [
     data: DateTwo,
   },
   {
-    id: "11",
+    id: "11", number: 11,
+    category: "手机",
     state: "apply",
     name: "管理员",
     purpose: "测试使用",
@@ -178,7 +190,8 @@ const data = [
     data: DataOne,
   },
   {
-    id: "12",
+    id: "12", number: 12,
+    category: "手机",
     state: "scrap",
     name: "测试自动变更数据",
     purpose: "测试自动变更数据",

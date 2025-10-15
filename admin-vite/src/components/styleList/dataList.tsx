@@ -78,6 +78,28 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
               {data.data.title}
             </Tooltip>
           </p>
+          {/*设备编号*/}
+          <p className="mt-2">
+            <Tooltip title={"设备编号：" + data.number}>
+              <b> 设备编号：</b>
+              {isName ? (
+                data.number
+              ) : (
+                <Skeleton.Input active={true} size={"small"} className="!h-4" />
+              )}
+            </Tooltip>
+          </p>
+          {/*设备分类*/}
+          <p className="mt-2">
+            <Tooltip title={"设备分类：" + data.category}>
+              <b> 设备分类：</b>
+              {isName ? (
+                data.category
+              ) : (
+                <Skeleton.Input active={true} size={"small"} className="!h-4" />
+              )}
+            </Tooltip>
+          </p>
           {/*使用人*/}
           <p className="mt-2">
             <Tooltip title={"使用人：" + data.name}>

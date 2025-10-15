@@ -34,7 +34,7 @@ const { TextArea } = Input;
 type FormType = StyleDeviceData & {
   name: string; //使用人
   purpose: string; //用途
-  state: "apply" | "idie" | "fault" | "scrap"; //设备状态
+  state: "apply" | "idie" | "fault" | "scrap"| "repair"; //设备状态
 };
 
 const onFinishFailed: FormProps<FormType>["onFinishFailed"] = (errorInfo) => {

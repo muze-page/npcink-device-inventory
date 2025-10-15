@@ -1,5 +1,10 @@
 //类型
 import type { Dayjs } from "dayjs";
+
+//设备状态TODO:合并类似类型
+export interface StateType {
+  state: "apply" | "idie" | "fault" | "scrap" | "repair"; //设备状态
+}
 /**
  * 变更自动记录表数据类型
  */
@@ -25,7 +30,7 @@ export interface ImportListData {
 //上传数据时需要的值
 export interface MysqlDeviceData {
   name: string; //姓名
-  state: "apply" | "idie" | "fault" | "scrap"; //设备状态
+  state: "apply" | "idie" | "fault" | "scrap" | "repair"; //设备状态
   number: string; //编号
   department: string; //部门
   ip: string; //ip
@@ -72,13 +77,13 @@ export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
 
 //筛选数据类型 - 电脑设备
 export interface FilterData {
-  state: "apply" | "idie" | "fault" | "scrap" | "all"; //筛选电脑设备状态
+  state: "apply" | "idie" | "fault" | "scrap" | "repair" | "all"; //筛选电脑设备状态
   department: string; //部门
 }
 
 //筛选数据类型 - 自定义设备
 export interface FilterStyleData {
-  state: "apply" | "idie" | "fault" | "scrap" | "all"; //筛选自定义设备状态
+  state: "apply" | "idie" | "fault" | "scrap" | "repair" | "all"; //筛选自定义设备状态
   platform: string; //筛选采购平台
   payMethod: string; //付款方式
 }
@@ -171,8 +176,10 @@ export interface DeviceChangeList {
 //自定义设备设置用类型
 export interface StyleDeviceSeting {
   name: string; //使用人
+  number: string; //设备编号
+  category: string; //分类
   purpose: string; //用途
-  state: "apply" | "idie" | "fault" | "scrap"; //设备状态
+  state: "apply" | "idie" | "fault" | "scrap" | "repair"; //设备状态
   data: StyleDeviceData; //设备数据
 }
 

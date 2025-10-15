@@ -194,7 +194,7 @@ class Dema_Activator extends DEMA_Admin_Interface
             id INT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
             name VARCHAR(64) NOT NULL COMMENT '姓名',
 			number VARCHAR(50) NOT NULL COMMENT '设备编号',
-            cat VARCHAR(64) NOT NULL COMMENT '分类',
+            category VARCHAR(64) NOT NULL COMMENT '分类',
             purpose VARCHAR(128) NOT NULL COMMENT '用途',
             state VARCHAR(64) NOT NULL COMMENT '状态',
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

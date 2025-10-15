@@ -35,7 +35,7 @@ export const formatDate = (date: Dayjs) => {
 };
 
 //准备设备状态
-type DeviceStatus = "apply" | "idie" | "fault" | "scrap";
+type DeviceStatus = "apply" | "idie" | "fault" | "scrap"| "repair";
 export const statusLabel = (value: DeviceStatus) => {
   return device_status.find((item) => item.value === value)?.label;
 };
