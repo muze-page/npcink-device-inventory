@@ -51,10 +51,11 @@ const App: React.FC<Props> = ({ uuid }) => {
     depreciation: string;
     purpose: string;
     //设备状态表
-    apply: string;
-    idie: string;
-    fault: string;
-    scrap: string;
+    apply: string;//使用
+    idie: string;//闲置
+    fault: string;//故障
+    scrap: string;//报废
+    repair:string,//维修
   };
   const changeRecordFieldNames: ChangeRecordFieldNames = {
     name: "姓名",
@@ -70,6 +71,7 @@ const App: React.FC<Props> = ({ uuid }) => {
     idie: "闲置",
     fault: "故障",
     scrap: "报废",
+    repair:"维修",
   };
 
   // 获取所有唯一字段名作为筛选选项
