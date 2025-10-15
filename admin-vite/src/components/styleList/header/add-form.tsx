@@ -203,7 +203,7 @@ const App = ({ form, handleOk }: AddFormProps) => {
         <Col span={8}>
           <Form.Item<FormType>
             label="数量"
-            name="number"
+            name="numbers"
             rules={[{ required: true, message: "请填写此信息" }]}
           >
             <InputNumber addonAfter="个" style={{ width: 122 }} />

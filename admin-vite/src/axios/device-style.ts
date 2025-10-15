@@ -32,6 +32,8 @@ export const addStyleDeviceData = async (
   params.append("action", "add_style_device_data_callback");
   // addParamIfDefined(params, "uuid", data.uuid);
   addParamIfDefined(params, "name", data.name);
+  addParamIfDefined(params, "number", data.number);
+  addParamIfDefined(params, "category", data.category);
   addParamIfDefined(params, "purpose", data.purpose);
   addParamIfDefined(params, "state", data.state);
   addParamIfDefined(params, "data", JSON.stringify(data.data));

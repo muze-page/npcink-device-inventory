@@ -63,12 +63,15 @@ if (!class_exists('DEMA_Admin_Interface_Style_Data')) {
             // 获取前端传递的参数并进行输入验证，如果有值，肯定是字符串类型
             // $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //生成的uuid
             $name = isset($_POST['name']) ? sanitize_text_field($_POST['name']) : null; //使用人
+            $number = isset($_POST['number']) ? sanitize_text_field($_POST['number']) : null; //编号
+            $category = isset($_POST['category']) ? sanitize_text_field($_POST['category']) : null; //设备分类
             $purpose = isset($_POST['purpose']) ? sanitize_text_field($_POST['purpose']) : null; //设备用途
             $state = isset($_POST['state']) ? sanitize_text_field($_POST['state']) : null; //设备状态
             $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : null; //设备信息
 
+
             //是否缺少参数
-            $variables = compact('name', 'purpose', 'state', 'data');
+            $variables = compact('name', 'number', 'category', 'purpose', 'state',  'data');
 
             // 检查是否有参数为 null
             $null_param = array_search(null, $variables, true);
@@ -78,6 +81,8 @@ if (!class_exists('DEMA_Admin_Interface_Style_Data')) {
                 $param_names = [
                     //'uuid' => 'uuid - 设备唯一编号',
                     'name' => 'name - 使用人姓名',
+                    'number' => 'number - 设备编号',
+                    'category' => 'category - 设备分类',
                     'purpose' => 'purpose - 用途',
                     'state' => 'state - 设备状态',
                     'data' => 'data - 设备数据'
@@ -103,6 +108,8 @@ if (!class_exists('DEMA_Admin_Interface_Style_Data')) {
                 array(
                     // 'uuid' => $uuid,
                     'name' => $name,
+                    'number' => $number,
+                    'category' => $category,
                     'purpose' => $purpose,
                     'state' => $state,
                     'data' =>  $json
@@ -110,6 +117,8 @@ if (!class_exists('DEMA_Admin_Interface_Style_Data')) {
                 array(
                     //'%s', // uuid
                     '%s', // name
+                    '%s', // number
+                    '%s', // category
                     '%s', // purpose
                     '%s', // state
                     '%s'  // data
