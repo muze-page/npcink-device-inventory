@@ -2,7 +2,7 @@
  * 自定义设备类型
  */
 import { useState, useMemo, SetStateAction } from "react";
-import { Pagination, Flex } from "antd";
+import { Pagination, Flex, } from "antd";
 import type { PaginationProps } from "antd";
 
 //模糊搜索
@@ -38,6 +38,7 @@ const App: React.FC = () => {
 
   //共享弹窗状态
   const [active, setActive] = useState(false);
+
   //修改弹窗状态
   const changeActive = () => {
     setActive(!active);
@@ -67,6 +68,7 @@ const App: React.FC = () => {
   const [filter, setFilter] = useState<FilterStyleData>({
     //筛选条件默认值
     state: "all", //设备状态
+    category: "all", //设备分类
     platform: "all", //采购平台
     payMethod: "all", //支付方式
   });

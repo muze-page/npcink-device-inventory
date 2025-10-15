@@ -18,8 +18,40 @@ if (!class_exists('DEMA_Admin_Interface_Style_Data')) {
 
             //改
             add_action('wp_ajax_update_style_device_data_callback',  array(__CLASS__, 'update_style_device_data_callback'));
+
+            //提供自定义设备分类列表接口
+            add_action('wp_ajax_get_style_device_categories_callback',  array(__CLASS__, 'get_style_device_categories_callback'));
         }
 
+        /**
+         * 自定义设备分类数据接口
+         */
+        public static function get_style_device_categories_callback()
+        {
+            global $wpdb;
+            $table_name = $wpdb->prefix . self::$table_style_name;
+
+            // 获取所有设备分类
+            $categories = $wpdb->get_results(
+                $wpdb->prepare("SELECT DISTINCT category FROM {$table_name} WHERE category IS NOT NULL AND category != ''")
+            );
+
+            // 检查查询是否成功
+            if ($wpdb->last_error) {
+                return wp_send_json_error(['error' => $wpdb->last_error], 500);
+            }
+
+            // 整理成键值对形式，value和label都是相同的值
+            $result = array_map(function ($item) {
+                return [
+                    'value' => $item->category,
+                    'label' => $item->category
+                ];
+            }, $categories);
+
+            wp_send_json_success(array_values($result));
+            wp_die();
+        }
         /**
          * 增- 添加自定义设备数据接口
          */

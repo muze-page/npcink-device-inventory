@@ -19,6 +19,7 @@ export {
   addStyleDeviceData,
   deleteStyleDeviceData,
   updateStyleDeviceData,
+  getStyleDeviceCategory,
 } from "@/axios/device-style";
 
 //硬件设备数据变更自动记录

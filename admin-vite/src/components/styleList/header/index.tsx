@@ -20,7 +20,10 @@ import { device_status } from "@/store/dataReplace";
 import { StyleContext } from "@/components/styleList/styleContext";
 
 //准备采购平台,付款方式
-import { stylePlatform, stylePayType } from "@/store/dataReplace";
+import { stylePlatform, stylePayType, } from "@/store/dataReplace";
+//自定义产品分类获取方法
+import { getStyleDeviceCategory } from "@/axios/index";
+
 
 //引入数据填写弹窗表单
 import Add from "@/components/styleList/header/add";
@@ -63,6 +66,10 @@ const App: React.FC<Props> = ({
 
   //信息录入弹窗状态
   const [isModalOpen, setIsModalOpen] = useState(false);
+  //设备分类选项
+  const [styleCategoryOptions, setStyleCategoryOptions] = useState([
+    { label: "全部", value: "all" }
+  ]);
 
   //展示弹窗
   const showModal = () => {
@@ -74,6 +81,24 @@ const App: React.FC<Props> = ({
     setIsModalOpen(false);
   };
 
+  //获取设备分类数据
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const categories = await getStyleDeviceCategory();
+        if (Array.isArray(categories)) {
+          setStyleCategoryOptions([
+            { label: "全部", value: "all" },
+            ...categories
+          ]);
+        }
+      } catch (error) {
+        console.error("获取设备分类失败:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
   /**
    * 筛选和搜索
    */
@@ -85,6 +110,7 @@ const App: React.FC<Props> = ({
     onChange({
       //筛选条件默认值
       state: "all", //状态
+      category: "all",//设备类别
       platform: "all", //平台
       payMethod: "all", //付款方式
     });
@@ -126,6 +152,18 @@ const App: React.FC<Props> = ({
                 onChange({ ...filterData, state: value });
               }}
               options={stateOptions}
+            />
+          </div>
+
+          <div>
+            分类：
+            <Select
+              value={filterData.category || "all"} // 使用value属性，从filterData获取当前值
+              style={{ width: 100 }}
+              onChange={(value: string) => {
+                onChange({ ...filterData, category: value });
+              }}
+              options={styleCategoryOptions}
             />
           </div>
 
