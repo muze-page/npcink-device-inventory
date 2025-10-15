@@ -3,6 +3,7 @@
  */
 import { useContext } from "react";
 import { StyleContext } from "@/components/styleList/styleContext";
+import { AppContext } from "@/context/AppContext";
 import {
   Button,
   Form,
@@ -34,7 +35,9 @@ const { TextArea } = Input;
 type FormType = StyleDeviceData & {
   name: string; //使用人
   purpose: string; //用途
-  state: "apply" | "idie" | "fault" | "scrap"| "repair"; //设备状态
+  state: "apply" | "idie" | "fault" | "scrap" | "repair"; //设备状态
+  number: string; //编号
+  category: string; //分类
 };
 
 const onFinishFailed: FormProps<FormType>["onFinishFailed"] = (errorInfo) => {
@@ -44,10 +47,12 @@ const onFinishFailed: FormProps<FormType>["onFinishFailed"] = (errorInfo) => {
 //准备选项默认值
 const defaultValue: FormType = {
   name: "",
+  number: "9527", //编号
+  category: "", //分类设备类别
   purpose: "",
   state: "apply", //设备状态
   title: "",
-  number: 1,
+  numbers: 1, // 设备数量
   total: 0,
   platform: "TaoBao",
   shop_name: "",
@@ -67,6 +72,8 @@ type AddFormProps = {
 const App = ({ form, handleOk }: AddFormProps) => {
   //拿到添加设备的回调函数
   const { handleAddDevice } = useContext(StyleContext);
+  //拿到自定义设备分类选项
+  const { styleCategoryOption } = useContext(AppContext);
   //提交拿到的值
   const onFinish: FormProps<FormType>["onFinish"] = async (values) => {
     //添加弹窗提示，确定提交则继续，不提交则取消
@@ -78,9 +85,11 @@ const App = ({ form, handleOk }: AddFormProps) => {
       name: values.name,
       purpose: values.purpose,
       state: values.state,
+      number: values.number,
+      category: values.category,
       data: {
         title: values.title,
-        number: values.number,
+        numbers: values.numbers,
         total: values.total,
         platform: values.platform,
         shop_name: values.shop_name,
@@ -105,9 +114,9 @@ const App = ({ form, handleOk }: AddFormProps) => {
       if (state.deviceData) {
         //准备载入的值
         const deviceData = {
-          uuid: state.deviceData.uuid,
-          id: state.deviceData.id,
-          created_at: state.deviceData.created_at,
+          uuid: state.deviceData.uuid, //不变的值
+          id: state.deviceData.id, //不变的值
+          created_at: state.deviceData.created_at, //不变的值
           ...data,
         };
         handleAddDevice(deviceData); // 调用添加设备的回调函数
@@ -124,10 +133,12 @@ const App = ({ form, handleOk }: AddFormProps) => {
   const fillTestData = () => {
     const data: FormType = {
       name: "张三",
+      number: "number",
+      category: "all",
       purpose: "测试用途",
       state: "apply",
       title: "华为路由器",
-      number: 2,
+      numbers: 2,
       total: 2300,
       platform: "TaoBao",
       shop_name: "华为路由器专卖店",
@@ -251,7 +262,7 @@ const App = ({ form, handleOk }: AddFormProps) => {
       <Row>
         <Col span={12}>
           <Form.Item<FormType>
-            label="使用人："
+            label="使用"
             name="name"
             rules={[{ required: true, message: "请填写此信息" }]}
           >
@@ -260,11 +271,31 @@ const App = ({ form, handleOk }: AddFormProps) => {
         </Col>
         <Col span={12}>
           <Form.Item<FormType>
-            label="采购人"
+            label="采购"
             name="purchaser"
             rules={[{ required: true, message: "请填写此信息" }]}
           >
             <Input allowClear placeholder="负责购买此设备的人" />
+          </Form.Item>
+        </Col>
+      </Row>
+      <Row>
+        <Col span={12}>
+          <Form.Item<FormType>
+            label="编号"
+            name="number"
+            rules={[{ required: true, message: "请填写此信息" }]}
+          >
+            <InputNumber />
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item<FormType>
+            label="分类"
+            name="category"
+            rules={[{ required: true, message: "请填写此信息" }]}
+          >
+            <Select options={styleCategoryOption} style={{ width: 122 }} />
           </Form.Item>
         </Col>
       </Row>

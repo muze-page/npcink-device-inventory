@@ -62,6 +62,8 @@ const App: React.FC<Props> = ({ onActive }) => {
     //准备数据
     const valuesData = {
       id: drawerData.id,
+      number: values.number,
+      category: values.category,
       uuid: uuid,
       created_at:drawerData.created_at,
       name: values.name,

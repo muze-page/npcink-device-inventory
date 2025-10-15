@@ -194,7 +194,7 @@ export type StyleDevice = StyleDeviceSeting & {
 //自定义设备数据属性
 export interface StyleDeviceData {
   title: string; //设备名称
-  number: number; //设备数量
+  numbers: number; //设备数量
   total: number; //单价
   platform:
     | "JingDong"
