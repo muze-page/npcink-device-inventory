@@ -90,8 +90,8 @@ const App: React.FC = () => {
     },
     {
       title: "日期",
-      dataIndex: "time",
-      key: "time",
+      dataIndex: "created_at",
+      key: "created_at",
       width: "15%",
     },
   ];
