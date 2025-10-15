@@ -25,8 +25,8 @@ if (!class_exists('DEMA_Admin_Menu')) {
             // 添加一个菜单到 WordPress 后台的“设置”菜单下
             add_submenu_page(
                 'plugins.php',
-                '电脑资产管理',
-                '电脑资产管理',
+                '设备资产管理',
+                '设备资产管理',
                 'administrator',
                 'dema_seting',
                 array(__CLASS__, 'menu_displays'),

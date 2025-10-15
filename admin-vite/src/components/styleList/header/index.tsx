@@ -22,7 +22,7 @@ import { device_status } from "@/store/dataReplace";
 import { StyleContext } from "@/components/styleList/styleContext";
 
 //准备采购平台,付款方式
-import { stylePlatform, stylePayType } from "@/store/dataReplace";
+import { stylePlatform } from "@/store/dataReplace";
 
 //引入数据填写弹窗表单
 import Add from "@/components/styleList/header/add";
@@ -51,7 +51,7 @@ const stylePlatformOptions = [
 ];
 
 //处理付款平台
-const payPlatformOptions = [{ label: "全部", value: "all" }, ...stylePayType];
+//const payPlatformOptions = [{ label: "全部", value: "all" }, ...stylePayType];
 
 const App: React.FC<Props> = ({
   filterData,
@@ -74,7 +74,7 @@ const App: React.FC<Props> = ({
     { label: "全部", value: "all" },
     ...styleCategoryOption,
   ];
-  
+
   //展示弹窗
   const showModal = () => {
     setIsModalOpen(true);
@@ -127,7 +127,7 @@ const App: React.FC<Props> = ({
   return (
     <>
       <div className="flex justify-between items-center mb-4">
-        <Header title="自定义资产信息" />
+        <Header title="其他资产" />
         <Space align="center" size={"middle"} wrap>
           <div>
             设备状态：
@@ -164,7 +164,9 @@ const App: React.FC<Props> = ({
               options={stylePlatformOptions}
             />
           </div>
-          <div>
+          {/**
+             * 
+            <div>
             付款方式：
             <Select
               value={filterData.payMethod || "all"} // 使用value属性，从filterData获取当前值
@@ -175,6 +177,8 @@ const App: React.FC<Props> = ({
               options={payPlatformOptions}
             />
           </div>
+             */}
+
           <Search
             placeholder="搜索姓名、订单号、产品名称" //添加说明
             allowClear // 可以点击清除图标删除内容

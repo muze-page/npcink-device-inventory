@@ -3,16 +3,20 @@
  */
 import { useContext, useEffect } from "react";
 import { StyleContext } from "@/components/styleList/styleContext";
-import { Form, Button, Input, Radio } from "antd";
+import { Form, Button, Input, Radio, InputNumber, Select } from "antd";
 import type { FormProps } from "antd";
 import { deleteStyleDeviceData, updateStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
 import { StyleDeviceSeting } from "@/store/interface";
+import { AppContext } from "@/context/AppContext";
 const { TextArea } = Input;
 interface Props {
   onActive: () => void; //修改弹窗状态
 }
 const App: React.FC<Props> = ({ onActive }) => {
+  //拿到自定义设备分类选项
+  const { styleCategoryOption } = useContext(AppContext);
+
   //拿到父组件传入的删除方法
   const { drawerData, setDrawerData, handleDeleteData, handleUpdateData } =
     useContext(StyleContext);
@@ -52,6 +56,8 @@ const App: React.FC<Props> = ({ onActive }) => {
   useEffect(() => {
     form.setFieldsValue({
       name: drawerData.name,
+      number: drawerData.number,
+      category: drawerData.category,
       purpose: drawerData.purpose,
       state: drawerData.state,
     });
@@ -62,10 +68,10 @@ const App: React.FC<Props> = ({ onActive }) => {
     //准备数据
     const valuesData = {
       id: drawerData.id,
-      number: values.number,
-      category: values.category,
+      number: values.number,//设备编号
+      category: values.category,//设备分类
       uuid: uuid,
-      created_at:drawerData.created_at,
+      created_at: drawerData.created_at,
       name: values.name,
       purpose: values.purpose,
       state: values.state,
@@ -104,6 +110,12 @@ const App: React.FC<Props> = ({ onActive }) => {
         <Form.Item<StyleDeviceSeting> label="使用人" name="name">
           <Input />
         </Form.Item>
+        <Form.Item<StyleDeviceSeting> label="编号" name="number">
+          <InputNumber />
+        </Form.Item>
+        <Form.Item<StyleDeviceSeting> label="分类" name="category">
+          <Select options={styleCategoryOption} />
+        </Form.Item>
 
         <Form.Item<StyleDeviceSeting> label="设备状态：" name="state">
           <Radio.Group options={device_status} />
@@ -112,7 +124,7 @@ const App: React.FC<Props> = ({ onActive }) => {
         <Form.Item<StyleDeviceSeting>
           label="用途"
           name="purpose"
-          rules={[{ required: true, message: "Please input your password!" }]}
+          rules={[{ required: true, message: "您的用途" }]}
         >
           <TextArea rows={3} />
         </Form.Item>
