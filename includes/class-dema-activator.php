@@ -65,22 +65,25 @@ class Dema_Activator extends DEMA_Admin_Interface
 			// 创建表结构
 			$sql = "CREATE TABLE $table_name (
             id INT NOT NULL AUTO_INCREMENT,
-            name VARCHAR(64) NOT NULL COMMENT '姓名',
-            number VARCHAR(64) NOT NULL COMMENT '设备编号',
+            name VARCHAR(100) NOT NULL COMMENT '姓名',
+            number VARCHAR(50) NOT NULL COMMENT '设备编号',
             department VARCHAR(64) NOT NULL COMMENT '部门',
-            ip VARCHAR(39) NOT NULL COMMENT 'IP地址', 
+            ip VARCHAR(45) NOT NULL COMMENT 'IP地址', 
 			state VARCHAR(64) NOT NULL COMMENT '状态',
-            purchase DECIMAL(10, 2) NOT NULL COMMENT '采购价', 
-            depreciation DECIMAL(10, 2) NOT NULL COMMENT '二手价', 
+            purchase DECIMAL(12, 2) NOT NULL COMMENT '采购价', 
+            depreciation DECIMAL(12, 2) NOT NULL COMMENT '二手价', 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-            uuid VARCHAR(36) NOT NULL COMMENT '设备唯一标识符',
+			uuid CHAR(36) NOT NULL COMMENT '设备唯一标识符',
             data JSON COMMENT '设备信息',
             PRIMARY KEY (id),
             UNIQUE (number),
             UNIQUE (uuid),
-            KEY idx_number (number),
-            KEY idx_uuid (uuid)
+			-- 添加复合索引
+            KEY idx_dept_state (department, state),
+            KEY idx_created_at (created_at),
+            KEY idx_dept_created (department, created_at)
+            -- 对于查询频繁的字段组合
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
 			// 执行 SQL 语句
