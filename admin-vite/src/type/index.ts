@@ -359,14 +359,15 @@ export interface ComputerDishplays {
 }
 //显卡
 export interface ComputerControllers {
-  bus: string;
-  memoryTotal: number | null; //显存
+  bus: string; //硬盘总线
+  vram: number | null; //显存
   cores: string;
-  model: string;
-  vendor: string;
+  model: string; //显卡型号
+  vendor: string; //显卡厂商
   deviceId: string;
   external: boolean;
   vendorId: string;
+  subDeviceId: string; //显卡设备ID
   vramDynamic: boolean;
   metalVersion: string;
 }

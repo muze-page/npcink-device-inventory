@@ -12,20 +12,20 @@ interface Props {
 const App: React.FC<Props> = ({ data }) => {
   const formattedData = (item: ComputerControllers) => {
     const arr = [
-      { key: "1", label: "供应商", value: item.vendor },
-      { key: "2", label: "型号", value: item.model },
-      { key: "3", label: "总线", value: item.bus },
+      { label: "型号", value: item.model },
       {
-        key: "4",
         label: "显存",
-        value: item.memoryTotal ? item.memoryTotal / 1024 + "GB" : "",
+        value: item.vram ? (item.vram / 1024).toFixed(0) + "GB" : "",
       },
-      { key: "5", label: "动态分配", value: judge_bool(item.vramDynamic) },
-      { key: "6", label: "GPU内核", value: item.cores },
-      { key: "7", label: "设备标识", value: item.deviceId },
-      { key: "8", label: "外部GPU", value: judge_bool(item.external) },
-      { key: "9", label: "API Metal 版本", value: item.metalVersion },
-      { key: "10", label: "供应商编号", value: item.vendorId },
+      { label: "显卡ID", value: item.subDeviceId },
+      { label: "供应商", value: item.vendor },
+      { label: "总线", value: item.bus },
+      { label: "动态分配", value: judge_bool(item.vramDynamic) },
+      { label: "GPU内核", value: item.cores },
+      { label: "设备标识", value: item.deviceId },
+      { label: "外部GPU", value: judge_bool(item.external) },
+      { label: "API Metal 版本", value: item.metalVersion },
+      { label: "供应商编号", value: item.vendorId },
     ];
     return removeEmpty(arr);
   };
@@ -42,6 +42,10 @@ const App: React.FC<Props> = ({ data }) => {
               dataSource={formattedData(item)}
               columns={columnsTable}
               size="small"
+              pagination={{
+                pageSize: 10,
+                hideOnSinglePage: true,
+              }}
             />
           </div>
         );

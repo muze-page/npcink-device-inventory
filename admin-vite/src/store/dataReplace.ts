@@ -61,8 +61,10 @@ export const excludeGraphics = [
 export const columnsTable = [
   {
     title: "序号",
-    dataIndex: "key",
-    key: "key",
+    dataIndex: "index",
+    key: "index",
+    /**自定义序号 */
+    render: (_text: any, _record: any, index: number) => index + 1,
   },
   {
     title: "属性",

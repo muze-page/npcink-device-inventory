@@ -12,14 +12,15 @@ interface Props {
 const App: React.FC<Props> = ({ data }) => {
   const formattedData = (item: ComputerControllers) => {
     const arr = [
-      { key: "1", label: "供应商", value: item.vendor },
       { key: "2", label: "型号", value: item.model },
-      { key: "3", label: "总线", value: item.bus },
       {
         key: "4",
         label: "显存",
-        value: item.memoryTotal ? item.memoryTotal / 1024 + "GB" : "",
+        value: item.vram ? (item.vram / 1024).toFixed(0) + "GB" : "",
       },
+      { key: "11", label: "显卡ID", value: item.subDeviceId },
+      { key: "1", label: "供应商", value: item.vendor },
+      { key: "3", label: "总线", value: item.bus },
       { key: "5", label: "动态分配", value: judge_bool(item.vramDynamic) },
       { key: "6", label: "GPU内核", value: item.cores },
       { key: "7", label: "设备标识", value: item.deviceId },
