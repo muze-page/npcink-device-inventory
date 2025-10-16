@@ -406,7 +406,7 @@ export const handleGraphicsVram = (vram: number) => {
   return value;
 };
 
-//处理多张显卡情况  输入显卡数组
+//处理多张显卡，按显存大小从大望小排序，输出数组
 export const handleGraphics = (data: ComputerControllers[]) => {
   //对值进行处理，出现如下字符串的，去掉
   data = data.filter(
@@ -417,7 +417,7 @@ export const handleGraphics = (data: ComputerControllers[]) => {
       (item) =>
         item.model + " " + (item.vram ? handleGraphicsVram(item.vram) : "")
     )
-    .join("/");
+    .join("<br/>");
 
   return value;
 };

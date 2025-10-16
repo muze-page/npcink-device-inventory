@@ -55,6 +55,7 @@ export const excludeGraphics = [
   "OrayIddDriver Device",
   "System Product Name",
   "OrayIddDriver Device",
+  "Virtual Display Device",
 ];
 
 //硬件详细配置表头

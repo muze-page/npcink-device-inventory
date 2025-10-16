@@ -22,7 +22,7 @@ const App: React.FC<Props> = ({ data, time }) => {
   const displayMemoryInfo = (memoryInfo: MemoryInfo): string => {
     return `
     
-    <div class="text-xs">制造商: ${memoryInfo.manufacturer}
+    <div class="text-xs">
   频率: ${memoryInfo.clockSpeed} MHz
   大小: ${memoryInfo.size / 1024 ** 3} GB </div>`;
   };
