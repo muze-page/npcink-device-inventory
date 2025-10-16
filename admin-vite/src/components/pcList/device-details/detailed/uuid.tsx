@@ -11,8 +11,8 @@ interface Props {
 }
 const App: React.FC<Props> = ({ data }) => {
   const Items = [
-    { key: "1", label: "系统", value: data.os },
-    { key: "2", label: "硬件", value: data.hardware },
+    { label: "系统", value: data.os },
+    { label: "硬件", value: data.hardware },
   ];
 
   return (
@@ -21,6 +21,10 @@ const App: React.FC<Props> = ({ data }) => {
         dataSource={removeEmpty(Items)}
         columns={columnsTable}
         size="small"
+        pagination={{
+          pageSize: 10,
+          hideOnSinglePage: true,
+        }}
       />
     </>
   );

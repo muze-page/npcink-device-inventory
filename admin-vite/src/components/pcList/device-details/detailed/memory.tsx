@@ -12,18 +12,18 @@ interface Props {
 const App: React.FC<Props> = ({ data }) => {
   const formattedData = (item: ComputerRam) => {
     const arr = [
-      { key: "1", label: "大小", value: bytesToMB(item.size, "GB") },
-      { key: "2", label: "内存库", value: item.bank },
-      { key: "3", label: "内存类型", value: item.type },
-      { key: "4", label: "ECC 内存", value: judge_bool(item.ecc) },
-      { key: "5", label: "时钟速度", value: item.clockSpeed + " GHz" },
-      { key: "6", label: "外形尺寸", value: item.formFactor },
-      { key: "7", label: "制造者", value: item.manufacturer },
-      { key: "8", label: "部件号", value: item.partNum },
-      { key: "9", label: "序号", value: item.serialNum },
-      { key: "10", label: "配置电压", value: item.voltageConfigured + " V" },
-      { key: "11", label: "最小电压", value: item.voltageMin },
-      { key: "12", label: "最大电压", value: item.voltageMax },
+      { label: "大小", value: bytesToMB(item.size, "GB") },
+      { label: "内存库", value: item.bank },
+      { label: "内存类型", value: item.type },
+      { label: "ECC 内存", value: judge_bool(item.ecc) },
+      { label: "时钟速度", value: item.clockSpeed + " GHz" },
+      { label: "外形尺寸", value: item.formFactor },
+      { label: "制造者", value: item.manufacturer },
+      { label: "部件号", value: item.partNum },
+      { label: "序号", value: item.serialNum },
+      { label: "配置电压", value: item.voltageConfigured + " V" },
+      { label: "最小电压", value: item.voltageMin },
+      { label: "最大电压", value: item.voltageMax },
     ];
     return removeEmpty(arr);
   };
@@ -40,6 +40,10 @@ const App: React.FC<Props> = ({ data }) => {
               dataSource={formattedData(item)}
               columns={columnsTable}
               size="small"
+              pagination={{
+                pageSize: 10,
+                hideOnSinglePage: true,
+              }}
             />
           </div>
         );

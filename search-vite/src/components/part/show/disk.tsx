@@ -11,24 +11,24 @@ interface Props {
 const App: React.FC<Props> = ({ data }) => {
   const formattedData = (item: ComputerDevice) => {
     const arr = [
-      { key: "1", label: "设备", value: item.device },
-      { key: "2", label: "类型", value: item.type },
-      { key: "3", label: "接口类型", value: item.interfaceType },
-      { key: "4", label: "名称", value: item.name },
-      { key: "5", label: "容量", value: bytesToMB(item.size, "GB") },
-      { key: "6", label: "总柱面数", value: item.totalCylinders },
-      { key: "7", label: "磁头总数", value: item.totalHeads },
-      { key: "8", label: "总磁道数", value: item.totalTracks },
-      { key: "9", label: "总扇区数", value: item.totalSectors },
-      { key: "10", label: "每柱面磁道数", value: item.tracksPerCylinder },
-      { key: "11", label: "每磁道扇区数", value: item.sectorsPerTrack },
-      { key: "12", label: "每扇区字节数", value: item.bytesPerSector },
-      { key: "13", label: "固件修订版本", value: item.firmwareRevision },
-      { key: "14", label: "序列号", value: item.serialNum },
-      { key: "15", label: "供应商", value: item.vendor },
-      { key: "16", label: "智能状态", value: item.smartStatus },
-      { key: "17", label: "温度", value: item.temperature },
-      { key: "18", label: "智能数据", value: item.smartData },
+      { label: "设备", value: item.device },
+      { label: "类型", value: item.type },
+      { label: "接口类型", value: item.interfaceType },
+      { label: "名称", value: item.name },
+      { label: "容量", value: bytesToMB(item.size, "GB") },
+      { label: "总柱面数", value: item.totalCylinders },
+      { label: "磁头总数", value: item.totalHeads },
+      { label: "总磁道数", value: item.totalTracks },
+      { label: "总扇区数", value: item.totalSectors },
+      { label: "每柱面磁道数", value: item.tracksPerCylinder },
+      { label: "每磁道扇区数", value: item.sectorsPerTrack },
+      { label: "每扇区字节数", value: item.bytesPerSector },
+      { label: "固件修订版本", value: item.firmwareRevision },
+      { label: "序列号", value: item.serialNum },
+      { label: "供应商", value: item.vendor },
+      { label: "智能状态", value: item.smartStatus },
+      { label: "温度", value: item.temperature },
+      { label: "智能数据", value: item.smartData },
     ];
     return removeEmpty(arr);
   };
@@ -45,6 +45,10 @@ const App: React.FC<Props> = ({ data }) => {
               dataSource={formattedData(item)}
               columns={columnsTable}
               size="small"
+              pagination={{
+                pageSize: 10,
+                hideOnSinglePage: true,
+              }}
             />
           </div>
         );

@@ -12,13 +12,13 @@ interface Props {
 const App: React.FC<Props> = ({ data }) => {
   // BIOS信息的数组
   const Items = [
-    { key: "1", label: "供应商", value: data.vendor },
-    { key: "2", label: "版本", value: data.version },
-    { key: "3", label: "发布日期", value: data.releaseDate },
-    { key: "4", label: "校订", value: data.revision },
-    { key: "5", label: "语言", value: data.langage },
-    { key: "6", label: "特征", value: data.features },
-    { key: "7", label: "序列号", value: data.serial },
+    { label: "供应商", value: data.vendor },
+    { label: "版本", value: data.version },
+    { label: "发布日期", value: data.releaseDate },
+    { label: "校订", value: data.revision },
+    { label: "语言", value: data.langage },
+    { label: "特征", value: data.features },
+    { label: "序列号", value: data.serial },
   ];
 
   return (
@@ -27,6 +27,10 @@ const App: React.FC<Props> = ({ data }) => {
         dataSource={removeEmpty(Items)}
         columns={columnsTable}
         size="small"
+        pagination={{
+          pageSize: 10,
+          hideOnSinglePage: true,
+        }}
       />
     </>
   );

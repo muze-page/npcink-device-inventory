@@ -11,13 +11,13 @@ interface Props {
 }
 const App: React.FC<Props> = ({ data }) => {
   const Items = [
-    { key: "1", label: "厂家", value: data.manufacturer },
-    { key: "2", label: "型号", value: data.model },
-    { key: "3", label: "类型", value: data.type },
-    { key: "4", label: "版本", value: data.version },
-    { key: "5", label: "序号", value: data.serial },
-    { key: "6", label: "资产标签", value: data.assetTag },
-    { key: "7", label: "货号", value: data.sku },
+    { label: "厂家", value: data.manufacturer },
+    { label: "型号", value: data.model },
+    { label: "类型", value: data.type },
+    { label: "版本", value: data.version },
+    { label: "序号", value: data.serial },
+    { label: "资产标签", value: data.assetTag },
+    { label: "货号", value: data.sku },
   ];
 
   return (
@@ -26,6 +26,10 @@ const App: React.FC<Props> = ({ data }) => {
         dataSource={removeEmpty(Items)}
         columns={columnsTable}
         size="small"
+        pagination={{
+          pageSize: 10,
+          hideOnSinglePage: true,
+        }}
       />
     </>
   );
