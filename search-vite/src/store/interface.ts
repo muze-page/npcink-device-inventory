@@ -64,7 +64,7 @@ export interface TableData {
 //标准下拉
 export interface DataItemArr {
   key?: string;
-  label: string;
+  label: string; 
   value: string | number | null | undefined;
 }
 

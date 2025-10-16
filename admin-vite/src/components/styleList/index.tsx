@@ -87,6 +87,11 @@ const App: React.FC = () => {
     if (filter.state && filter.state != "all")
       data = data.filter((v) => v.state === filter.state);
 
+    //筛选分类
+    if (filter.category && filter.category != "all")
+      data = data.filter((v) => v.category === filter.category);
+
+
     //筛选采购平台
     if (filter.platform && filter.platform != "all")
       data = data.filter((v) => v.data.platform === filter.platform);
