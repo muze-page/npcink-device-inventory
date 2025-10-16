@@ -10,8 +10,7 @@ import {
   EyeInvisibleOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-//公共值
-import { AppContext } from "@/context/AppContext";
+
 //导入类型
 import { FilterStyleData } from "@/type/index";
 
@@ -60,14 +59,12 @@ const App: React.FC<Props> = ({
   setKeyword,
   onName,
 }) => {
-  //拿到是否隐藏姓名的状态
-  const { isName } = useContext(StyleContext);
+  //拿到是否隐藏姓名的状态和分类选项
+  const { isName,styleCategoryOption } = useContext(StyleContext);
 
   //信息录入弹窗状态
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  //拿到传递的值
-  const { styleCategoryOption } = useContext(AppContext);
 
   //准备分类选项
   const styleCategoryOptions = [

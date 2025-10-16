@@ -1,10 +1,12 @@
 /**
  * 自定义设备类型
  */
-import { useState, useMemo, SetStateAction } from "react";
+import { useState, useMemo, SetStateAction, useEffect } from "react";
 import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 
+//自定义产品分类获取方法
+import { getStyleDeviceCategory } from "@/axios/index";
 //模糊搜索
 import Fuse from "fuse.js";
 
@@ -12,7 +14,7 @@ import Fuse from "fuse.js";
 import DataList from "@/components/styleList/dataList";
 
 //拿到自定义设备数据类型
-import { StyleDevice, FilterStyleData } from "@/type/index";
+import { StyleDevice, FilterStyleData, DataItemArr } from "@/type/index";
 
 //跨组件提供方法
 import { StyleContext } from "@/context/StyleContext";
@@ -35,6 +37,27 @@ const App: React.FC = () => {
 
   //共享弹窗状态
   const [active, setActive] = useState(false);
+
+  //获取自定义设备分类
+  const [styleCategoryOption, setStyleCategoryOption] = useState<DataItemArr[]>(
+    [{ label: "", value: "" }]
+  );
+
+  //获取自定义设备分类数据
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const categories = await getStyleDeviceCategory();
+        if (Array.isArray(categories)) {
+          setStyleCategoryOption(categories);
+        }
+      } catch (error) {
+        console.error("获取设备分类失败:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   //修改弹窗状态
   const changeActive = () => {
@@ -90,7 +113,6 @@ const App: React.FC = () => {
     //筛选分类
     if (filter.category && filter.category != "all")
       data = data.filter((v) => v.category === filter.category);
-
 
     //筛选采购平台
     if (filter.platform && filter.platform != "all")
@@ -185,6 +207,7 @@ const App: React.FC = () => {
         handleAddDevice,
         handleDeleteData,
         handleUpdateData,
+        styleCategoryOption,
         isName,
       }}
     >

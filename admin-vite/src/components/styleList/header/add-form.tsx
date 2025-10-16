@@ -3,7 +3,6 @@
  */
 import { useContext } from "react";
 import { StyleContext } from "@/context/StyleContext";
-import { AppContext } from "@/context/AppContext";
 import {
   Button,
   Form,
@@ -73,9 +72,7 @@ type AddFormProps = {
 
 const App = ({ form, handleOk }: AddFormProps) => {
   //拿到添加设备的回调函数
-  const { handleAddDevice } = useContext(StyleContext);
-  //拿到自定义设备分类选项
-  const { styleCategoryOption } = useContext(AppContext);
+  const { handleAddDevice,styleCategoryOption } = useContext(StyleContext);
   //提交拿到的值
   const onFinish: FormProps<FormType>["onFinish"] = async (values) => {
     //添加弹窗提示，确定提交则继续，不提交则取消
