@@ -27,6 +27,8 @@ import { devStatus } from "@/store/tool";
 
 //准备采购平台,付款方式
 import { StyleDeviceData } from "@/type/index";
+//选择输入框
+import SelectInput from "@/block/SelectInput";
 
 //准备输入框
 const { TextArea } = Input;
@@ -295,7 +297,11 @@ const App = ({ form, handleOk }: AddFormProps) => {
             name="category"
             rules={[{ required: true, message: "请填写此信息" }]}
           >
-            <Select options={styleCategoryOption} style={{ width: 122 }} />
+            <SelectInput
+              options={styleCategoryOption}
+              filterData=""
+              onChange={(value) => form?.setFieldsValue({ category: value })}
+            />
           </Form.Item>
         </Col>
       </Row>
