@@ -455,4 +455,5 @@ export interface ComputerChassis {
 export interface ComputerUuid {
   os: string;
   hardware: string;
+  macs: string[];//MAC
 }

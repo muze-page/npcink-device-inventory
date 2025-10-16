@@ -13,6 +13,7 @@ const App: React.FC<Props> = ({ data }) => {
   const Items = [
     { label: "系统", value: data.os },
     { label: "硬件", value: data.hardware },
+    { label: "MAC", value: data.macs.join('\n') },
   ];
 
   return (
