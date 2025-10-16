@@ -17,8 +17,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             //导入数据接口
             add_action('wp_ajax_import_data_callback', array(__CLASS__, 'import_data_callback'));
 
-            //移除部门接口
-            add_action('wp_ajax_remove_department_callback', array(__CLASS__, 'remove_department_callback'));
+           
         }
 
         /**
@@ -365,43 +364,6 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             }
 
             wp_die();
-        }
-
-        /**
-         * 移除部门接口
-         * 接受部门名称，查找数据库中包含此部门的，替换为默认
-         */
-        public static function remove_department_callback()
-        {
-            global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_data_name;
-            // 获取通过 Ajax POST 请求传递的对象数据
-            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : null;
-            // 检查是否收到了正确的数据
-            if (empty($data)) {
-                // 发送错误响应，未收到正确的数据
-                return wp_send_json_error(['error' => '未收到部门的数据！'], 400);
-            }
-
-            // 执行更新操作
-            // 更新表中department字段的值为$object的行，将其替换为"默认"
-            $result = $wpdb->update(
-                $table_name,
-                array('department' => '默认'),
-                array('department' => $data)
-            );
-
-            // 检查更新操作是否成功
-            if ($result === false) {
-                // 发送错误响应
-                return wp_send_json_error(['error' => '更新数据时发生错误！', 'reason' => $wpdb->last_error,], 500);
-            }
-
-            // 发送成功响应
-            // 确保 $object 是字符串类型
-            return wp_send_json_success([
-                'message' => '已移除！' . $data . '部门',
-            ]);
         }
     }
 }

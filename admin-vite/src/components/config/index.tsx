@@ -8,18 +8,17 @@ import {
   Input,
   Switch,
   InputNumber,
-  Select,
+
   message,
-  Popconfirm,
+
 } from "antd";
-import { PlusCircleFilled, MinusCircleFilled } from "@ant-design/icons";
+import { PlusCircleFilled,  } from "@ant-design/icons";
 
 import { defaultOption, Site, sqlTableName } from "@/store";
-import { saveSQLData, remove_department, addPublicSearchPage } from "@/axios";
+import { saveSQLData,  addPublicSearchPage } from "@/axios";
 
 import ImportExport from "@/components/config/importExport";
 import { OptionType } from "@/type/index";
-import { changeSelectData } from "@/store/tool";
 import Header from "@/block/tab-header";
 
 const App: React.FC = () => {
@@ -72,91 +71,6 @@ const App: React.FC = () => {
 
   const routerMsg = () => {
     return Site + "/wp-json/npcink/v1/" + RouteData;
-  };
-
-  /**
-   * 添加部门
-   */
-  const [newDepartment, setNewDepartment] = useState(""); // 新增部门输入框的值
-
-  //添加部门TODO:检查，保存的数据必须符合对应格式
-
-  const depArr = option.department; //传来的部门数组
-  const handleAddDepartment = () => {
-    //先检查输入框的值是否为空
-    if (newDepartment.trim() === "") {
-      message.error("请输入部门名称");
-      return;
-    }
-    //使用传来的值组成数组，将输入框中的值添加进数组前面
-    //判断，若传来的是空值或空数组，则自己创建一个数组
-    const newDepartmentArr =
-      depArr && depArr.length === 0
-        ? [newDepartment]
-        : [newDepartment, ...(depArr || [])];
-
-    setNewDepartment(""); //清空输入框
-
-    //更新选项中的部门数组，直接使用setOption 可能无法通过option拿到最新值
-    const newOption = {
-      ...option,
-      department: newDepartmentArr,
-    };
-    setOption(newOption); //保存数据
-
-    //保存选项
-    postData(newOption);
-  };
-
-  //当前部门信息
-  const DepartmentState =
-    option.department && option.department.length > 0
-      ? option.department.join("，")
-      : "暂无部门信息";
-
-  //删除部门
-  //下拉筛选 - 准备筛选数据
-  const getSelectData = changeSelectData(option.department);
-
-  const [selectedDepartment, setSelectedDepartment] = useState<string>("默认");
-
-  //移除选中的部门
-  const removeData = async (data: string) => {
-    await remove_department(data); //服务器端移除
-    //更新数据
-    const newDepartmentList = option.department.filter(
-      (dep) => dep !== selectedDepartment
-    );
-    const newOption = {
-      ...option,
-      department: newDepartmentList,
-    };
-    //console.log(newOption);
-    setOption(newOption); //设定值
-    postData(newOption); //保存选项
-    setSelectedDepartment(""); // 清空下拉框选中的内容
-
-    return;
-  };
-
-  //删除的二次确认
-  const confirm = () => {
-    switch (selectedDepartment) {
-      case "":
-        message.error("请选择要移除的部门");
-        break;
-      case "默认":
-        message.error("保留用，请不要移除此部门");
-        break;
-      default:
-        removeData(selectedDepartment); //删除操作
-    }
-  };
-
-  const cancel = () => {
-    //e: React.MouseEvent<HTMLElement>
-    //console.log(e);
-    message.warning("已取消");
   };
 
   //公共查询页面
@@ -263,53 +177,7 @@ const App: React.FC = () => {
           </Form.Item>
 
           <Header title="其他设置" />
-          <Form.Item
-            label="添加部门"
-            style={{ width: "100%" }}
-            name="department"
-            extra={DepartmentState}
-          >
-            <div>
-              <Input
-                style={{ width: "180px" }}
-                value={newDepartment}
-                onChange={(e) => setNewDepartment(e.target.value)}
-              />
-              <Button
-                icon={<PlusCircleFilled />}
-                style={{ width: "90px", marginLeft: "30px" }}
-                onClick={handleAddDepartment}
-              >
-                添加
-              </Button>
-            </div>
-          </Form.Item>
 
-          <Form.Item label="移除部门" name="department">
-            <div>
-              <Select
-                value={selectedDepartment}
-                style={{ width: "180px" }}
-                options={getSelectData}
-                onChange={(value) => setSelectedDepartment(value)}
-              />
-              <Popconfirm
-                title="移除此部门"
-                description="您确定要移除此部门吗？"
-                onConfirm={confirm}
-                onCancel={cancel}
-                okText="移除"
-                cancelText="我再想想"
-              >
-                <Button
-                  icon={<MinusCircleFilled />}
-                  style={{ width: "90px", marginLeft: "30px" }}
-                >
-                  移除
-                </Button>
-              </Popconfirm>
-            </div>
-          </Form.Item>
           <Form.Item
             label="公共查询页面"
             name="public_search_route"

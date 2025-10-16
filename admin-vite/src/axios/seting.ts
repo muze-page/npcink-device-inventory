@@ -67,22 +67,7 @@ export const importSQLData = async (name: string, data: string) => {
   }
 };
 
-/**
- * 移除部门
- *
- */
-export const remove_department = async (optionObj: string) => {
-  const params = new URLSearchParams();
-  params.append("action", "remove_department_callback");
-  addParamIfDefined(params, "data", optionObj);
-  try {
-    await instance.post(Ajaxurl, params);
-  } catch (error: any) {
-    console.error("保存设置选项时出错：" + error.message);
-  } finally {
-    //console.log(false);
-  }
-};
+
 
 /**
  * 添加自定义公共引导页
