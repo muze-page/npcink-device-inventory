@@ -3,7 +3,7 @@
  *  {JSON.stringify(data, null, 2)}
  */
 import { useContext } from "react";
-import { Tooltip, Skeleton, Space } from "antd";
+import { Tooltip, Skeleton } from "antd";
 
 //跨组件提供方法
 import { StyleContext } from "@/context/StyleContext";
@@ -12,10 +12,10 @@ import { StyleContext } from "@/context/StyleContext";
 import { StyleDevice } from "@/type/index";
 
 //准备采购平台类型
-import { findOsTypeObj, formatDate } from "@/store/tool";
+import {  formatDate } from "@/store/tool";
 
 //准备采购平台列表和支付平台列表
-import { platformArray, payArray } from "@/store/dataReplace";
+//import { platformArray, payArray } from "@/store/dataReplace";
 
 //工具函数
 import { statusLabel } from "@/store/tool";
@@ -35,9 +35,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
   };
 
   //找到需要的平台对象、付款方式对象
-  const platformObj = findOsTypeObj(platformArray, data.data.platform);
+ // const platformObj = findOsTypeObj(platformArray, data.data.platform);
 
-  const payFormObj = findOsTypeObj(payArray, data.data.pay_method);
+  //const payFormObj = findOsTypeObj(payArray, data.data.pay_method);
 
   return (
     <>
