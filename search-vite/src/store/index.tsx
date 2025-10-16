@@ -1,6 +1,6 @@
 //准备初始数据
 import data from "@/store/defaultVar";
-import {OptionType } from "./interface";
+import {OptionType } from "@/type/index";
 
 //开发环境状态
 const state: boolean = import.meta.env.VITE_STATE;

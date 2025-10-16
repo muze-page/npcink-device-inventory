@@ -1,4 +1,3 @@
-
 /**
  * 替换数组
  */
@@ -15,17 +14,14 @@ export const device_status = [
  * 筛选数组
  */
 
-
-
-
-
-
 //硬件详细配置表头
 export const columnsTable = [
   {
     title: "序号",
-    dataIndex: "key",
-    key: "key",
+    dataIndex: "index",
+    key: "index",
+    /**自定义序号 */
+    render: (_text: any, _record: any, index: number) => index + 1,
   },
   {
     title: "属性",
