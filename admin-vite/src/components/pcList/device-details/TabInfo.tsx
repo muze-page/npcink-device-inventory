@@ -2,7 +2,7 @@
  * 设备详情 - 大概信息
  */
 import { handleGraphics, formatDate } from "@/store/tool";
-import { Computer } from "@/type/index";
+import { Computer, ComputerControllers } from "@/type/index";
 import { Dayjs } from "dayjs";
 interface Props {
   data: Computer;
@@ -35,6 +35,16 @@ const App: React.FC<Props> = ({ data, time }) => {
     return result;
   };
 
+  //展示显卡信息
+  const displayGraphics = (controllers: ComputerControllers[]): string => {
+    const data = handleGraphics(controllers);
+    let result = "";
+    for (const item of data) {
+      result += item;
+    }
+    return result;
+  };
+
   //一个数组中有若干对象，对象中有多个属性，将指定的属性进行拼接，返回一个字符串
   const handleArrayData = (arr: any[], key: string) => {
     const value = arr.map((item) => item[key]).join("<br/>");
@@ -48,7 +58,7 @@ const App: React.FC<Props> = ({ data, time }) => {
     },
     {
       title: "显卡型号",
-      data: handleGraphics(data.graphics.controllers) || "未找到显卡",
+      data: displayGraphics(data.graphics.controllers) || "未找到显卡",
     },
     {
       title: "计算机型号",

@@ -433,18 +433,28 @@ const extractMacValues = (data: ComputerNet[]) => {
   return macValues;
 };
 
-//处理多张显卡，按显存大小从大望小排序，输出数组
+//处理多张显卡，按显存大小从大到小排序，输出字符串数组
 export const handleGraphics = (data: ComputerControllers[]) => {
   //对值进行处理，出现如下字符串的，去掉
-  data = data.filter(
+  const filteredData = data.filter(
     (item) => !excludeGraphics.some((str) => item.model.includes(str))
   );
-  const value = data
-    .map((item) => item.model + " " + (item.vram ? formatMB(item.vram) : ""))
-    .join("<br/>");
+
+  // 按显存大小从大到小排序
+  const sortedData = filteredData.sort((a, b) => {
+    const vramA = a.vram || 0;
+    const vramB = b.vram || 0;
+    return vramB - vramA;
+  });
+
+  // 返回排序好的字符串数组
+  const value = sortedData.map(
+    (item) => item.model + " " + (item.vram ? formatMB(item.vram) : "")
+  );
 
   return value;
 };
+
 //添加需要的筛选标记数据
 export const updateOSType = (
   dataArrays: MysqlDeviceChange[]
@@ -462,7 +472,7 @@ export const updateOSType = (
       cpuModel: value.cpu.brand || "暂无 CPU 型号", //CPU型号 Core™ i5-9400F
       model: value.system.model || "暂无设备型号", //设备型号
       motherboard: value.baseboard.model || "暂无主板型号", //主板型号
-      graphics: handleGraphics(value.graphics.controllers) || "暂无显卡型号", //显卡型号，处理有多张显卡的情况
+      graphics: handleGraphics(value.graphics.controllers)[0] || "暂无显卡型号", //仅展示显存最大的显卡
       memory: memory.toString() || "暂无内存容量", //内存容量
       disk: disk.toString() || "暂无硬盘容量", //硬盘容量
     };
