@@ -24,7 +24,7 @@ import Drawer from "@/components/pcList/drawer";
 import SearchNoData from "@/block/searchNoData";
 
 //公共方法
-import { AppContext } from "@/components/pcList/Context";
+import { DevieContext } from "@/context/DeviceContext";
 
 //导入处理工具
 import { updateOSType, devStatus } from "@/store/tool";
@@ -189,7 +189,7 @@ const App: React.FC = () => {
   const [isName, setIsName] = useState(true);
 
   return (
-    <AppContext.Provider
+    <DevieContext.Provider
       value={{
         setListData,
         drawerData,
@@ -248,7 +248,7 @@ const App: React.FC = () => {
       {/**
        * <Demo />
        */}
-    </AppContext.Provider>
+    </DevieContext.Provider>
   );
 };
 

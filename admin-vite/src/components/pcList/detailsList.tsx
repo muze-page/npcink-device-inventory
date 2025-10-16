@@ -2,7 +2,7 @@
  * 设备详情
  */
 import { useContext } from "react";
-import { AppContext } from "@/components/pcList/Context";
+import { DevieContext } from "@/context/DeviceContext";
 import { Tooltip, Skeleton } from "antd";
 import { MysqlDeviceChangeMeat } from "@/type/index";
 import { device_status } from "@/store/dataReplace";
@@ -17,7 +17,7 @@ interface Props {
 }
 const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
   //拿到隐藏姓名状态
-  const { isName } = useContext(AppContext);
+  const { isName } = useContext(DevieContext);
 
   //点击打开弹窗并保存选中的值
   const showDrawer = () => {

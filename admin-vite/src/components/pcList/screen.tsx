@@ -11,12 +11,12 @@ import {
 } from "@ant-design/icons";
 import { FilterData } from "@/type/index";
 
-import {  normalize } from "@/store/tool";
+import { normalize } from "@/store/tool";
 
 //设备状态
 import { device_status } from "@/store/dataReplace";
 import Header from "@/block/tab-header";
-import { AppContext } from "@/components/pcList/Context";
+import { DevieContext } from "@/context/DeviceContext";
 interface Props {
   filterData: FilterData; //当前筛选条件
   onChange: (next: FilterData) => void; //更新筛选条件
@@ -28,12 +28,8 @@ interface Props {
 //准备搜索框
 const { Search } = Input;
 
-
-
 //处理状态选项，添加全部选项
 const stateOptions = [{ label: "全部", value: "all" }, ...device_status];
-
-
 
 const App: React.FC<Props> = ({
   filterData,
@@ -43,15 +39,14 @@ const App: React.FC<Props> = ({
   onName,
 }) => {
   //拿到是否隐藏姓名的状态和部门选项
-  const { isName, deviceCategoryOption } = useContext(AppContext);
+  const { isName, deviceCategoryOption } = useContext(DevieContext);
 
   //准备部门筛选用选项
-    //准备分类选项
+  //准备分类选项
   const deviceCategoryOptions = [
     { label: "全部", value: "all" },
     ...deviceCategoryOption,
   ];
-
 
   //重置按钮,
   const restSelect = () => {

@@ -13,64 +13,39 @@ import Detailed from "@/components/pcList/device-details/TabDetailed";
 import ChangeAutoRecord from "@/block/change-auto-record";
 
 //公共方法
-import { AppContext } from "@/components/pcList/Context";
+import { DevieContext } from "@/context/DeviceContext";
 
 const App: React.FC = () => {
   //获取数据
   //拿到父组件传入的删除方法
-  const { drawerData } = useContext(AppContext);
+  const { drawerData } = useContext(DevieContext);
 
   //Tab 栏
   const items: TabsProps["items"] = [
     {
       key: "1",
-      label: (
-        <span>
-          
-          硬件信息
-        </span>
-      ), //TODO:为啥这里的drawerData.created_at换成drawerData.time,不报类型错误？
+      label: <span>硬件信息</span>, //TODO:为啥这里的drawerData.created_at换成drawerData.time,不报类型错误？
       children: <Info data={drawerData.data} time={drawerData.created_at} />,
     },
 
     {
       key: "2",
-      label: (
-        <span>
-         
-          详细信息
-        </span>
-      ),
+      label: <span>详细信息</span>,
       children: <Detailed data={drawerData.data} />,
     },
     {
       key: "3",
-      label: (
-        <span>
-         
-          变更记录
-        </span>
-      ),
+      label: <span>变更记录</span>,
       children: <Change uuid={drawerData.uuid} />,
     },
     {
       key: "4",
-      label: (
-        <span>
-         
-          自动记录
-        </span>
-      ),
+      label: <span>自动记录</span>,
       children: <ChangeAutoRecord uuid={drawerData.uuid} />,
     },
     {
       key: "5",
-      label: (
-        <span>
-         
-          设置
-        </span>
-      ),
+      label: <span>设置</span>,
       children: <Seting />,
     },
   ];

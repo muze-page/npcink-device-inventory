@@ -3,20 +3,13 @@
  */
 import { useContext, useEffect } from "react";
 import { Form, Button, Input, InputNumber, Select } from "antd";
-import { AppContext } from "@/components/pcList/Context";
+import { DevieContext } from "@/context/DeviceContext";
 import { deltSQLData, changeMySql } from "@/axios";
 import { MysqlDeviceData } from "@/type/index";
 import { device_status } from "@/store/dataReplace";
-import {
-
-  totalResidualValue,
-  getPercentage,
-  validateIPv4,
-} from "@/store/tool";
+import { totalResidualValue, getPercentage, validateIPv4 } from "@/store/tool";
 //选择输入框
 import SelectInput from "@/block/SelectInput";
-
-
 
 const App: React.FC = () => {
   //接收上下文中的值
@@ -26,7 +19,7 @@ const App: React.FC = () => {
     setDrawerData,
     setActive,
     deviceCategoryOption,
-  } = useContext(AppContext);
+  } = useContext(DevieContext);
 
   /*
    * form 变量用于操作表单实例，

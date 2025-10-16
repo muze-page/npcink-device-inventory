@@ -9,10 +9,10 @@ interface AppContextType {
   setDrawerData: React.Dispatch<React.SetStateAction<MysqlDeviceChangeMeat>>; //弹窗数据修改方法
   isName: boolean; //是否显示姓名
   setActive: React.Dispatch<React.SetStateAction<boolean>>; //设置弹窗状态
-  deviceCategoryOption: DataItemArr[];//设备类别
+  deviceCategoryOption: DataItemArr[]; //设备类别
 }
 
-export const AppContext = createContext<AppContextType>({
+export const DevieContext = createContext<AppContextType>({
   //listData: [],
   setListData: () => {},
   drawerData: {} as MysqlDeviceChangeMeat,
