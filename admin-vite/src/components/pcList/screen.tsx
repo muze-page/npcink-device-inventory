@@ -11,9 +11,7 @@ import {
 } from "@ant-design/icons";
 import { FilterData } from "@/type/index";
 
-//默认选项
-import { defaultOption } from "@/store";
-import { changeSelectData, normalize } from "@/store/tool";
+import {  normalize } from "@/store/tool";
 
 //设备状态
 import { device_status } from "@/store/dataReplace";
@@ -30,14 +28,12 @@ interface Props {
 //准备搜索框
 const { Search } = Input;
 
-// 准备部门
-const departmentData = changeSelectData(defaultOption.department);
+
 
 //处理状态选项，添加全部选项
 const stateOptions = [{ label: "全部", value: "all" }, ...device_status];
 
-//处理部门选项，添加全部选项
-const departmentOptions = [{ label: "全部", value: "all" }, ...departmentData];
+
 
 const App: React.FC<Props> = ({
   filterData,

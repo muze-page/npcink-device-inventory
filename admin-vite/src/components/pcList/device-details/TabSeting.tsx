@@ -7,9 +7,8 @@ import { AppContext } from "@/components/pcList/Context";
 import { deltSQLData, changeMySql } from "@/axios";
 import { MysqlDeviceData } from "@/type/index";
 import { device_status } from "@/store/dataReplace";
-import { defaultOption } from "@/store";
 import {
-  changeSelectData,
+
   totalResidualValue,
   getPercentage,
   validateIPv4,
@@ -17,8 +16,7 @@ import {
 //选择输入框
 import SelectInput from "@/block/SelectInput";
 
-//部门下拉筛选 - 准备部门筛选数据
-const getSelectData = changeSelectData(defaultOption.department);
+
 
 const App: React.FC = () => {
   //接收上下文中的值

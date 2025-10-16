@@ -202,7 +202,7 @@ export const findOsTypeObj = (array: OsTypeArray[], value: string) => {
 };
 
 /**
- * 将字符串数组转换为对象，方便下拉选择
+ * 将字符串数组转换为对象，方便下拉选择，TODO:检查有没有使用
  */
 export const changeSelectData = (data: string[] | undefined) => {
   if (data && data.length > 0) {
