@@ -52,7 +52,7 @@ export const judge_bool = (boo: boolean) => {
 };
 
 /**
- * 字节转换单位
+ * 字节转换单位TODO:输入数字即可，自动选择单位
  */
 export const bytesToMB = (bytes: number | null, type: string) => {
   if (bytes === null) {
@@ -389,10 +389,20 @@ const extractMacValues = (data: ComputerNet[]) => {
   return macValues;
 };
 
-//处理大容量内存和硬盘
+//处理大容量内存和硬盘，四舍五入TODO:同意使用字节处理
 export const handleMemoryAndDisk = (data: number) => {
   const value =
-    data > 1024 ? (data / 1024).toFixed(2) + " T" : (data || 0) + " G"; //硬盘
+    data > 1024 ? (data / 1024).toFixed(0) + " T" : (data || 0) + " G"; //硬盘
+  return value;
+};
+
+//处理显存（MB）
+export const handleGraphicsVram = (vram: number) => {
+  const vrams = vram / 1024;
+  const value =
+    vrams > 1024
+      ? (vrams / 1024).toFixed(0) + " T"
+      : (vrams.toFixed(0) || 0) + " G"; //显存
   return value;
 };
 
@@ -402,7 +412,13 @@ export const handleGraphics = (data: ComputerControllers[]) => {
   data = data.filter(
     (item) => !excludeGraphics.some((str) => item.model.includes(str))
   );
-  const value = data.map((item) => item.model).join("_");
+  const value = data
+    .map(
+      (item) =>
+        item.model + " " + (item.vram ? handleGraphicsVram(item.vram) : "")
+    )
+    .join("/");
+
   return value;
 };
 //添加需要的筛选标记数据

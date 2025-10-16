@@ -5,7 +5,7 @@
 import { Table } from "antd";
 import { ComputerControllers } from "@/type/index";
 import { columnsTable } from "@/store/dataReplace";
-import { judge_bool, removeEmpty } from "@/store/tool";
+import { judge_bool, removeEmpty, handleGraphicsVram } from "@/store/tool";
 interface Props {
   data: ComputerControllers[];
 }
@@ -15,7 +15,7 @@ const App: React.FC<Props> = ({ data }) => {
       { label: "型号", value: item.model },
       {
         label: "显存",
-        value: item.vram ? (item.vram / 1024).toFixed(0) + "GB" : "",
+        value: item.vram ? handleGraphicsVram(item.vram) : "",
       },
       { label: "显卡ID", value: item.subDeviceId },
       { label: "供应商", value: item.vendor },

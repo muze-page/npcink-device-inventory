@@ -24,7 +24,7 @@ const App: React.FC = () => {
   const items: TabsProps["items"] = [
     {
       key: "1",
-      label: <span>硬件信息</span>, //TODO:为啥这里的drawerData.created_at换成drawerData.time,不报类型错误？
+      label: <span>硬件信息</span>, 
       children: <Info data={drawerData.data} time={drawerData.created_at} />,
     },
 

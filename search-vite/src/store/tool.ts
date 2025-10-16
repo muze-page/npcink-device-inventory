@@ -91,8 +91,18 @@ export const replaceKeyValues = (
   });
 };
 
+//处理显存
+export const handleGraphicsVram = (vram: number) => {
+  const vrams = vram / 1024;
+  const value =
+    vrams > 1024
+      ? (vrams / 1024).toFixed(0) + " T"
+      : (vrams.toFixed(0) || 0) + " G"; //显存
+  return value;
+};
+
 /**
- * 字节转mb
+ * 字节转对应单位
  */
 export const bytesToMB = (bytes: number | null, type: string) => {
   if (bytes === null) {
