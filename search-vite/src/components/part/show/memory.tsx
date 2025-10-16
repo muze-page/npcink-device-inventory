@@ -5,14 +5,14 @@
 import { Table } from "antd";
 import { ComputerRam } from "@/type/index";
 import { columnsTable } from "@/store/dataReplace";
-import { bytesToMB, judge_bool, removeEmpty } from "@/store/tool";
+import { formatBytes, judge_bool, removeEmpty } from "@/store/tool";
 interface Props {
   data: ComputerRam[];
 }
 const App: React.FC<Props> = ({ data }) => {
   const formattedData = (item: ComputerRam) => {
     const arr = [
-      { label: "大小", value: bytesToMB(item.size, "GB") },
+      { label: "大小", value: formatBytes(item.size, "GB") },
       { label: "内存库", value: item.bank },
       { label: "内存类型", value: item.type },
       { label: "ECC 内存", value: judge_bool(item.ecc) },

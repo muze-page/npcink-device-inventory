@@ -104,7 +104,7 @@ export const handleGraphicsVram = (vram: number) => {
 /**
  * 字节转对应单位
  */
-export const bytesToMB = (bytes: number | null, type: string) => {
+export const formatBytes = (bytes: number | null, type: string) => {
   if (bytes === null) {
     return "0";
   }

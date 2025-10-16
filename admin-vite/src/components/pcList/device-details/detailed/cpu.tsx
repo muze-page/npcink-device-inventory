@@ -4,7 +4,7 @@
  */
 import { Table } from "antd";
 import { ComputerCpu } from "@/type/index";
-import { bytesToMB, judge_bool, removeEmpty } from "@/store/tool";
+import { formatBytes, judge_bool, removeEmpty } from "@/store/tool";
 import { columnsTable } from "@/store/dataReplace";
 interface Props {
   data: ComputerCpu;
@@ -26,10 +26,10 @@ const App: React.FC<Props> = ({ data }) => {
     { label: "供应商", value: data.vendor },
     { label: "电压", value: data.voltage },
     { label: "虚拟化", value: judge_bool(data.virtualization) },
-    { label: "L1 数据", value: bytesToMB(data.cache.l1d, "MB") },
-    { label: "L1 缓存", value: bytesToMB(data.cache.l1i, "MB") },
-    { label: "L2 缓存", value: bytesToMB(data.cache.l2, "MB") },
-    { label: "L3 缓存", value: bytesToMB(data.cache.l3, "MB") },
+    { label: "L1 数据缓存", value: formatBytes(data.cache.l1d) },
+    { label: "L1 指令缓存", value: formatBytes(data.cache.l1i) },
+    { label: "L2 缓存", value: formatBytes(data.cache.l2) },
+    { label: "L3 缓存", value: formatBytes(data.cache.l3) },
     { label: "调度器", value: data.governor },
     { label: "系列", value: data.family },
     { label: "型号", value: data.model },

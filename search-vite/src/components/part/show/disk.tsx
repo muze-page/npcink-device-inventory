@@ -4,7 +4,7 @@
 import { Table } from "antd";
 import { ComputerDevice } from "@/type/index";
 import { columnsTable } from "@/store/dataReplace";
-import { bytesToMB, removeEmpty } from "@/store/tool";
+import { formatBytes, removeEmpty } from "@/store/tool";
 interface Props {
   data: ComputerDevice[];
 }
@@ -15,7 +15,7 @@ const App: React.FC<Props> = ({ data }) => {
       { label: "类型", value: item.type },
       { label: "接口类型", value: item.interfaceType },
       { label: "名称", value: item.name },
-      { label: "容量", value: bytesToMB(item.size, "GB") },
+      { label: "容量", value: formatBytes(item.size, "GB") },
       { label: "总柱面数", value: item.totalCylinders },
       { label: "磁头总数", value: item.totalHeads },
       { label: "总磁道数", value: item.totalTracks },
