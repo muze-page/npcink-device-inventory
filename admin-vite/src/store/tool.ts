@@ -420,19 +420,6 @@ const replaceString = (input: string, obj: repType[]): string => {
   }
 };
 
-//创建函数，提取数组对象中mac的值组成新数组并输出，
-const extractMacValues = (data: ComputerNet[]) => {
-  // 遍历数组，提取每个对象的mac值，并去除为空或为 "00-00-00-00-00-00" 的值
-  const macValues = data.reduce((acc: string[], { mac }) => {
-    if (mac && mac !== "00-00-00-00-00-00") {
-      const formattedMac = mac.replace(/:/g, "-");
-      acc.push(formattedMac);
-    }
-    return acc;
-  }, []);
-  return macValues;
-};
-
 //处理多张显卡，按显存大小从大到小排序，输出字符串数组
 export const handleGraphics = (data: ComputerControllers[]) => {
   //对值进行处理，出现如下字符串的，去掉
@@ -476,7 +463,7 @@ export const updateOSType = (
       memory: memory.toString() || "暂无内存容量", //内存容量
       disk: disk.toString() || "暂无硬盘容量", //硬盘容量
     };
-    const mac = extractMacValues(value.net);
+    const mac = value.uuid.macs; //获取mac地址
     return { ...obj, meat, mac };
   });
   return updatedData;

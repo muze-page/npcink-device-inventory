@@ -87,7 +87,7 @@ const App: React.FC<Props> = ({
   return (
     <>
       <div className="flex justify-between items-center mb-4">
-        <Header title="电脑设备资产信息" />
+        <Header title="电脑资产" />
         <Space size={"middle"} wrap>
           <div>
             状态：
