@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { MysqlDeviceChangeMeat } from "@/type/index";
+import { MysqlDeviceChangeMeat, DataItemArr } from "@/type/index";
 
 interface AppContextType {
   //当前选中的设备的值和修改方法
@@ -9,6 +9,7 @@ interface AppContextType {
   setDrawerData: React.Dispatch<React.SetStateAction<MysqlDeviceChangeMeat>>; //弹窗数据修改方法
   isName: boolean; //是否显示姓名
   setActive: React.Dispatch<React.SetStateAction<boolean>>; //设置弹窗状态
+  deviceCategoryOption: DataItemArr[];//设备类别
 }
 
 export const AppContext = createContext<AppContextType>({
@@ -18,4 +19,5 @@ export const AppContext = createContext<AppContextType>({
   setDrawerData: () => {},
   isName: true,
   setActive: () => {},
+  deviceCategoryOption: [],
 });

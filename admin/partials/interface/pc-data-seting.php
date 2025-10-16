@@ -8,11 +8,44 @@ if (!class_exists('DEMA_Admin_Interface_Pc_Data_Seting')) {
     {
         public static function run()
         {
+            //获取设备分类键值对
+            add_action('wp_ajax_get_device_category_callback', array(__CLASS__, 'get_device_category_callback'));
+
             // 修改 - 设备信息接口
             add_action('wp_ajax_modify_device_callback',  array(__CLASS__, 'modify_device_callback'));
 
             // 删除设备接口
             add_action('wp_ajax_delt_device_callback', array(__CLASS__, 'delt_device_callback'));
+        }
+
+        /**
+         * 获取设备分类键值对接口
+         */
+        public static function get_device_category_callback()
+        {
+            global $wpdb;
+            $table_name = $wpdb->prefix . self::$table_data_name;
+
+            // 获取所有设备分类
+            $categories = $wpdb->get_results(
+                $wpdb->prepare("SELECT DISTINCT department FROM {$table_name} WHERE department IS NOT NULL AND department != ''")
+            );
+
+            // 检查查询是否成功
+            if ($wpdb->last_error) {
+                return wp_send_json_error(['error' => $wpdb->last_error], 500);
+            }
+
+            // 整理成键值对形式，value和label都是相同的值
+            $result = array_map(function ($item) {
+                return [
+                    'value' => $item->department,
+                    'label' => $item->department
+                ];
+            }, $categories);
+
+            wp_send_json_success(array_values($result));
+            wp_die();
         }
 
         /**

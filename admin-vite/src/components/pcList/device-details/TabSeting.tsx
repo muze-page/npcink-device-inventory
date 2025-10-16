@@ -14,14 +14,21 @@ import {
   getPercentage,
   validateIPv4,
 } from "@/store/tool";
+//选择输入框
+import SelectInput from "@/block/SelectInput";
 
 //部门下拉筛选 - 准备部门筛选数据
 const getSelectData = changeSelectData(defaultOption.department);
 
 const App: React.FC = () => {
   //接收上下文中的值
-  const { setListData, drawerData, setDrawerData, setActive } =
-    useContext(AppContext);
+  const {
+    setListData,
+    drawerData,
+    setDrawerData,
+    setActive,
+    deviceCategoryOption,
+  } = useContext(AppContext);
 
   /*
    * form 变量用于操作表单实例，
@@ -121,7 +128,11 @@ const App: React.FC = () => {
           <Select style={{ width: 180 }} options={device_status} />
         </Form.Item>
         <Form.Item<MysqlDeviceData> label="部门" name="department">
-          <Select style={{ width: 180 }} options={getSelectData} />
+          <SelectInput
+            options={deviceCategoryOption}
+            defaultValue={drawerData.department}
+            onChange={(value) => form?.setFieldsValue({ department: value })}
+          />
         </Form.Item>
         <Form.Item<MysqlDeviceData>
           label="IP 地址"

@@ -12,7 +12,7 @@ export {
   searchChangeAllData,
 } from "@/axios/device-change";
 
-export { changeMySql, deltSQLData } from "@/axios/device-seting";
+export { changeMySql, deltSQLData,getDeviceCategory } from "@/axios/device-seting";
 
 //自定义硬件设备数据
 export {

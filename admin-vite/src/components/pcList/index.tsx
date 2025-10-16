@@ -2,12 +2,12 @@
  * 设备列表
  * TODO:翻页时才获取数据，一开始仅获取两页的数据
  */
-import { SetStateAction, useState, useMemo } from "react";
+import { SetStateAction, useState, useMemo, useEffect } from "react";
 import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 import { dataMySql } from "@/store";
-import { MysqlDeviceChangeMeat, FilterData } from "@/type/index";
-
+import { MysqlDeviceChangeMeat, FilterData, DataItemArr } from "@/type/index";
+import { getDeviceCategory } from "@/axios/index";
 //模糊搜索
 import Fuse from "fuse.js";
 
@@ -29,9 +29,12 @@ import { AppContext } from "@/components/pcList/Context";
 //导入处理工具
 import { updateOSType, devStatus } from "@/store/tool";
 
-//import Demo from "@/demo/parent";
-
 const App: React.FC = () => {
+  //获取设备分类
+  const [deviceCategoryOption, setDeviceCategoryOption] = useState<
+    DataItemArr[]
+  >([{ label: "", value: "" }]);
+
   //将拿到的数据进行排序，再添加需要的meat信息
   const DataMeatArray = updateOSType(dataMySql);
 
@@ -42,6 +45,22 @@ const App: React.FC = () => {
     console.log("处理后的数据：");
     console.dir(DataMeatArray);
   }
+
+  //获取设备分类数据
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const categories = await getDeviceCategory();
+        if (Array.isArray(categories)) {
+          setDeviceCategoryOption(categories);
+        }
+      } catch (error) {
+        console.error("获取设备分类失败:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   //设置列表数据
   const [listData, setListData] =
@@ -177,6 +196,7 @@ const App: React.FC = () => {
         setDrawerData,
         isName,
         setActive,
+        deviceCategoryOption,
       }}
     >
       <div className="pb-6 px-5">

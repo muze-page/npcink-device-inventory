@@ -46,8 +46,16 @@ const App: React.FC<Props> = ({
   setKeyword,
   onName,
 }) => {
-  //拿到是否隐藏姓名的状态
-  const { isName } = useContext(AppContext);
+  //拿到是否隐藏姓名的状态和部门选项
+  const { isName, deviceCategoryOption } = useContext(AppContext);
+
+  //准备部门筛选用选项
+    //准备分类选项
+  const deviceCategoryOptions = [
+    { label: "全部", value: "all" },
+    ...deviceCategoryOption,
+  ];
+
 
   //重置按钮,
   const restSelect = () => {
@@ -109,7 +117,7 @@ const App: React.FC<Props> = ({
               onChange={(value: any) => {
                 onChange({ ...filterData, department: value });
               }}
-              options={departmentOptions}
+              options={deviceCategoryOptions}
             />
           </div>
 
