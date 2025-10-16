@@ -58,7 +58,7 @@ const CategoryFilter: React.FC<Props> = ({
     <AutoComplete
       value={inputValue}
       options={getOptions()}
-      style={{ width: 100 }}
+      style={{ width: "100%" }}
       onChange={handleInputChange}
       onSelect={handleSelect}
       onSearch={(value) => {

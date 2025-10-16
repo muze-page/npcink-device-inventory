@@ -284,8 +284,9 @@ const App = ({ form, handleOk }: AddFormProps) => {
             label="编号"
             name="number"
             rules={[{ required: true, message: "请填写此信息" }]}
+            style={{ width: "100%" }}
           >
-            <InputNumber />
+            <Input />
           </Form.Item>
         </Col>
         <Col span={12}>

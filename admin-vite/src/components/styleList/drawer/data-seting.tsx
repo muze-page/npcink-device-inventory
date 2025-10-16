@@ -3,7 +3,7 @@
  */
 import { useContext, useEffect } from "react";
 import { StyleContext } from "@/context/StyleContext";
-import { Form, Button, Input, Radio, InputNumber } from "antd";
+import { Form, Button, Input, Radio } from "antd";
 import type { FormProps } from "antd";
 import { deleteStyleDeviceData, updateStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
@@ -15,10 +15,14 @@ interface Props {
   onActive: () => void; //修改弹窗状态
 }
 const App: React.FC<Props> = ({ onActive }) => {
-
   //拿到父组件传入的方法
-  const { drawerData, setDrawerData, handleDeleteData, handleUpdateData,styleCategoryOption } =
-    useContext(StyleContext);
+  const {
+    drawerData,
+    setDrawerData,
+    handleDeleteData,
+    handleUpdateData,
+    styleCategoryOption,
+  } = useContext(StyleContext);
 
   //拿到UUID
   const uuid = drawerData.uuid || "";
@@ -110,7 +114,7 @@ const App: React.FC<Props> = ({ onActive }) => {
           <Input />
         </Form.Item>
         <Form.Item<StyleDeviceSeting> label="编号" name="number">
-          <InputNumber />
+          <Input />
         </Form.Item>
         <Form.Item<StyleDeviceSeting> label="分类" name="category">
           <SelectInput
