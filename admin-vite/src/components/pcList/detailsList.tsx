@@ -3,7 +3,7 @@
  */
 import { useContext } from "react";
 import { DevieContext } from "@/context/DeviceContext";
-import { Tooltip, Skeleton } from "antd";
+import { Tooltip, Skeleton, Space } from "antd";
 import { MysqlDeviceChangeMeat } from "@/type/index";
 import { device_status } from "@/store/dataReplace";
 import Mac from "@/assets/mac.png";
@@ -54,7 +54,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         </div>
 
         {/**底部数据 */}
-        <div className="mt-4 text-xs text-zinc-500 rounded whitespace-nowrap min-h-[190px]">
+        <div className="mt-2 text-xs text-zinc-500 rounded whitespace-nowrap min-h-[190px]">
           {/*姓名*/}
           <div className="text-sm font-bold text-zinc-800 leading-8 m-0  ">
             {/** <div className={isName ? "" : "hideName"}> */}
@@ -67,46 +67,57 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             {/** </div> */}
           </div>
 
-          {/*设备型号*/}
-          <Tooltip
-            title={"设备型号：" + data.meat.model}
-            className="mt-2 w-full truncate"
-          >
-            {data.meat.model}
-          </Tooltip>
-          <br />
-          {/*配置信息*/}
-          <Tooltip title={"CPU  / 内存容量 / 硬盘容量"} className="mt-2">
-            {data.meat.cpu} / {data.meat.memory} / {data.meat.disk}
-          </Tooltip>
+          <Space direction="vertical" size="small" style={{ display: "flex" }}>
+            {/*设备型号*/}
+            <Tooltip
+              title={"主板型号：" + data.meat.model}
+              className=" w-full truncate"
+            >
+              {data.meat.motherboard}
+            </Tooltip>
 
-          {/*编号*/}
-          <p className="grid gap-y-1 items-center  mt-2">
+            <Tooltip
+              title={"CPU品牌 / 型号" + data.meat.cpu + data.meat.cpuModel}
+              className=" text-[10px]"
+            >
+              {data.meat.cpu} /{data.meat.cpuModel}
+            </Tooltip>
+
+            <Tooltip
+              title={"显卡型号" + data.meat.graphics}
+              className=" text-[10px]"
+            >
+              {data.meat.graphics}
+            </Tooltip>
+
+            {/*配置信息*/}
+            <Tooltip
+              title={
+                " 总内存容量 / 总硬盘容量" + data.meat.memory + data.meat.disk
+              }
+            >
+              {data.meat.memory} / {data.meat.disk}
+            </Tooltip>
+
+            {/*编号*/}
+
             <Tooltip title={"设备编号：" + data.number}>
-              <span>
-                <b>编号 ：</b> {data.number}
-              </span>
+              <b>编号：</b> {data.number}
             </Tooltip>
 
             <Tooltip title={"当前部门：" + data.department}>
-              <span>
-                <b>部门：</b>
-                {data.department}
-              </span>
+              <b>部门：</b>
+              {data.department}
             </Tooltip>
             <Tooltip title={"当前状态：" + deviceStatus}>
-              <span>
-                <b>状态：</b>
-                {deviceStatus}
-              </span>
+              <b>状态：</b>
+              {deviceStatus}
             </Tooltip>
             <Tooltip title={"当前IP：" + data.ip}>
-              <span>
-                <b>IP：</b>
-                {data.ip}
-              </span>
+              <b>IP：</b>
+              {data.ip}
             </Tooltip>
-          </p>
+          </Space>
         </div>
       </div>
     </>
