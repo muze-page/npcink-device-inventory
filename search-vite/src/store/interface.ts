@@ -24,7 +24,7 @@ export interface MysqlDeviceChange {
   updated_at: Dayjs; //更新时间
   uuid: string; //唯一编号
   data: Computer; //数据
-  [key: string]: any;
+  /*[key: string]: any;*/
 }
 
 //准备交叉类型

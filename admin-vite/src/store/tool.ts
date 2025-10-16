@@ -299,7 +299,7 @@ const processArray = (arr: MysqlDeviceChange[]): ProcessedItem[] => {
   const now = dayjs();
   return arr.map((item) => {
     // 直接使用 dayjs 方法计算月份差
-    const monthsUsed = Math.abs(now.diff(item.time, "month"));
+    const monthsUsed = Math.abs(now.diff(item.created_at, "month"));
     return {
       purchase: item.purchase,
       monthsUsed: monthsUsed,
