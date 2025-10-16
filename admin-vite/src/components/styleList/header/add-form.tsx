@@ -299,7 +299,7 @@ const App = ({ form, handleOk }: AddFormProps) => {
           >
             <SelectInput
               options={styleCategoryOption}
-              filterData=""
+              defaultValue=""
               onChange={(value) => form?.setFieldsValue({ category: value })}
             />
           </Form.Item>

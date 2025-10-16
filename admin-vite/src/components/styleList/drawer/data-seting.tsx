@@ -9,6 +9,8 @@ import { deleteStyleDeviceData, updateStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
 import { StyleDeviceSeting } from "@/type/index";
 import { AppContext } from "@/context/AppContext";
+//选择输入框
+import SelectInput from "@/block/SelectInput";
 const { TextArea } = Input;
 interface Props {
   onActive: () => void; //修改弹窗状态
@@ -71,7 +73,7 @@ const App: React.FC<Props> = ({ onActive }) => {
       number: values.number, //设备编号
       category: values.category, //设备分类
       uuid: uuid,
-      created_at: drawerData.created_at,
+      created_at: drawerData.created_at, //保留创建时间
       name: values.name,
       purpose: values.purpose,
       state: values.state,
@@ -115,6 +117,11 @@ const App: React.FC<Props> = ({ onActive }) => {
         </Form.Item>
         <Form.Item<StyleDeviceSeting> label="分类" name="category">
           <Select options={styleCategoryOption} />
+          <SelectInput
+            options={styleCategoryOption}
+            defaultValue={drawerData.category}
+            onChange={(value) => form?.setFieldsValue({ category: value })}
+          />
         </Form.Item>
 
         <Form.Item<StyleDeviceSeting> label="设备状态：" name="state">

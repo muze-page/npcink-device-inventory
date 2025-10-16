@@ -9,17 +9,17 @@ import {DataItemArr} from "@/type/index"
 
 
 interface Props {
-  filterData: string; // 筛选数据
+  defaultValue: string; // 默认值
   onChange: (data: string) => void; // 筛选数据改变的回调
   options: DataItemArr[]; // 设备分类选项
 }
 
 const CategoryFilter: React.FC<Props> = ({
-  filterData,
+  defaultValue,
   onChange,
   options,
 }) => {
-  const [inputValue, setInputValue] = useState(filterData || ""); // 输入框的值
+  const [inputValue, setInputValue] = useState(defaultValue || ""); // 输入框的值
 
   // 将预设选项转换为 AutoComplete 需要的格式
   const autoCompleteOptions = options.map((option) => ({
@@ -35,7 +35,7 @@ const CategoryFilter: React.FC<Props> = ({
       !options.some((opt) => opt.value === currentInput)
     ) {
       return [
-        { value: currentInput, label: `自定义: ${currentInput}` },
+        { value: currentInput, label: ` ${currentInput}` },
         ...autoCompleteOptions,
       ];
     }
@@ -66,7 +66,7 @@ const CategoryFilter: React.FC<Props> = ({
         // 搜索时也更新到父组件
         onChange(value);
       }}
-      placeholder="选择或输入分类"
+      placeholder="选择或输入"
       allowClear
     />
   );
