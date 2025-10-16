@@ -8,7 +8,6 @@ import {
   DataItemArr,
   ComputerRam,
   ComputerDevice,
-  ComputerNet,
   ComputerControllers,
   MysqlDevice,
 } from "@/type/index";

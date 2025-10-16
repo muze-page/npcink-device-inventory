@@ -112,7 +112,7 @@ const App: React.FC<Props> = ({ data, time }) => {
         {handleData.map((item: itemType, index: number) => (
           <div
             className={`
-            mb-2 w-[49.6%] h-24 py-4 px-5 rounded border bg-gradient-to-r
+            mb-2 w-[49.6%] h-24 py-4 px-5 rounded-xl border bg-gradient-to-r
             ${
               index % 4 === 0 || index % 4 === 3 || index % 4 === 4
                 ? "bg_blue"

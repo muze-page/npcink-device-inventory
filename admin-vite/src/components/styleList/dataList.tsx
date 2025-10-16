@@ -44,7 +44,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
       {/**开始展示设备信息 */}
       <div
         className="
-        cursor-pointer p-4 rounded  w-52 h-72 mac
+        cursor-pointer p-4 rounded-xl  w-52 h-72 mac
         hover:border-1 hover:border-blue-400 "
         onClick={() => {
           showDrawer();

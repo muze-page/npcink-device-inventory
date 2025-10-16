@@ -13,7 +13,7 @@ import Style from "@/components/styleList/index";
 const items: TabsProps["items"] = [
   {
     key: "sbxq",
-    label: `设备详情`,
+    label: `电脑设备`,
     children: <Details />,
   },
 
@@ -29,14 +29,14 @@ const items: TabsProps["items"] = [
     children: <Check />,
   },
   {
-    key: "bgjl",
-    label: `变更记录`,
-    children: <ChangeList />,
-  },
-  {
     key: "sz",
     label: `设置`,
     children: <Config />,
+  },
+  {
+    key: "bgjl",
+    label: `电脑变更`,
+    children: <ChangeList />,
   },
 ];
 

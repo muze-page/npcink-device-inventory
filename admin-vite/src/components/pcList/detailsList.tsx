@@ -42,7 +42,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
       {/**开始循环 */}
       <div
         className="
-        cursor-pointer p-4 rounded w-52 h-72 mac
+        cursor-pointer p-4 rounded-xl w-52 h-72 mac 
         hover:border-1 hover:border-blue-400"
         onClick={() => {
           showDrawer();
@@ -54,7 +54,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         </div>
 
         {/**底部数据 */}
-        <div className="mt-2 text-xs text-zinc-500 rounded whitespace-nowrap min-h-[190px]">
+        <div className="mt-1 text-xs text-zinc-500 rounded whitespace-nowrap min-h-[190px]">
           {/*姓名*/}
           <div className="text-sm font-bold text-zinc-800 leading-8 m-0  ">
             {/** <div className={isName ? "" : "hideName"}> */}

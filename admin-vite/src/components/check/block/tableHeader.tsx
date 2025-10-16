@@ -20,7 +20,7 @@ const App: React.FC<Props> = ({ items, handleTabClick, activeTab }) => {
     <div className="flex items-center">
       {items.map((tab, index) => (
         <div
-          className={`w-calc-1/4 first:ml-0 ml-4 cursor-pointer relative h-[6em] rounded px-5 py-4  bg-gradient-to-br   w-full ${tab.color}`}
+          className={`w-calc-1/4 first:ml-0 ml-4 cursor-pointer relative h-[6em] rounded-xl px-5 py-4  bg-gradient-to-br   w-full ${tab.color}`}
           key={index}
           onClick={() => handleTabClick(index)}
         >

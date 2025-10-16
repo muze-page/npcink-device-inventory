@@ -39,7 +39,7 @@ const App: React.FC = ({}) => {
         <Mark osType={osTypeObj} />
         {/**内容 */}
         <div
-          className={`pt-6 pr-[17px] pb-6 pl-[23px] text-white text-sm flex-1 ${styleClassName}`}
+          className={`pt-6 pr-[17px] pb-6 pl-[23px] text-white text-sm flex-1 rounded-r-xl ${styleClassName}`}
         >
           {/**姓名 */}
           <div className="flex justify-between">
@@ -94,7 +94,7 @@ interface PropsMark {
 }
 const Mark: React.FC<PropsMark> = ({ osType }) => (
   <div
-    className={`rounded-l-[4px] py-[22px] px-[10px] 
+    className={`rounded-l-xl py-[22px] px-[10px] 
 ${
   (osType.name === "Windows" && "bg-[#356dee]") ||
   (osType.name === "Mac" && "Mac_icon_background_color")
