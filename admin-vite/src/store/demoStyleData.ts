@@ -14,7 +14,7 @@ const DataOne = {
 };
 
 const DateTwo = {
-  title: "华为手机",
+  title: "七彩虹 RTX 5060 Ti 战斧 豪华版 16 GB",
   link: "https://item.taobao.com/item.htm?id=1234567890",
   shop_name: "华为官方旗舰店",
   number: 2,

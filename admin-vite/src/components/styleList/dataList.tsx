@@ -51,7 +51,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         }}
       >
         {/**顶部标志 */}
-
+        {/** 
         <Space className="flex justify-between">
           <Tooltip title={"采购平台：" + platformObj.name}>
             <img
@@ -69,11 +69,12 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             />
           </Tooltip>
         </Space>
+        */}
 
         {/**底部数据 */}
         <div className="text-xs text-zinc-500  rounded whitespace-nowrap min-h-[190px] mt-4">
           {/*设备名称*/}
-          <p className="text-sm font-bold text-zinc-800 leading-8 m-0 ">
+          <p className="text-sm font-bold text-zinc-800 leading-2 h-10 m-0 whitespace-normal break-words">
             <Tooltip title={"设备名称：" + data.data.title}>
               {data.data.title}
             </Tooltip>
