@@ -77,14 +77,14 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             </Tooltip>
 
             <Tooltip
-              title={"CPU品牌 / 型号" + data.meat.cpu + data.meat.cpuModel}
+              title={"CPU品牌 / 型号：" + data.meat.cpu +" / "+ data.meat.cpuModel}
               className=" text-[10px]"
             >
               {data.meat.cpu} /{data.meat.cpuModel}
             </Tooltip>
 
             <Tooltip
-              title={"显卡型号" + data.meat.graphics}
+              title={"显卡型号：" + data.meat.graphics}
               className=" text-[10px]"
             >
               {data.meat.graphics}
@@ -93,7 +93,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             {/*配置信息*/}
             <Tooltip
               title={
-                " 总内存容量 / 总硬盘容量" + data.meat.memory + data.meat.disk
+                " 总内存容量 / 总硬盘容量：" + data.meat.memory +" / "+ data.meat.disk
               }
             >
               {data.meat.memory} / {data.meat.disk}
