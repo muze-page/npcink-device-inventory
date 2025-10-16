@@ -17,7 +17,7 @@ const App: React.FC<Props> = ({ data }) => {
     { label: "版本", value: data.version },
     { label: "序列号", value: data.serial },
     { label: "资产标签", value: data.assetTag },
-    { label: "最大内存", value: formatBytes(data.memMax, "GB") },
+    { label: "最大内存", value: formatBytes(data.memMax) },
     { label: "内存插槽", value: data.memslots },
   ];
 

@@ -89,19 +89,19 @@ export const formatMB = (mb: number | null) => {
   if (mb === null || mb === 0) {
     return "0";
   }
-  
+
   // 如果是MB单位，我们可以直接处理
   // 自动选择合适的单位，适用于内存和显存显示
-  const units = ['MB', 'GB', 'TB', 'PB'];
+  const units = ["MB", "GB", "TB", "PB"];
   let size = mb;
   let unitIndex = 0;
-  
+
   // 从MB开始，1024 MB = 1 GB
   while (size >= 1024 && unitIndex < units.length - 1) {
     size /= 1024;
     unitIndex++;
   }
-  
+
   // 对于内存和显存显示，通常使用整数或1位小数就足够了
   if (unitIndex === 0) {
     // MB单位显示整数
@@ -111,23 +111,6 @@ export const formatMB = (mb: number | null) => {
     const rounded = parseFloat(size.toFixed(1));
     return rounded + " " + units[unitIndex];
   }
-};
-
-//处理大容量内存和硬盘，四舍五入TODO:同意使用字节处理
-export const handleMemoryAndDisk = (data: number) => {
-  const value =
-    data > 1024 ? (data / 1024).toFixed(0) + " T" : (data || 0) + " G"; //硬盘
-  return value;
-};
-
-//处理显存（MB）
-export const handleGraphicsVram = (vram: number) => {
-  const vrams = vram / 1024;
-  const value =
-    vrams > 1024
-      ? (vrams / 1024).toFixed(0) + " T"
-      : (vrams.toFixed(0) || 0) + " G"; //显存
-  return value;
 };
 
 // IPv4 正则表达式
@@ -412,7 +395,7 @@ const calculateTotalSize = (dataArrays: DataType[]) => {
   const totalSize = dataArrays.reduce((sum: number, obj: { size: number }) => {
     return sum + obj.size;
   }, 0);
-  return totalSize / (1024 * 1024 * 1024); // 将字节转换为GB
+  return formatBytes(totalSize); // 单位转换
 };
 
 /**
@@ -457,10 +440,7 @@ export const handleGraphics = (data: ComputerControllers[]) => {
     (item) => !excludeGraphics.some((str) => item.model.includes(str))
   );
   const value = data
-    .map(
-      (item) =>
-        item.model + " " + (item.vram ? handleGraphicsVram(item.vram) : "")
-    )
+    .map((item) => item.model + " " + (item.vram ? formatMB(item.vram) : ""))
     .join("<br/>");
 
   return value;
@@ -473,7 +453,7 @@ export const updateOSType = (
   const updatedData = dataArrays.map((obj: MysqlDeviceChange) => {
     const value = obj.data; //拿到对象
     const memory = calculateTotalSize(value.memLayout); //内存数组
-    const disk = calculateTotalSize(value.diskLayout); //硬盘数组TODO:要不要分固态和机械硬盘
+    const disk = calculateTotalSize(value.diskLayout); //混合计算，不分固态和机械
     //整理添加的信息
     const meat = {
       os: replaceString(value.os.distro, osTypeReplace), //系统版本 Windows 10
@@ -483,8 +463,8 @@ export const updateOSType = (
       model: value.system.model || "暂无设备型号", //设备型号
       motherboard: value.baseboard.model || "暂无主板型号", //主板型号
       graphics: handleGraphics(value.graphics.controllers) || "暂无显卡型号", //显卡型号，处理有多张显卡的情况
-      memory: handleMemoryAndDisk(Math.floor(memory)) || "暂无内存容量", //内存容量
-      disk: handleMemoryAndDisk(Math.floor(disk)) || "暂无硬盘容量", //硬盘容量
+      memory: memory.toString() || "暂无内存容量", //内存容量
+      disk: disk.toString() || "暂无硬盘容量", //硬盘容量
     };
     const mac = extractMacValues(value.net);
     return { ...obj, meat, mac };

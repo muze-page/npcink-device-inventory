@@ -15,7 +15,7 @@ const App: React.FC<Props> = ({ data }) => {
       { label: "类型", value: item.type },
       { label: "接口类型", value: item.interfaceType },
       { label: "名称", value: item.name },
-      { label: "容量", value: formatBytes(item.size, "GB") },
+      { label: "容量", value: formatBytes(item.size) },
       { label: "总柱面数", value: item.totalCylinders },
       { label: "磁头总数", value: item.totalHeads },
       { label: "总磁道数", value: item.totalTracks },

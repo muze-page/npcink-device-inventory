@@ -12,7 +12,7 @@ interface Props {
 const App: React.FC<Props> = ({ data }) => {
   const formattedData = (item: ComputerRam) => {
     const arr = [
-      { label: "大小", value: formatBytes(item.size, "GB") },
+      { label: "大小", value: formatBytes(item.size) },
       { label: "内存库", value: item.bank },
       { label: "内存类型", value: item.type },
       { label: "ECC 内存", value: judge_bool(item.ecc) },
