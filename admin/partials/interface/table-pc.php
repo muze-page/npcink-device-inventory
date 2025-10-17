@@ -1,10 +1,10 @@
 <?php
 
 /**
- * 硬件信息设置接口 - 删、改
+ * 电脑信息设置接口 - 删、改
  */
-if (!class_exists('DEMA_Admin_Interface_Pc_Data_Seting')) {
-    class DEMA_Admin_Interface_Pc_Data_Seting extends DEMA_Admin_Interface
+if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
+    class DEMA_Admin_Interface_Table_PC extends DEMA_Admin_Interface
     {
         public static function run()
         {

@@ -1,10 +1,10 @@
 <?php
 
 /**
- * 硬件变更接口 - 增删改查
+ * 手动变更接口 - 增删改查
  */
-if (!class_exists('DEMA_Admin_Interface_Change_Manual_Record')) {
-    class DEMA_Admin_Interface_Change_Manual_Record extends DEMA_Admin_Interface
+if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
+    class DEMA_Admin_Interface_Table_Manual extends DEMA_Admin_Interface
     {
         public static function run()
         {

@@ -4,8 +4,8 @@
  * 接口 硬件变更自动记录查询接口
  * 接收UUID，返回查询的数据列表
  */
-if (!class_exists('DEMA_Admin_Interface_Change_Auto_Record')) {
-    class DEMA_Admin_Interface_Change_Auto_Record extends DEMA_Admin_Interface
+if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
+    class DEMA_Admin_Interface_Table_Auto extends DEMA_Admin_Interface
     {
         /**
          * 接收数据

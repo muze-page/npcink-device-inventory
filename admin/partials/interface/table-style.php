@@ -3,8 +3,8 @@
 /**
  * 前端添加自定义设备数据，增删改查接口
  */
-if (!class_exists('DEMA_Admin_Interface_Style_Data')) {
-    class DEMA_Admin_Interface_Style_Data extends DEMA_Admin_Interface
+if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
+    class DEMA_Admin_Interface_Table_Style extends DEMA_Admin_Interface
     {
         //表名
         public static $style_table_name;
