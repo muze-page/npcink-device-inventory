@@ -22,7 +22,11 @@ const items: TabsProps["items"] = [
     label: `自定义设备`,
     children: <Style />,
   },
-
+  {
+    key: "bgjl",
+    label: `变更数据`,
+    children: <ChangeList />,
+  },
   {
     key: "yjpd",
     label: `硬件盘点`,
@@ -32,11 +36,6 @@ const items: TabsProps["items"] = [
     key: "sz",
     label: `设置`,
     children: <Config />,
-  },
-  {
-    key: "bgjl",
-    label: `电脑变更`,
-    children: <ChangeList />,
   },
 ];
 

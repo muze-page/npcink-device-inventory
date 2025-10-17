@@ -269,7 +269,34 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     }
                 }
             }
-            //变更数据
+
+            //自定义设备数据
+            if ($name == self::$table_style_name) {
+                foreach ($data as $item) {
+                    //是否有重复数据
+                    $uuid = isset($item['uuid']) ? $item['uuid'] : null; //唯一标识符
+                    $table_name = $wpdb->prefix . self::$table_style_name;
+                    $existingData = $wpdb->get_row(
+                        $wpdb->prepare(
+                            "SELECT * FROM $table_name WHERE uuid = %s;",
+                            $uuid
+                        ),
+                        ARRAY_A
+                    );
+                    //没有重复数据，插入数据
+                    if (!$existingData) {
+                        $insert_data[] = array(
+                            'name' => isset($item['name']) ? $item['name'] :  null,
+                            'purpose' => isset($item['purpose']) ? $item['purpose'] :  null,
+                            'state' => isset($item['state']) ? $item['state'] :  null,
+                            'created_at' => isset($item['created_at']) ? $item['created_at'] :  null,
+                            'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
+                            'data' => isset($item['data']) ? $item['data'] :  null,
+                        );
+                    }
+                }
+            }
+            //手动变更数据
             if ($name == self::$table_manual_name) {
                 foreach ($data as $item) {
                     //是否有重复数据
@@ -295,28 +322,28 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                 }
             }
 
-            //自定义设备数据
-            if ($name == self::$table_style_name) {
+            //变更自动记录数据
+            if ($name == self::$table_auto_name) {
                 foreach ($data as $item) {
                     //是否有重复数据
-                    $uuid = isset($item['uuid']) ? $item['uuid'] : null; //唯一标识符
-                    $table_name = $wpdb->prefix . self::$table_style_name;
+                    $time = isset($item['time']) ? $item['time'] : null;
+                    $table_name = $wpdb->prefix . self::$table_auto_name;
                     $existingData = $wpdb->get_row(
                         $wpdb->prepare(
-                            "SELECT * FROM $table_name WHERE uuid = %s;",
-                            $uuid
+                            "SELECT * FROM $table_name WHERE time = %s;",
+                            $time
                         ),
                         ARRAY_A
                     );
-                    //没有重复数据，插入数据
+
                     if (!$existingData) {
                         $insert_data[] = array(
-                            'name' => isset($item['name']) ? $item['name'] :  null,
-                            'purpose' => isset($item['purpose']) ? $item['purpose'] :  null,
-                            'state' => isset($item['state']) ? $item['state'] :  null,
-                            'created_at' => isset($item['created_at']) ? $item['created_at'] :  null,
-                            'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
-                            'data' => isset($item['data']) ? $item['data'] :  null,
+                            'table_name' => isset($item['table_name']) ? $item['table_name'] :  null, //表名
+                            'column_name' => isset($item['column_name']) ? $item['column_name'] : null, //字段名
+                            'old_value' => isset($item['old_value']) ? $item['old_value'] :  null,//旧值
+                            'new_value' => isset($item['new_value']) ? $item['new_value'] :  null,//新值
+                            'changed_at' => isset($item['changed_at']) ? $item['changed_at'] :  null,//变更时间
+                            'record_uuid' => isset($item['record_uuid']) ? $item['record_uuid'] :  null,//记录唯一标识符
                         );
                     }
                 }
