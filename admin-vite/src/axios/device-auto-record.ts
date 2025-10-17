@@ -27,3 +27,14 @@ export const changeAutoRecordAxios = async (
     throw error;
   }
 };
+
+/**
+ * 查全部自定义设备数据
+ */
+export const searchAutoChangeAllData = async () => {
+  const params = new URLSearchParams({
+    action: "auto_change_all_data_callback",
+  });
+  const response = await axios.post(Ajaxurl, params);
+  return response.data as axiosType;
+};

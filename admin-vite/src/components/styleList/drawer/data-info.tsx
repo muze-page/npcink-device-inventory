@@ -67,7 +67,7 @@ const App: React.FC<Props> = ({ deviceData }) => {
           {deviceData.numbers}
         </p>
         <p>
-          <b>采购人：</b>
+          <b>采购人员：</b>
           {isName ? (
             deviceData.purchaser
           ) : (

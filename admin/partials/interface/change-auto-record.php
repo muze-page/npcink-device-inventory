@@ -12,7 +12,7 @@ if (!class_exists('DEMA_Admin_Interface_Change_Auto_Record')) {
          */
         public static function run()
         {
-            //查 - 设备变更信息接口
+            //查指定设备 - 设备变更信息接口
             add_action('wp_ajax_auto_change_data_callback',  array(__CLASS__, 'auto_change_data_callback'));
 
             //查全部 - 设备变更信息接口
@@ -56,7 +56,7 @@ if (!class_exists('DEMA_Admin_Interface_Change_Auto_Record')) {
                 ], 500);
             }
         }
-        //查询全部变更数据
+        //查询全部变更自动记录数据
         public static function auto_change_all_data_callback()
         {
             global $wpdb;

@@ -11,7 +11,11 @@ export {
   searchChangeAllData,
 } from "@/axios/device-change";
 
-export { changeMySql, deltSQLData,getDeviceCategory } from "@/axios/device-seting";
+export {
+  changeMySql,
+  deltSQLData,
+  getDeviceCategory,
+} from "@/axios/device-seting";
 
 //自定义硬件设备数据
 export {
@@ -22,4 +26,7 @@ export {
 } from "@/axios/device-style";
 
 //硬件设备数据变更自动记录
-export { changeAutoRecordAxios } from "@/axios/device-auto-record";
+export {
+  changeAutoRecordAxios,
+  searchAutoChangeAllData,
+} from "@/axios/device-auto-record";

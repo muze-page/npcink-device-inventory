@@ -81,7 +81,7 @@ export const searchChangeData = async (uuid: string) => {
 };
 
 /**
- * 查全部数据
+ * 查全部电脑数据
  */
 export const searchChangeAllData = async () => {
   const params = new URLSearchParams({

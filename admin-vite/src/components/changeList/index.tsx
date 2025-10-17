@@ -3,7 +3,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { searchChangeAllData } from "@/axios";
+import { searchChangeAllData, searchAutoChangeAllData } from "@/axios";
 import { Space, Button, Table, message } from "antd";
 import type { TableColumnsType } from "antd";
 import { DeviceChangeList } from "@/type/index";
@@ -12,10 +12,12 @@ import { DeviceChangeList } from "@/type/index";
 const App: React.FC = () => {
   const [dataAxios, setDataAxios] = useState<DeviceChangeList[]>([]); //待渲染的值
 
+  //数据来源切换
+  const [active, setActive] = useState(true); //默认为电脑变更
+
   // 获取数据并处理TODO:优化报错机制
   const getData = async () => {
-    const response = await searchChangeAllData(); // 获取数据
-
+    const response = await searchChangeAllData(); // 获取自定义设备变更数据
     if (response.success) {
       const addKeyData = response.data.data
         .map((obj: DeviceChangeList, index: number) => ({
@@ -102,18 +104,27 @@ const App: React.FC = () => {
   const toggleStyle = () => {
     setIsActive((prevIsActive) => !prevIsActive);
   };
+
+  //获取全部自动记录的变更数据
+  const getAutoData = async () => {
+    const response = await searchAutoChangeAllData();
+    console.log("获取全部自动记录的变更数据");
+    console.log(response);
+  };
   return (
     <>
+      <Space className="mb-4">
+        <Button onClick={getAutoData}>获取自动变更数据</Button>
+        <Button onClick={() => setActive}>
+          {isActive ? "电脑" : "自定义"}变更数据
+        </Button>
+        <Button onClick={toggleStyle}>{isActive ? "展示" : "隐藏"}姓名</Button>
+      </Space>
       <Table
         dataSource={dataAxios}
         columns={columns}
         className={isActive ? "hideName" : ""}
       />
-      <br />
-
-      <Space>
-        <Button onClick={toggleStyle}>{isActive ? "展示" : "隐藏"}姓名</Button>{" "}
-      </Space>
     </>
   );
 };

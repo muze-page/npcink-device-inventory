@@ -45,6 +45,13 @@ data:{
 提供接口，扫描对应分类字段，去重后提供给前端选择
 前端可以自己输入分类，也可聪提供的分类字段中选择
 
+## 数据库介绍
+
+- npcink_device_auto 自动记录表，有修改内容的，自动记录
+- npcink_device_change 变更记录表，手动记录变更
+- npcink_device_data 电脑设备记录表
+- npcink_device_style 自定义设备记录表
+
 #### 介绍
 
 硬件统计前端模块 WordPress 插件
