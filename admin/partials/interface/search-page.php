@@ -3,8 +3,8 @@
 /**
  * 添加前端搜索页接口
  */
-if (!class_exists('DEMA_Admin_Interface_Search_Page_Add')) {
-    class DEMA_Admin_Interface_Search_Page_Add extends DEMA_Admin_Interface
+if (!class_exists('DEMA_Admin_Interface_Search_Page')) {
+    class DEMA_Admin_Interface_Search_Page extends DEMA_Admin_Interface
     {
         public static function run()
         {

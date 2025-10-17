@@ -50,8 +50,8 @@ if (!class_exists('DEMA_Admin_Interface')) {
             DEMA_Admin_Interface_Table_Auto::run();
 
             //添加前端公共搜索页接口
-            require_once plugin_dir_path(__FILE__) . 'interface/search-page-add.php';
-            DEMA_Admin_Interface_Search_Page_Add::run();
+            require_once plugin_dir_path(__FILE__) . 'interface/search-page.php';
+            DEMA_Admin_Interface_Search_Page::run();
         }
 
 
