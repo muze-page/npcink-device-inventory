@@ -2,129 +2,41 @@
  * 变更记录表
  */
 
-import React, { useState, useEffect } from "react";
-import { searchChangeAllData, searchAutoChangeAllData } from "@/axios";
-import { Space, Button, Table, message } from "antd";
-import type { TableColumnsType } from "antd";
-import { DeviceChangeList } from "@/type/index";
-//
+import React, { useState } from "react";
+import { Space, Button } from "antd";
+import Change from "@/components/changeList/change";
+import Auto from "@/components/changeList/auto";
 
 const App: React.FC = () => {
-  const [dataAxios, setDataAxios] = useState<DeviceChangeList[]>([]); //待渲染的值
-
-  //数据来源切换
-  const [active, setActive] = useState(true); //默认为电脑变更
-
-  // 获取数据并处理TODO:优化报错机制
-  const getData = async () => {
-    const response = await searchChangeAllData(); // 获取自定义设备变更数据
-    if (response.success) {
-      const addKeyData = response.data.data
-        .map((obj: DeviceChangeList, index: number) => ({
-          ...obj,
-          key: index + 1,
-        }))
-        .reverse();
-      setDataAxios(addKeyData); // 传值
-      //console.log(addKeyData);
-    } else {
-      message.error(response.data.error);
-    }
-  };
-
-  //拿到最新UUID
-  useEffect(() => {
-    getData();
-  }, []);
-
-  //准备姓名，类型数组
-  //从数组对象中，提取指定键的值，去重后输出为指定的对象数组
-  const uniqueTypess = (data: DeviceChangeList[], name: string) => {
-    const uniqueNames = [...new Set(data.map((obj) => obj[name]))];
-    return uniqueNames.map((item) => ({
-      text: item.toString(),
-      value: item.toString(),
-    }));
-  };
-
-  //姓名
-  const userArr = uniqueTypess(dataAxios, "user");
-  //类型
-  const typeArr = uniqueTypess(dataAxios, "type");
-  //筛选
-  const columns: TableColumnsType<DeviceChangeList> = [
-    {
-      title: "序号",
-      dataIndex: "key",
-      sorter: (a, b) => a.key - b.key,
-      width: "10%",
-    },
-    {
-      title: "姓名",
-      dataIndex: "user",
-      filters: userArr,
-      filterMode: "tree",
-      filterSearch: true,
-      onFilter: (value, record) => record.user.startsWith(value.toString()),
-      width: "15%",
-    },
-    {
-      title: "类型",
-      dataIndex: "type",
-      filters: typeArr,
-      filterMode: "tree",
-      filterSearch: true,
-      onFilter: (value, record) => record.type.startsWith(value.toString()),
-      width: "10%",
-    },
-
-    {
-      title: "内容",
-      dataIndex: "data",
-      key: "data",
-      width: "35%",
-    },
-    {
-      title: "设备",
-      dataIndex: "msg",
-      key: "msg",
-      width: "15%",
-    },
-    {
-      title: "日期",
-      dataIndex: "created_at",
-      key: "created_at",
-      width: "15%",
-    },
-  ];
-
   //隐藏姓名
   const [isActive, setIsActive] = useState(false);
-
+  //数据来源切换
+  const [dataSctive, setDataActive] = useState(true); //默认为电脑变更
+  //切换姓名
   const toggleStyle = () => {
     setIsActive((prevIsActive) => !prevIsActive);
   };
 
-  //获取全部自动记录的变更数据
-  const getAutoData = async () => {
-    const response = await searchAutoChangeAllData();
-    console.log("获取全部自动记录的变更数据");
-    console.log(response);
+  //切换数据来源
+  const toggleData = () => {
+    setDataActive((prevIsActive) => !prevIsActive);
   };
+
+  //我需要使用active来显示不同的组件
+
   return (
     <>
       <Space className="mb-4">
-        <Button onClick={getAutoData}>获取自动变更数据</Button>
-        <Button onClick={() => setActive}>
-          {isActive ? "电脑" : "自定义"}变更数据
+        <Button onClick={toggleData}>
+          {dataSctive ? "手动" : "自动"}变更数据
         </Button>
         <Button onClick={toggleStyle}>{isActive ? "展示" : "隐藏"}姓名</Button>
       </Space>
-      <Table
-        dataSource={dataAxios}
-        columns={columns}
-        className={isActive ? "hideName" : ""}
-      />
+      {dataSctive ? (
+        <Change isActive={isActive} />
+      ) : (
+        <Auto isActive={isActive} />
+      )}
     </>
   );
 };

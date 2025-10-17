@@ -5,18 +5,7 @@ import type { Dayjs } from "dayjs";
 export interface StateType {
   state: "apply" | "idie" | "fault" | "scrap" | "repair"; //设备状态
 }
-/**
- * 变更自动记录表数据类型
- */
-export interface ChangeAutoRecord {
-  id: number;
-  table_name: string; //变更的表名
-  column_name: string; //变更的字段名
-  old_value: string; //变更前的值
-  new_value: string; //变更后的值
-  changed_at: Dayjs; //变更的时间
-  record_uuid: string; //对应设备的UUID
-}
+
 /**
  * 导出数据时的数据结构
  */
@@ -171,6 +160,20 @@ export interface DeviceChangeList {
   type: string; //变更类型
   user: string; //变更人
   uuid: string; //设备UUID
+  [keysx: string]: number | string | Dayjs;
+}
+
+/**
+ * 自动记录变更表数据类型
+ */
+export interface ChangeAutoRecord {
+  id: number;
+  table_name: string; //变更的表名
+  column_name: string; //变更的字段名
+  old_value: string; //变更前的值
+  new_value: string; //变更后的值
+  changed_at: Dayjs; //变更的时间
+  record_uuid: string; //对应设备的UUID
   [keysx: string]: number | string | Dayjs;
 }
 
@@ -455,5 +458,5 @@ export interface ComputerChassis {
 export interface ComputerUuid {
   os: string;
   hardware: string;
-  macs: string[];//MAC
+  macs: string[]; //MAC
 }
