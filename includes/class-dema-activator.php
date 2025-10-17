@@ -91,7 +91,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 			dbDelta($sql);
 		}
 
-		// 创建UPDATE触发器，当name、state、number、depreciation、ip、purchase、department字段发生变化时记录到自动记录表
+		// 创建UPDATE触发器，当name、state、number、depreciation、ip、purchase、department、updated_at字段发生变化时记录到自动记录表
 		// 先删除已存在的触发器
 		//$wpdb->query("DROP TRIGGER IF EXISTS after_update_device_data");
 		$auto_table_name = $wpdb->prefix . self::$table_change_auto;
@@ -135,6 +135,12 @@ class Dema_Activator extends DEMA_Admin_Interface
 				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
 				VALUES ('data', NEW.uuid, 'depreciation', OLD.depreciation, NEW.depreciation);
 			END IF;
+
+            IF OLD.updated_at != NEW.updated_at THEN
+				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+				VALUES ('data', NEW.uuid, 'updated_at', OLD.updated_at, NEW.updated_at);
+			END IF;
+			
 		END;
 		";
 
@@ -225,7 +231,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 			// 执行触发器 SQL
 			$wpdb->query($trigger_sql);
 		}
-		// 创建UPDATE触发器，当name、purpose或state字段发生变化时记录到自动记录表
+		// 创建UPDATE触发器，当name、number、purpose或state字段发生变化时记录到自动记录表
 		$auto_table_name = $wpdb->prefix . self::$table_change_auto;
 		//$auto_table_value = self::$table_change_auto;
 		// 先删除已存在的触发器
@@ -238,6 +244,11 @@ class Dema_Activator extends DEMA_Admin_Interface
 			IF OLD.name != NEW.name THEN
 				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
 				VALUES ('style', OLD.uuid, 'name', OLD.name, NEW.name);
+			END IF;
+
+			IF OLD.number != NEW.number THEN
+				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+				VALUES ('style', OLD.uuid, 'number', OLD.number, NEW.number);
 			END IF;
 			
 			IF OLD.purpose != NEW.purpose THEN
