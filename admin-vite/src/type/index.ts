@@ -174,6 +174,7 @@ export interface ChangeAutoRecord {
   new_value: string; //变更后的值
   changed_at: Dayjs; //变更的时间
   record_uuid: string; //对应设备的UUID
+  msg: string;//描述信息
   [keysx: string]: number | string | Dayjs;
 }
 

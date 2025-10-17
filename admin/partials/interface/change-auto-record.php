@@ -60,7 +60,9 @@ if (!class_exists('DEMA_Admin_Interface_Change_Auto_Record')) {
         public static function auto_change_all_data_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_change_auto;
+            $table_name = $wpdb->prefix . self::$table_change_auto; //自动记录
+            $table_data = $wpdb->prefix . self::$table_data_name; //电脑设备
+            $table_style = $wpdb->prefix . self::$table_style_name; //自定义设备
             // 使用 $wpdb 对象执行 SQL 查询
             $results = $wpdb->get_results("SELECT * FROM $table_name", OBJECT);
 
@@ -68,7 +70,72 @@ if (!class_exists('DEMA_Admin_Interface_Change_Auto_Record')) {
             $data_array = array();
             foreach ($results as $result) {
                 $data_array[] = (array) $result;
+            };
+
+            // 遍历数组对象，根据UUID值查询第二张表，获取name字段的值并更新原始数组对象
+            foreach ($data_array as $key => $data) {
+                $uuid = $data['record_uuid']; //拿到UUID
+                $table_name = $data['table_name']; //表名
+                $name_result = null;
+                //自定义设备
+                if ($table_name == 'style') {
+                    // 查询第二张表获取name字段的值
+                    $name_result = $wpdb->get_row($wpdb->prepare("SELECT name, number  FROM $table_style WHERE uuid = %s", $uuid), ARRAY_A);
+                }
+
+                //电脑设备
+                if ($table_name == 'data') {
+                    // 查询第二张表获取name字段的值
+                    $name_result = $wpdb->get_row($wpdb->prepare("SELECT name, number FROM $table_data WHERE uuid = %s", $uuid), ARRAY_A);
+                }
+
+
+                if ($name_result) {
+                    // 更新原始数组对象中的name键名
+                    $name = $name_result['name'];
+                    $number = $name_result['number'];
+                    //$data_array[$key]['number'] =  $number;
+                    $data_array[$key]['msg'] = $name   . " _ "  . $number;
+                }
             }
+
+            //关键值替换
+            // 准备替换表名映射
+            $tableNameMap = array(
+                'style' => '自定义设备',
+                'data' => '电脑设备'
+            );
+            // 准备字段名表名映射
+            $columnNameMap = array(
+                'state' => '设备状态',
+            );
+
+            // 准备字段名表名映射
+            $oldValueMap = array(
+                'apply' => '使用',
+                'idie' => '闲置',
+                'fault' => '故障',
+                'repair' => '维修',
+                'scrap' => '报废',
+            );
+
+            // 遍历数据并替换匹配的table_name值
+            foreach ($data_array as &$row) {
+                if (isset($row['table_name']) && isset($tableNameMap[$row['table_name']])) {
+                    $row['table_name'] = $tableNameMap[$row['table_name']];
+                }
+                if (isset($row['column_name']) && isset($columnNameMap[$row['column_name']])) {
+                    $row['column_name'] = $columnNameMap[$row['column_name']];
+                }
+                if (isset($row['old_value']) && isset($oldValueMap[$row['old_value']])) {
+                    $row['old_value'] = $oldValueMap[$row['old_value']];
+                }
+                if (isset($row['new_value']) && isset($oldValueMap[$row['new_value']])) {
+                    $row['new_value'] = $oldValueMap[$row['new_value']];
+                }
+            }
+            unset($row); // 销毁引用变量
+
             return wp_send_json_success(['message' => '查询全部变更自动记录数据成功', 'data' =>  $data_array,]);
         }
     }

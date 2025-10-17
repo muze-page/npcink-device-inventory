@@ -10,10 +10,10 @@ if (!class_exists('DEMA_Admin_Interface')) {
         //选项
         public static $option = "device_manaje_option";
 
-        //基本数据表
+        //电脑设备数据表
         public static $table_data_name = "npcink_device_data";
 
-        //自定义数据表
+        //自定义设备数据表
         public static $table_style_name = "npcink_device_style";
 
         //变更手动记录表

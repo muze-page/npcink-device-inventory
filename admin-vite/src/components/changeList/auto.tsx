@@ -46,6 +46,8 @@ const App: React.FC<Props> = ({ isActive }) => {
   const userArr = uniqueTypess(dataAxios, "table_name");
   //字段名
   const typeArr = uniqueTypess(dataAxios, "column_name");
+
+
   //筛选
   const columns: TableColumnsType<ChangeAutoRecord> = [
     {
@@ -62,7 +64,7 @@ const App: React.FC<Props> = ({ isActive }) => {
       filterSearch: true,
       onFilter: (value, record) =>
         record.table_name.startsWith(value.toString()),
-      width: "15%",
+      width: "10%",
     },
     {
       title: "字段名",
@@ -79,19 +81,25 @@ const App: React.FC<Props> = ({ isActive }) => {
       title: "变更前的值",
       dataIndex: "old_value",
       key: "old_value",
-      width: "35%",
+      width: "20%",
     },
     {
       title: "变更后的值",
       dataIndex: "new_value",
       key: "new_value",
-      width: "15%",
+      width: "20%",
+    },
+    {
+      title: "描述信息",
+      dataIndex: "msg",
+      key: "msg",
+      width: "20%",
     },
     {
       title: "日期",
       dataIndex: "changed_at",
       key: "changed_at",
-      width: "15%",
+      width: "10%",
     },
   ];
 
