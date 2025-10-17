@@ -58,7 +58,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 		global $wpdb;
 
 		// 定义表名
-		$table_name = $wpdb->prefix . self::$table_data_name;
+		$table_name = $wpdb->prefix . self::$table_pc_name;
 
 		// 检查是否已存在同名表
 		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
@@ -94,7 +94,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 		// 创建UPDATE触发器，当name、state、number、depreciation、ip、purchase、department、updated_at字段发生变化时记录到自动记录表
 		// 先删除已存在的触发器
 		//$wpdb->query("DROP TRIGGER IF EXISTS after_update_device_data");
-		$auto_table_name = $wpdb->prefix . self::$table_change_auto;
+		$auto_table_name = $wpdb->prefix . self::$table_auto_name;
 		// 创建新的UPDATE触发器
 		$update_trigger_sql = "
 		CREATE TRIGGER after_update_device_data
@@ -157,7 +157,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 		global $wpdb;
 
 		// 定义表名
-		$table_name = $wpdb->prefix . self::$table_change_name;
+		$table_name = $wpdb->prefix . self::$table_manual_name;
 
 		// 检查是否已存在同名表
 		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
@@ -232,8 +232,8 @@ class Dema_Activator extends DEMA_Admin_Interface
 			$wpdb->query($trigger_sql);
 		}
 		// 创建UPDATE触发器，当name、number、purpose或state字段发生变化时记录到自动记录表
-		$auto_table_name = $wpdb->prefix . self::$table_change_auto;
-		//$auto_table_value = self::$table_change_auto;
+		$auto_table_name = $wpdb->prefix . self::$table_auto_name;
+		//$auto_table_value = self::$table_auto_name;
 		// 先删除已存在的触发器
 		//$wpdb->query("DROP TRIGGER IF EXISTS after_update_style_device");
 		$update_trigger_sql = "
@@ -276,7 +276,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 		global $wpdb;
 
 		// 定义表名
-		$table_name = $wpdb->prefix . self::$table_change_auto;
+		$table_name = $wpdb->prefix . self::$table_auto_name;
 
 		// 检查是否已存在同名表
 		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {

@@ -17,10 +17,10 @@ if (!class_exists('Mare_Admin_Uninstall')) {
             //进行判断
             if ($config) {
                 $result = [
-                    DEMA_Admin_Interface::$table_data_name,
+                    DEMA_Admin_Interface::$table_pc_name,
                     DEMA_Admin_Interface::$table_style_name,
-                    DEMA_Admin_Interface::$table_change_name,
-                    DEMA_Admin_Interface::$table_change_auto
+                    DEMA_Admin_Interface::$table_manual_name,
+                    DEMA_Admin_Interface::$table_auto_name
                 ];
                 self::delete_sql($result); //移除数据库
                 self::delete_option(); //移除选项值

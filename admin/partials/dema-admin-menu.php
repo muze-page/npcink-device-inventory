@@ -69,10 +69,10 @@ if (!class_exists('DEMA_Admin_Menu')) {
 
             //准备数据库名称
             $sql_table_name = [
-                'pcData' => self::$table_data_name, //设备数据表名
+                'pcData' => self::$table_pc_name, //设备数据表名
                 'styleData' => self::$table_style_name, //自定义设备数据表名
-                'changeManualData' => self::$table_change_name, //手动变更记录数据表名
-                'changeAutoData' => self::$table_change_auto, //自动变更记录表名
+                'changeManualData' => self::$table_manual_name, //手动变更记录数据表名
+                'changeAutoData' => self::$table_auto_name, //自动变更记录表名
             ];
 
 
@@ -82,7 +82,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
                 'data' => self::get_device_data(), //传递设备数据
                 'styleData' => self::get_style_device_data(), //传递自定义设备数据'
                 'option' => get_option(self::$option), //传递选项
-                'sqlTableName' => $sql_table_name,//数据库表名
+                'sqlTableName' => $sql_table_name, //数据库表名
 
             );
             wp_localize_script($name, 'dataLocal', $pf_api_translation_array); //传给vite项目
@@ -106,7 +106,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
         public static function get_device_data()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_data_name;
+            $table_name = $wpdb->prefix . self::$table_pc_name;
 
             // 获取所有数据
             $result = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);

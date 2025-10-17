@@ -24,7 +24,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
         public static function get_device_category_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_data_name;
+            $table_name = $wpdb->prefix . self::$table_pc_name;
 
             // 获取所有设备分类
             $categories = $wpdb->get_results(
@@ -54,7 +54,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
         public static function modify_device_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_data_name;
+            $table_name = $wpdb->prefix . self::$table_pc_name;
 
             // 获取前端传递的参数并进行输入验证
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //唯一标识符
@@ -201,9 +201,9 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
         public static  function delt_device_callback()
         {
             global $wpdb;
-            $data_name = $wpdb->prefix . self::$table_data_name; //数据表名
-            $change_name = $wpdb->prefix . self::$table_change_name; //变更记录表
-            $auto_name = $wpdb->prefix . self::$table_change_auto; //自动记录表
+            $data_name = $wpdb->prefix . self::$table_pc_name; //数据表名
+            $change_name = $wpdb->prefix . self::$table_manual_name; //变更记录表
+            $auto_name = $wpdb->prefix . self::$table_auto_name; //自动记录表
 
             // 获取前端传递的参数并进行输入验证
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null;

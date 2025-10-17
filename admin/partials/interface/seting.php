@@ -16,8 +16,6 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
 
             //导入数据接口
             add_action('wp_ajax_import_data_callback', array(__CLASS__, 'import_data_callback'));
-
-           
         }
 
         /**
@@ -237,7 +235,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             // 构建插入数据的数组
             $insert_data = array();
             //电脑设备数据
-            if ($name == self::$table_data_name) {
+            if ($name == self::$table_pc_name) {
                 foreach ($data as $item) {
                     //设备信息是否为空
                     if (empty($item['data']) || empty($item['uuid'])) {
@@ -245,7 +243,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     }
                     //是否有重复数据
                     $uuid = isset($item['uuid']) ? $item['uuid'] : null;
-                    $table_name = $wpdb->prefix . self::$table_data_name;
+                    $table_name = $wpdb->prefix . self::$table_pc_name;
                     $existingData = $wpdb->get_row(
                         $wpdb->prepare(
                             "SELECT * FROM $table_name WHERE uuid = %s;",
@@ -272,11 +270,11 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                 }
             }
             //变更数据
-            if ($name == self::$table_change_name) {
+            if ($name == self::$table_manual_name) {
                 foreach ($data as $item) {
                     //是否有重复数据
                     $time = isset($item['time']) ? $item['time'] : null;
-                    $table_name = $wpdb->prefix . self::$table_change_name;
+                    $table_name = $wpdb->prefix . self::$table_manual_name;
                     $existingData = $wpdb->get_row(
                         $wpdb->prepare(
                             "SELECT * FROM $table_name WHERE time = %s;",
@@ -288,7 +286,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     if (!$existingData) {
                         $insert_data[] = array(
                             'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
-                            'created_at' => isset($item['created_at'])? $item['created_at'] : null, 
+                            'created_at' => isset($item['created_at']) ? $item['created_at'] : null,
                             'user' => isset($item['user']) ? $item['user'] :  null,
                             'type' => isset($item['type']) ? $item['type'] :  null,
                             'data' => isset($item['data']) ? $item['data'] :  null,

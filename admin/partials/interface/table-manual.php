@@ -27,7 +27,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
         public static function add_change_data_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_change_name;
+            $table_name = $wpdb->prefix . self::$table_manual_name;
 
             // 获取前端传递的参数并进行输入验证，如果有值，肯定是字符串类型
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //id
@@ -83,7 +83,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
         public static function modify_change_data_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_change_name;
+            $table_name = $wpdb->prefix . self::$table_manual_name;
             // 获取前端传递的参数并进行输入验证
             $id = isset($_POST['id']) ? sanitize_text_field($_POST['id']) : null; //id
             $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : null; //字段名
@@ -141,7 +141,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
         public static function search_change_data_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_change_name;
+            $table_name = $wpdb->prefix . self::$table_manual_name;
 
             //拿到值
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //字段名
@@ -171,8 +171,8 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
         public static function search_change_all_data_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_change_name;
-            $table_data = $wpdb->prefix . self::$table_data_name;
+            $table_name = $wpdb->prefix . self::$table_manual_name;
+            $table_data = $wpdb->prefix . self::$table_pc_name;
             // 使用 $wpdb 对象执行 SQL 查询
             $results = $wpdb->get_results("SELECT * FROM $table_name", OBJECT);
 

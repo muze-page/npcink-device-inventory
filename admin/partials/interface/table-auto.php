@@ -24,7 +24,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
         public static function auto_change_data_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_change_auto;
+            $table_name = $wpdb->prefix . self::$table_auto_name;
 
             //拿到值
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //字段名
@@ -60,8 +60,8 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
         public static function auto_change_all_data_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_change_auto; //自动记录
-            $table_data = $wpdb->prefix . self::$table_data_name; //电脑设备
+            $table_name = $wpdb->prefix . self::$table_auto_name; //自动记录
+            $table_data = $wpdb->prefix . self::$table_pc_name; //电脑设备
             $table_style = $wpdb->prefix . self::$table_style_name; //自定义设备
             // 使用 $wpdb 对象执行 SQL 查询
             $results = $wpdb->get_results("SELECT * FROM $table_name", OBJECT);

@@ -166,7 +166,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
         {
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_style_name;
-            $table_auto = $wpdb->prefix . self::$table_change_auto;
+            $table_auto = $wpdb->prefix . self::$table_auto_name;
 
             // 获取前端传递的参数并进行输入验证，如果有值，肯定是字符串类型
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //生成的uuid
@@ -188,7 +188,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
                 array('%s') // uuid 类型
             );
 
-            // 同时从$table_change_auto表中删除record_uuid为相同UUID的记录
+            // 同时从$table_auto_name表中删除record_uuid为相同UUID的记录
             $result_auto = $wpdb->delete(
                 $table_auto,
                 array('record_uuid' => $uuid),
@@ -223,7 +223,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
             $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : null; //设备信息
 
             //是否缺少参数
-            $variables = compact('uuid', 'name', 'number','category', 'purpose', 'state', 'data');
+            $variables = compact('uuid', 'name', 'number', 'category', 'purpose', 'state', 'data');
 
             // 检查是否有参数为 null
             $null_param = array_search(null, $variables, true);
