@@ -35,7 +35,7 @@ const App: React.FC<Props> = ({ deviceData }) => {
             {deviceData.shop_name}
           </a>
         }
-        style={{ width: 450 }}
+        style={{ width: "100%" }}
       >
         <p>
           <b>采购总价：</b>

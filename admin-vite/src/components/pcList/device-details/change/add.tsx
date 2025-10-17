@@ -50,8 +50,10 @@ const AddChangeData: React.FC<ACDProps> = ({ uuid, onUpdata }) => {
     <>
       <h2 className="mb-4 text-base font-bold text-[#333]">添加记录：</h2>
       <Form
-        labelCol={{ span: 4 }}
-        wrapperCol={{ span: 12 }}
+        labelAlign="left"
+        labelCol={{ span: 6 }}
+        wrapperCol={{ span: 18 }}
+        style={{ maxWidth: 480 }}
         form={form}
         onFinish={onFinish}
       >

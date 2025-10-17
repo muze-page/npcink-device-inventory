@@ -52,9 +52,9 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
         size="large"
         className="pt-9"
       >
-        <Card title="设备信息" extra={""} style={{ width: 450 }}>
+        <Card title="设备信息" extra={""} style={{ width: "100%" }}>
           <p>
-            <b>设备使用：</b>
+            <b>使用方式：</b>
             {isName ? (
               data.name
             ) : (
@@ -62,11 +62,11 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
             )}
           </p>
           <p>
-            <b>设备状态：</b>
+            <b>当前状态：</b>
             {statusLabel(data.state)}
           </p>
           <p>
-            <b>设备用途：</b>
+            <b>使用用途：</b>
             {data.purpose}
           </p>
         </Card>

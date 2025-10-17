@@ -103,20 +103,32 @@ const App: React.FC<Props> = ({ onActive }) => {
         form={form}
         name="update"
         labelAlign="left"
-        labelCol={{ span: 4 }}
-        wrapperCol={{ span: 20 }}
-        style={{ maxWidth: 600 }}
+        labelCol={{ span: 6 }}
+        wrapperCol={{ span: 18 }}
+        style={{ maxWidth: 480 }}
         onFinish={onFinish}
         onFinishFailed={onFinishFailed}
         autoComplete="off"
       >
-        <Form.Item<StyleDeviceSeting> label="使用人" name="name">
+        <Form.Item<StyleDeviceSeting>
+          label="使用人"
+          name="name"
+          rules={[{ required: true, message: "您的设备使用人" }]}
+        >
           <Input />
         </Form.Item>
-        <Form.Item<StyleDeviceSeting> label="编号" name="number">
+        <Form.Item<StyleDeviceSeting>
+          label="编号"
+          name="number"
+          rules={[{ required: true, message: "您的设备编号" }]}
+        >
           <Input />
         </Form.Item>
-        <Form.Item<StyleDeviceSeting> label="分类" name="category">
+        <Form.Item<StyleDeviceSeting>
+          label="分类"
+          name="category"
+          rules={[{ required: true, message: "您的设备分类" }]}
+        >
           <SelectInput
             options={styleCategoryOption}
             defaultValue={drawerData.category}
@@ -124,14 +136,18 @@ const App: React.FC<Props> = ({ onActive }) => {
           />
         </Form.Item>
 
-        <Form.Item<StyleDeviceSeting> label="设备状态：" name="state">
+        <Form.Item<StyleDeviceSeting>
+          label="设备状态："
+          name="state"
+          rules={[{ required: true, message: "您的设备状态" }]}
+        >
           <Radio.Group options={device_status} />
         </Form.Item>
 
         <Form.Item<StyleDeviceSeting>
           label="用途"
           name="purpose"
-          rules={[{ required: true, message: "您的用途" }]}
+          rules={[{ required: true, message: "您的设备用途" }]}
         >
           <TextArea rows={3} />
         </Form.Item>

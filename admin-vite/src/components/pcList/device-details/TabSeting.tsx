@@ -2,7 +2,7 @@
  * 设备详情 - 设置
  */
 import { useContext, useEffect } from "react";
-import { Form, Button, Input, InputNumber, Select } from "antd";
+import { Form, Button, Input, InputNumber, Select, Tooltip } from "antd";
 import { DevieContext } from "@/context/DeviceContext";
 import { deltSQLData, changeMySql } from "@/axios";
 import { MysqlDeviceData } from "@/type/index";
@@ -104,19 +104,19 @@ const App: React.FC = () => {
         form={form}
         onFinish={onFinish}
         labelAlign="left"
-        labelCol={{ span: 4 }}
-        wrapperCol={{ span: 20 }}
-        style={{ maxWidth: 600 }}
+        labelCol={{ span: 6 }}
+        wrapperCol={{ span: 18 }}
+        style={{ maxWidth: 288 }}
         initialValues={drawerData}
       >
         <Form.Item<MysqlDeviceData> label="姓名" name="name">
-          <Input placeholder="设备使用者" style={{ width: 180 }} />
+          <Input placeholder="设备使用者" />
         </Form.Item>
         <Form.Item<MysqlDeviceData> label="编号" name="number">
-          <Input placeholder="设备唯一标识编号" style={{ width: 180 }} />
+          <Input placeholder="设备唯一标识编号" />
         </Form.Item>
         <Form.Item<MysqlDeviceData> label="状态" name="state">
-          <Select style={{ width: 180 }} options={device_status} />
+          <Select options={device_status} />
         </Form.Item>
         <Form.Item<MysqlDeviceData> label="部门" name="department">
           <SelectInput
@@ -130,18 +130,18 @@ const App: React.FC = () => {
           name="ip"
           rules={[{ validator: validateIPv4 }]}
         >
-          <Input placeholder="分配的唯一 IP 地址" style={{ width: 180 }} />
+          <Input placeholder="分配的唯一 IP 地址" />
         </Form.Item>
         <Form.Item<MysqlDeviceData> label="采购价" name="purchase">
           <InputNumber
-            style={{ width: 180 }}
+            style={{ width: "100%" }}
             addonAfter="￥"
             placeholder="采购时的价格"
           />
         </Form.Item>
         <Form.Item<MysqlDeviceData> label="二手价" name="depreciation">
           <InputNumber
-            style={{ width: 180 }}
+            style={{ width: "100%" }}
             addonAfter="￥"
             placeholder="二手市场的价格"
           />
@@ -150,9 +150,15 @@ const App: React.FC = () => {
           <table>
             <thead>
               <tr>
-                <th className="w-28 text-center">二手折旧率</th>
-                <th className="w-28 text-center">残值</th>
-                <th className="w-28 text-center">残值率</th>
+                <th className="w-28 text-center">
+                  <Tooltip title="采购价对比二手价格的百分比">折旧率</Tooltip>
+                </th>
+                <th className="w-28 text-center">
+                  <Tooltip title="按照设定百分比，相对于购买时间，当前剩下的价值">残值</Tooltip>
+                </th>
+                <th className="w-28 text-center">
+                  <Tooltip title="采购价对比残值价格的百分比">残值率</Tooltip>
+                </th>
               </tr>
             </thead>
 
