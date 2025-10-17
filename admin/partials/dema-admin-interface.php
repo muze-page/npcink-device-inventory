@@ -29,9 +29,9 @@ if (!class_exists('DEMA_Admin_Interface')) {
             require_once plugin_dir_path(__FILE__) . 'interface/seting.php';
             DEMA_Admin_Interface_Seting::run();
 
-            //电脑设备数据接收
-            require_once plugin_dir_path(__FILE__) . 'interface/pc-data-input.php';
-            DEMA_Admin_Interface_Pc_Data_Input::run();
+            //电脑设备数据的接收，前端数据查询
+            require_once plugin_dir_path(__FILE__) . 'interface/api.php';
+            DEMA_Admin_Interface_API::run();
 
             //电脑设备设置
             require_once plugin_dir_path(__FILE__) . 'interface/table-pc.php';

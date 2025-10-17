@@ -1,12 +1,12 @@
 <?php
 
 /**
- * 接口 接收传来的数据
+ * 接口 接收软件传来的数据
  * 使用特定算法算出的UUID，用于校验机器唯一性，
  * 第一张网卡的mac地址加设备UUID，再进行md5处理，得到UUID
  */
-if (!class_exists('DEMA_Admin_Interface_Pc_Data_Input')) {
-    class DEMA_Admin_Interface_Pc_Data_Input extends DEMA_Admin_Interface
+if (!class_exists('DEMA_Admin_Interface_API')) {
+    class DEMA_Admin_Interface_API extends DEMA_Admin_Interface
     {
         //表名
         public static $table_name;
