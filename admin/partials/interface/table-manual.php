@@ -171,11 +171,11 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
         public static function search_change_all_data_callback()
         {
             global $wpdb;
-            $table_data = $wpdb->prefix . self::$table_pc_name; //获取电脑设备数据表
-            $table_name = $wpdb->prefix . self::$table_manual_name; //获取变更数据表
+            $table_data_pc = $wpdb->prefix . self::$table_pc_name; //获取电脑设备数据表
+            $table_data_manual = $wpdb->prefix . self::$table_manual_name; //获取手动变更数据表
 
             // 使用 $wpdb 对象执行 SQL 查询
-            $results = $wpdb->get_results("SELECT * FROM $table_name", OBJECT);
+            $results = $wpdb->get_results("SELECT * FROM $table_data_manual", OBJECT);
 
             // 将查询结果转换为数组对象
             $data_array = array();
@@ -188,7 +188,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
                 $record_uuid = $data['record_uuid'];
 
                 // 查询第二张表获取name字段的值
-                $name_result = $wpdb->get_row($wpdb->prepare("SELECT name, number, department FROM $table_data WHERE uuid = %s", $record_uuid), ARRAY_A);
+                $name_result = $wpdb->get_row($wpdb->prepare("SELECT name, number, department FROM $table_data_pc WHERE uuid = %s", $record_uuid), ARRAY_A);
                 if ($name_result) {
                     // 更新原始数组对象中的name键名
                     $name = $name_result['name'];
