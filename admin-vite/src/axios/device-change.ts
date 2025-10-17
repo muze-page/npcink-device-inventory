@@ -15,12 +15,12 @@ import { instance, addParamIfDefined } from "@/axios/public";
  */
 
 export const addChangeData = async (
-  uuid: string,
+  uuid: string,//设备的UUID
   data: ComputerChangeReturn
 ): Promise<boolean> => {
   const params = new URLSearchParams();
   params.append("action", "add_change_data_callback");
-  addParamIfDefined(params, "uuid", uuid);
+  addParamIfDefined(params, "record_uuid", uuid);
   addParamIfDefined(params, "user", data.user);
   addParamIfDefined(params, "type", data.type);
   addParamIfDefined(params, "data", data.data);
@@ -71,10 +71,10 @@ export const changeMySqlData = async (
  * 查
  * TODO:优化下，使用try catch ,配和调用端
  */
-export const searchChangeData = async (uuid: string) => {
+export const searchChangeData = async (record_uuid: string) => {
   const params = new URLSearchParams({
     action: "search_change_data_callback",
-    uuid,
+    record_uuid,
   });
   const response = await axios.post(Ajaxurl, params);
   return response.data as axiosType;

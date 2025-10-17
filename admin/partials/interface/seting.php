@@ -285,7 +285,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
 
                     if (!$existingData) {
                         $insert_data[] = array(
-                            'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
+                            'record_uuid' => isset($item['record_uuid']) ? $item['record_uuid'] :  null,
                             'created_at' => isset($item['created_at']) ? $item['created_at'] : null,
                             'user' => isset($item['user']) ? $item['user'] :  null,
                             'type' => isset($item['type']) ? $item['type'] :  null,

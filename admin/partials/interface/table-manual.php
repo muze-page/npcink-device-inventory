@@ -30,21 +30,21 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
             $table_name = $wpdb->prefix . self::$table_manual_name;
 
             // 获取前端传递的参数并进行输入验证，如果有值，肯定是字符串类型
-            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //id
+            $record_uuid = isset($_POST['record_uuid']) ? sanitize_text_field($_POST['record_uuid']) : null; //id
             $user = isset($_POST['user']) ? sanitize_text_field($_POST['user']) : null; //用户名
             $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : null; //字段名
             $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : null; //修改的值
 
             //是否缺少参数
             // 假设 $uuid, $user, $type, $data 是需要检查的变量
-            $variables = compact('uuid', 'user', 'type', 'data');
+            $variables = compact('record_uuid', 'user', 'type', 'data');
 
             // 检查是否有参数为 null
             $null_param = array_search(null, $variables, true);
 
             // 如果有参数为 null，则返回相应的错误消息
             if ($null_param !== false) {
-                $param_names = ['uuid' => 'uuid - 设备唯一编号', 'user' => 'user - 变更用户名', 'type' => 'type - 变更类型', 'data' => 'data - 变更内容'];
+                $param_names = ['record_uuid' => 'record_uuid - 设备唯一编号', 'user' => 'user - 变更用户名', 'type' => 'type - 变更类型', 'data' => 'data - 变更内容'];
                 return wp_send_json_error(['error' => '缺少参数：' . $param_names[$null_param]], 400);
             }
 
@@ -53,7 +53,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
             $result = $wpdb->insert(
                 $table_name,
                 array(
-                    'uuid' => $uuid,
+                    'record_uuid' => $record_uuid,
                     'user' => $user,
                     'type' => $type,
                     'data' => $data
@@ -85,19 +85,19 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_manual_name;
             // 获取前端传递的参数并进行输入验证
-            $id = isset($_POST['id']) ? sanitize_text_field($_POST['id']) : null; //id
+            $id = isset($_POST['id']) ? sanitize_text_field($_POST['id']) : null; //id序号
             $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : null; //字段名
             $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : null; //修改的值
             //是否缺少参数
             // 假设 $uuid, $user, $type, $data 是需要检查的变量
-            $variables = compact('uuid',  'type', 'data');
+            $variables = compact('id',  'type', 'data');
 
             // 检查是否有参数为 null
             $null_param = array_search(null, $variables, true);
 
             // 如果有参数为 null，则返回相应的错误消息
             if ($null_param !== false) {
-                $param_names = ['uuid' => 'uuid - 设备唯一编号',  'type' => 'type - 变更类型', 'data' => 'data - 变更内容'];
+                $param_names = ['id' => 'id - 设备唯一编号',  'type' => 'type - 变更类型', 'data' => 'data - 变更内容'];
                 return wp_send_json_error(['error' => '缺少参数：' . $param_names[$null_param]], 400);
             }
 
@@ -144,17 +144,17 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
             $table_name = $wpdb->prefix . self::$table_manual_name;
 
             //拿到值
-            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //字段名
+            $record_uuid = isset($_POST['record_uuid']) ? sanitize_text_field($_POST['record_uuid']) : null; //字段名
 
             //检查是否有值
-            if (empty($uuid)) {
-                return wp_send_json_error(['error' => '缺少参数：uuid - 设备唯一编号'], 400);
+            if (empty($record_uuid)) {
+                return wp_send_json_error(['error' => '缺少参数：record_uuid - 设备唯一编号'], 400);
             }
 
             //查询
             // 使用预处理语句执行查询
             $object = $wpdb->get_results(
-                $wpdb->prepare("SELECT * FROM $table_name WHERE uuid = %s", $uuid),
+                $wpdb->prepare("SELECT * FROM $table_name WHERE record_uuid = %s", $record_uuid),
                 ARRAY_A
             );
 
@@ -167,12 +167,13 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
             }
         }
 
-        //查询全部变更数据
+        //输出全部变更数据
         public static function search_change_all_data_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_manual_name;
-            $table_data = $wpdb->prefix . self::$table_pc_name;
+            $table_data = $wpdb->prefix . self::$table_pc_name; //获取电脑设备数据表
+            $table_name = $wpdb->prefix . self::$table_manual_name; //获取变更数据表
+
             // 使用 $wpdb 对象执行 SQL 查询
             $results = $wpdb->get_results("SELECT * FROM $table_name", OBJECT);
 
@@ -182,12 +183,12 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
                 $data_array[] = (array) $result;
             }
 
-            // 遍历数组对象，根据UUID值查询第二张表，获取name字段的值并更新原始数组对象
+            // 遍历数组对象，根据变更数据表中的record_uuid的值查询电脑设备表，获取name字段的值并更新原始数组对象
             foreach ($data_array as $key => $data) {
-                $uuid = $data['uuid'];
+                $record_uuid = $data['record_uuid'];
 
                 // 查询第二张表获取name字段的值
-                $name_result = $wpdb->get_row($wpdb->prepare("SELECT name, number, department FROM $table_data WHERE uuid = %s", $uuid), ARRAY_A);
+                $name_result = $wpdb->get_row($wpdb->prepare("SELECT name, number, department FROM $table_data WHERE uuid = %s", $record_uuid), ARRAY_A);
                 if ($name_result) {
                     // 更新原始数组对象中的name键名
                     $name = $name_result['name'];

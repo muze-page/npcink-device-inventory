@@ -215,7 +215,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
 
             // 使用预处理语句构建SQL查询
             $sql = $wpdb->prepare("DELETE FROM $data_name WHERE uuid = %s", $uuid);
-            $sql_change = $wpdb->prepare("DELETE FROM $change_name WHERE uuid = %s", $uuid);
+            $sql_change = $wpdb->prepare("DELETE FROM $change_name WHERE record_uuid = %s", $uuid);
             $sql_auto = $wpdb->prepare("DELETE FROM $auto_name WHERE record_uuid = %s", $uuid);
 
             // 开始事务

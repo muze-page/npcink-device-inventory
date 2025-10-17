@@ -73,7 +73,8 @@ const App: React.FC<Props> = ({ name }) => {
         ),
         onOk() {
           //进行表格名称判断
-          if (name === jsonContent.name) {
+          //if (name === jsonContent.name) {
+            if (true) {
             const jsonString = JSON.stringify(jsonContent); //格式化数据
             importSQLData(name, jsonString); //传递
           } else {

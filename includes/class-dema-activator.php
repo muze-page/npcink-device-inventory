@@ -32,17 +32,17 @@ class Dema_Activator extends DEMA_Admin_Interface
 	 */
 	public static function run()
 	{
-		//创建自定义类型设备管理表
-		self::device_manage_create_auto();
-
-		//数据变更表
-		self::device_manage_create_change();
-
-		//主数据表
-		self::device_manage_create_table();
+		//存储电脑设备信息用
+		self::create_table_pc();
 
 		//创建自定义类型设备管理表
-		self::device_manage_create_style();
+		self::create_table_style();
+
+		//变更手动记录表
+		self::create_table_manual();
+
+		//变更自动记录表
+		self::create_table_auto();
 
 		//判断，所有选项都是空的，才会给初始值
 		if (get_option(self::$option) === false) {
@@ -52,7 +52,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 	//新建数据库表 - 存储电脑设备数据用
 	// 在插件激活时创建数据库表
 	//使用特定算法算出的UUID数据做设备唯一编号，
-	public static function device_manage_create_table()
+	public static function create_table_pc()
 	{
 		// 获取全局 $wpdb 对象
 		global $wpdb;
@@ -67,13 +67,13 @@ class Dema_Activator extends DEMA_Admin_Interface
             id INT NOT NULL AUTO_INCREMENT,
             name VARCHAR(100) NOT NULL COMMENT '姓名',
             number VARCHAR(50) NOT NULL COMMENT '设备编号',
-            department VARCHAR(64) NOT NULL COMMENT '部门',
-            ip VARCHAR(45) NOT NULL COMMENT 'IP地址', 
 			state VARCHAR(64) NOT NULL COMMENT '状态',
+            department VARCHAR(64) NOT NULL COMMENT '部门',
             purchase DECIMAL(12, 2) NOT NULL COMMENT '采购价', 
             depreciation DECIMAL(12, 2) NOT NULL COMMENT '二手价', 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+			ip VARCHAR(45) NOT NULL COMMENT 'IP地址', 
 			uuid CHAR(36) NOT NULL COMMENT '设备唯一标识符',
             data JSON COMMENT '设备信息',
             PRIMARY KEY (id),
@@ -84,7 +84,7 @@ class Dema_Activator extends DEMA_Admin_Interface
             KEY idx_created_at (created_at),
             KEY idx_dept_created (department, created_at)
             -- 对于查询频繁的字段组合
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+		  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='电脑设备信息表';";
 
 			// 执行 SQL 语句
 			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -148,44 +148,8 @@ class Dema_Activator extends DEMA_Admin_Interface
 		$wpdb->query($update_trigger_sql);
 	}
 
-	/**
-	 * 创建配置信息变更表
-	 */
-	public static function device_manage_create_change()
-	{
-		// 获取全局 $wpdb 对象
-		global $wpdb;
-
-		// 定义表名
-		$table_name = $wpdb->prefix . self::$table_manual_name;
-
-		// 检查是否已存在同名表
-		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
-			// 创建表结构
-			$sql = "CREATE TABLE $table_name (
-            id INT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-            user VARCHAR(64) NOT NULL COMMENT '变更人姓名',
-            type VARCHAR(64) NOT NULL COMMENT '变更类型',
-            data TEXT NOT NULL COMMENT '变更说明',
-            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间',
-            uuid VARCHAR(36) NOT NULL COMMENT '变更记录唯一标识',
-            PRIMARY KEY (id),
-            UNIQUE (uuid),
-            KEY idx_user (user),
-            KEY idx_type (type)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
-
-			//这里的UUID取自对应设备的UUID
-
-			// 执行 SQL 语句
-			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-			dbDelta($sql);
-		}
-	}
-
-
 	//创建自定义类型设备管理表
-	public static function device_manage_create_style()
+	public static function create_table_style()
 	{
 		// 获取全局 $wpdb 对象
 		global $wpdb;
@@ -200,9 +164,9 @@ class Dema_Activator extends DEMA_Admin_Interface
             id INT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
             name VARCHAR(64) NOT NULL COMMENT '姓名',
 			number VARCHAR(50) NOT NULL COMMENT '设备编号',
+			state VARCHAR(64) NOT NULL COMMENT '状态',
             category VARCHAR(64) NOT NULL COMMENT '分类',
             purpose VARCHAR(128) NOT NULL COMMENT '用途',
-            state VARCHAR(64) NOT NULL COMMENT '状态',
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
             uuid VARCHAR(36) NOT NULL COMMENT '设备唯一标识符',
             data JSON COMMENT '自定义设备数据',
@@ -210,7 +174,7 @@ class Dema_Activator extends DEMA_Admin_Interface
             UNIQUE (uuid),
             KEY idx_name (name),
             KEY idx_purpose (purpose)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='自定义设备记录表';";
 
 			// 执行 SQL 语句
 			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -268,9 +232,45 @@ class Dema_Activator extends DEMA_Admin_Interface
 	}
 
 	/**
+	 * 手动变更记录表
+	 */
+	public static function create_table_manual()
+	{
+		// 获取全局 $wpdb 对象
+		global $wpdb;
+
+		// 定义表名
+		$table_name = $wpdb->prefix . self::$table_manual_name;
+
+		// 检查是否已存在同名表
+		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+			// 创建表结构
+			$sql = "CREATE TABLE $table_name (
+            id INT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+            user VARCHAR(64) NOT NULL COMMENT '变更人姓名',
+            type VARCHAR(64) NOT NULL COMMENT '变更类型',
+            data TEXT NOT NULL COMMENT '变更说明',
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间',
+            record_uuid VARCHAR(36) NOT NULL COMMENT '变更记录唯一标识',
+            PRIMARY KEY (id),
+            KEY idx_user (user),
+            KEY idx_type (type)
+         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='变更手动记录表';";
+			//这里的UUID取自对应设备的UUID
+
+			// 执行 SQL 语句
+			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+			dbDelta($sql);
+		}
+	}
+
+
+
+
+	/**
 	 * 创建配置信息变更记录表 - 自动记录
 	 */
-	public static function device_manage_create_auto()
+	public static function create_table_auto()
 	{
 		// 获取全局 $wpdb 对象
 		global $wpdb;
@@ -289,7 +289,7 @@ class Dema_Activator extends DEMA_Admin_Interface
            new_value VARCHAR(128) COMMENT '变更后的值',
 		   changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间',
            record_uuid VARCHAR(36) COMMENT '记录的uuid'
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='变更自动记录表';";
 
 			//这里的UUID取自对应设备的UUID
 
