@@ -103,42 +103,42 @@ class Dema_Activator extends DEMA_Admin_Interface
 		BEGIN
 			IF OLD.name != NEW.name THEN
 				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('data', NEW.uuid, 'name', OLD.name, NEW.name);
+				VALUES ('pc', NEW.uuid, 'name', OLD.name, NEW.name);
 			END IF;
 			
 			IF OLD.state != NEW.state THEN
 				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('data', NEW.uuid, 'state', OLD.state, NEW.state);
+				VALUES ('pc', NEW.uuid, 'state', OLD.state, NEW.state);
 			END IF;
 			
 			IF OLD.number != NEW.number THEN
 				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('data', NEW.uuid, 'number', OLD.number, NEW.number);
+				VALUES ('pc', NEW.uuid, 'number', OLD.number, NEW.number);
 			END IF;
 			
 			IF OLD.department != NEW.department THEN
 				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('data', NEW.uuid, 'department', OLD.department, NEW.department);
+				VALUES ('pc', NEW.uuid, 'department', OLD.department, NEW.department);
 			END IF;
 			
 			IF OLD.ip != NEW.ip THEN
 				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('data', NEW.uuid, 'ip', OLD.ip, NEW.ip);
+				VALUES ('pc', NEW.uuid, 'ip', OLD.ip, NEW.ip);
 			END IF;
 			
 			IF OLD.purchase != NEW.purchase THEN
 				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('data', NEW.uuid, 'purchase', OLD.purchase, NEW.purchase);
+				VALUES ('pc', NEW.uuid, 'purchase', OLD.purchase, NEW.purchase);
 			END IF;
 			
 			IF OLD.depreciation != NEW.depreciation THEN
 				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('data', NEW.uuid, 'depreciation', OLD.depreciation, NEW.depreciation);
+				VALUES ('pc', NEW.uuid, 'depreciation', OLD.depreciation, NEW.depreciation);
 			END IF;
 
             IF OLD.updated_at != NEW.updated_at THEN
 				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('data', NEW.uuid, 'updated_at', OLD.updated_at, NEW.updated_at);
+				VALUES ('pc', NEW.uuid, 'updated_at', OLD.updated_at, NEW.updated_at);
 			END IF;
 			
 		END;

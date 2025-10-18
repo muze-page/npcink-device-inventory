@@ -245,7 +245,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     $uuid = isset($item['uuid']) ? $item['uuid'] : null;
                     $table_name = $wpdb->prefix . self::$table_pc_name;
                     $existingData = $wpdb->get_row(
-                        $wpdb->prepare(
+                        $wpdb->get_results(
                             "SELECT * FROM $table_name WHERE uuid = %s;",
                             $uuid
                         ),
@@ -277,7 +277,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     $uuid = isset($item['uuid']) ? $item['uuid'] : null; //唯一标识符
                     $table_name = $wpdb->prefix . self::$table_style_name;
                     $existingData = $wpdb->get_row(
-                        $wpdb->prepare(
+                        $wpdb->get_results(
                             "SELECT * FROM $table_name WHERE uuid = %s;",
                             $uuid
                         ),
@@ -305,7 +305,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     $time = isset($item['time']) ? $item['time'] : null;
                     $table_name = $wpdb->prefix . self::$table_manual_name;
                     $existingData = $wpdb->get_row(
-                        $wpdb->prepare(
+                        $wpdb->get_results(
                             "SELECT * FROM $table_name WHERE time = %s;",
                             $time
                         ),
@@ -331,7 +331,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     $time = isset($item['time']) ? $item['time'] : null;
                     $table_name = $wpdb->prefix . self::$table_auto_name;
                     $existingData = $wpdb->get_row(
-                        $wpdb->prepare(
+                        $wpdb->get_results(
                             "SELECT * FROM $table_name WHERE time = %s;",
                             $time
                         ),

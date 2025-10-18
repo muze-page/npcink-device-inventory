@@ -93,7 +93,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
 
             // 构造 SQL 查询语句
-            $query = $wpdb->prepare("SELECT * FROM " . self::$table_name . " WHERE number = %d OR name = %s", $query_data, $query_data);
+            $query = $wpdb->get_results("SELECT * FROM " . self::$table_name . " WHERE number = %d OR name = %s", $query_data, $query_data);
 
             // 执行查询
             $result = $wpdb->get_row($query);
@@ -282,7 +282,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $table = self::$table_name;
 
             // 准备 SQL 查询语句
-            $sql = $wpdb->prepare("SELECT * FROM $table WHERE uuid = %s;", $uuid);
+            $sql = $wpdb->get_results("SELECT * FROM $table WHERE uuid = %s;", $uuid);
 
             // 执行查询
             $result = $wpdb->get_row($sql, ARRAY_A);

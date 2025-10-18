@@ -47,7 +47,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
                     wp_send_json_error([
                         'error' => '暂未查到变更记录',
                         'data' => [],
-                    ], 404);
+                    ], 204);//强调没有查到内容
                 }
                 return;
             }
@@ -104,7 +104,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
                         );
                         break;
 
-                    case 'data':
+                    case 'pc':
                         // 电脑设备
                         $name_result = $wpdb->get_row(
                             $wpdb->prepare("SELECT name, number FROM $table_pc WHERE uuid = %s", $uuid),
@@ -124,7 +124,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
             // 关键值替换映射
             $tableNameMap = [
                 'style' => '自定义设备',
-                'data' => '电脑设备'
+                'pc' => '电脑设备'
             ];
 
             $columnNameMap = [

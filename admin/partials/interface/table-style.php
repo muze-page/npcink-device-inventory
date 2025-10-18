@@ -33,7 +33,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
 
             // 获取所有设备分类
             $categories = $wpdb->get_results(
-                $wpdb->prepare("SELECT DISTINCT category FROM {$table_name} WHERE category IS NOT NULL AND category != ''")
+                "SELECT DISTINCT category FROM {$table_name} WHERE category IS NOT NULL AND category != ''"
             );
 
             // 检查查询是否成功
@@ -132,7 +132,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
 
                 // 从数据库中查询刚插入的记录，获取自动生成的UUID和created_at
                 $inserted_record = $wpdb->get_row(
-                    $wpdb->prepare("SELECT uuid, created_at FROM $table_name WHERE id = %d", $inserted_id)
+                    $wpdb->get_results("SELECT uuid, created_at FROM $table_name WHERE id = %d", $inserted_id)
                 );
 
                 $inserted_uuid = $inserted_record->uuid;
@@ -176,7 +176,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
             }
 
             //检查数据库是否存在传来的UUID
-            $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE uuid = %s", $uuid));
+            $exists = $wpdb->get_var($wpdb->get_results("SELECT COUNT(*) FROM $table_name WHERE uuid = %s", $uuid));
             if ($exists == 0) {
                 return wp_send_json_error(['error' => '指定的UUID不存在'], 404);
             }

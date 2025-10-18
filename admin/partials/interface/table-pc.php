@@ -85,7 +85,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
             }
 
             // 检查设备是否存在
-            $device_exists = $wpdb->get_var($wpdb->prepare(
+            $device_exists = $wpdb->get_var($wpdb->get_results(
                 "SELECT COUNT(*) FROM $table_name WHERE uuid = %s",
                 $uuid
             ));
@@ -214,9 +214,9 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
             }
 
             // 使用预处理语句构建SQL查询
-            $sql = $wpdb->prepare("DELETE FROM $data_name WHERE uuid = %s", $uuid);
-            $sql_change = $wpdb->prepare("DELETE FROM $change_name WHERE record_uuid = %s", $uuid);
-            $sql_auto = $wpdb->prepare("DELETE FROM $auto_name WHERE record_uuid = %s", $uuid);
+            $sql = $wpdb->get_results("DELETE FROM $data_name WHERE uuid = %s", $uuid);
+            $sql_change = $wpdb->get_results("DELETE FROM $change_name WHERE record_uuid = %s", $uuid);
+            $sql_auto = $wpdb->get_results("DELETE FROM $auto_name WHERE record_uuid = %s", $uuid);
 
             // 开始事务
             $wpdb->query('START TRANSACTION');
