@@ -30,7 +30,7 @@ export default defineConfig({
   },
 
   //媒体资源打包前缀，避免图片无法正常显示
-  base: site + "admin-vite/dist/",
+  base: site + "vite-admin/dist/",
 
   //代理
   server: {
