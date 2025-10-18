@@ -9,18 +9,18 @@
 import { Tabs } from "antd";
 import { Computer } from "@/type/index";
 
-import Cpu from "@/components/part/show/cpu";
-import Memory from "@/components/part/show/memory";
-import Graphics from "@/components/part/show/graphics";
-import Baseboard from "@/components/part/show/baseboard";
-import Monitor from "@/components/part/show/monitor";
-import Disk from "@/components/part/show/disk";
-import Net from "@/components/part/show/net";
-import Bios from "@/components/part/show/bios";
-import Chassis from "@/components/part/show/chassis";
-import Os from "@/components/part/show/os";
-import System from "@/components/part/show/system";
-import Uuid from "@/components/part/show/uuid";
+import Cpu from "@/pages/part/show/cpu";
+import Memory from "@/pages/part/show/memory";
+import Graphics from "@/pages/part/show/graphics";
+import Baseboard from "@/pages/part/show/baseboard";
+import Monitor from "@/pages/part/show/monitor";
+import Disk from "@/pages/part/show/disk";
+import Net from "@/pages/part/show/net";
+import Bios from "@/pages/part/show/bios";
+import Chassis from "@/pages/part/show/chassis";
+import Os from "@/pages/part/show/os";
+import System from "@/pages/part/show/system";
+import Uuid from "@/pages/part/show/uuid";
 
 interface Props {
   data: Computer;

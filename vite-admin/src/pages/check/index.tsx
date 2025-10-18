@@ -12,13 +12,13 @@ import {
   ComputerDevice,
 } from "@/type/index";
 
-import Ad from "@/components/check/block/ad";
-import TabHeader from "@/components/check/block/tableHeader";
+import Ad from "@/pages/check/block/ad";
+import TabHeader from "@/pages/check/block/tableHeader";
 //导入tab组件
-import Baseboard from "@/components/check/tab/baseboard";
-import Cpu from "@/components/check/tab/cpu";
-import Disk from "@/components/check/tab/disk";
-import Memory from "@/components/check/tab/memory";
+import Baseboard from "@/pages/check/tab/baseboard";
+import Cpu from "@/pages/check/tab/cpu";
+import Disk from "@/pages/check/tab/disk";
+import Memory from "@/pages/check/tab/memory";
 import Header from "@/block/tab-header";
 
 //收集最新数据并输出数组

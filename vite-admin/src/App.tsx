@@ -1,9 +1,8 @@
-
-import Index from "@/components/index";
+import Index from "@/pages/index";
 import { ConfigProvider } from "antd";
 import "./App.css";
 import zhCN from "antd/locale/zh_CN";
-import 'dayjs/locale/zh-cn';
+import "dayjs/locale/zh-cn";
 import { message } from "antd";
 message.config({
   top: 50,
@@ -13,7 +12,7 @@ message.config({
   prefixCls: "my-message",
 });
 
-const App=()=> {
+const App = () => {
   return (
     <>
       <ConfigProvider locale={zhCN}>
@@ -21,6 +20,6 @@ const App=()=> {
       </ConfigProvider>
     </>
   );
-}
+};
 
 export default App;

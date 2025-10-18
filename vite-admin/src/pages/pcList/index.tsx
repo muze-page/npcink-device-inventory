@@ -12,13 +12,13 @@ import { getDeviceCategory } from "@/axios/index";
 import Fuse from "fuse.js";
 
 //展示列表
-import DetailsList from "@/components/pcList/detailsList";
+import DetailsList from "@/pages/pcList/detailsList";
 
 //筛选
-import Screen from "@/components/pcList/screen";
+import Screen from "@/pages/pcList/screen";
 
 //弹窗
-import Drawer from "@/components/pcList/drawer";
+import Drawer from "@/pages/pcList/drawer";
 
 //筛序和搜索无结果时的提示
 import SearchNoData from "@/block/searchNoData";

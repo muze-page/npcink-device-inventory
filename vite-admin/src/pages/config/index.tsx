@@ -2,22 +2,13 @@
  * 设置
  */
 import { useEffect, useState } from "react";
-import {
-  Button,
-  Form,
-  Input,
-  Switch,
-  InputNumber,
-
-  message,
-
-} from "antd";
-import { PlusCircleFilled,  } from "@ant-design/icons";
+import { Button, Form, Input, Switch, InputNumber, message } from "antd";
+import { PlusCircleFilled } from "@ant-design/icons";
 
 import { defaultOption, Site, sqlTableName } from "@/store";
-import { saveSQLData,  addPublicSearchPage } from "@/axios";
+import { saveSQLData, addPublicSearchPage } from "@/axios";
 
-import ImportExport from "@/components/config/importExport";
+import ImportExport from "@/pages/config/importExport";
 import { OptionType } from "@/type/index";
 import Header from "@/block/tab-header";
 

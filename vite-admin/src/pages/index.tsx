@@ -4,11 +4,11 @@
 import React from "react";
 import { Tabs } from "antd";
 import type { TabsProps } from "antd";
-import Check from "@/components/check/index";
-import Details from "@/components/pcList/index";
-import ChangeList from "@/components/changeList/index";
-import Config from "@/components/config/index";
-import Style from "@/components/styleList/index";
+import Check from "@/pages/check/index";
+import Details from "@/pages/pcList/index";
+import ChangeList from "@/pages/changeList/index";
+import Config from "@/pages/config/index";
+import Style from "@/pages/styleList/index";
 
 const items: TabsProps["items"] = [
   {

@@ -11,7 +11,7 @@ import { getStyleDeviceCategory } from "@/axios/index";
 import Fuse from "fuse.js";
 
 //数据渲染组件
-import DataList from "@/components/styleList/dataList";
+import DataList from "@/pages/styleList/dataList";
 
 //拿到自定义设备数据类型
 import { StyleDevice, FilterStyleData, DataItemArr } from "@/type/index";
@@ -20,10 +20,10 @@ import { StyleDevice, FilterStyleData, DataItemArr } from "@/type/index";
 import { StyleContext } from "@/context/StyleContext";
 
 //拿到弹窗组件
-import Drawer from "@/components/styleList/drawer/index";
+import Drawer from "@/pages/styleList/drawer/index";
 
 //拿到顶部组件
-import Header from "@/components/styleList/header";
+import Header from "@/pages/styleList/header";
 
 //筛序和搜索无结果时的提示
 import SearchNoData from "@/block/searchNoData";

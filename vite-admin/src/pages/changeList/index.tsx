@@ -4,8 +4,8 @@
 
 import React, { useState } from "react";
 import { Space, Button } from "antd";
-import Change from "@/components/changeList/change";
-import Auto from "@/components/changeList/auto";
+import Change from "@/pages/changeList/change";
+import Auto from "@/pages/changeList/auto";
 
 const App: React.FC = () => {
   //隐藏姓名

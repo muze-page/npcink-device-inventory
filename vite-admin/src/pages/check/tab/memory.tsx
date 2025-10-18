@@ -2,7 +2,7 @@
  * 内存条
  */
 
-import TabList from "@/components/check/block/tabList";
+import TabList from "@/pages/check/block/tabList";
 import { sum_order } from "@/store/tool";
 import { ComputerRam } from "@/type/index";
 

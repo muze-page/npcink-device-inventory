@@ -3,7 +3,7 @@
  * 自定义设备信息列表 - 顶部，信息录入弹窗
  */
 import { Modal, Form } from "antd";
-import AddForm from "@/components/styleList/header/add-form";
+import AddForm from "@/pages/styleList/header/add-form";
 interface Props {
   isModalOpen: boolean; //设备数据
   handleOk: () => void; //关闭弹窗

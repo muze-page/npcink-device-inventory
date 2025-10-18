@@ -2,7 +2,7 @@
  * 主板
  */
 
-import TabList from "@/components/check/block/tabList";
+import TabList from "@/pages/check/block/tabList";
 import { sum_brand, replaceKeyValues } from "@/store/tool";
 import { replaceBaseboard } from "@/store/dataReplace";
 import { ComputerBaseboard, TableData } from "@/type/index";

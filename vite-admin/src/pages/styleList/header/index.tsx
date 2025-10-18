@@ -24,7 +24,7 @@ import { StyleContext } from "@/context/StyleContext";
 import { stylePlatform } from "@/store/dataReplace";
 
 //引入数据填写弹窗表单
-import Add from "@/components/styleList/header/add";
+import Add from "@/pages/styleList/header/add";
 
 //引入头部模块
 import Header from "@/block/tab-header";
@@ -60,11 +60,10 @@ const App: React.FC<Props> = ({
   onName,
 }) => {
   //拿到是否隐藏姓名的状态和分类选项
-  const { isName,styleCategoryOption } = useContext(StyleContext);
+  const { isName, styleCategoryOption } = useContext(StyleContext);
 
   //信息录入弹窗状态
   const [isModalOpen, setIsModalOpen] = useState(false);
-
 
   //准备分类选项
   const styleCategoryOptions = [

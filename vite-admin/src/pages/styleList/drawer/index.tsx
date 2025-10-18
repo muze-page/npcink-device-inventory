@@ -7,9 +7,9 @@ import type { TabsProps } from "antd";
 //跨组件提供方法
 import { StyleContext } from "@/context/StyleContext";
 import { StyleDevice } from "@/type/index";
-import Info from "@/components/styleList/drawer/data-info";
+import Info from "@/pages/styleList/drawer/data-info";
 import ChangeAutoRecord from "@/block/change-auto-record.tsx";
-import Seting from "@/components/styleList/drawer/data-seting";
+import Seting from "@/pages/styleList/drawer/data-seting";
 import { statusLabel } from "@/store/tool";
 //调试打印
 import PrintData from "@/block/printData";

@@ -4,8 +4,8 @@
 
 import { Drawer } from "antd";
 import { MysqlDeviceChangeMeat } from "@/type/index";
-import Property from "@/components/pcList/device-details";
-import TabHeader from "@/components/pcList/drawer/tabHeader";
+import Property from "@/pages/pcList/device-details";
+import TabHeader from "@/pages/pcList/drawer/tabHeader";
 import PrintData from "@/block/printData";
 interface Props {
   active: boolean; //弹窗状态
