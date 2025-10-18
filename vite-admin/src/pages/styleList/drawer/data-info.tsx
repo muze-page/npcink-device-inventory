@@ -39,7 +39,7 @@ const App: React.FC<Props> = ({ deviceData }) => {
       >
         <p>
           <b>采购总价：</b>
-          {deviceData.total}
+          {deviceData.total} 元
         </p>
         <p>
           <b>采购单号：</b>
