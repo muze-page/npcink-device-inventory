@@ -12,63 +12,52 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
          */
         public static function run()
         {
-            //TODO:考虑合并两个接口，并且使用缓存技术
-            //查指定设备 - 设备变更信息接口
-            add_action('wp_ajax_auto_change_data_callback',  array(__CLASS__, 'auto_change_data_callback'));
-
-            //查全部 - 设备变更信息接口
-            add_action('wp_ajax_auto_change_all_data_callback',  array(__CLASS__, 'auto_change_all_data_callback'));
+            //TODO:使用缓存技术?
+            //查数据，提供UUID是查指定设备，不提供则查全部设备
+            add_action('wp_ajax_auto_change_all_data_callback',  array(__CLASS__, 'auto_change_data_callback'));
         }
-        /**
-         * 创建查询接口，查询指定的设备变更信息
-         */
+
+        //查询全部变更自动记录数据
         public static function auto_change_data_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_auto_name;
-
-            //拿到值
-            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //字段名
-
-            //检查是否有值
-            if (empty($uuid)) {
-                return wp_send_json_error(['error' => '缺少参数：uuid - 设备唯一编号'], 400);
-            }
-
-            //查询
-            // 使用预处理语句执行查询
-            $object = $wpdb->get_results(
-                $wpdb->prepare("SELECT * FROM $table_name WHERE record_uuid = %s", $uuid),
-                ARRAY_A
-            );
-
-            //返回值逆序排列
-            $object = array_reverse($object);
-
-            if (!empty($object)) {
-                // 返回查询结果
-                return wp_send_json_success([
-                    'message' => '查询指定设备变更自动记录成功',
-                    'data' =>  $object,
-                ]);
-            } else {
-                // 返回空数组表示没有找到符合条件的记录
-                return wp_send_json_error([
-                    'error' => '暂未查到变更记录',
-                    'reason' => $wpdb->last_error,
-                    'data' =>  [],
-                ], 500);
-            }
-        }
-        //查询全部变更自动记录数据
-        public static function auto_change_all_data_callback()
-        {
-            global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_auto_name; //自动记录
-            $table_data = $wpdb->prefix . self::$table_pc_name; //电脑设备
+            $table_auto = $wpdb->prefix . self::$table_auto_name; //自动记录
+            $table_pc = $wpdb->prefix . self::$table_pc_name; //电脑设备
             $table_style = $wpdb->prefix . self::$table_style_name; //自定义设备
+
+            //拿到UUI的值
+            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //字段名
+            //检查是否有uuid的值
+            if ($uuid) {
+                //return wp_send_json_error(['error' => '缺少参数：uuid - 设备唯一编号'], 400);
+                //查询
+                // 使用预处理语句执行查询
+                $object = $wpdb->get_results(
+                    $wpdb->prepare("SELECT * FROM $table_auto WHERE record_uuid = %s", $uuid),
+                    ARRAY_A
+                );
+
+                //返回值逆序排列
+                $object = array_reverse($object);
+
+                if (!empty($object)) {
+                    // 返回查询结果
+                    return wp_send_json_success([
+                        'message' => '查询指定设备变更自动记录成功',
+                        'data' =>  $object,
+                    ]);
+                } else {
+                    // 返回空数组表示没有找到符合条件的记录
+                    return wp_send_json_error([
+                        'error' => '暂未查到变更记录',
+                        'reason' => $wpdb->last_error,
+                        'data' =>  [],
+                    ], 500);
+                }
+            }
+
             // 使用 $wpdb 对象执行 SQL 查询
-            $results = $wpdb->get_results("SELECT * FROM $table_name", OBJECT);
+            $results = $wpdb->get_results("SELECT * FROM $table_auto", OBJECT);
 
             // 将查询结果转换为数组对象
             $data_array = array();
@@ -90,7 +79,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
                 //电脑设备
                 if ($table_name == 'data') {
                     // 查询第二张表获取name字段的值
-                    $name_result = $wpdb->get_row($wpdb->prepare("SELECT name, number FROM $table_data WHERE uuid = %s", $uuid), ARRAY_A);
+                    $name_result = $wpdb->get_row($wpdb->prepare("SELECT name, number FROM $table_pc WHERE uuid = %s", $uuid), ARRAY_A);
                 }
 
 

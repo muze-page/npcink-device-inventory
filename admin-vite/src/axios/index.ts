@@ -27,6 +27,5 @@ export {
 
 //硬件设备数据变更自动记录
 export {
-  changeAutoRecordAxios,
   searchAutoChangeAllData,
 } from "@/axios/device-auto-record";

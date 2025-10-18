@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Table, Space } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { changeAutoRecordAxios } from "@/axios/index";
+import { searchAutoChangeAllData } from "@/axios/index";
 import { ChangeAutoRecord } from "@/type/index";
 import { formatDate } from "@/store/tool";
 import { Dayjs } from "dayjs";
@@ -20,7 +20,7 @@ const App: React.FC<Props> = ({ uuid }) => {
   const getData = async () => {
     setLoading(true);
     try {
-      const res = await changeAutoRecordAxios(uuid);
+      const res = await searchAutoChangeAllData(uuid);
       if (res.success) {
         setData(res.data.data || []);
       }
