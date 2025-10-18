@@ -6,7 +6,7 @@ import { Table, Space } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { searchAutoChangeAllData } from "@/services/index";
 import { ChangeAutoRecord } from "@/type/index";
-import { formatDate } from "@/store/tool";
+import { formatDate } from "@/utils/tool";
 import { Dayjs } from "dayjs";
 
 interface Props {

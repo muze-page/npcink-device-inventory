@@ -15,13 +15,13 @@ import {
 import { FilterStyleData } from "@/type/index";
 
 //导入设备状态类型
-import { device_status } from "@/store/dataReplace";
+import { device_status } from "@/utils/dataReplace";
 
 //跨组件提供方法
 import { StyleContext } from "@/context/StyleContext";
 
 //准备采购平台,付款方式
-import { stylePlatform } from "@/store/dataReplace";
+import { stylePlatform } from "@/utils/dataReplace";
 
 //引入数据填写弹窗表单
 import Add from "@/pages/styleList/header/add";

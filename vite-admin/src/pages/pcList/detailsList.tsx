@@ -5,10 +5,10 @@ import { useContext } from "react";
 import { DevieContext } from "@/context/DeviceContext";
 import { Tooltip, Skeleton, Space } from "antd";
 import { MysqlDeviceChangeMeat } from "@/type/index";
-import { device_status } from "@/store/dataReplace";
+import { device_status } from "@/utils/dataReplace";
 import Mac from "@/assets/mac.png";
 import Win from "@/assets/windows_ico.png";
-import { findOsTypeObj, findBValue } from "@/store/tool";
+import { findOsTypeObj, findBValue } from "@/utils/tool";
 
 interface Props {
   data: MysqlDeviceChangeMeat; //设备数据
@@ -76,7 +76,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             </Tooltip>
 
             <Tooltip
-              title={"CPU品牌 / 型号：" + data.meat.cpu +" / "+ data.meat.cpuModel}
+              title={
+                "CPU品牌 / 型号：" + data.meat.cpu + " / " + data.meat.cpuModel
+              }
               className=" text-[10px]"
             >
               {data.meat.cpu} /{data.meat.cpuModel}
@@ -92,7 +94,10 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             {/*配置信息*/}
             <Tooltip
               title={
-                " 总内存容量 / 总硬盘容量：" + data.meat.memory +" / "+ data.meat.disk
+                " 总内存容量 / 总硬盘容量：" +
+                data.meat.memory +
+                " / " +
+                data.meat.disk
               }
             >
               {data.meat.memory} / {data.meat.disk}

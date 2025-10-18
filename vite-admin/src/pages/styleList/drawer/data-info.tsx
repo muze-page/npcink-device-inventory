@@ -8,9 +8,9 @@ import { StyleDeviceData } from "@/type/index";
 //跨组件提供方法
 import { StyleContext } from "@/context/StyleContext";
 
-import { formatDate, findBValue } from "@/store/tool";
+import { formatDate, findBValue } from "@/utils/tool";
 //导入自定义设备的采购和支付方式列表
-import { stylePlatform, stylePayType } from "@/store/dataReplace";
+import { stylePlatform, stylePayType } from "@/utils/dataReplace";
 interface Props {
   deviceData: StyleDeviceData;
 }

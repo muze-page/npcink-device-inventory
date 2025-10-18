@@ -4,8 +4,8 @@
  */
 import { Table } from "antd";
 import { ComputerControllers } from "@/type/index";
-import { columnsTable } from "@/store/dataReplace";
-import { judge_bool, removeEmpty, formatMB } from "@/store/tool";
+import { columnsTable } from "@/utils/dataReplace";
+import { judge_bool, removeEmpty, formatMB } from "@/utils/tool";
 interface Props {
   data: ComputerControllers[];
 }

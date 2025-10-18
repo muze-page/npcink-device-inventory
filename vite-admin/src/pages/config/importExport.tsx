@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { Space, Button, message, Modal } from "antd";
 import { exportSQLData, importSQLData } from "@/services/index";
-import { Site } from "@/store/index";
-import { exportTable, formatDate } from "@/store/tool";
+import { Site } from "@/utils/index";
+import { exportTable, formatDate } from "@/utils/tool";
 import { ImportListData } from "@/type/index";
 interface Props {
   name: string; //数据库表名

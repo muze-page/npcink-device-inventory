@@ -4,8 +4,8 @@
  */
 import { Table } from "antd";
 import { ComputerNet } from "@/type/index";
-import { columnsTable } from "@/store/dataReplace";
-import { judge_bool, removeEmpty } from "@/store/tool";
+import { columnsTable } from "@/utils/dataReplace";
+import { judge_bool, removeEmpty } from "@/utils/tool";
 interface Props {
   data: ComputerNet[];
 }

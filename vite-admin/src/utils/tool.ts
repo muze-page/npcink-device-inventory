@@ -11,7 +11,7 @@ import {
   ComputerControllers,
   MysqlDevice,
 } from "@/type/index";
-import { defaultOption } from "@/store";
+import { defaultOption } from "@/utils/index";
 import dayjs, { Dayjs } from "dayjs";
 import Unknown from "@/assets/type/unknown.png";
 
@@ -21,7 +21,7 @@ import {
   osReplace,
   osTypeReplace,
   excludeGraphics,
-} from "@/store/dataReplace";
+} from "@/utils/dataReplace";
 
 //开发环境状态,各种调试按钮用
 export const devStatus: boolean = import.meta.env.VITE_STATE;

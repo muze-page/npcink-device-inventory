@@ -4,8 +4,8 @@
  */
 import { Table } from "antd";
 import { ComputerUuid } from "@/type/index";
-import { columnsTable } from "@/store/dataReplace";
-import { removeEmpty } from "@/store/tool";
+import { columnsTable } from "@/utils/dataReplace";
+import { removeEmpty } from "@/utils/tool";
 interface Props {
   data: ComputerUuid;
 }
@@ -13,7 +13,7 @@ const App: React.FC<Props> = ({ data }) => {
   const Items = [
     { label: "系统", value: data.os },
     { label: "硬件", value: data.hardware },
-    { label: "MAC", value: data.macs.join('\n') },
+    { label: "MAC", value: data.macs.join("\n") },
   ];
 
   return (

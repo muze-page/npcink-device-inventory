@@ -29,7 +29,7 @@ import Header from "@/pages/styleList/header";
 import SearchNoData from "@/components/searchNoData";
 
 //拿到通过接口传来的数据
-import { dataStyle } from "@/store/index";
+import { dataStyle } from "@/utils/index";
 
 const App: React.FC = () => {
   //在设备展示列表和删除设备两个组件间同步设备数据（添加、删除设备后更新设备列表）

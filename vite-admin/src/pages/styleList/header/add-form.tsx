@@ -21,8 +21,8 @@ import {
   device_status,
   stylePlatform,
   stylePayType,
-} from "@/store/dataReplace";
-import { devStatus } from "@/store/tool";
+} from "@/utils/dataReplace";
+import { devStatus } from "@/utils/tool";
 
 //准备采购平台,付款方式
 import { StyleDeviceData } from "@/type/index";

@@ -2,8 +2,8 @@
  * 电脑硬件资产盘点
  */
 import { useState } from "react";
-import { dataMySql } from "@/store";
-import { totalResidualValue, getPercentage } from "@/store/tool";
+import { dataMySql } from "@/utils/index";
+import { totalResidualValue, getPercentage } from "@/utils/tool";
 import {
   Computer,
   ComputerCpu,

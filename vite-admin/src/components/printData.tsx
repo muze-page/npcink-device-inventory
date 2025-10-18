@@ -1,6 +1,6 @@
 //传入值和标题，进行打印
 import { Button } from "antd";
-import { devStatus } from "@/store/tool";
+import { devStatus } from "@/utils/tool";
 interface Props {
   title: string;
   data: any;
@@ -13,7 +13,12 @@ const App: React.FC<Props> = ({ title, data }) => {
   return (
     <>
       {devStatus && (
-        <Button type="default" onClick={printData} className="m-4" style={{ marginLeft: 8 }}>
+        <Button
+          type="default"
+          onClick={printData}
+          className="m-4"
+          style={{ marginLeft: 8 }}
+        >
           {title}
         </Button>
       )}

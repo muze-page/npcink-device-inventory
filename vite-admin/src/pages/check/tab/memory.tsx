@@ -3,7 +3,7 @@
  */
 
 import TabList from "@/pages/check/block/tabList";
-import { sum_order } from "@/store/tool";
+import { sum_order } from "@/utils/tool";
 import { ComputerRam } from "@/type/index";
 
 const meat = {

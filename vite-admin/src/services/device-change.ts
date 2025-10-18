@@ -3,7 +3,7 @@
  */
 
 import axios from "axios";
-import { Ajaxurl } from "@/store";
+import { Ajaxurl } from "@/utils/index";
 import { MysqlChange, ComputerChangeReturn, axiosType } from "@/type/index";
 import { instance, addParamIfDefined } from "@/services/public";
 /**

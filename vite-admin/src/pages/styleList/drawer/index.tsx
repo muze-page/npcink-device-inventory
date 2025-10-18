@@ -10,7 +10,7 @@ import { StyleDevice } from "@/type/index";
 import Info from "@/pages/styleList/drawer/data-info";
 import ChangeAutoRecord from "@/components/change-auto-record.tsx";
 import Seting from "@/pages/styleList/drawer/data-seting";
-import { statusLabel } from "@/store/tool";
+import { statusLabel } from "@/utils/tool";
 //调试打印
 import PrintData from "@/components/printData";
 interface Props {

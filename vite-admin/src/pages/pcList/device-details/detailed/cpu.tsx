@@ -4,8 +4,8 @@
  */
 import { Table } from "antd";
 import { ComputerCpu } from "@/type/index";
-import { formatBytes, judge_bool, removeEmpty } from "@/store/tool";
-import { columnsTable } from "@/store/dataReplace";
+import { formatBytes, judge_bool, removeEmpty } from "@/utils/tool";
+import { columnsTable } from "@/utils/dataReplace";
 interface Props {
   data: ComputerCpu;
 }

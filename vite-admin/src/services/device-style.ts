@@ -2,7 +2,7 @@
  * 自定义设备的增删改查操作
  */
 import axios from "axios";
-import { Ajaxurl } from "@/store";
+import { Ajaxurl } from "@/utils/index";
 import { StyleDevice, StyleDeviceSeting } from "@/type/index";
 import { instance, addParamIfDefined } from "@/services/public";
 /**

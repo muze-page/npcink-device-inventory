@@ -1,7 +1,7 @@
 /**
  * 设备详情 - 大概信息
  */
-import { handleGraphics, formatDate } from "@/store/tool";
+import { handleGraphics, formatDate } from "@/utils/tool";
 import { Computer, ComputerControllers } from "@/type/index";
 import { Dayjs } from "dayjs";
 interface Props {

@@ -2,7 +2,7 @@
  * 设备变更自动记录
  */
 import axios from "axios";
-import { Ajaxurl } from "@/store";
+import { Ajaxurl } from "@/utils/index";
 import { axiosType } from "@/type/index";
 
 /**

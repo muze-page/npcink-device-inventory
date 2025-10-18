@@ -2,8 +2,8 @@
 import { useContext } from "react";
 import { Skeleton, Space, Tooltip } from "antd";
 import { OsTypeArray } from "@/type/index";
-import { device_status } from "@/store/dataReplace";
-import { findBValue, findOsTypeObj } from "@/store/tool";
+import { device_status } from "@/utils/dataReplace";
+import { findBValue, findOsTypeObj } from "@/utils/tool";
 import { DevieContext } from "@/context/DeviceContext";
 import MacOs from "@/assets/macos.png";
 import Win from "@/assets/windows_s.png";

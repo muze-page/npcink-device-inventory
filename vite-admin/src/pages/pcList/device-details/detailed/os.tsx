@@ -4,8 +4,8 @@
  */
 import { Table } from "antd";
 import { ComputerOS } from "@/type/index";
-import { judge_bool, removeEmpty } from "@/store/tool";
-import { columnsTable } from "@/store/dataReplace";
+import { judge_bool, removeEmpty } from "@/utils/tool";
+import { columnsTable } from "@/utils/dataReplace";
 interface Props {
   data: ComputerOS;
 }

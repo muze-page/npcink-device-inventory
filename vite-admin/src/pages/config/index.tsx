@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Button, Form, Input, Switch, InputNumber, message } from "antd";
 import { PlusCircleFilled } from "@ant-design/icons";
 
-import { defaultOption, Site, sqlTableName } from "@/store";
+import { defaultOption, Site, sqlTableName } from "@/utils/index";
 import { saveSQLData, addPublicSearchPage } from "@/services/index";
 
 import ImportExport from "@/pages/config/importExport";

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Site } from "@/store";
+import { Site } from "@/utils/index";
 /**
  * 获取返回值
  */

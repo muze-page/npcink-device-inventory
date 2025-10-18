@@ -3,8 +3,8 @@
  */
 
 import TabList from "@/pages/check/block/tabList";
-import { sum_brand, replaceKeyValues } from "@/store/tool";
-import { replaceBaseboard } from "@/store/dataReplace";
+import { sum_brand, replaceKeyValues } from "@/utils/tool";
+import { replaceBaseboard } from "@/utils/dataReplace";
 import { ComputerBaseboard, TableData } from "@/type/index";
 
 const meat = {

@@ -3,8 +3,8 @@
  */
 import React from "react";
 import { Card, Space } from "antd";
-import { findBValue, formatDate } from "@/store/tool";
-import { device_status } from "@/store/dataReplace";
+import { findBValue, formatDate } from "@/utils/tool";
+import { device_status } from "@/utils/dataReplace";
 import { MysqlDeviceChange } from "@/type/index";
 
 interface Props {

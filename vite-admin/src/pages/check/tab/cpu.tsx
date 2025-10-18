@@ -3,7 +3,7 @@
  */
 
 import TabList from "@/pages/check/block/tabList";
-import { sum_brand } from "@/store/tool";
+import { sum_brand } from "@/utils/tool";
 import { ComputerCpu } from "@/type/index";
 
 const meat = {

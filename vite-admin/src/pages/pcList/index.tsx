@@ -5,7 +5,7 @@
 import { SetStateAction, useState, useMemo, useEffect } from "react";
 import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
-import { dataMySql } from "@/store";
+import { dataMySql } from "@/utils/index";
 import { MysqlDeviceChangeMeat, FilterData, DataItemArr } from "@/type/index";
 import { getDeviceCategory } from "@/services/index";
 //模糊搜索
@@ -27,7 +27,7 @@ import SearchNoData from "@/components/searchNoData";
 import { DevieContext } from "@/context/DeviceContext";
 
 //导入处理工具
-import { updateOSType, devStatus } from "@/store/tool";
+import { updateOSType, devStatus } from "@/utils/tool";
 
 const App: React.FC = () => {
   //获取设备分类

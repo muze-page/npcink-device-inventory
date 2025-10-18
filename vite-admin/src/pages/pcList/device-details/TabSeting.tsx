@@ -6,8 +6,8 @@ import { Form, Button, Input, InputNumber, Select, Tooltip } from "antd";
 import { DevieContext } from "@/context/DeviceContext";
 import { deltSQLData, changeMySql } from "@/services/index";
 import { MysqlDeviceData } from "@/type/index";
-import { device_status } from "@/store/dataReplace";
-import { totalResidualValue, getPercentage, validateIPv4 } from "@/store/tool";
+import { device_status } from "@/utils/dataReplace";
+import { totalResidualValue, getPercentage, validateIPv4 } from "@/utils/tool";
 //选择输入框
 import SelectInput from "@/components/SelectInput";
 

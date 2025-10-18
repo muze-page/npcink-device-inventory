@@ -1,9 +1,9 @@
 //准备初始数据
 import axios from "axios";
-import data from "@/store/defaultVar";
+import data from "@/utils/defaultVar";
 import { MysqlDevice, OptionType, Computer, StyleDevice } from "@/type/index";
 //开发环境状态
-import { devStatus } from "@/store/tool";
+import { devStatus } from "@/utils/tool";
 
 //输出选项值
 const getDataLocal = () => {

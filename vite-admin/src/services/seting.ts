@@ -1,7 +1,7 @@
 /**
  * 设置
  */
-import { Ajaxurl } from "@/store";
+import { Ajaxurl } from "@/utils/index";
 import { MysqlChange, MysqlDevice } from "@/type/index";
 import { instance, addParamIfDefined } from "@/services/public";
 

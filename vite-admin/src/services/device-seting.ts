@@ -2,7 +2,7 @@
  * 硬件设置选项
  */
 import axios from "axios";
-import { Ajaxurl } from "@/store";
+import { Ajaxurl } from "@/utils/index";
 import { MysqlChange, MysqlDeviceData } from "@/type/index";
 import { instance, addParamIfDefined } from "@/services/public";
 /**

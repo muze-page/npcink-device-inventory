@@ -12,13 +12,13 @@ import { StyleContext } from "@/context/StyleContext";
 import { StyleDevice } from "@/type/index";
 
 //准备采购平台类型
-import {  formatDate } from "@/store/tool";
+import { formatDate } from "@/utils/tool";
 
 //准备采购平台列表和支付平台列表
-//import { platformArray, payArray } from "@/store/dataReplace";
+//import { platformArray, payArray } from "@/utils/dataReplace";
 
 //工具函数
-import { statusLabel } from "@/store/tool";
+import { statusLabel } from "@/utils/tool";
 interface Props {
   data: StyleDevice; //拿到自定义设备数据
   onActive: () => void; //修改状态
@@ -35,7 +35,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
   };
 
   //找到需要的平台对象、付款方式对象
- // const platformObj = findOsTypeObj(platformArray, data.data.platform);
+  // const platformObj = findOsTypeObj(platformArray, data.data.platform);
 
   //const payFormObj = findOsTypeObj(payArray, data.data.pay_method);
 
