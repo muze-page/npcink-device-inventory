@@ -6,8 +6,8 @@ import { DevieContext } from "@/context/DeviceContext";
 import { Tooltip, Skeleton, Space } from "antd";
 import { MysqlDeviceChangeMeat } from "@/type/index";
 import { device_status } from "@/utils/dataReplace";
-import Mac from "@/assets/mac.png";
-import Win from "@/assets/windows_ico.png";
+import Mac from "@/assets/pc/mac.png";
+import Win from "@/assets/pc/windows.png";
 import { findOsTypeObj, findBValue } from "@/utils/tool";
 
 interface Props {

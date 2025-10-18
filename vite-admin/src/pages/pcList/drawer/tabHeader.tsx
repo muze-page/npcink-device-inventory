@@ -5,8 +5,8 @@ import { OsTypeArray } from "@/type/index";
 import { device_status } from "@/utils/dataReplace";
 import { findBValue, findOsTypeObj } from "@/utils/tool";
 import { DevieContext } from "@/context/DeviceContext";
-import MacOs from "@/assets/macos.png";
-import Win from "@/assets/windows_s.png";
+import MacOs from "@/assets/pc/macOS.png";
+import Win from "@/assets/pc/windowsOS.png";
 
 const App: React.FC = ({}) => {
   //获取数据，拿到隐藏姓名状态
