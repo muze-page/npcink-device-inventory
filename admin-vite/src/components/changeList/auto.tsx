@@ -105,10 +105,7 @@ const App: React.FC<Props> = ({ isActive }) => {
 
   return (
     <>
-      <Table
-        dataSource={dataAxios}
-        columns={columns}
-      />
+      <Table dataSource={dataAxios} columns={columns} />
     </>
   );
 };

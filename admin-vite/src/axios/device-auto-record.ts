@@ -14,13 +14,14 @@ export const searchAutoChangeAllData = async (
 ): Promise<axiosType> => {
   const params = new URLSearchParams();
   params.append("action", "auto_change_data_callback");
-  if (uuid) {
+
+  // 当uuid为有效字符串时才添加到参数中
+  if (uuid !== undefined && uuid !== null && uuid.trim() !== "") {
     params.append("uuid", uuid);
   }
+
   try {
     const response = await axios.post<axiosType, axiosType>(Ajaxurl, params);
-    // console.log("返回的值");
-    //console.log(response);
     return response.data as axiosType;
   } catch (error: any) {
     // 错误已在拦截器中处理

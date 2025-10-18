@@ -28,7 +28,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
 
             // 获取所有设备分类
             $categories = $wpdb->get_results(
-                $wpdb->prepare("SELECT DISTINCT department FROM {$table_name} WHERE department IS NOT NULL AND department != ''")
+                "SELECT DISTINCT department FROM {$table_name} WHERE department IS NOT NULL AND department != ''"
             );
 
             // 检查查询是否成功

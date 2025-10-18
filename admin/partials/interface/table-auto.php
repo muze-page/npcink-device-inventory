@@ -12,124 +12,160 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
          */
         public static function run()
         {
-            //TODO:使用缓存技术?
-            //查数据，提供UUID是查指定设备，不提供则查全部设备
-            add_action('wp_ajax_auto_change_all_data_callback',  array(__CLASS__, 'auto_change_data_callback'));
+            // 查数据，提供UUID是查指定设备，不提供则查全部设备
+            add_action('wp_ajax_auto_change_data_callback',  array(__CLASS__, 'auto_change_data_callback'));
         }
 
-        //查询全部变更自动记录数据
+        /**
+         * 查询全部变更自动记录数据
+         */
         public static function auto_change_data_callback()
         {
             global $wpdb;
-            $table_auto = $wpdb->prefix . self::$table_auto_name; //自动记录
-            $table_pc = $wpdb->prefix . self::$table_pc_name; //电脑设备
-            $table_style = $wpdb->prefix . self::$table_style_name; //自定义设备
+            $table_auto = $wpdb->prefix . self::$table_auto_name; // 自动记录
+            $table_pc = $wpdb->prefix . self::$table_pc_name; // 电脑设备
+            $table_style = $wpdb->prefix . self::$table_style_name; // 自定义设备
 
-            //拿到UUI的值
-            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //字段名
-            //检查是否有uuid的值
-            if ($uuid) {
-                //return wp_send_json_error(['error' => '缺少参数：uuid - 设备唯一编号'], 400);
-                //查询
-                // 使用预处理语句执行查询
+            // 获取UUID参数
+            $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null;
+
+            // 如果提供了UUID，则查询指定设备的变更记录
+            if (!empty($uuid)) {
                 $object = $wpdb->get_results(
-                    $wpdb->prepare("SELECT * FROM $table_auto WHERE record_uuid = %s", $uuid),
+                    $wpdb->prepare("SELECT * FROM $table_auto WHERE record_uuid = %s ORDER BY id DESC", $uuid),
                     ARRAY_A
                 );
 
-                //返回值逆序排列
-                $object = array_reverse($object);
-
-                if (!empty($object)) {
+                if (!is_wp_error($object) && !empty($object)) {
                     // 返回查询结果
-                    return wp_send_json_success([
+                    wp_send_json_success([
                         'message' => '查询指定设备变更自动记录成功',
-                        'data' =>  $object,
+                        'data' => $object,
                     ]);
                 } else {
                     // 返回空数组表示没有找到符合条件的记录
-                    return wp_send_json_error([
+                    wp_send_json_error([
                         'error' => '暂未查到变更记录',
-                        'reason' => $wpdb->last_error,
-                        'data' =>  [],
-                    ], 500);
+                        'data' => [],
+                    ], 404);
                 }
+                return;
             }
 
-            // 使用 $wpdb 对象执行 SQL 查询
-            $results = $wpdb->get_results("SELECT * FROM $table_auto", OBJECT);
+            // 查询所有变更记录
+            $results = $wpdb->get_results("SELECT * FROM $table_auto ORDER BY id DESC", ARRAY_A);
 
-            // 将查询结果转换为数组对象
-            $data_array = array();
-            foreach ($results as $result) {
-                $data_array[] = (array) $result;
-            };
+            if (is_wp_error($results)) {
+                wp_send_json_error([
+                    'error' => '数据库查询出错',
+                    'reason' => $wpdb->last_error,
+                ], 500);
+                return;
+            }
+
+            // 处理数据，添加设备信息
+            $data_array = self::process_auto_change_data($results, $table_pc, $table_style);
+
+            wp_send_json_success([
+                'message' => '查询全部变更自动记录数据成功',
+                'data' => $data_array
+            ]);
+        }
+
+        /**
+         * 处理自动变更数据，添加设备相关信息
+         *
+         * @param array $data 变更记录数据
+         * @param string $table_pc 电脑设备表名
+         * @param string $table_style 自定义设备表名
+         * @return array 处理后的数据
+         */
+        private static function process_auto_change_data($data, $table_pc, $table_style)
+        {
+            global $wpdb;
+
+            if (empty($data)) {
+                return [];
+            }
 
             // 遍历数组对象，根据UUID值查询第二张表，获取name字段的值并更新原始数组对象
-            foreach ($data_array as $key => $data) {
-                $uuid = $data['record_uuid']; //拿到UUID
-                $table_name = $data['table_name']; //表名
+            foreach ($data as $key => $record) {
+                $uuid = $record['record_uuid']; // 拿到UUID
+                $table_name = $record['table_name']; // 表名
                 $name_result = null;
-                //自定义设备
-                if ($table_name == 'style') {
-                    // 查询第二张表获取name字段的值
-                    $name_result = $wpdb->get_row($wpdb->prepare("SELECT name, number  FROM $table_style WHERE uuid = %s", $uuid), ARRAY_A);
-                }
 
-                //电脑设备
-                if ($table_name == 'data') {
-                    // 查询第二张表获取name字段的值
-                    $name_result = $wpdb->get_row($wpdb->prepare("SELECT name, number FROM $table_pc WHERE uuid = %s", $uuid), ARRAY_A);
-                }
+                // 根据表名查询对应设备信息
+                switch ($table_name) {
+                    case 'style':
+                        // 自定义设备
+                        $name_result = $wpdb->get_row(
+                            $wpdb->prepare("SELECT name, number FROM $table_style WHERE uuid = %s", $uuid),
+                            ARRAY_A
+                        );
+                        break;
 
+                    case 'data':
+                        // 电脑设备
+                        $name_result = $wpdb->get_row(
+                            $wpdb->prepare("SELECT name, number FROM $table_pc WHERE uuid = %s", $uuid),
+                            ARRAY_A
+                        );
+                        break;
+                }
 
                 if ($name_result) {
-                    // 更新原始数组对象中的name键名
+                    // 更新原始数组对象中的msg键
                     $name = $name_result['name'];
                     $number = $name_result['number'];
-                    //$data_array[$key]['number'] =  $number;
-                    $data_array[$key]['msg'] = $name   . " _ "  . $number;
+                    $data[$key]['msg'] = $name . " _ " . $number;
                 }
             }
 
-            //关键值替换
-            // 准备替换表名映射
-            $tableNameMap = array(
+            // 关键值替换映射
+            $tableNameMap = [
                 'style' => '自定义设备',
                 'data' => '电脑设备'
-            );
-            // 准备字段名表名映射
-            $columnNameMap = array(
-                'state' => '设备状态',
-            );
+            ];
 
-            // 准备字段名表名映射
-            $oldValueMap = array(
+            $columnNameMap = [
+                'state' => '设备状态',
+            ];
+
+            $oldValueMap = [
                 'apply' => '使用',
                 'idie' => '闲置',
                 'fault' => '故障',
                 'repair' => '维修',
                 'scrap' => '报废',
-            );
+            ];
 
-            // 遍历数据并替换匹配的table_name值
-            foreach ($data_array as &$row) {
+            // 遍历数据并替换匹配的值
+            foreach ($data as &$row) {
+                // 替换表名
                 if (isset($row['table_name']) && isset($tableNameMap[$row['table_name']])) {
                     $row['table_name'] = $tableNameMap[$row['table_name']];
                 }
+
+                // 替换列名
                 if (isset($row['column_name']) && isset($columnNameMap[$row['column_name']])) {
                     $row['column_name'] = $columnNameMap[$row['column_name']];
                 }
+
+                // 替换旧值
                 if (isset($row['old_value']) && isset($oldValueMap[$row['old_value']])) {
                     $row['old_value'] = $oldValueMap[$row['old_value']];
                 }
+
+                // 替换新值
                 if (isset($row['new_value']) && isset($oldValueMap[$row['new_value']])) {
                     $row['new_value'] = $oldValueMap[$row['new_value']];
                 }
             }
-            unset($row); // 销毁引用变量
 
-            return wp_send_json_success(['message' => '查询全部变更自动记录数据成功', 'data' =>  $data_array,]);
+            // 销毁引用变量
+            unset($row);
+
+            return $data;
         }
     }
 }
