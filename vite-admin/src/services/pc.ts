@@ -49,8 +49,8 @@ export const getDeviceCategory = async () => {
   params.append("action", "get_device_category_callback");
   try {
     const data = await axios.post(Ajaxurl, params);
-    console.log("拿到的值:");
-    console.log(data);
+    //console.log("拿到的值:");
+    //console.log(data);
     return data.data.data;
   } catch (error) {
     console.log(error);
