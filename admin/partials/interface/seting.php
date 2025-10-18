@@ -286,12 +286,14 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     //没有重复数据，插入数据
                     if (!$existingData) {
                         $insert_data[] = array(
-                            'name' => isset($item['name']) ? $item['name'] :  null,
-                            'purpose' => isset($item['purpose']) ? $item['purpose'] :  null,
-                            'state' => isset($item['state']) ? $item['state'] :  null,
-                            'created_at' => isset($item['created_at']) ? $item['created_at'] :  null,
-                            'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
-                            'data' => isset($item['data']) ? $item['data'] :  null,
+                            'name' => isset($item['name']) ? $item['name'] :  null, //名称
+                            'number' => isset($item['number']) ? $item['number'] :  null, //编号
+                            'state' => isset($item['state']) ? $item['state'] :  null, //状态
+                            'category' => isset($item['category']) ? $item['category'] :  null, //类别
+                            'purpose' => isset($item['purpose']) ? $item['purpose'] :  null, //用途
+                            'created_at' => isset($item['created_at']) ? $item['created_at'] :  null, //创建时间
+                            'uuid' => isset($item['uuid']) ? $item['uuid'] :  null, //唯一标识符
+                            'data' => isset($item['data']) ? $item['data'] :  null, //设备数据
                         );
                     }
                 }
@@ -340,10 +342,10 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                         $insert_data[] = array(
                             'table_name' => isset($item['table_name']) ? $item['table_name'] :  null, //表名
                             'column_name' => isset($item['column_name']) ? $item['column_name'] : null, //字段名
-                            'old_value' => isset($item['old_value']) ? $item['old_value'] :  null,//旧值
-                            'new_value' => isset($item['new_value']) ? $item['new_value'] :  null,//新值
-                            'changed_at' => isset($item['changed_at']) ? $item['changed_at'] :  null,//变更时间
-                            'record_uuid' => isset($item['record_uuid']) ? $item['record_uuid'] :  null,//记录唯一标识符
+                            'old_value' => isset($item['old_value']) ? $item['old_value'] :  null, //旧值
+                            'new_value' => isset($item['new_value']) ? $item['new_value'] :  null, //新值
+                            'changed_at' => isset($item['changed_at']) ? $item['changed_at'] :  null, //变更时间
+                            'record_uuid' => isset($item['record_uuid']) ? $item['record_uuid'] :  null, //记录唯一标识符
                         );
                     }
                 }
