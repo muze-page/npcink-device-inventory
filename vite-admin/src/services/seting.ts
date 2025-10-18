@@ -3,7 +3,7 @@
  */
 import { Ajaxurl } from "@/utils/index";
 import { MysqlChange, MysqlDevice } from "@/type/index";
-import { instance, addParamIfDefined } from "@/services/public";
+import { instance, addParamIfDefined } from "@/services/axiosConfig";
 
 //成功响应传出的接口数据
 

@@ -9,7 +9,7 @@ export {
   changeMySqlData,
   searchChangeData,
   searchChangeAllData,
-} from "@/services/device-change";
+} from "@/services/manual";
 
 export {
   changeMySql,
@@ -26,4 +26,4 @@ export {
 } from "@/services/device-style";
 
 //硬件设备数据变更自动记录
-export { searchAutoChangeAllData } from "@/services/device-auto-record";
+export { searchAutoChangeAllData } from "@/services/auto";

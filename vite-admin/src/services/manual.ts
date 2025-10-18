@@ -1,11 +1,11 @@
 /**
- * 硬件变更操作
+ * 手动记录
  */
 
 import axios from "axios";
 import { Ajaxurl } from "@/utils/index";
 import { MysqlChange, ComputerChangeReturn, axiosType } from "@/type/index";
-import { instance, addParamIfDefined } from "@/services/public";
+import { instance, addParamIfDefined } from "@/services/axiosConfig";
 /**
  * 增 - 添加变更数据
  * @param uuid 设备的唯一标识符
