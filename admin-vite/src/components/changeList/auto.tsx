@@ -47,7 +47,6 @@ const App: React.FC<Props> = ({ isActive }) => {
   //字段名
   const typeArr = uniqueTypess(dataAxios, "column_name");
 
-
   //筛选
   const columns: TableColumnsType<ChangeAutoRecord> = [
     {
@@ -81,25 +80,26 @@ const App: React.FC<Props> = ({ isActive }) => {
       title: "变更前的值",
       dataIndex: "old_value",
       key: "old_value",
-      width: "20%",
+      width: "15%",
     },
     {
       title: "变更后的值",
       dataIndex: "new_value",
       key: "new_value",
-      width: "20%",
+      width: "15%",
     },
     {
       title: "描述信息",
       dataIndex: "msg",
       key: "msg",
       width: "20%",
+      hidden: isActive, // 这一列含有敏感信息
     },
     {
       title: "日期",
       dataIndex: "changed_at",
       key: "changed_at",
-      width: "10%",
+      width: "20%",
     },
   ];
 
@@ -108,7 +108,6 @@ const App: React.FC<Props> = ({ isActive }) => {
       <Table
         dataSource={dataAxios}
         columns={columns}
-        className={isActive ? "hideName" : ""}
       />
     </>
   );

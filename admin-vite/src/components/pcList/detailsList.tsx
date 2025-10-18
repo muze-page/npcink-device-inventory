@@ -57,7 +57,6 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         <div className="mt-1 text-xs text-zinc-500 rounded whitespace-nowrap min-h-[190px]">
           {/*姓名*/}
           <div className="text-sm font-bold text-zinc-800 leading-8 m-0  ">
-            {/** <div className={isName ? "" : "hideName"}> */}
             {isName ? (
               data.name
             ) : (

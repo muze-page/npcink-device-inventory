@@ -62,6 +62,7 @@ const App: React.FC<Props> = ({ isActive }) => {
       filterSearch: true,
       onFilter: (value, record) => record.user.startsWith(value.toString()),
       width: "15%",
+      hidden: isActive, // 这一列含有敏感信息
     },
     {
       title: "类型",
@@ -84,6 +85,7 @@ const App: React.FC<Props> = ({ isActive }) => {
       dataIndex: "msg",
       key: "msg",
       width: "15%",
+      hidden: isActive, // 这一列含有敏感信息
     },
     {
       title: "日期",
@@ -95,11 +97,7 @@ const App: React.FC<Props> = ({ isActive }) => {
 
   return (
     <>
-      <Table
-        dataSource={dataAxios}
-        columns={columns}
-        className={isActive ? "hideName" : ""}
-      />
+      <Table dataSource={dataAxios} columns={columns} />
     </>
   );
 };

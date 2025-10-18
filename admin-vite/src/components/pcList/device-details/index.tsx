@@ -35,7 +35,7 @@ const App: React.FC = () => {
     },
     {
       key: "3",
-      label: <span>变更记录</span>,
+      label: <span>手动记录</span>,
       children: <Change uuid={drawerData.uuid} />,
     },
     {
