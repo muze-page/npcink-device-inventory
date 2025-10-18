@@ -27,7 +27,7 @@ import { devStatus } from "@/store/tool";
 //准备采购平台,付款方式
 import { StyleDeviceData } from "@/type/index";
 //选择输入框
-import SelectInput from "@/block/SelectInput";
+import SelectInput from "@/components/SelectInput";
 
 //准备输入框
 const { TextArea } = Input;
@@ -72,7 +72,7 @@ type AddFormProps = {
 
 const App = ({ form, handleOk }: AddFormProps) => {
   //拿到添加设备的回调函数
-  const { handleAddDevice,styleCategoryOption } = useContext(StyleContext);
+  const { handleAddDevice, styleCategoryOption } = useContext(StyleContext);
   //提交拿到的值
   const onFinish: FormProps<FormType>["onFinish"] = async (values) => {
     //添加弹窗提示，确定提交则继续，不提交则取消

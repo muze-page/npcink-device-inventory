@@ -26,7 +26,7 @@ import Drawer from "@/pages/styleList/drawer/index";
 import Header from "@/pages/styleList/header";
 
 //筛序和搜索无结果时的提示
-import SearchNoData from "@/block/searchNoData";
+import SearchNoData from "@/components/searchNoData";
 
 //拿到通过接口传来的数据
 import { dataStyle } from "@/store/index";

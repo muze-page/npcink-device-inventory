@@ -21,7 +21,7 @@ import Screen from "@/pages/pcList/screen";
 import Drawer from "@/pages/pcList/drawer";
 
 //筛序和搜索无结果时的提示
-import SearchNoData from "@/block/searchNoData";
+import SearchNoData from "@/components/searchNoData";
 
 //公共方法
 import { DevieContext } from "@/context/DeviceContext";

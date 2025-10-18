@@ -10,7 +10,7 @@ import { saveSQLData, addPublicSearchPage } from "@/axios";
 
 import ImportExport from "@/pages/config/importExport";
 import { OptionType } from "@/type/index";
-import Header from "@/block/tab-header";
+import Header from "@/components/tab-header";
 
 const App: React.FC = () => {
   //传来的默认选项

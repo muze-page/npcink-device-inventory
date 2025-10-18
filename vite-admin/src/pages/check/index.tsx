@@ -19,7 +19,7 @@ import Baseboard from "@/pages/check/tab/baseboard";
 import Cpu from "@/pages/check/tab/cpu";
 import Disk from "@/pages/check/tab/disk";
 import Memory from "@/pages/check/tab/memory";
-import Header from "@/block/tab-header";
+import Header from "@/components/tab-header";
 
 //收集最新数据并输出数组
 interface DataArray {

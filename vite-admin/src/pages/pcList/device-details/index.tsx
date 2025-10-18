@@ -10,7 +10,7 @@ import Info from "@/pages/pcList/device-details/TabInfo";
 import Change from "@/pages/pcList/device-details/TabChange";
 import Seting from "@/pages/pcList/device-details/TabSeting";
 import Detailed from "@/pages/pcList/device-details/TabDetailed";
-import ChangeAutoRecord from "@/block/change-auto-record";
+import ChangeAutoRecord from "@/components/change-auto-record";
 
 //公共方法
 import { DevieContext } from "@/context/DeviceContext";

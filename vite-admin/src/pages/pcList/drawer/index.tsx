@@ -6,7 +6,7 @@ import { Drawer } from "antd";
 import { MysqlDeviceChangeMeat } from "@/type/index";
 import Property from "@/pages/pcList/device-details";
 import TabHeader from "@/pages/pcList/drawer/tabHeader";
-import PrintData from "@/block/printData";
+import PrintData from "@/components/printData";
 interface Props {
   active: boolean; //弹窗状态
   onActive: () => void; //关闭弹窗的回调函数

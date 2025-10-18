@@ -9,7 +9,7 @@ import { deleteStyleDeviceData, updateStyleDeviceData } from "@/axios";
 import { device_status } from "@/store/dataReplace";
 import { StyleDeviceSeting } from "@/type/index";
 //选择输入框
-import SelectInput from "@/block/SelectInput";
+import SelectInput from "@/components/SelectInput";
 const { TextArea } = Input;
 interface Props {
   onActive: () => void; //修改弹窗状态

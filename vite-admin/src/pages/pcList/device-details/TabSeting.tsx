@@ -9,7 +9,7 @@ import { MysqlDeviceData } from "@/type/index";
 import { device_status } from "@/store/dataReplace";
 import { totalResidualValue, getPercentage, validateIPv4 } from "@/store/tool";
 //选择输入框
-import SelectInput from "@/block/SelectInput";
+import SelectInput from "@/components/SelectInput";
 
 const App: React.FC = () => {
   //接收上下文中的值
@@ -154,7 +154,9 @@ const App: React.FC = () => {
                   <Tooltip title="采购价对比二手价格的百分比">折旧率</Tooltip>
                 </th>
                 <th className="w-28 text-center">
-                  <Tooltip title="按照设定百分比，相对于购买时间，当前剩下的价值">残值</Tooltip>
+                  <Tooltip title="按照设定百分比，相对于购买时间，当前剩下的价值">
+                    残值
+                  </Tooltip>
                 </th>
                 <th className="w-28 text-center">
                   <Tooltip title="采购价对比残值价格的百分比">残值率</Tooltip>

@@ -8,11 +8,11 @@ import type { TabsProps } from "antd";
 import { StyleContext } from "@/context/StyleContext";
 import { StyleDevice } from "@/type/index";
 import Info from "@/pages/styleList/drawer/data-info";
-import ChangeAutoRecord from "@/block/change-auto-record.tsx";
+import ChangeAutoRecord from "@/components/change-auto-record.tsx";
 import Seting from "@/pages/styleList/drawer/data-seting";
 import { statusLabel } from "@/store/tool";
 //调试打印
-import PrintData from "@/block/printData";
+import PrintData from "@/components/printData";
 interface Props {
   data: StyleDevice; //设备数据
   active: boolean; //弹窗状态
