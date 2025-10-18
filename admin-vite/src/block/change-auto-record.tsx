@@ -91,6 +91,7 @@ const App: React.FC<Props> = ({ uuid }) => {
   const columns: ColumnsType<ChangeAutoRecord> = [
     {
       title: "序号",
+      dataIndex: "index",
       key: "index",
       render: (_, __, index) => index + 1,
       width: 60,

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * 接口 硬件变更自动记录查询接口
+ * 接口 变更自动记录查询接口
  * 接收UUID，返回查询的数据列表
  */
 if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
@@ -12,6 +12,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
          */
         public static function run()
         {
+            //TODO:考虑合并两个接口，并且使用缓存技术
             //查指定设备 - 设备变更信息接口
             add_action('wp_ajax_auto_change_data_callback',  array(__CLASS__, 'auto_change_data_callback'));
 
@@ -19,7 +20,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
             add_action('wp_ajax_auto_change_all_data_callback',  array(__CLASS__, 'auto_change_all_data_callback'));
         }
         /**
-         * 创建查询接口，
+         * 创建查询接口，查询指定的设备变更信息
          */
         public static function auto_change_data_callback()
         {
@@ -40,6 +41,9 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
                 $wpdb->prepare("SELECT * FROM $table_name WHERE record_uuid = %s", $uuid),
                 ARRAY_A
             );
+
+            //返回值逆序排列
+            $object = array_reverse($object);
 
             if (!empty($object)) {
                 // 返回查询结果
