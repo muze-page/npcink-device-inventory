@@ -9,7 +9,7 @@ import { MysqlDeviceData } from "@/type/index";
 import { device_status } from "@/utils/dataReplace";
 import { totalResidualValue, getPercentage, validateIPv4 } from "@/utils/tool";
 //选择输入框
-import SelectInput from "@/components/SelectInput";
+import SelectInput from "@/components/selectInput";
 
 const App: React.FC = () => {
   //接收上下文中的值

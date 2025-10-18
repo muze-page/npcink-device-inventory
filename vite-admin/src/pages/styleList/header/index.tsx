@@ -27,7 +27,7 @@ import { stylePlatform } from "@/utils/dataReplace";
 import Add from "@/pages/styleList/header/add";
 
 //引入头部模块
-import Header from "@/components/tab-header";
+import Header from "@/components/tabHeader";
 
 interface Props {
   filterData: FilterStyleData; //当前筛选条件

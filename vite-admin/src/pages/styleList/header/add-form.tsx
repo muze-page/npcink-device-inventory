@@ -27,7 +27,7 @@ import { devStatus } from "@/utils/tool";
 //准备采购平台,付款方式
 import { StyleDeviceData } from "@/type/index";
 //选择输入框
-import SelectInput from "@/components/SelectInput";
+import SelectInput from "@/components/selectInput";
 
 //准备输入框
 const { TextArea } = Input;

@@ -15,7 +15,7 @@ import { normalize } from "@/utils/tool";
 
 //设备状态
 import { device_status } from "@/utils/dataReplace";
-import Header from "@/components/tab-header";
+import Header from "@/components/tabHeader";
 import { DevieContext } from "@/context/DeviceContext";
 interface Props {
   filterData: FilterData; //当前筛选条件
