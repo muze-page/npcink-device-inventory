@@ -1,6 +1,6 @@
 //自动记录设备变更
 import React, { useState, useEffect } from "react";
-import { searchAutoChangeAllData } from "@/axios";
+import { searchAutoChangeAllData } from "@/services/index";
 import { Table, message } from "antd";
 import type { TableColumnsType } from "antd";
 import { ChangeAutoRecord } from "@/type/index";

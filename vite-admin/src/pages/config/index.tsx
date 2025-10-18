@@ -6,7 +6,7 @@ import { Button, Form, Input, Switch, InputNumber, message } from "antd";
 import { PlusCircleFilled } from "@ant-design/icons";
 
 import { defaultOption, Site, sqlTableName } from "@/store";
-import { saveSQLData, addPublicSearchPage } from "@/axios";
+import { saveSQLData, addPublicSearchPage } from "@/services/index";
 
 import ImportExport from "@/pages/config/importExport";
 import { OptionType } from "@/type/index";

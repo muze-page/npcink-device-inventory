@@ -1,6 +1,6 @@
 //手动记录设备变更
 import React, { useState, useEffect } from "react";
-import { searchChangeAllData } from "@/axios";
+import { searchChangeAllData } from "@/services/index";
 import { Table, message } from "antd";
 import type { TableColumnsType } from "antd";
 import { DeviceChangeList } from "@/type/index";

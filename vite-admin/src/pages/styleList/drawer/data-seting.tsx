@@ -5,7 +5,7 @@ import { useContext, useEffect } from "react";
 import { StyleContext } from "@/context/StyleContext";
 import { Form, Button, Input, Radio } from "antd";
 import type { FormProps } from "antd";
-import { deleteStyleDeviceData, updateStyleDeviceData } from "@/axios";
+import { deleteStyleDeviceData, updateStyleDeviceData } from "@/services/index";
 import { device_status } from "@/store/dataReplace";
 import { StyleDeviceSeting } from "@/type/index";
 //选择输入框

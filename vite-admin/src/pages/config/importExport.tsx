@@ -1,7 +1,7 @@
 //导入导出变更数据
 import { useState } from "react";
 import { Space, Button, message, Modal } from "antd";
-import { exportSQLData, importSQLData } from "@/axios";
+import { exportSQLData, importSQLData } from "@/services/index";
 import { Site } from "@/store/index";
 import { exportTable, formatDate } from "@/store/tool";
 import { ImportListData } from "@/type/index";
@@ -74,7 +74,7 @@ const App: React.FC<Props> = ({ name }) => {
         onOk() {
           //进行表格名称判断
           //if (name === jsonContent.name) {
-            if (true) {
+          if (true) {
             const jsonString = JSON.stringify(jsonContent); //格式化数据
             importSQLData(name, jsonString); //传递
           } else {

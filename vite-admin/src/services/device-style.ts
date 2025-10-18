@@ -4,7 +4,7 @@
 import axios from "axios";
 import { Ajaxurl } from "@/store";
 import { StyleDevice, StyleDeviceSeting } from "@/type/index";
-import { instance, addParamIfDefined } from "@/axios/public";
+import { instance, addParamIfDefined } from "@/services/public";
 /**
  * 获取自定义设备分类数组
  */

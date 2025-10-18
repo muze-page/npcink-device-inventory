@@ -1,6 +1,6 @@
 //添加修改记录
 import { Form, Input, Button, message } from "antd";
-import { addChangeData } from "@/axios";
+import { addChangeData } from "@/services/index";
 import { ComputerChangeReturn } from "@/type/index";
 interface ACDProps {
   uuid: string; //UUID

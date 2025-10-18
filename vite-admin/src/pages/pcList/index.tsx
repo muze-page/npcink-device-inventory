@@ -7,7 +7,7 @@ import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 import { dataMySql } from "@/store";
 import { MysqlDeviceChangeMeat, FilterData, DataItemArr } from "@/type/index";
-import { getDeviceCategory } from "@/axios/index";
+import { getDeviceCategory } from "@/services/index";
 //模糊搜索
 import Fuse from "fuse.js";
 

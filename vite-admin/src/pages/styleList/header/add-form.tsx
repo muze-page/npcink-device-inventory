@@ -15,7 +15,7 @@ import {
 } from "antd";
 import type { FormProps, FormInstance } from "antd";
 import dayjs from "dayjs";
-import { addStyleDeviceData } from "@/axios";
+import { addStyleDeviceData } from "@/services/index";
 
 import {
   device_status,

@@ -4,7 +4,7 @@
 import { useContext, useEffect } from "react";
 import { Form, Button, Input, InputNumber, Select, Tooltip } from "antd";
 import { DevieContext } from "@/context/DeviceContext";
-import { deltSQLData, changeMySql } from "@/axios";
+import { deltSQLData, changeMySql } from "@/services/index";
 import { MysqlDeviceData } from "@/type/index";
 import { device_status } from "@/store/dataReplace";
 import { totalResidualValue, getPercentage, validateIPv4 } from "@/store/tool";

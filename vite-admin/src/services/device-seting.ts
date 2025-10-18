@@ -4,7 +4,7 @@
 import axios from "axios";
 import { Ajaxurl } from "@/store";
 import { MysqlChange, MysqlDeviceData } from "@/type/index";
-import { instance, addParamIfDefined } from "@/axios/public";
+import { instance, addParamIfDefined } from "@/services/public";
 /**
  * 修改设备数据，一次性更新
  */

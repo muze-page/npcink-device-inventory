@@ -5,7 +5,7 @@
 import axios from "axios";
 import { Ajaxurl } from "@/store";
 import { MysqlChange, ComputerChangeReturn, axiosType } from "@/type/index";
-import { instance, addParamIfDefined } from "@/axios/public";
+import { instance, addParamIfDefined } from "@/services/public";
 /**
  * 增 - 添加变更数据
  * @param uuid 设备的唯一标识符
@@ -15,7 +15,7 @@ import { instance, addParamIfDefined } from "@/axios/public";
  */
 
 export const addChangeData = async (
-  uuid: string,//设备的UUID
+  uuid: string, //设备的UUID
   data: ComputerChangeReturn
 ): Promise<boolean> => {
   const params = new URLSearchParams();

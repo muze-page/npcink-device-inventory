@@ -6,7 +6,7 @@ import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 
 //自定义产品分类获取方法
-import { getStyleDeviceCategory } from "@/axios/index";
+import { getStyleDeviceCategory } from "@/services/index";
 //模糊搜索
 import Fuse from "fuse.js";
 

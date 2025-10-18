@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Table, Space } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { searchAutoChangeAllData } from "@/axios/index";
+import { searchAutoChangeAllData } from "@/services/index";
 import { ChangeAutoRecord } from "@/type/index";
 import { formatDate } from "@/store/tool";
 import { Dayjs } from "dayjs";

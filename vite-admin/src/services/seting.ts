@@ -3,7 +3,7 @@
  */
 import { Ajaxurl } from "@/store";
 import { MysqlChange, MysqlDevice } from "@/type/index";
-import { instance, addParamIfDefined } from "@/axios/public";
+import { instance, addParamIfDefined } from "@/services/public";
 
 //成功响应传出的接口数据
 
@@ -66,8 +66,6 @@ export const importSQLData = async (name: string, data: string) => {
     throw new Error("保存数据时出错：" + error.message);
   }
 };
-
-
 
 /**
  * 添加自定义公共引导页

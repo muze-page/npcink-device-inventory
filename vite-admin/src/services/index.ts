@@ -3,19 +3,19 @@ export {
   exportSQLData,
   importSQLData,
   addPublicSearchPage,
-} from "@/axios/seting";
+} from "@/services/seting";
 export {
   addChangeData,
   changeMySqlData,
   searchChangeData,
   searchChangeAllData,
-} from "@/axios/device-change";
+} from "@/services/device-change";
 
 export {
   changeMySql,
   deltSQLData,
   getDeviceCategory,
-} from "@/axios/device-seting";
+} from "@/services/device-seting";
 
 //自定义硬件设备数据
 export {
@@ -23,9 +23,7 @@ export {
   deleteStyleDeviceData,
   updateStyleDeviceData,
   getStyleDeviceCategory,
-} from "@/axios/device-style";
+} from "@/services/device-style";
 
 //硬件设备数据变更自动记录
-export {
-  searchAutoChangeAllData,
-} from "@/axios/device-auto-record";
+export { searchAutoChangeAllData } from "@/services/device-auto-record";
