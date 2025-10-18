@@ -5,7 +5,7 @@
 import { Table } from "antd";
 import { ComputerBaseboard } from "@/type/index";
 import { formatBytes, removeEmpty } from "@/utils/tool";
-import { columnsTable } from "@/utils/dataReplace";
+import { columnsTable } from "@/utils/replace";
 interface Props {
   data: ComputerBaseboard;
 }

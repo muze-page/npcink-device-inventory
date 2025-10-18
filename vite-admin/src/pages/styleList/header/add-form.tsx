@@ -17,11 +17,7 @@ import type { FormProps, FormInstance } from "antd";
 import dayjs from "dayjs";
 import { addStyleDeviceData } from "@/services/index";
 
-import {
-  device_status,
-  stylePlatform,
-  stylePayType,
-} from "@/utils/dataReplace";
+import { device_status, stylePlatform, stylePayType } from "@/utils/replace";
 import { devStatus } from "@/utils/tool";
 
 //准备采购平台,付款方式

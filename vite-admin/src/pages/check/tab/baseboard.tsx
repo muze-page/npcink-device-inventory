@@ -4,7 +4,7 @@
 
 import TabList from "@/pages/check/block/tabList";
 import { sum_brand, replaceKeyValues } from "@/utils/tool";
-import { replaceBaseboard } from "@/utils/dataReplace";
+import { replaceBaseboard } from "@/utils/replace";
 import { ComputerBaseboard, TableData } from "@/type/index";
 
 const meat = {

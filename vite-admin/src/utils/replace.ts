@@ -1,5 +1,5 @@
-import { Replacements } from "@/type/index";
 //替换表
+import { Replacements } from "@/type/index";
 
 /**
  * 主板品牌

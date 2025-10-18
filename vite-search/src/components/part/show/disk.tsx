@@ -3,7 +3,7 @@
  */
 import { Table } from "antd";
 import { ComputerDevice } from "@/type/index";
-import { columnsTable } from "@/utils/dataReplace";
+import { columnsTable } from "@/utils/replace";
 import { formatBytes, removeEmpty } from "@/utils/tool";
 interface Props {
   data: ComputerDevice[];

@@ -15,7 +15,7 @@ import { StyleDevice } from "@/type/index";
 import { formatDate } from "@/utils/tool";
 
 //准备采购平台列表和支付平台列表
-//import { platformArray, payArray } from "@/utils/dataReplace";
+//import { platformArray, payArray } from "@/utils/replace";
 
 //工具函数
 import { statusLabel } from "@/utils/tool";

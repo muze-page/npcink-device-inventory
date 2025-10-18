@@ -21,7 +21,7 @@ import {
   osReplace,
   osTypeReplace,
   excludeGraphics,
-} from "@/utils/dataReplace";
+} from "@/utils/replace";
 
 //开发环境状态,各种调试按钮用
 export const devStatus: boolean = import.meta.env.VITE_STATE;

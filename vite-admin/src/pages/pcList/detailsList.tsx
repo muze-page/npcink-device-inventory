@@ -5,7 +5,7 @@ import { useContext } from "react";
 import { DevieContext } from "@/context/DeviceContext";
 import { Tooltip, Skeleton, Space } from "antd";
 import { MysqlDeviceChangeMeat } from "@/type/index";
-import { device_status } from "@/utils/dataReplace";
+import { device_status } from "@/utils/replace";
 import Mac from "@/assets/pc/mac.png";
 import Win from "@/assets/pc/windows.png";
 import { findOsTypeObj, findBValue } from "@/utils/tool";

@@ -4,7 +4,7 @@
  */
 import { Table } from "antd";
 import { ComputerRam } from "@/type/index";
-import { columnsTable } from "@/utils/dataReplace";
+import { columnsTable } from "@/utils/replace";
 import { formatBytes, judge_bool, removeEmpty } from "@/utils/tool";
 interface Props {
   data: ComputerRam[];

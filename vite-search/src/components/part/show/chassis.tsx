@@ -4,7 +4,7 @@
  */
 import { Table } from "antd";
 import { ComputerChassis } from "@/type/index";
-import { columnsTable } from "@/utils/dataReplace";
+import { columnsTable } from "@/utils/replace";
 import { removeEmpty } from "@/utils/tool";
 interface Props {
   data: ComputerChassis;

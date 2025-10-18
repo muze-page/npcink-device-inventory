@@ -10,7 +10,7 @@ import { StyleContext } from "@/context/StyleContext";
 
 import { formatDate, findBValue } from "@/utils/tool";
 //导入自定义设备的采购和支付方式列表
-import { stylePlatform, stylePayType } from "@/utils/dataReplace";
+import { stylePlatform, stylePayType } from "@/utils/replace";
 interface Props {
   deviceData: StyleDeviceData;
 }
