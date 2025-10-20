@@ -10,7 +10,7 @@ import { changeMySqlData, searchChangeData } from "@/services/index";
 
 import { ComputerChangeReturn } from "@/type/index";
 
-import AddChangeData from "@/pages/pcList/device-details/change/add";
+import TabChangeAdd from "@/pages/pcList/device-details/TabChangeAdd";
 
 //在嵌套的组件之间传递Form实例，使得表单可以进行联动
 const EditableContext = React.createContext<FormInstance<any> | null>(null);
@@ -277,7 +277,7 @@ const App: React.FC<Props> = ({ uuid }) => {
       {error ? (
         <>
           <Error message={errorData} />
-          <AddChangeData uuid={uuid} onUpdata={getData} />
+          <TabChangeAdd uuid={uuid} onUpdata={getData} />
         </>
       ) : (
         <>
@@ -306,7 +306,7 @@ const App: React.FC<Props> = ({ uuid }) => {
                 )}
                 {/* 没有数据 */}
                 {/* 添加 - 修改记录 */}
-                <AddChangeData uuid={uuid} onUpdata={getData} />
+                <TabChangeAdd uuid={uuid} onUpdata={getData} />
               </div>
             </div>
           }
