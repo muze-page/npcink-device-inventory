@@ -11,9 +11,6 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         //表名
         public static $table_name;
 
-        /**
-         * 接收数据
-         */
         public static function run()
         {
 
@@ -62,14 +59,6 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             /**
              * 安全检查 - 是否为空
              */
-            if (empty($query_data)) {
-                return wp_send_json_error(
-                    [
-                        'error' => '请填写需要查询的值',
-                    ],
-                    400
-                );
-            }
             if (empty($query_password)) {
                 return wp_send_json_error(
                     [
@@ -78,6 +67,15 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                     400
                 );
             }
+            if (empty($query_data)) {
+                return wp_send_json_error(
+                    [
+                        'error' => '请填写需要查询的值',
+                    ],
+                    400
+                );
+            }
+
 
             // 验证密码
             $is_valid_password = self::password_verification($query_password);
@@ -93,24 +91,22 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
 
             // 构造 SQL 查询语句
-            $query = $wpdb->prepare("SELECT * FROM " . self::$table_name . " WHERE number = %d OR name = %s", $query_data, $query_data);
+            $prepared_query = $wpdb->prepare("SELECT * FROM " . self::$table_name . " WHERE number = %s OR name = %s", $query_data, $query_data);
 
             // 执行查询
-            $result = $wpdb->get_row($query);
+            $result = $wpdb->get_row($prepared_query);
 
             if ($result) {
                 // 返回查询结果
                 wp_send_json_success([
                     'message' => '查询成功',
                     'data' => $result,
-
                 ]);
             } else {
                 return wp_send_json_error([
                     'error' => '数据不存在，请换个姓名或编号再试试'
                 ], 404);
                 // 数据不存在
-
             }
         }
 
@@ -185,7 +181,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             }
 
             //为了防止硬件UUID重复，这里再加上第一张网卡的MAC地址以防万一
-            $uuid_hardware = $data_obj->uuid->hardware;; //唯一UUID
+            $uuid_hardware = $data_obj->uuid->hardware; //唯一UUID
             $uuid_one_net = $data_obj->uuid->macs[0]; //第一个网口的MAC地址
             $uuid = md5($uuid_hardware . $uuid_one_net); //拼接，进行md5处理，短点更好看
 
@@ -282,7 +278,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $table = self::$table_name;
 
             // 准备 SQL 查询语句
-            $sql = $wpdb->get_results("SELECT * FROM $table WHERE uuid = %s;", $uuid);
+            $sql = $wpdb->prepare("SELECT * FROM $table WHERE uuid = %s", $uuid);
 
             // 执行查询
             $result = $wpdb->get_row($sql, ARRAY_A);
@@ -303,8 +299,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
          * 更新现有数据
          * @param $existingData 查出的数据
          * @param $data 设备JSON字符串数据
-         * @param $data_obj 设备对象数据
-         * @param $uuid 设备唯一标识符
+         * @param $name 用户名
          * @return bool
          */
         public static function check_Data_Change($existingData, $data, $name)
@@ -319,7 +314,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                         'data' => $data,
                     ],
                     ['id' => $existingData['id']],
-                    ['%s', '%s'],
+                    ['%s'],
                     ['%d']
                 );
 
