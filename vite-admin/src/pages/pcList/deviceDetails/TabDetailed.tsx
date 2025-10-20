@@ -9,18 +9,18 @@
 import { Tabs, Empty } from "antd";
 import { Computer } from "@/type/index";
 
-import Cpu from "@/pages/pcList/device-details/detailed/cpu";
-import Memory from "@/pages/pcList/device-details/detailed/memory";
-import Graphics from "@/pages/pcList/device-details/detailed/graphics";
-import Baseboard from "@/pages/pcList/device-details/detailed/baseboard";
-import Monitor from "@/pages/pcList/device-details/detailed/monitor";
-import Disk from "@/pages/pcList/device-details/detailed/disk";
-import Net from "@/pages/pcList/device-details/detailed/net";
-import Bios from "@/pages/pcList/device-details/detailed/bios";
-import Chassis from "@/pages/pcList/device-details/detailed/chassis";
-import Os from "@/pages/pcList/device-details/detailed/os";
-import System from "@/pages/pcList/device-details/detailed/system";
-import Uuid from "@/pages/pcList/device-details/detailed/uuid";
+import Cpu from "@/pages/pcList/deviceDetails/detailed/cpu";
+import Memory from "@/pages/pcList/deviceDetails/detailed/memory";
+import Graphics from "@/pages/pcList/deviceDetails/detailed/graphics";
+import Baseboard from "@/pages/pcList/deviceDetails/detailed/baseboard";
+import Monitor from "@/pages/pcList/deviceDetails/detailed/monitor";
+import Disk from "@/pages/pcList/deviceDetails/detailed/disk";
+import Net from "@/pages/pcList/deviceDetails/detailed/net";
+import Bios from "@/pages/pcList/deviceDetails/detailed/bios";
+import Chassis from "@/pages/pcList/deviceDetails/detailed/chassis";
+import Os from "@/pages/pcList/deviceDetails/detailed/os";
+import System from "@/pages/pcList/deviceDetails/detailed/system";
+import Uuid from "@/pages/pcList/deviceDetails/detailed/uuid";
 
 interface Props {
   data: Computer;

@@ -6,10 +6,10 @@ import { Tabs } from "antd";
 import type { TabsProps } from "antd";
 
 //准备四个菜单模块
-import Info from "@/pages/pcList/device-details/TabInfo";
-import Change from "@/pages/pcList/device-details/TabChange";
-import Seting from "@/pages/pcList/device-details/TabSeting";
-import Detailed from "@/pages/pcList/device-details/TabDetailed";
+import Info from "@/pages/pcList/deviceDetails/TabInfo";
+import Change from "@/pages/pcList/deviceDetails/TabChange";
+import Seting from "@/pages/pcList/deviceDetails/TabSeting";
+import Detailed from "@/pages/pcList/deviceDetails/TabDetailed";
 import ChangeAutoRecord from "@/components/autoChangeRecord";
 
 //公共方法

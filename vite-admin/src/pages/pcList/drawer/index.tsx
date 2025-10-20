@@ -4,7 +4,7 @@
 
 import { Drawer } from "antd";
 import { MysqlDeviceChangeMeat } from "@/type/index";
-import Property from "@/pages/pcList/device-details";
+import Property from "@/pages/pcList/deviceDetails";
 import TabHeader from "@/pages/pcList/drawer/tabHeader";
 import PrintData from "@/components/printData";
 interface Props {
