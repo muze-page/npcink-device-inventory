@@ -93,7 +93,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
 
             // 构造 SQL 查询语句
-            $query = $wpdb->get_results("SELECT * FROM " . self::$table_name . " WHERE number = %d OR name = %s", $query_data, $query_data);
+            $query = $wpdb->prepare("SELECT * FROM " . self::$table_name . " WHERE number = %d OR name = %s", $query_data, $query_data);
 
             // 执行查询
             $result = $wpdb->get_row($query);
