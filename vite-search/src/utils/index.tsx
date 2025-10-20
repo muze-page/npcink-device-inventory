@@ -1,5 +1,5 @@
 //准备初始数据
-import data from "@/utils/demoConfig";
+import data from "@/utils/config";
 import { OptionType } from "@/type/index";
 
 //开发环境状态
