@@ -9,21 +9,14 @@ interface Props {
   name: string; //数据库表名
 }
 
-/**
- * 基础数据：npcink_device_data
- * 变更数据：npcink_device_change
- * 自定义设备数据：npcink_device_style
- * 自动变更数据：npcink_device_auto
- */
-
 //数据库名称翻译
 const translateTableName = (name: string) => {
   switch (name) {
-    case "npcink_device_data":
+    case "npcink_device_pc":
       return "电脑设备数据";
     case "npcink_device_style":
       return "自定义设备数据";
-    case "npcink_device_change":
+    case "npcink_device_manual":
       return "手动变更数据";
     case "npcink_device_auto":
       return "自动变更数据";
@@ -73,8 +66,8 @@ const App: React.FC<Props> = ({ name }) => {
         ),
         onOk() {
           //进行表格名称判断
-          //if (name === jsonContent.name) {
-          if (true) {
+          if (name === jsonContent.name) {
+          //if (true) {
             const jsonString = JSON.stringify(jsonContent); //格式化数据
             importSQLData(name, jsonString); //传递
           } else {

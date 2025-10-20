@@ -14,8 +14,8 @@ export const option = {
 //数据库表名
 const sqlTableNameData = {
   changeAutoData: "npcink_device_auto",
-  changeManualData: "npcink_device_change",
-  pcData: "npcink_device_data",
+  changeManualData: "npcink_device_manual",
+  pcData: "npcink_device_pc",
   styleData: "npcink_device_style",
 };
 
