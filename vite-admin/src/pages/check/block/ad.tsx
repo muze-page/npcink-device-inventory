@@ -21,7 +21,6 @@ const App = () => {
             target="_blank"
             className="text-amber-950"
           >
-            {" "}
             选择专业
           </a>
         </div>
