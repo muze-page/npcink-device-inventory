@@ -45,14 +45,13 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
                 } else {
                     // 返回空数组表示没有找到符合条件的记录
                     wp_send_json_error([
-                        'error' => '暂未查到变更记录',
-                        'data' => [],
-                    ], 204);//强调没有查到内容
+                        'error' => '自动变更记录暂未查到',
+                    ], 404);//强调没有查到内容
                 }
                 return;
             }
 
-            // 查询所有变更记录
+            // 没有提供UUID，则查询所有变更记录
             $results = $wpdb->get_results("SELECT * FROM $table_auto ORDER BY id DESC", ARRAY_A);
 
             if (is_wp_error($results)) {

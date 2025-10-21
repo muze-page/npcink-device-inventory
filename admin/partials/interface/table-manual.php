@@ -161,7 +161,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
                 return wp_send_json_success(['message' => '查询成功', 'data' =>  $object,]);
             } else {
                 // 返回空数组表示没有找到符合条件的记录
-                return wp_send_json_error(['error' => '暂未查到变更记录', 'reason' => $wpdb->last_error,], 404);
+                return wp_send_json_error(['error' => '手动变更记录暂未查到', 'reason' => $wpdb->last_error,], 404);
             }
         }
 
