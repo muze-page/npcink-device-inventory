@@ -141,17 +141,15 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
         public static function search_change_data_callback()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_manual_name;
+            $table_name = $wpdb->prefix . self::$table_manual_name;//手动变更表
 
             //拿到值
             $record_uuid = isset($_POST['record_uuid']) ? sanitize_text_field($_POST['record_uuid']) : null; //字段名
 
-            //检查是否有值
+            //检查是否有record_uuid值
             if (empty($record_uuid)) {
                 return wp_send_json_error(['error' => '缺少参数：record_uuid - 设备唯一编号'], 400);
             }
-
-            //查询
             // 使用预处理语句执行查询
             $object = $wpdb->get_results(
                 $wpdb->prepare("SELECT * FROM $table_name WHERE record_uuid = %s", $record_uuid),
@@ -163,7 +161,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
                 return wp_send_json_success(['message' => '查询成功', 'data' =>  $object,]);
             } else {
                 // 返回空数组表示没有找到符合条件的记录
-                return wp_send_json_error(['error' => '暂未查到变更记录', 'reason' => $wpdb->last_error, 'data' =>  [],], 204);
+                return wp_send_json_error(['error' => '暂未查到变更记录', 'reason' => $wpdb->last_error,], 404);
             }
         }
 

@@ -2,7 +2,7 @@
  * 设备详情 - 变更记录
  */
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { Table, Form, Input, Empty } from "antd";
+import { Table, Form, Input, Empty, message } from "antd";
 import type { InputRef } from "antd";
 import type { FormInstance } from "antd/es/form";
 
@@ -159,6 +159,12 @@ const App: React.FC<Props> = ({ uuid }) => {
 
   // 获取数据并处理
   const getData = async (uuid: string) => {
+    if (!uuid) {
+      setErrorData("设备标识无效");
+      setError(true);
+      return;
+    }
+
     setLoading(true); // 开始加载
     try {
       const response = await searchChangeData(uuid); // 获取数据
@@ -166,7 +172,8 @@ const App: React.FC<Props> = ({ uuid }) => {
       if (response.success) {
         // 如果成功获取数据
         // 添加 key （提升列表性能） 并倒序
-        const addKeyData = response.data.data
+        const data = response.data?.data || [];
+        const addKeyData = data
           .map((obj: ComputerChangeReturn, index: number) => ({
             ...obj,
             key: index + 1,
@@ -177,12 +184,14 @@ const App: React.FC<Props> = ({ uuid }) => {
         setError(false); // 重置错误状态为 false
       } else {
         // 如果获取数据失败
-        setErrorData("获取数据时出错：" + response.data.error); // 设置错误消息
+        const errorMsg = response.data?.error || "获取数据失败";
+        setErrorData("获取数据时出错：" + errorMsg); // 设置错误消息
         setError(true); //展示错误状态下的信息
       }
     } catch (error: any) {
       //请求数据失败
-      setErrorData(error.response.data.error); // 设置错误消息
+      const errorMsg = error.response?.data?.data?.error || "网络请求失败";
+      setErrorData(errorMsg); // 设置错误消息
       setError(true); //展示错误状态下的信息
     } finally {
       setLoading(false); // 结束加载
@@ -195,12 +204,19 @@ const App: React.FC<Props> = ({ uuid }) => {
   }, [uuid]);
 
   //保存
-  const handleSave = (row: ComputerChangeReturn) => {
-    //浅拷贝 创建副本
+  const handleSave = async (row: ComputerChangeReturn) => {
+    // 浅拷贝 创建副本
     const newData = [...dataAxios];
 
     //在newData数组中查找具有与row.id相同的id属性的元素，并返回该元素在数组中的索引位置。
     const index = newData.findIndex((item) => row.id === item.id);
+
+    // 如果找不到对应的记录，直接返回
+    if (index === -1) {
+      message.error("未找到要更新的记录");
+      return;
+    }
+
     const oldData = newData[index]; //修改前的值
 
     //更新数据
@@ -211,31 +227,36 @@ const App: React.FC<Props> = ({ uuid }) => {
 
     setDataAxios(newData); //保存选项
 
-    //console.log(newData);
-    //console.log(index);
-    //console.log(oldData);
-
-    //console.log(row); //当前设置的值
-    //console.log(dataAxios); //服务器传来的值
-    //console.log(changeData); //来自服务器的当前设置的值
     //哪个发生变化就更新那个
+    let hasChanges = false;
     for (let key in oldData) {
       if (oldData[key] !== row[key]) {
-        //console.log(`a2.${key}: `, row[key]);
-        switch (key) {
-          case "user":
-            changeMySqlData(row.id, "user", row.user); //更新姓名
-            break;
-          case "type":
-            changeMySqlData(row.id, "type", row.type); //更新类型
-            break;
-          case "data":
-            changeMySqlData(row.id, "data", row.data); //更新描述
-            break;
-          default:
-            break;
+        hasChanges = true;
+        try {
+          switch (key) {
+            case "user":
+              await changeMySqlData(row.id, "user", row.user); //更新姓名
+              break;
+            case "type":
+              await changeMySqlData(row.id, "type", row.type); //更新类型
+              break;
+            case "data":
+              await changeMySqlData(row.id, "data", row.data); //更新描述
+              break;
+            default:
+              break;
+          }
+        } catch (error) {
+          message.error("保存失败，请重试");
+          // 恢复原数据
+          setDataAxios([...dataAxios]);
+          return;
         }
       }
+    }
+
+    if (hasChanges) {
+      message.success("保存成功");
     }
   };
 
@@ -300,11 +321,11 @@ const App: React.FC<Props> = ({ uuid }) => {
                     columns={columnss as ColumnTypes}
                     dataSource={dataAxios}
                     pagination={pagination}
+                    locale={{ emptyText: "暂无数据" }}
                   />
                 ) : (
                   <Empty description={<span>暂无记录</span>} />
                 )}
-                {/* 没有数据 */}
                 {/* 添加 - 修改记录 */}
                 <TabChangeAdd uuid={uuid} onUpdata={getData} />
               </div>
