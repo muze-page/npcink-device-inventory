@@ -123,7 +123,7 @@ const App: React.FC<Props> = ({ name }) => {
       onOk: () => {
         //进行表格名称判断
         if (name === jsonContent.name) {
-          //return handleImport(); // 返回Promise以便Modal正确处理
+          return handleImport(); // 返回Promise以便Modal正确处理
         } else {
           message.error(
             `文件类型不匹配：需要 ${translateTableName(
@@ -156,7 +156,6 @@ const App: React.FC<Props> = ({ name }) => {
           console.log("导入信息:", result.data.message);
         }
         message.error(errorMsg);
-        // 不再 reject，避免控制台错误
       }
     } catch (error: any) {
       console.error("导入错误:", error);

@@ -374,8 +374,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                 $total_records = is_array($data) ? count($data) : 0;
 
                 return wp_send_json_error([
-                    'error' => '没有可导入的新数据',
-                    'message' => sprintf(
+                    'error' => sprintf(
                         '已检查 %d 条记录，但由于以下原因未导入任何数据：%s',
                         $total_records,
                         $total_records > 0

@@ -50,6 +50,9 @@ data:{
 - npcink_device_data 电脑设备记录表
 - npcink_device_style 自定义设备记录表
 
+## 请求返回值
+返回值中有message的，会被拦截并进行展示
+
 #### 介绍
 
 硬件统计前端模块 WordPress 插件
