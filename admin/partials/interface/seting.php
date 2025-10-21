@@ -245,8 +245,8 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     $uuid = isset($item['uuid']) ? $item['uuid'] : null;
                     $table_name = $wpdb->prefix . self::$table_pc_name;
                     $existingData = $wpdb->get_row(
-                        $wpdb->get_results(
-                            "SELECT * FROM $table_name WHERE uuid = %s;",
+                        $wpdb->prepare(
+                            "SELECT * FROM $table_name WHERE uuid = %s",
                             $uuid
                         ),
                         ARRAY_A
@@ -277,8 +277,8 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                     $uuid = isset($item['uuid']) ? $item['uuid'] : null; //唯一标识符
                     $table_name = $wpdb->prefix . self::$table_style_name;
                     $existingData = $wpdb->get_row(
-                        $wpdb->get_results(
-                            "SELECT * FROM $table_name WHERE uuid = %s;",
+                        $wpdb->prepare(
+                            "SELECT * FROM $table_name WHERE uuid = %s",
                             $uuid
                         ),
                         ARRAY_A
@@ -301,13 +301,21 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             //手动变更数据
             if ($name == self::$table_manual_name) {
                 foreach ($data as $item) {
-                    //是否有重复数据
-                    $time = isset($item['time']) ? $item['time'] : null;
+                    //是否有重复数据 - 使用record_uuid和created_at来检查重复
+                    $record_uuid = isset($item['record_uuid']) ? $item['record_uuid'] : null;
+                    $created_at = isset($item['created_at']) ? $item['created_at'] : null;
+
+                    if (!$record_uuid || !$created_at) {
+                        // 如果必要字段缺失，跳过此条记录
+                        continue;
+                    }
+
                     $table_name = $wpdb->prefix . self::$table_manual_name;
                     $existingData = $wpdb->get_row(
-                        $wpdb->get_results(
-                            "SELECT * FROM $table_name WHERE time = %s;",
-                            $time
+                        $wpdb->prepare(
+                            "SELECT * FROM $table_name WHERE record_uuid = %s AND created_at = %s",
+                            $record_uuid,
+                            $created_at
                         ),
                         ARRAY_A
                     );
@@ -327,13 +335,21 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             //变更自动记录数据
             if ($name == self::$table_auto_name) {
                 foreach ($data as $item) {
-                    //是否有重复数据
-                    $time = isset($item['time']) ? $item['time'] : null;
+                    //是否有重复数据 - 使用record_uuid和changed_at来检查重复
+                    $record_uuid = isset($item['record_uuid']) ? $item['record_uuid'] : null;
+                    $changed_at = isset($item['changed_at']) ? $item['changed_at'] : null;
+
+                    if (!$record_uuid || !$changed_at) {
+                        // 如果必要字段缺失，跳过此条记录
+                        continue;
+                    }
+
                     $table_name = $wpdb->prefix . self::$table_auto_name;
                     $existingData = $wpdb->get_row(
-                        $wpdb->get_results(
-                            "SELECT * FROM $table_name WHERE time = %s;",
-                            $time
+                        $wpdb->prepare(
+                            "SELECT * FROM $table_name WHERE record_uuid = %s AND changed_at = %s",
+                            $record_uuid,
+                            $changed_at
                         ),
                         ARRAY_A
                     );
@@ -354,12 +370,21 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
 
             //检查是否有可更新的数据
             if (empty($insert_data)) {
-                return wp_send_json_error([
-                    'error' => '没有可更新的数据',
-                    //'name' => $name,
-                    //'data' => $data,
+                // 获取原始数据总数
+                $total_records = is_array($data) ? count($data) : 0;
 
-                ], 500);
+                return wp_send_json_error([
+                    'error' => '没有可导入的新数据',
+                    'message' => sprintf(
+                        '已检查 %d 条记录，但由于以下原因未导入任何数据：%s',
+                        $total_records,
+                        $total_records > 0
+                            ? '所有记录均已存在于数据库中'
+                            : '导入文件中没有有效数据'
+                    ),
+                    'total_records' => $total_records,
+                    'imported_records' => 0
+                ], 200); // 使用200状态码，因为这不是一个错误，而是一个正常的业务逻辑结果
             }
 
             //准备数据库表名
@@ -371,14 +396,17 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             }
 
             // 检查插入结果
-            if ($result) {
+            if ($result !== false) {
+                $imported_count = count($insert_data);
                 return wp_send_json_success([
-                    'message' => '成功导入 - ' . count($insert_data) . '套设备信息,刷新页面后查看',
+                    'message' => sprintf('成功导入 %d 条记录，刷新页面后查看', $imported_count),
+                    'imported_records' => $imported_count,
+                    'total_records' => is_array($data) ? count($data) : 0
                 ]);
             } else {
                 $response = array(
-                    'error' => '导入错误：停用插件，再重新启用试试',
-                    'data' => ($insert_data[1]),
+                    'error' => '数据导入失败',
+                    'message' => '导入过程中发生数据库错误，请检查数据格式或联系管理员',
                     'reason' => $wpdb->last_error,
                 );
                 return wp_send_json_error($response, 500);

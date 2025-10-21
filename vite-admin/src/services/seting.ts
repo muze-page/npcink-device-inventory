@@ -2,7 +2,7 @@
  * 设置
  */
 import { Ajaxurl } from "@/utils/index";
-import { MysqlChange, MysqlDevice } from "@/type/index";
+import {   axiosType } from "@/type/index";
 import { instance, addParamIfDefined } from "@/services/axiosConfig";
 
 //成功响应传出的接口数据
@@ -25,17 +25,14 @@ export const saveSQLData = async (optionObj: object) => {
  * @returns
  */
 
-export const exportSQLData = async (name: string) => {
+export const exportSQLData = async (name: string): Promise<axiosType> => {
   const params = new URLSearchParams();
   params.append("action", "export_data_callback");
   addParamIfDefined(params, "name", name);
+
   try {
-    const response = await instance.post(Ajaxurl, params);
-    if (response.data.success) {
-      return response.data.data.data as MysqlDevice[]; //导出设备信息
-    } else {
-      return;
-    }
+    const response = await instance.post<axiosType>(Ajaxurl, params);
+    return response.data;
   } catch (error: any) {
     // 将错误信息保存到全局状态中
     console.log("传出数据时出错：" + error.message);
@@ -49,17 +46,19 @@ export const exportSQLData = async (name: string) => {
  * @param data 导入数据
  * @returns
  */
-export const importSQLData = async (name: string, data: string) => {
+export const importSQLData = async (
+  name: string,
+  data: string
+): Promise<axiosType> => {
   const params = new URLSearchParams();
   params.append("action", "import_data_callback");
   addParamIfDefined(params, "name", name);
   addParamIfDefined(params, "data", data);
 
   try {
-    await instance.post<MysqlChange>(Ajaxurl, params);
-    //console.log(response.data);
-    //TODO:是覆盖式导入，还是只导入目前不存在的数据
-    //只导入目前不存在的数据
+    const response = await instance.post<axiosType>(Ajaxurl, params);
+    // 只导入目前不存在的数据
+    return response.data;
   } catch (error: any) {
     // 将错误信息保存到全局状态中
     console.log("保存数据时出错：" + error.message);
@@ -84,35 +83,3 @@ export const addPublicSearchPage = async (route: string) => {
   } finally {
   }
 };
-
-/**
- * 保存选项
- */
-//export const saveSQLData = async (optionObj: object) => {
-//  const params = new URLSearchParams();
-//  params.append("action", "save_object_option");
-//  params.append("object_data", JSON.stringify(optionObj));
-//  try {
-//    const response = await axios.post(Ajaxurl, params);
-//    if (response.status === 200) {
-//      if (response.data.success || response.data.success === false) {
-//        message.error(response.data.data.message);
-//      } else {
-//        message.success(response.data.data.message);
-//      }
-//      return response.data;
-//    } else {
-//      message.error("保存设置选项时出错：服务器返回状态码 " + response.status);
-//      throw new Error(
-//        "保存设置选项时出错：服务器返回状态码 " + response.status
-//      );
-//    }
-//  } catch (error: any) {
-//    // 处理错误情况
-//    console.error("保存设置选项时出错：" + error);
-//    console.log(error);
-//    throw error; // 重新抛出错误，以便调用者可以进一步处理
-//  } finally {
-//    //console.log(false);
-//  }
-//};
