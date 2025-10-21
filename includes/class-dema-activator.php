@@ -58,12 +58,13 @@ class Dema_Activator extends DEMA_Admin_Interface
 		global $wpdb;
 
 		// 定义表名
-		$table_name = $wpdb->prefix . self::$table_pc_name;
+		$pc_table_name = $wpdb->prefix . self::$table_pc_name; //电脑设备数据表
+		$auto_table_name = $wpdb->prefix . self::$table_auto_name; //自动记录表
 
 		// 检查是否已存在同名表
-		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+		if ($wpdb->get_var("SHOW TABLES LIKE '$pc_table_name'") != $pc_table_name) {
 			// 创建表结构
-			$sql = "CREATE TABLE $table_name (
+			$sql = "CREATE TABLE $pc_table_name (
             id INT NOT NULL AUTO_INCREMENT,
             name VARCHAR(100) NOT NULL COMMENT '姓名',
             number VARCHAR(50) NOT NULL COMMENT '设备编号',
@@ -91,61 +92,70 @@ class Dema_Activator extends DEMA_Admin_Interface
 			dbDelta($sql);
 		}
 
-		// 创建UPDATE触发器，当name、state、number、depreciation、ip、purchase、department、updated_at字段发生变化时记录到自动记录表
-		// 先删除已存在的触发器
-		//$wpdb->query("DROP TRIGGER IF EXISTS after_update_device_data");
-		$auto_table_name = $wpdb->prefix . self::$table_auto_name;
-		// 创建新的UPDATE触发器
-		$update_trigger_sql = "
-		CREATE TRIGGER after_update_device_data
-		AFTER UPDATE ON `$table_name`
-		FOR EACH ROW
-		BEGIN
-			IF OLD.name != NEW.name THEN
-				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('pc', NEW.uuid, 'name', OLD.name, NEW.name);
-			END IF;
-			
-			IF OLD.state != NEW.state THEN
-				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('pc', NEW.uuid, 'state', OLD.state, NEW.state);
-			END IF;
-			
-			IF OLD.number != NEW.number THEN
-				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('pc', NEW.uuid, 'number', OLD.number, NEW.number);
-			END IF;
-			
-			IF OLD.department != NEW.department THEN
-				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('pc', NEW.uuid, 'department', OLD.department, NEW.department);
-			END IF;
-			
-			IF OLD.ip != NEW.ip THEN
-				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('pc', NEW.uuid, 'ip', OLD.ip, NEW.ip);
-			END IF;
-			
-			IF OLD.purchase != NEW.purchase THEN
-				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('pc', NEW.uuid, 'purchase', OLD.purchase, NEW.purchase);
-			END IF;
-			
-			IF OLD.depreciation != NEW.depreciation THEN
-				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('pc', NEW.uuid, 'depreciation', OLD.depreciation, NEW.depreciation);
-			END IF;
+		// 检查触发器是否已存在
+		$trigger_exists = $wpdb->get_var(
+			"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TRIGGERS 
+			 WHERE TRIGGER_NAME = 'after_update_device_data' 
+			 AND TRIGGER_SCHEMA = DATABASE()"
+		);
 
-            IF OLD.updated_at != NEW.updated_at THEN
-				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('pc', NEW.uuid, 'updated_at', OLD.updated_at, NEW.updated_at);
-			END IF;
-			
-		END;
-		";
+		// 如果触发器不存在，则创建它
+		if ($trigger_exists == 0) {
+			// 创建UPDATE触发器，当name、state、number、depreciation、ip、purchase、department、updated_at字段发生变化时记录到自动记录表
+			$auto_table_name = $wpdb->prefix . self::$table_auto_name;
 
-		// 执行触发器 SQL
-		$wpdb->query($update_trigger_sql);
+			// 创建新的UPDATE触发器
+			$update_trigger_sql = "
+			CREATE TRIGGER after_update_device_data
+			AFTER UPDATE ON `$pc_table_name`
+			FOR EACH ROW
+			BEGIN
+				IF OLD.name != NEW.name THEN
+					INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+					VALUES ('pc', NEW.uuid, 'name', OLD.name, NEW.name);
+				END IF;
+				
+				IF OLD.state != NEW.state THEN
+					INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+					VALUES ('pc', NEW.uuid, 'state', OLD.state, NEW.state);
+				END IF;
+				
+				IF OLD.number != NEW.number THEN
+					INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+					VALUES ('pc', NEW.uuid, 'number', OLD.number, NEW.number);
+				END IF;
+				
+				IF OLD.department != NEW.department THEN
+					INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+					VALUES ('pc', NEW.uuid, 'department', OLD.department, NEW.department);
+				END IF;
+				
+				IF OLD.ip != NEW.ip THEN
+					INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+					VALUES ('pc', NEW.uuid, 'ip', OLD.ip, NEW.ip);
+				END IF;
+				
+				IF OLD.purchase != NEW.purchase THEN
+					INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+					VALUES ('pc', NEW.uuid, 'purchase', OLD.purchase, NEW.purchase);
+				END IF;
+				
+				IF OLD.depreciation != NEW.depreciation THEN
+					INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+					VALUES ('pc', NEW.uuid, 'depreciation', OLD.depreciation, NEW.depreciation);
+				END IF;
+
+				IF OLD.updated_at != NEW.updated_at THEN
+					INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+					VALUES ('pc', NEW.uuid, 'updated_at', OLD.updated_at, NEW.updated_at);
+				END IF;
+				
+			END;
+			";
+
+			// 执行触发器 SQL
+			$wpdb->query($update_trigger_sql);
+		}
 	}
 
 	//创建自定义类型设备管理表
@@ -155,12 +165,13 @@ class Dema_Activator extends DEMA_Admin_Interface
 		global $wpdb;
 
 		// 定义表名
-		$table_name = $wpdb->prefix . self::$table_style_name;
+		$style_table_name = $wpdb->prefix . self::$table_style_name; //自定义类型设备管理表
+		$auto_table_name = $wpdb->prefix . self::$table_auto_name; //自动记录表
 
 		// 检查是否已存在同名表
-		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+		if ($wpdb->get_var("SHOW TABLES LIKE '$style_table_name'") != $style_table_name) {
 			// 创建表结构
-			$sql = "CREATE TABLE $table_name (
+			$sql = "CREATE TABLE $style_table_name (
             id INT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
             name VARCHAR(64) NOT NULL COMMENT '姓名',
 			number VARCHAR(50) NOT NULL COMMENT '设备编号',
@@ -183,7 +194,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 			// 添加触发器
 			$trigger_sql = "
             CREATE TRIGGER before_insert_style_device
-            BEFORE INSERT ON `$table_name`
+            BEFORE INSERT ON `$style_table_name`
             FOR EACH ROW
             BEGIN
                 IF NEW.uuid IS NULL OR NEW.uuid = '' THEN
@@ -195,40 +206,46 @@ class Dema_Activator extends DEMA_Admin_Interface
 			// 执行触发器 SQL
 			$wpdb->query($trigger_sql);
 		}
-		// 创建UPDATE触发器，当name、number、purpose或state字段发生变化时记录到自动记录表
-		$auto_table_name = $wpdb->prefix . self::$table_auto_name;
-		//$auto_table_value = self::$table_auto_name;
-		// 先删除已存在的触发器
-		//$wpdb->query("DROP TRIGGER IF EXISTS after_update_style_device");
-		$update_trigger_sql = "
-		CREATE TRIGGER after_update_style_device
-		AFTER UPDATE ON `$table_name`
-		FOR EACH ROW
-		BEGIN
-			IF OLD.name != NEW.name THEN
-				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('style', OLD.uuid, 'name', OLD.name, NEW.name);
-			END IF;
+		// 检查自定义设备表的触发器是否已存在
+		$style_trigger_exists = $wpdb->get_var(
+			"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TRIGGERS 
+			 WHERE TRIGGER_NAME = 'after_update_style_device' 
+			 AND TRIGGER_SCHEMA = DATABASE()"
+		);
 
-			IF OLD.number != NEW.number THEN
-				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('style', OLD.uuid, 'number', OLD.number, NEW.number);
-			END IF;
-			
-			IF OLD.purpose != NEW.purpose THEN
-				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('style', OLD.uuid, 'purpose', OLD.purpose, NEW.purpose);
-			END IF;
-			
-			IF OLD.state != NEW.state THEN
-				INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-				VALUES ('style', OLD.uuid, 'state', OLD.state, NEW.state);
-			END IF;
-		END;
-		";
+		// 如果触发器不存在，则创建它
+		if ($style_trigger_exists == 0) {
+			// 创建自定义设备表的UPDATE触发器
+			$update_style_trigger_sql = "
+			CREATE TRIGGER after_update_style_device
+			AFTER UPDATE ON `$style_table_name`
+			FOR EACH ROW
+			BEGIN
+				IF OLD.name != NEW.name THEN
+					INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+					VALUES ('style', NEW.uuid, 'name', OLD.name, NEW.name);
+				END IF;
 
-		// 执行触发器 SQL
-		$wpdb->query($update_trigger_sql);
+				IF OLD.number != NEW.number THEN
+					INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+					VALUES ('style', NEW.uuid, 'number', OLD.number, NEW.number);
+				END IF;
+				
+				IF OLD.purpose != NEW.purpose THEN
+					INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+					VALUES ('style', NEW.uuid, 'purpose', OLD.purpose, NEW.purpose);
+				END IF;
+				
+				IF OLD.state != NEW.state THEN
+					INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
+					VALUES ('style', NEW.uuid, 'state', OLD.state, NEW.state);
+				END IF;
+			END;
+			";
+
+			// 执行触发器 SQL
+			$wpdb->query($update_style_trigger_sql);
+		}
 	}
 
 	/**
