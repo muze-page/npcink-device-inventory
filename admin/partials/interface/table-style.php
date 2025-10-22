@@ -99,6 +99,11 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
             //json转对象
             $json_data = json_decode(stripslashes($data), true);
 
+            // 检查JSON解析是否成功
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return wp_send_json_error(['error' => 'JSON解析失败: ' . json_last_error_msg()], 400);
+            }
+
             //对象转JSON
             $json = json_encode($json_data, JSON_UNESCAPED_UNICODE);
 
@@ -109,9 +114,9 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
                     // 'uuid' => $uuid,
                     'name' => $name,
                     'number' => $number,
+                    'state' => $state,
                     'category' => $category,
                     'purpose' => $purpose,
-                    'state' => $state,
                     'data' =>  $json
                 ),
                 array(
@@ -131,9 +136,10 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
                 $inserted_id = $wpdb->insert_id;
 
                 // 从数据库中查询刚插入的记录，获取自动生成的UUID和created_at
-                $inserted_record = $wpdb->get_row(
-                    $wpdb->get_results("SELECT uuid, created_at FROM $table_name WHERE id = %d", $inserted_id)
-                );
+                $inserted_record = $wpdb->get_row($wpdb->prepare(
+                    "SELECT uuid, created_at FROM $table_name WHERE id = %d",
+                    $inserted_id
+                ));
 
                 $inserted_uuid = $inserted_record->uuid;
                 $inserted_created_at = $inserted_record->created_at;
@@ -176,29 +182,43 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
             }
 
             //检查数据库是否存在传来的UUID
-            $exists = $wpdb->get_var($wpdb->get_results("SELECT COUNT(*) FROM $table_name WHERE uuid = %s", $uuid));
+            $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE uuid = %s", $uuid));
             if ($exists == 0) {
                 return wp_send_json_error(['error' => '指定的UUID不存在'], 404);
             }
 
-            // 执行删除操作
-            $result = $wpdb->delete(
-                $table_name,
-                array('uuid' => $uuid), // WHERE 条件
-                array('%s') // uuid 类型
-            );
+            // 开始事务以确保数据一致性
+            $wpdb->query('START TRANSACTION');
 
-            // 同时从$table_auto_name表中删除record_uuid为相同UUID的记录
-            $result_auto = $wpdb->delete(
-                $table_auto,
-                array('record_uuid' => $uuid),
-                array('%s')
-            );
+            try {
+                // 执行删除操作
+                $result = $wpdb->delete(
+                    $table_name,
+                    array('uuid' => $uuid), // WHERE 条件
+                    array('%s') // uuid 类型
+                );
 
-            if ($result !== false && $result_auto !== false) {
-                return wp_send_json_success(['message' => '删除成功']);
-            } else {
-                return wp_send_json_error(['error' => '删除失败', 'reason' => $wpdb->last_error], 500);
+                // 同时从$table_auto_name表中删除record_uuid为相同UUID的记录
+                $result_auto = $wpdb->delete(
+                    $table_auto,
+                    array('record_uuid' => $uuid),
+                    array('%s')
+                );
+
+                if ($result !== false && $result_auto !== false) {
+                    // 提交事务
+                    $wpdb->query('COMMIT');
+                    return wp_send_json_success(['message' => '删除成功']);
+                } else {
+                    throw new Exception('删除操作失败');
+                }
+            } catch (Exception $e) {
+                // 回滚事务
+                $wpdb->query('ROLLBACK');
+                return wp_send_json_error([
+                    'error' => '删除失败',
+                    'reason' => $wpdb->last_error ?: $e->getMessage()
+                ], 500);
             }
 
             wp_die();
