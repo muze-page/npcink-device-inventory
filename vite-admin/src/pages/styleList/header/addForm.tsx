@@ -44,7 +44,7 @@ const onFinishFailed: FormProps<FormType>["onFinishFailed"] = (errorInfo) => {
 //准备选项默认值
 const defaultValue: FormType = {
   name: "",
-  number: "9527", //编号
+  number: "", //编号
   category: "", //分类设备类别
   purpose: "",
   state: "apply", //设备状态

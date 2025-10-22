@@ -85,7 +85,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
             }
 
             // 检查设备是否存在
-            $device_exists = $wpdb->get_var($wpdb->get_results(
+            $device_exists = $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(*) FROM $table_name WHERE uuid = %s",
                 $uuid
             ));
