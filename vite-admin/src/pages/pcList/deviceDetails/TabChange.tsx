@@ -256,7 +256,8 @@ const App: React.FC<Props> = ({ uuid }) => {
     }
 
     if (hasChanges) {
-      message.success("保存成功");
+      //提示成功信息
+      //message.success("保存成功");
     }
   };
 

@@ -26,7 +26,7 @@ import { StyleDeviceData } from "@/type/index";
 import SelectInput from "@/components/selectInput";
 
 //准备输入框
-const { TextArea } = Input;
+//const { TextArea } = Input;
 
 //当前表格的数据类型
 type FormType = StyleDeviceData & {
@@ -158,78 +158,119 @@ const App = ({ form, handleOk }: AddFormProps) => {
       onFinishFailed={onFinishFailed}
       autoComplete="off"
     >
-      <Form.Item<FormType>
-        label="店铺名称"
-        name="shop_name"
-        rules={[{ required: true, message: "请填写此信息" }]}
-      >
-        <Input allowClear />
-      </Form.Item>
-      <Form.Item<FormType>
-        label="订单单号"
-        name="order"
-        rules={[{ required: true, message: "请填写此信息" }]}
-      >
-        <Input allowClear />
-      </Form.Item>
+      <h5 className="text-sm">设备信息</h5>
       <Form.Item<FormType>
         label="设备名称："
         name="title"
-        rules={[{ required: true, message: "请填写此信息" }]}
+        rules={[{ required: true, message: "请填写设备名称" }]}
       >
         <Input allowClear />
       </Form.Item>
-
       <Form.Item<FormType>
         label="设备用途："
         name="purpose"
-        rules={[{ required: true, message: "请填写此信息" }]}
+        rules={[{ required: true, message: "请填写用途" }]}
       >
         <Input allowClear />
       </Form.Item>
       <Form.Item<FormType>
-        label="购买链接："
-        name="link"
-        rules={[{ required: true, message: "请填写此信息" }]}
+        label="分类"
+        name="category"
+        rules={[{ required: true, message: "请填写设备分类" }]}
       >
-        <TextArea rows={2} allowClear />
+        <SelectInput
+          options={styleCategoryOption}
+          defaultValue=""
+          onChange={(value) => form?.setFieldsValue({ category: value })}
+        />
       </Form.Item>
       <Row>
         <Col span={8}>
           <Form.Item<FormType>
             label="数量"
             name="numbers"
-            rules={[{ required: true, message: "请填写此信息" }]}
+            rules={[{ required: true, message: "请填写采购数量" }]}
           >
             <InputNumber addonAfter="个" style={{ width: 122 }} />
           </Form.Item>
         </Col>
+        {/*TODO:添加验证，不能为负数和0元*/}
         <Col span={8}>
           <Form.Item<FormType>
-            label="价格"
+            label="总计"
             name="total"
-            rules={[{ required: true, message: "请填写此信息" }]}
+            rules={[{ required: true, message: "请填写采购金额" }]}
           >
             <InputNumber addonAfter="¥" style={{ width: 122 }} />
           </Form.Item>
         </Col>
         <Col span={8}>
           <Form.Item<FormType>
-            label="时间"
-            name="order_time"
-            rules={[{ required: true, message: "请填写此信息" }]}
+            label="状态："
+            name="state"
+            rules={[{ required: true, message: "请填写设备状态" }]}
           >
-            <DatePicker />
+            <Select options={device_status} style={{ width: 122 }} />
           </Form.Item>
         </Col>
       </Row>
 
+      <h5 className="text-sm">采购信息</h5>
+
+      <Form.Item<FormType>
+        label="采购"
+        name="purchaser"
+        rules={[{ required: true, message: "请填写采购人信息" }]}
+      >
+        <Input allowClear placeholder="负责购买此设备的人" />
+      </Form.Item>
+
+      <Form.Item<FormType>
+        label="编号"
+        name="number"
+        rules={[{ required: true, message: "请填写设备编号" }]}
+        style={{ width: "100%" }}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item<FormType>
+        label="使用"
+        name="name"
+        rules={[{ required: true, message: "请填写使用人信息" }]}
+      >
+        <Input allowClear placeholder="人员，部门或位置" />
+      </Form.Item>
+
+      <h5 className="text-sm">订单信息</h5>
+
+      <Form.Item<FormType>
+        label="店铺名称"
+        name="shop_name"
+        rules={[{ required: true, message: "请填写店铺名称" }]}
+      >
+        <Input allowClear />
+      </Form.Item>
+      <Form.Item<FormType>
+        label="商品链接："
+        name="link"
+        rules={[{ required: true, message: "请填写商品链接" }]}
+      >
+        <Input allowClear />
+      </Form.Item>
+
+      <Form.Item<FormType>
+        label="订单单号"
+        name="order"
+        rules={[{ required: true, message: "请填写订单单号" }]}
+      >
+        <Input allowClear />
+      </Form.Item>
       <Row>
         <Col span={8}>
           <Form.Item<FormType>
-            label="采购"
+            label="平台"
             name="platform"
-            rules={[{ required: true, message: "请填写此信息" }]}
+            rules={[{ required: true, message: "请选择采购平台" }]}
           >
             <Select options={stylePlatform} style={{ width: 122 }} />
           </Form.Item>
@@ -238,68 +279,21 @@ const App = ({ form, handleOk }: AddFormProps) => {
           <Form.Item<FormType>
             label="支付"
             name="pay_method"
-            rules={[{ required: true, message: "请填写此信息" }]}
+            rules={[{ required: true, message: "请选择支付方式" }]}
           >
             <Select options={stylePayType} style={{ width: 122 }} />
           </Form.Item>
         </Col>
         <Col span={8}>
           <Form.Item<FormType>
-            label="状态："
-            name="state"
-            rules={[{ required: true, message: "请填写此信息" }]}
+            label="时间"
+            name="order_time"
+            rules={[{ required: true, message: "请选择购买时间" }]}
           >
-            <Select options={device_status} style={{ width: 122 }} />
+            <DatePicker />
           </Form.Item>
         </Col>
       </Row>
-
-      <Row>
-        <Col span={12}>
-          <Form.Item<FormType>
-            label="使用"
-            name="name"
-            rules={[{ required: true, message: "请填写此信息" }]}
-          >
-            <Input allowClear placeholder="人员，部门或位置" />
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item<FormType>
-            label="采购"
-            name="purchaser"
-            rules={[{ required: true, message: "请填写此信息" }]}
-          >
-            <Input allowClear placeholder="负责购买此设备的人" />
-          </Form.Item>
-        </Col>
-      </Row>
-      <Row>
-        <Col span={12}>
-          <Form.Item<FormType>
-            label="编号"
-            name="number"
-            rules={[{ required: true, message: "请填写此信息" }]}
-            style={{ width: "100%" }}
-          >
-            <Input />
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item<FormType>
-            label="分类"
-            name="category"
-            rules={[{ required: true, message: "请填写此信息" }]}
-          >
-            <SelectInput
-              options={styleCategoryOption}
-              defaultValue=""
-              onChange={(value) => form?.setFieldsValue({ category: value })}
-            />
-          </Form.Item>
-        </Col>
-      </Row>
-
       <Form.Item>
         <Button type="primary" htmlType="submit">
           提交
