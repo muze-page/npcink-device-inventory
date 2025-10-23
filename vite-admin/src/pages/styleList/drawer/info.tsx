@@ -8,7 +8,12 @@ import { StyleDevice } from "@/type/index";
 //跨组件提供方法
 import { StyleContext } from "@/context/StyleContext";
 
-import { formatDate, findBValue, formatNumber,statusLabel } from "@/utils/tool";
+import {
+  formatDate,
+  findBValue,
+  formatNumber,
+  statusLabel,
+} from "@/utils/tool";
 //导入自定义设备的采购和支付方式列表
 import { stylePlatform, stylePayType } from "@/utils/replace";
 interface Props {
@@ -38,10 +43,49 @@ const App: React.FC<Props> = ({ data }) => {
         }
         style={{ width: "100%" }}
       >
+        设备信息：
+        <p>
+          <b>用途：</b>
+          {data.purpose}
+        </p>
+        <p>
+          <b>采购数量：</b>
+          {formatNumber(deviceData.numbers)}
+        </p>
         <p>
           <b>采购总价：</b>
           {formatNumber(deviceData.total)} 元
         </p>
+        <p>
+          <b>当前状态：</b>
+          {statusLabel(data.state)}
+        </p>
+        <p>
+          <b>分类：</b>
+          {data.category}
+        </p>
+        采购信息：
+        <p>
+          <b>采购人员：</b>
+          {isName ? (
+            deviceData.purchaser
+          ) : (
+            <Skeleton.Input active={true} size={"small"} />
+          )}
+        </p>
+        <p>
+          <b>设备编号：</b>
+          {isName ? (
+            data.number
+          ) : (
+            <Skeleton.Input active={true} size={"small"} />
+          )}
+        </p>
+        <p>
+          <b>使用人员：</b>
+          {isName ? data.name : <Skeleton.Input active={true} size={"small"} />}
+        </p>
+        订单信息：
         <p>
           <b>采购单号：</b>
           {isName ? (
@@ -55,37 +99,12 @@ const App: React.FC<Props> = ({ data }) => {
           {formatDate(deviceData.order_time)}
         </p>
         <p>
-          <b>支付方式：</b>
-          {payType}
-        </p>
-
-        <p>
           <b>采购平台：</b>
           {platfromType}
         </p>
         <p>
-          <b>采购数量：</b>
-          {formatNumber(deviceData.numbers)}
-        </p>
-        <p>
-          <b>采购人员：</b>
-          {isName ? (
-            deviceData.purchaser
-          ) : (
-            <Skeleton.Input active={true} size={"small"} />
-          )}
-        </p>
-        <p>
-          <b>使用方式：</b>
-          {isName ? data.name : <Skeleton.Input active={true} size={"small"} />}
-        </p>
-        <p>
-          <b>当前状态：</b>
-          {statusLabel(data.state)}
-        </p>
-        <p>
-          <b>使用用途：</b>
-          {data.purpose}
+          <b>支付方式：</b>
+          {payType}
         </p>
       </Card>
     </>
