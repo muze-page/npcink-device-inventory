@@ -12,7 +12,7 @@ import { StyleContext } from "@/context/StyleContext";
 import { StyleDevice } from "@/type/index";
 
 //准备采购平台类型
-import { formatDate } from "@/utils/tool";
+import { formatDate, formatNumber } from "@/utils/tool";
 
 //准备采购平台列表和支付平台列表
 //import { platformArray, payArray } from "@/utils/replace";
@@ -115,7 +115,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           {/*设备价格*/}
           <p className="mt-2">
             <b>价格：</b>
-            {data.data.total}
+            {formatNumber(data.data.total)} 元
           </p>
           {/*状态*/}
           <p className="mt-2 w-full truncate">
@@ -125,7 +125,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
 
           {/*时间*/}
           <p className="grid gap-y-1 items-center  mt-2">
-            <Tooltip title={"设备采购时间：" + formatDate(data.created_at)}>
+            <Tooltip title={"设备记录时间：" + formatDate(data.created_at)}>
               <span>
                 <b>时间：</b> {formatDate(data.created_at)}
               </span>

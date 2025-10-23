@@ -33,6 +33,16 @@ export const formatDate = (date: Dayjs) => {
   return formattedTime;
 };
 
+/**
+ * 将数字格式化为带千分位分隔符的形式
+ * 可以处理 undefined 或 null 值
+ * 类型安全，接受 number | undefined 并返回字符串
+ */
+export const formatNumber = (num: number | undefined): string => {
+  if (num === undefined || num === null) return "0";
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};
+
 //准备设备状态
 type DeviceStatus = "apply" | "idie" | "fault" | "scrap" | "repair";
 export const statusLabel = (value: DeviceStatus) => {

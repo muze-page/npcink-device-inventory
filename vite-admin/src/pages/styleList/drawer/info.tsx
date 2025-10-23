@@ -8,7 +8,7 @@ import { StyleDeviceData } from "@/type/index";
 //跨组件提供方法
 import { StyleContext } from "@/context/StyleContext";
 
-import { formatDate, findBValue } from "@/utils/tool";
+import { formatDate, findBValue, formatNumber } from "@/utils/tool";
 //导入自定义设备的采购和支付方式列表
 import { stylePlatform, stylePayType } from "@/utils/replace";
 interface Props {
@@ -39,7 +39,7 @@ const App: React.FC<Props> = ({ deviceData }) => {
       >
         <p>
           <b>采购总价：</b>
-          {deviceData.total} 元
+          {formatNumber(deviceData.total)} 元
         </p>
         <p>
           <b>采购单号：</b>
@@ -64,7 +64,7 @@ const App: React.FC<Props> = ({ deviceData }) => {
         </p>
         <p>
           <b>采购数量：</b>
-          {deviceData.numbers}
+          {formatNumber(deviceData.numbers)}
         </p>
         <p>
           <b>采购人员：</b>
