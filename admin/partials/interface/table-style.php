@@ -38,7 +38,8 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
 
             // 检查查询是否成功
             if ($wpdb->last_error) {
-                return wp_send_json_error(['error' => $wpdb->last_error], 500);
+                wp_send_json_error(['error' => $wpdb->last_error], 500);
+                wp_die();
             }
 
             // 整理成键值对形式，value和label都是相同的值
@@ -52,6 +53,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
             wp_send_json_success(array_values($result));
             wp_die();
         }
+
         /**
          * 增- 添加自定义设备数据接口
          */
@@ -61,17 +63,15 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
             $table_name = $wpdb->prefix . self::$table_style_name;
 
             // 获取前端传递的参数并进行输入验证，如果有值，肯定是字符串类型
-            // $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //生成的uuid
             $name = isset($_POST['name']) ? sanitize_text_field($_POST['name']) : null; //使用人
             $number = isset($_POST['number']) ? sanitize_text_field($_POST['number']) : null; //编号
             $category = isset($_POST['category']) ? sanitize_text_field($_POST['category']) : null; //设备分类
             $purpose = isset($_POST['purpose']) ? sanitize_text_field($_POST['purpose']) : null; //设备用途
             $state = isset($_POST['state']) ? sanitize_text_field($_POST['state']) : null; //设备状态
-            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : null; //设备信息
-
+            $data = isset($_POST['data']) ? stripslashes($_POST['data']) : null; //设备信息
 
             //是否缺少参数
-            $variables = compact('name', 'number', 'category', 'purpose', 'state',  'data');
+            $variables = compact('name', 'number', 'category', 'purpose', 'state', 'data');
 
             // 检查是否有参数为 null
             $null_param = array_search(null, $variables, true);
@@ -79,7 +79,6 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
             // 如果有参数为 null，则返回相应的错误消息
             if ($null_param !== false) {
                 $param_names = [
-                    //'uuid' => 'uuid - 设备唯一编号',
                     'name' => 'name - 使用人姓名',
                     'number' => 'number - 设备编号',
                     'category' => 'category - 设备分类',
@@ -87,40 +86,40 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
                     'state' => 'state - 设备状态',
                     'data' => 'data - 设备数据'
                 ];
-                return wp_send_json_error(['error' => '缺少参数：' . $param_names[$null_param]], 400);
+                wp_send_json_error(['error' => '缺少参数：' . $param_names[$null_param]], 400);
+                wp_die();
             }
 
             //防止空数据
             if (empty($data) || !is_string($data)) {
-                return wp_send_json_error(['error' => 'data 参数为空或不是字符串'], 400);
+                wp_send_json_error(['error' => 'data 参数为空或不是字符串'], 400);
+                wp_die();
             }
 
-            //TODO:为啥不能直接用json,非要转换一次
-            //json转对象
-            $json_data = json_decode(stripslashes($data), true);
+            // 解析并重新编码JSON数据
+            $json_data = json_decode($data, true);
 
             // 检查JSON解析是否成功
             if (json_last_error() !== JSON_ERROR_NONE) {
-                return wp_send_json_error(['error' => 'JSON解析失败: ' . json_last_error_msg()], 400);
+                wp_send_json_error(['error' => 'JSON解析失败: ' . json_last_error_msg()], 400);
+                wp_die();
             }
 
-            //对象转JSON
+            // 对象转JSON
             $json = json_encode($json_data, JSON_UNESCAPED_UNICODE);
 
             // 使用预处理语句插入数据
             $result = $wpdb->insert(
                 $table_name,
                 array(
-                    // 'uuid' => $uuid,
                     'name' => $name,
                     'number' => $number,
                     'state' => $state,
                     'category' => $category,
                     'purpose' => $purpose,
-                    'data' =>  $json
+                    'data' => $json
                 ),
                 array(
-                    //'%s', // uuid
                     '%s', // name
                     '%s', // number
                     '%s', // category
@@ -141,26 +140,33 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
                     $inserted_id
                 ));
 
+                // 检查是否成功获取记录
+                if ($inserted_record === null) {
+                    wp_send_json_error([
+                        'error' => '无法获取刚插入的记录',
+                        'inserted_id' => $inserted_id,
+                        'table_name' => $table_name
+                    ], 500);
+                    wp_die();
+                }
+
                 $inserted_uuid = $inserted_record->uuid;
                 $inserted_created_at = $inserted_record->created_at;
 
                 //返回对应的值给本地用，方便在不刷新页面的情况下获取正常的数据，便于后续设置用
-                return wp_send_json_success([
+                wp_send_json_success([
                     'message' => '添加自定义设备数据成功',
                     'id' => $inserted_id,
                     'uuid' => $inserted_uuid,
                     'created_at' => $inserted_created_at
                 ]);
             } else {
-                return wp_send_json_error([
+                wp_send_json_error([
                     'error' => '添加自定义设备数据失败，请排查错误',
-                    'reason' => $wpdb->last_error,
-                    // 'data-one' => $data,
-                    // 'data-two' => $json_data,
-                    //'data-three' => $json
+                    'reason' => $wpdb->last_error
                 ], 500);
             }
-            // 插入成功，可以进行其他操作
+
             wp_die();
         }
 
@@ -178,13 +184,15 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //生成的uuid
 
             if (empty($uuid)) {
-                return wp_send_json_error(['error' => '缺少参数：uuid'], 400);
+                wp_send_json_error(['error' => '缺少参数：uuid'], 400);
+                wp_die();
             }
 
             //检查数据库是否存在传来的UUID
             $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE uuid = %s", $uuid));
             if ($exists == 0) {
-                return wp_send_json_error(['error' => '指定的UUID不存在'], 404);
+                wp_send_json_error(['error' => '指定的UUID不存在'], 404);
+                wp_die();
             }
 
             // 开始事务以确保数据一致性
@@ -208,14 +216,14 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
                 if ($result !== false && $result_auto !== false) {
                     // 提交事务
                     $wpdb->query('COMMIT');
-                    return wp_send_json_success(['message' => '删除成功']);
+                    wp_send_json_success(['message' => '删除成功']);
                 } else {
                     throw new Exception('删除操作失败');
                 }
             } catch (Exception $e) {
                 // 回滚事务
                 $wpdb->query('ROLLBACK');
-                return wp_send_json_error([
+                wp_send_json_error([
                     'error' => '删除失败',
                     'reason' => $wpdb->last_error ?: $e->getMessage()
                 ], 500);
@@ -240,7 +248,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
             $category = isset($_POST['category']) ? sanitize_text_field($_POST['category']) : null;
             $purpose = isset($_POST['purpose']) ? sanitize_text_field($_POST['purpose']) : null; //设备用途
             $state = isset($_POST['state']) ? sanitize_text_field($_POST['state']) : null; //设备状态
-            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : null; //设备信息
+            $data = isset($_POST['data']) ? stripslashes($_POST['data']) : null; //设备信息
 
             //是否缺少参数
             $variables = compact('uuid', 'name', 'number', 'category', 'purpose', 'state', 'data');
@@ -264,19 +272,26 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
                     'state' => 'state - 设备状态',
                     'data' => 'data - 设备数据'
                 ];
-                return wp_send_json_error(['error' => '缺少参数：' . $param_names[$null_param]], 400);
+                wp_send_json_error(['error' => '缺少参数：' . $param_names[$null_param]], 400);
+                wp_die();
             }
 
             //防止空数据
             if (empty($data) || !is_string($data)) {
-                return wp_send_json_error(['error' => 'data 参数为空或不是字符串'], 400);
+                wp_send_json_error(['error' => 'data 参数为空或不是字符串'], 400);
+                wp_die();
             }
 
-            //TODO:为啥不能直接用json,非要转换一次
-            //json转对象
-            $json_data = json_decode(stripslashes($data), true);
+            // 解析并重新编码JSON数据
+            $json_data = json_decode($data, true);
 
-            //对象转JSON
+            // 检查JSON解析是否成功
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                wp_send_json_error(['error' => 'JSON解析失败: ' . json_last_error_msg()], 400);
+                wp_die();
+            }
+
+            // 对象转JSON
             $json = json_encode($json_data, JSON_UNESCAPED_UNICODE);
 
             // 执行更新操作
@@ -302,24 +317,18 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
                 array('%s') // WHERE 条件类型
             );
 
-            // 检查插入是否成功
+            // 检查更新是否成功
             if ($result !== false) {
-                return wp_send_json_success([
-                    'message' => '更新自定义设备数据成功',
-                    // 'data-one' => $data,
-                    // 'data-two' => $json_data,
-                    //'data-three' => $json
+                wp_send_json_success([
+                    'message' => '更新自定义设备数据成功'
                 ]);
             } else {
-                return wp_send_json_error([
-                    'error' => '更新自定义设备数据失败' + $wpdb->last_error,
-                    'reason' => $wpdb->last_error,
-                    // 'data-one' => $data,
-                    // 'data-two' => $json_data,
-                    //'data-three' => $json
+                wp_send_json_error([
+                    'error' => '更新自定义设备数据失败',
+                    'reason' => $wpdb->last_error
                 ], 500);
             }
-            // 更新成功，可以进行其他操作
+
             wp_die();
         }
     }
