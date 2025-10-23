@@ -134,6 +134,10 @@ const App: React.FC = () => {
         </Form.Item>
         <Form.Item<MysqlDeviceData> label="采购价" name="purchase">
           <InputNumber
+            min={0}
+            formatter={(value) =>
+              `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+            }
             style={{ width: "100%" }}
             addonAfter="￥"
             placeholder="采购时的价格"
@@ -141,6 +145,10 @@ const App: React.FC = () => {
         </Form.Item>
         <Form.Item<MysqlDeviceData> label="二手价" name="depreciation">
           <InputNumber
+            min={0}
+            formatter={(value) =>
+              `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+            }
             style={{ width: "100%" }}
             addonAfter="￥"
             placeholder="二手市场的价格"

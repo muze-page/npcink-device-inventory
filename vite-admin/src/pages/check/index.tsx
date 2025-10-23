@@ -3,7 +3,7 @@
  */
 import { useState } from "react";
 import { dataMySql } from "@/utils/index";
-import { totalResidualValue, getPercentage } from "@/utils/tool";
+import { totalResidualValue, getPercentage, formatNumber } from "@/utils/tool";
 import {
   Computer,
   ComputerCpu,
@@ -152,13 +152,17 @@ const App: React.FC = () => {
           </tr>
 
           <tr>
-            <td className="w-28 text-center">{totalPurchase || 0}元</td>
-            <td className="w-28 text-center">{totalDepreciation || 0}元</td>
+            <td className="w-28 text-center">
+              {formatNumber(totalPurchase) || 0}元
+            </td>
+            <td className="w-28 text-center">
+              {formatNumber(totalDepreciation) || 0}元
+            </td>
             <td className="w-28 text-center">
               {getPercentage(totalDepreciation, totalPurchase)}
             </td>
             <td className="w-28 text-center">
-              {totalResidualValue(dataMySql)}元
+              {formatNumber(totalResidualValue(dataMySql))}元
             </td>
             <td className="w-28 text-center">
               {getPercentage(totalResidualValue(dataMySql), totalPurchase)}
