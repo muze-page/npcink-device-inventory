@@ -180,7 +180,14 @@ const App = ({ form, handleOk }: AddFormProps) => {
             name="numbers"
             rules={[{ required: true, message: "请填写采购数量" }]}
           >
-            <InputNumber addonAfter="个" style={{ width: "100%" }} />
+            <InputNumber
+              min={1}
+              formatter={(value) =>
+                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+              }
+              addonAfter="个"
+              style={{ width: "100%" }}
+            />
           </Form.Item>
         </Col>
         {/*TODO:添加验证，不能为负数和0元*/}
@@ -190,7 +197,14 @@ const App = ({ form, handleOk }: AddFormProps) => {
             name="total"
             rules={[{ required: true, message: "请填写采购金额" }]}
           >
-            <InputNumber addonAfter="¥" style={{ width: "100%" }} />
+            <InputNumber
+              min={0}
+              formatter={(value) =>
+                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+              }
+              addonAfter="¥"
+              style={{ width: "100%" }}
+            />
           </Form.Item>
         </Col>
       </Row>
