@@ -3,18 +3,19 @@
  */
 import { useContext } from "react";
 import { Card, Skeleton } from "antd";
-import { StyleDeviceData } from "@/type/index";
+import { StyleDevice } from "@/type/index";
 
 //跨组件提供方法
 import { StyleContext } from "@/context/StyleContext";
 
-import { formatDate, findBValue, formatNumber } from "@/utils/tool";
+import { formatDate, findBValue, formatNumber,statusLabel } from "@/utils/tool";
 //导入自定义设备的采购和支付方式列表
 import { stylePlatform, stylePayType } from "@/utils/replace";
 interface Props {
-  deviceData: StyleDeviceData;
+  data: StyleDevice;
 }
-const App: React.FC<Props> = ({ deviceData }) => {
+const App: React.FC<Props> = ({ data }) => {
+  const deviceData = data.data;
   //拿到是否隐藏姓名的状态
   const { isName } = useContext(StyleContext);
 
@@ -28,7 +29,7 @@ const App: React.FC<Props> = ({ deviceData }) => {
         title={deviceData.title}
         extra={
           <a
-            href="{deviceData.link}"
+            href={deviceData.link}
             target="_blank"
             style={{ color: "#1890ff" }}
           >
@@ -73,6 +74,18 @@ const App: React.FC<Props> = ({ deviceData }) => {
           ) : (
             <Skeleton.Input active={true} size={"small"} />
           )}
+        </p>
+        <p>
+          <b>使用方式：</b>
+          {isName ? data.name : <Skeleton.Input active={true} size={"small"} />}
+        </p>
+        <p>
+          <b>当前状态：</b>
+          {statusLabel(data.state)}
+        </p>
+        <p>
+          <b>使用用途：</b>
+          {data.purpose}
         </p>
       </Card>
     </>
