@@ -33,7 +33,8 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
 
             // 检查查询是否成功
             if ($wpdb->last_error) {
-                return wp_send_json_error(['error' => $wpdb->last_error], 500);
+                wp_send_json_error(['error' => $wpdb->last_error], 500);
+                wp_die();
             }
 
             // 整理成键值对形式，value和label都是相同的值
@@ -58,30 +59,24 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
 
             // 获取前端传递的参数并进行输入验证
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null; //唯一标识符
-            $data = isset($_POST['data']) ? sanitize_text_field($_POST['data']) : null; //修改的值
-
-            //json转对象
-            $json_data = json_decode(stripslashes($data), true);
-
-            //对象转JSON
-            //$json = json_encode($json_data, JSON_UNESCAPED_UNICODE);
+            $data = isset($_POST['data']) ? stripslashes($_POST['data']) : null; //修改的值
 
             //是否缺少参数
-            // 假设 $uuid, $user, $type, $data 是需要检查的变量
-            $variables = compact('uuid', 'data',);
+            $variables = compact('uuid', 'data');
 
             // 检查是否有参数为 null
             $null_param = array_search(null, $variables, true);
 
             // 如果有参数为 null，则返回相应的错误消息
             if ($null_param !== false) {
-                $param_names = ['uuid' => 'uuid - 设备唯一编号', 'data' => 'data - 变更的值'];
-                return wp_send_json_error([
-                    'error' => '缺少参数：' . $param_names[$null_param],
-                    'reason' => $uuid,
-                    'message' => $data
-
+                $param_names = [
+                    'uuid' => 'uuid - 设备唯一编号',
+                    'data' => 'data - 变更的值'
+                ];
+                wp_send_json_error([
+                    'error' => '缺少参数：' . $param_names[$null_param]
                 ], 400);
+                wp_die();
             }
 
             // 检查设备是否存在
@@ -98,8 +93,16 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
                 wp_die();
             }
 
+            // 解析JSON数据
+            $json_data = json_decode($data, true);
 
-
+            // 检查JSON解析是否成功
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                wp_send_json_error([
+                    'error' => 'JSON解析失败: ' . json_last_error_msg()
+                ], 400);
+                wp_die();
+            }
 
             // 定义字段与数据库类型的映射关系
             $field_map = array(
@@ -140,7 +143,6 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
                 ], 400);
                 wp_die();
             }
-
 
             try {
                 // 执行更新操作
@@ -198,7 +200,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
         /**
          * 添加删除设备接口 - 删除设备信息和变更信息
          */
-        public static  function delt_device_callback()
+        public static function delt_device_callback()
         {
             global $wpdb;
             $data_name = $wpdb->prefix . self::$table_pc_name; //数据表名
@@ -210,18 +212,19 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
 
             //是否有值
             if (empty($uuid)) {
-                return wp_send_json_error(['error' => '缺少uuid参数'], 400);
+                wp_send_json_error(['error' => '缺少uuid参数'], 400);
+                wp_die();
             }
-
-            // 使用预处理语句构建SQL查询
-            $sql = $wpdb->get_results("DELETE FROM $data_name WHERE uuid = %s", $uuid);
-            $sql_change = $wpdb->get_results("DELETE FROM $change_name WHERE record_uuid = %s", $uuid);
-            $sql_auto = $wpdb->get_results("DELETE FROM $auto_name WHERE record_uuid = %s", $uuid);
 
             // 开始事务
             $wpdb->query('START TRANSACTION');
 
             try {
+                // 使用预处理语句执行删除操作
+                $sql = $wpdb->prepare("DELETE FROM $data_name WHERE uuid = %s", $uuid);
+                $sql_change = $wpdb->prepare("DELETE FROM $change_name WHERE record_uuid = %s", $uuid);
+                $sql_auto = $wpdb->prepare("DELETE FROM $auto_name WHERE record_uuid = %s", $uuid);
+
                 // 执行删除操作
                 $result = $wpdb->query($sql);
                 $result_change = $wpdb->query($sql_change);
@@ -229,7 +232,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
 
                 // 检查删除操作是否成功
                 if ($result === false || $result_change === false || $result_auto === false) {
-                    throw new Exception('删除数据时发生错误');
+                    throw new Exception('删除数据时发生错误: ' . $wpdb->last_error);
                 }
 
                 // 提交事务
@@ -241,11 +244,12 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
                 // 发生异常时回滚事务
                 $wpdb->query('ROLLBACK');
                 // 返回错误响应
-                wp_send_json_error(['error' => $e->getMessage(), 'reason' => $wpdb->last_error,], 500);
-            } finally {
-                // 结束请求
-                wp_die();
+                wp_send_json_error([
+                    'error' => $e->getMessage()
+                ], 500);
             }
+
+            wp_die();
         }
     }
 }
