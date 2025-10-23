@@ -24,9 +24,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 {
 
 	/**
-	 * Short Description. (use period)
-	 *
-	 * Long Description.
+	 * 插件激活时运行的主要方法
 	 *
 	 * @since    1.0.0
 	 */
@@ -49,9 +47,12 @@ class Dema_Activator extends DEMA_Admin_Interface
 			self::device_manage_create_option();
 		}
 	}
-	//新建数据库表 - 存储电脑设备数据用
-	// 在插件激活时创建数据库表
-	//使用特定算法算出的UUID数据做设备唯一编号，
+
+	/**
+	 * 新建数据库表 - 存储电脑设备数据用
+	 * 在插件激活时创建数据库表
+	 * 使用特定算法算出的UUID数据做设备唯一编号
+	 */
 	public static function create_table_pc()
 	{
 		// 获取全局 $wpdb 对象
@@ -59,12 +60,11 @@ class Dema_Activator extends DEMA_Admin_Interface
 
 		// 定义表名
 		$pc_table_name = $wpdb->prefix . self::$table_pc_name; //电脑设备数据表
-		$auto_table_name = $wpdb->prefix . self::$table_auto_name; //自动记录表
 
 		// 检查是否已存在同名表
-		if ($wpdb->get_var("SHOW TABLES LIKE '$pc_table_name'") != $pc_table_name) {
+		if ($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $pc_table_name)) != $pc_table_name) {
 			// 创建表结构
-			$sql = "CREATE TABLE $pc_table_name (
+			$sql = "CREATE TABLE `$pc_table_name` (
             id INT NOT NULL AUTO_INCREMENT,
             name VARCHAR(100) NOT NULL COMMENT '姓名',
             number VARCHAR(50) NOT NULL COMMENT '设备编号',
@@ -93,11 +93,12 @@ class Dema_Activator extends DEMA_Admin_Interface
 		}
 
 		// 检查触发器是否已存在
-		$trigger_exists = $wpdb->get_var(
+		$trigger_exists = $wpdb->get_var($wpdb->prepare(
 			"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TRIGGERS 
-			 WHERE TRIGGER_NAME = 'after_update_device_data' 
-			 AND TRIGGER_SCHEMA = DATABASE()"
-		);
+			 WHERE TRIGGER_NAME = %s 
+			 AND TRIGGER_SCHEMA = DATABASE()",
+			'after_update_device_data'
+		));
 
 		// 如果触发器不存在，则创建它
 		if ($trigger_exists == 0) {
@@ -158,7 +159,9 @@ class Dema_Activator extends DEMA_Admin_Interface
 		}
 	}
 
-	//创建自定义类型设备管理表
+	/**
+	 * 创建自定义类型设备管理表
+	 */
 	public static function create_table_style()
 	{
 		// 获取全局 $wpdb 对象
@@ -166,12 +169,11 @@ class Dema_Activator extends DEMA_Admin_Interface
 
 		// 定义表名
 		$style_table_name = $wpdb->prefix . self::$table_style_name; //自定义类型设备管理表
-		$auto_table_name = $wpdb->prefix . self::$table_auto_name; //自动记录表
 
 		// 检查是否已存在同名表
-		if ($wpdb->get_var("SHOW TABLES LIKE '$style_table_name'") != $style_table_name) {
+		if ($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $style_table_name)) != $style_table_name) {
 			// 创建表结构
-			$sql = "CREATE TABLE $style_table_name (
+			$sql = "CREATE TABLE `$style_table_name` (
             id INT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
             name VARCHAR(64) NOT NULL COMMENT '姓名',
 			number VARCHAR(50) NOT NULL COMMENT '设备编号',
@@ -201,21 +203,25 @@ class Dema_Activator extends DEMA_Admin_Interface
                     SET NEW.uuid = UUID();
                 END IF;
             END;
-        ";
+            ";
 
 			// 执行触发器 SQL
 			$wpdb->query($trigger_sql);
 		}
+
 		// 检查自定义设备表的触发器是否已存在
-		$style_trigger_exists = $wpdb->get_var(
+		$style_trigger_exists = $wpdb->get_var($wpdb->prepare(
 			"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TRIGGERS 
-			 WHERE TRIGGER_NAME = 'after_update_style_device' 
-			 AND TRIGGER_SCHEMA = DATABASE()"
-		);
+			 WHERE TRIGGER_NAME = %s 
+			 AND TRIGGER_SCHEMA = DATABASE()",
+			'after_update_style_device'
+		));
 
 		// 如果触发器不存在，则创建它
 		if ($style_trigger_exists == 0) {
 			// 创建自定义设备表的UPDATE触发器
+			$auto_table_name = $wpdb->prefix . self::$table_auto_name;
+
 			$update_style_trigger_sql = "
 			CREATE TRIGGER after_update_style_device
 			AFTER UPDATE ON `$style_table_name`
@@ -260,9 +266,9 @@ class Dema_Activator extends DEMA_Admin_Interface
 		$table_name = $wpdb->prefix . self::$table_manual_name;
 
 		// 检查是否已存在同名表
-		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+		if ($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name)) != $table_name) {
 			// 创建表结构
-			$sql = "CREATE TABLE $table_name (
+			$sql = "CREATE TABLE `$table_name` (
             id INT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
             user VARCHAR(64) NOT NULL COMMENT '变更人姓名',
             type VARCHAR(64) NOT NULL COMMENT '变更类型',
@@ -281,9 +287,6 @@ class Dema_Activator extends DEMA_Admin_Interface
 		}
 	}
 
-
-
-
 	/**
 	 * 创建配置信息变更记录表 - 自动记录
 	 */
@@ -296,9 +299,9 @@ class Dema_Activator extends DEMA_Admin_Interface
 		$table_name = $wpdb->prefix . self::$table_auto_name;
 
 		// 检查是否已存在同名表
-		if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+		if ($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name)) != $table_name) {
 			// 创建表结构
-			$sql = "CREATE TABLE $table_name (
+			$sql = "CREATE TABLE `$table_name` (
            id INT AUTO_INCREMENT PRIMARY KEY,
 		   table_name VARCHAR(64) COMMENT '变更的表名',
            column_name VARCHAR(64) COMMENT '变更的字段名',
