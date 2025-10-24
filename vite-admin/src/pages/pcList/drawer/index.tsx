@@ -2,7 +2,7 @@
  * 弹窗
  */
 
-import { Drawer } from "antd";
+import { Modal } from "antd";
 import { MysqlDeviceChangeMeat } from "@/type/index";
 import Property from "@/pages/pcList/deviceDetails";
 import TabHeader from "@/pages/pcList/drawer/tabHeader";
@@ -15,13 +15,13 @@ interface Props {
 const App: React.FC<Props> = ({ active, onActive, data }) => {
   return (
     <>
-      <Drawer
-        title="资产详细信息"
-        placement={"right"}
-        onClose={onActive}
+      <Modal
+        title="电脑资产详情"
         open={active}
-        width={"600px"}
-        className="pt-9"
+        onCancel={onActive}
+        style={{ top: 50 }}
+        width={"800px"}
+        footer={null}
       >
         {/**标识栏 */}
         <TabHeader />
@@ -29,7 +29,7 @@ const App: React.FC<Props> = ({ active, onActive, data }) => {
         <Property />
         {/** 测试用 */}
         <PrintData data={data} title="打印当前设备信息" />
-      </Drawer>
+      </Modal>
     </>
   );
 };

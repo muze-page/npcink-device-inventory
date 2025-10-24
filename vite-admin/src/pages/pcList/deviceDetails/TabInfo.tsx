@@ -70,18 +70,14 @@ const App: React.FC<Props> = ({ data, time }) => {
     },
 
     {
-      title: "主硬盘",
-      data: handleArrayData(data.diskLayout, "name") || "未找到硬盘",
-    },
-
-    {
       title: "内存信息",
       data: allMemory(data.memLayout) || "未找到内存",
     },
+    /** 
     {
       title: "网卡型号",
       data: handleArrayData(data.net, "ifaceName") || "未找到网卡",
-    },
+    },*/
     {
       title: "显示器",
       data: displayData
@@ -91,9 +87,15 @@ const App: React.FC<Props> = ({ data, time }) => {
         : "不存在",
     },
     {
+      title: "主硬盘",
+      data: handleArrayData(data.diskLayout, "name") || "未找到硬盘",
+    },
+
+    /** 
+    {
       title: "磁盘序列号",
       data: handleArrayData(data.diskLayout, "serialNum") || "未找到磁盘序列号",
-    },
+    },*/
     {
       title: "添加时间",
       data: formatDate(time),

@@ -1,7 +1,7 @@
 /**
  * 自定义设备信息展出弹窗
  */
-import { Drawer, Tabs } from "antd";
+import { Modal, Tabs } from "antd";
 import type { TabsProps } from "antd";
 //跨组件提供方法
 import { StyleDevice } from "@/type/index";
@@ -38,18 +38,17 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
 
   return (
     <>
-      <Drawer
-        title="自定义资产详细信息"
-        placement={"right"}
-        onClose={onActive}
+      <Modal
+        title="自定义资产详情"
         open={active}
-        width={"600px"}
-        size="large"
-        className="pt-9"
+        onCancel={onActive}
+        style={{ top: 50 }}
+        width={"800px"}
+        footer={null}
       >
         <Tabs defaultActiveKey="1" items={items} />
         <PrintData title="打印当前设备信息" data={data} />
-      </Drawer>
+      </Modal>
     </>
   );
 };
