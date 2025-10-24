@@ -55,7 +55,7 @@ export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
     ostype: string; //系统类型 Windows Linux Macos
     cpu: string; //CPU 品牌 Intel
     cpuModel: string; //CPU 型号 Core i5-10400F
-    model: string; //设备型号
+    //model: string; //设备型号
     motherboard: string; ///主板型号
     graphics: string; //显卡型号
     memory: string; //内存容量

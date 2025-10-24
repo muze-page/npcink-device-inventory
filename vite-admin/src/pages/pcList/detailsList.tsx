@@ -66,7 +66,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             {/** </div> */}
           </div>
 
-          <Space direction="vertical" size={4} style={{ display: "flex" }}>
+          <Space direction="vertical" size={0}>
             {/*设备型号*/}
             <Tooltip
               title={"主板型号：" + data.meat.motherboard}
@@ -90,7 +90,8 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             >
               {data.meat.graphics}
             </Tooltip>
-
+          </Space>
+          <Space direction="vertical" size={4} className="flex mt-1">
             {/*配置信息*/}
             <Tooltip
               title={

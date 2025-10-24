@@ -130,6 +130,7 @@ const graphicsReplace = [
   "NVIDIA GeForce",
   "Intel\\(R\\)",
   "\\(MS-7D48\\)",
+  "\\(MS-7D46\\)",
   "with Radeon Graphics",
 ];
 //添加需要的筛选标记数据
@@ -139,12 +140,16 @@ export const updateOSType = (
   //添加meat值，方便使用
   const updatedData = dataArrays.map((obj: MysqlDeviceChange) => {
     const value = obj.data; //拿到对象
-    const memory = calculateTotalSize(value.memLayout); //内存数组
-    const disk = calculateTotalSize(value.diskLayout); //混合计算，不分固态和机械
+    const memory = calculateTotalSize(value.memLayout) || "暂无内存容量"; //内存数组
+    const disk = calculateTotalSize(value.diskLayout) || "暂无硬盘容量"; //混合计算，不分固态和机械
 
     const motherboard = value.baseboard.model
       ? removeSubstring(value.baseboard.model, graphicsReplace)
       : "暂无主板型号"; //去除主板中的指定字符串
+
+    const cpuModel = value.cpu.brand
+      ? removeSubstring(value.cpu.brand, graphicsReplace)
+      : "暂无 CPU 型号";
 
     const graphicsData = handleGraphics(value.graphics.controllers)[0]; //拿显存最大的卡
     const graphics = graphicsData
@@ -156,12 +161,11 @@ export const updateOSType = (
       os: replaceString(value.os.distro, osTypeReplace), //系统版本 Windows 10
       ostype: replaceString(value.os.platform, osReplace), //系统类型，windows linux macos
       cpu: value.cpu.manufacturer || "暂无 CPU 品牌", //CPU品牌 Intel
-      cpuModel: value.cpu.brand || "暂无 CPU 型号", //CPU型号 Core™ i5-9400F
-      model: value.system.model || "暂无设备型号", //设备型号
+      cpuModel: cpuModel, //CPU型号 Core™ i5-9400F
       motherboard: motherboard, //主板型号
       graphics: graphics, //仅展示显存最大的显卡
-      memory: memory.toString() || "暂无内存容量", //内存容量
-      disk: disk.toString() || "暂无硬盘容量", //硬盘容量
+      memory: memory, //内存容量
+      disk: disk, //硬盘容量
     };
     const mac = value.uuid.macs; //获取mac地址
     return { ...obj, meat, mac };

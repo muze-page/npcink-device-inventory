@@ -51,10 +51,6 @@ const App: React.FC = ({}) => {
               )}
             </div>
           </div>
-          {/**
-           * 操作系统
-           *   <p className="mt-2">{drawerData.meat.model}</p>
-           */}
 
           {/*大概配置信息 */}
           <ul>
