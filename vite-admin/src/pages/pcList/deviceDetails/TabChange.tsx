@@ -10,7 +10,7 @@ import { changeMySqlData, searchChangeData } from "@/services/index";
 
 import { ComputerChangeReturn } from "@/type/index";
 
-import TabChangeAdd from "@/pages/pcList/deviceDetails/TabChangeAdd";
+import TabChangeAdd from "@/pages/pcList/deviceDetails/block/TabChangeAdd";
 
 //在嵌套的组件之间传递Form实例，使得表单可以进行联动
 const EditableContext = React.createContext<FormInstance<any> | null>(null);

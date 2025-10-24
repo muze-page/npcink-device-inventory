@@ -2,15 +2,16 @@
  * 设备详情 - 设置
  */
 import { useContext, useEffect } from "react";
-import {  Form, Button, Input, InputNumber, Select, Tooltip } from "antd";
+import { Form, Button, Input, InputNumber, Select } from "antd";
 import { DevieContext } from "@/context/DeviceContext";
 import { deltSQLData, changeMySql } from "@/services/index";
 import { MysqlDeviceData } from "@/type/index";
 import { device_status } from "@/utils/replace";
-import { totalResidualValue, getPercentage, validateIPv4 } from "@/utils/tool";
+import { totalResidualValue, validateIPv4 } from "@/utils/tool";
 //选择输入框
 import SelectInput from "@/components/selectInput";
-
+/**残值组件 */
+import Scrap from "@/pages/pcList/deviceDetails/block/scrap";
 const App: React.FC = () => {
   //接收上下文中的值
   const {
@@ -161,50 +162,9 @@ const App: React.FC = () => {
             </Form.Item>
           </div>
         </div>
+        {/**残值组件 */}
         <Form.Item<MysqlDeviceData> label="相关参数">
-          <table>
-            <thead>
-              <tr>
-                <th className="w-28 text-center">
-                  <Tooltip title="采购价对比二手价格的百分比">折旧率</Tooltip>
-                </th>
-                <th className="w-28 text-center">
-                  <Tooltip title="按照设定百分比，相对于购买时间，当前剩下的价值">
-                    残值
-                  </Tooltip>
-                </th>
-                <th className="w-28 text-center">
-                  <Tooltip title="采购价对比残值价格的百分比">残值率</Tooltip>
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <tr>
-                <td className="w-28 text-center">
-                  {/* 为啥可能是字符串 */}
-                  {getPercentage(
-                    Number(drawerData.depreciation),
-                    Number(drawerData.purchase)
-                  )}
-                </td>
-                <td className="w-28 text-center">{residualValue}元</td>
-                <td className="w-28 text-center">
-                  {getPercentage(residualValue, drawerData.purchase)}
-                </td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr>
-                <td
-                  colSpan={3}
-                  className="text-sm text-right py-2 text-zinc-400"
-                >
-                  以上数据仅供参考
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+          <Scrap drawerData={drawerData} residualValue={residualValue} />
         </Form.Item>
 
         <Form.Item>
