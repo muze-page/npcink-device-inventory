@@ -34,11 +34,6 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
     onDrawerData(); //保存值
   };
 
-  //找到需要的平台对象、付款方式对象
-  // const platformObj = findOsTypeObj(platformArray, data.data.platform);
-
-  //const payFormObj = findOsTypeObj(payArray, data.data.pay_method);
-
   return (
     <>
       {/**开始展示设备信息 */}

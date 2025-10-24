@@ -8,11 +8,68 @@ import {
   ComputerDevice,
   ComputerControllers,
   repType,
+  OsTypeArray,
+  DataItemArr,
 } from "@/type/index";
 //替换用数组
 import { osReplace, osTypeReplace, excludeGraphics } from "@/utils/replace";
 
 import { formatBytes, formatMB } from "@/utils/tool";
+import Unknown from "@/assets/type/unknown.png";
+
+/**
+ * 判断布尔值
+ */
+export const judge_bool = (boo: boolean) => {
+  if (boo === true) {
+    return "是";
+  } else {
+    return "否";
+  }
+};
+// IPv4 正则表达式
+const ipv4Regex =
+  /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
+// 自定义校验规则
+export const validateIPv4 = (_: any, value: string) => {
+  if (!value || ipv4Regex.test(value)) {
+    return Promise.resolve();
+  }
+  return Promise.reject(new Error("请输入正确的IP v4 地址"));
+};
+
+/**
+ * 处理搜索 MAC 地址的场景
+ * 兼容大小写 + 容错空格
+ * @param v 输入框的值
+ * @returns 若搜索的值类似这样的da:b1:99:04:29:42，则处理成这样的：da-b1-99-04-29-42
+ */
+export const normalize = (v: string) =>
+  v
+    .trim()
+    .toLowerCase()
+    .replace(
+      /^([0-9a-f]{2}):([0-9a-f]{2}):([0-9a-f]{2}):([0-9a-f]{2}):([0-9a-f]{2}):([0-9a-f]{2})$/i,
+      "$1-$2-$3-$4-$5-$6"
+    );
+
+/**
+ * 找到需要的系统对象 - 展示图片用
+ * @param array  存储图片的数组对象
+ * @param value 系统或平台类型
+ * @returns 包含图片的对象
+ */
+export const findOsTypeObj = (array: OsTypeArray[], value: string) => {
+  const result = array.find((item) => item.name === value);
+  // 返回默认对象，避免返回 undefined
+  return (
+    result || {
+      name: "unknown",
+      image: Unknown /* 其他默认属性 */,
+    }
+  );
+};
 
 //收集数组中的指定键值的总和，并转为GB单位
 type DataType = ComputerRam | ComputerDevice;
@@ -89,4 +146,39 @@ export const updateOSType = (
     return { ...obj, meat, mac };
   });
   return updatedData;
+};
+
+/**
+ * 展示设备详细数据，去除数组对象中，值是空字符串和undefined的对象
+ *添加key对象，值是label的值，展示数据用
+ */
+export const removeEmpty = (data: DataItemArr[]) => {
+  //包含下列字符将移除
+  const defaultValues = ["Default string", "Unknown", "NULL"];
+
+  return data
+    .filter((obj) => {
+      if (typeof obj.value === "string") {
+        if (defaultValues.includes(obj.value)) {
+          return false;
+        } else {
+          return obj.value.trim() !== "";
+        }
+      } else if (typeof obj.value === "number") {
+        if (obj.value === 0) {
+          return false;
+        } else {
+          return true; // 如果是数字，保留该项
+        }
+      } else {
+        return false; // 其他情况均移除
+      }
+    })
+    .map((obj) => {
+      // 为每个对象添加唯一的 key 属性，值为 label
+      return {
+        ...obj,
+        key: obj.label,
+      };
+    });
 };
