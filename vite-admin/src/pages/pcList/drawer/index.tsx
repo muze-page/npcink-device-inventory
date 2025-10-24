@@ -20,7 +20,7 @@ const App: React.FC<Props> = ({ active, onActive, data }) => {
         placement={"right"}
         onClose={onActive}
         open={active}
-        width={"800px"}
+        width={"600px"}
         className="pt-9"
       >
         {/**标识栏 */}

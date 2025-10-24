@@ -2,7 +2,7 @@
  * 设备详情 - 设置
  */
 import { useContext, useEffect } from "react";
-import { Form, Button, Input, InputNumber, Select, Tooltip } from "antd";
+import {  Form, Button, Input, InputNumber, Select, Tooltip } from "antd";
 import { DevieContext } from "@/context/DeviceContext";
 import { deltSQLData, changeMySql } from "@/services/index";
 import { MysqlDeviceData } from "@/type/index";
@@ -104,56 +104,63 @@ const App: React.FC = () => {
         form={form}
         onFinish={onFinish}
         labelAlign="left"
-        labelCol={{ span: 6 }}
-        wrapperCol={{ span: 18 }}
-        style={{ maxWidth: 288 }}
+        labelCol={{ span: 4 }}
+        wrapperCol={{ span: 20 }}
         initialValues={drawerData}
       >
-        <Form.Item<MysqlDeviceData> label="姓名" name="name">
-          <Input placeholder="设备使用者" />
-        </Form.Item>
-        <Form.Item<MysqlDeviceData> label="编号" name="number">
-          <Input placeholder="设备唯一标识编号" />
-        </Form.Item>
-        <Form.Item<MysqlDeviceData> label="状态" name="state">
-          <Select options={device_status} />
-        </Form.Item>
-        <Form.Item<MysqlDeviceData> label="部门" name="department">
-          <SelectInput
-            options={deviceCategoryOption}
-            defaultValue={drawerData.department}
-            onChange={(value) => form?.setFieldsValue({ department: value })}
-          />
-        </Form.Item>
-        <Form.Item<MysqlDeviceData>
-          label="IP 地址"
-          name="ip"
-          rules={[{ validator: validateIPv4 }]}
-        >
-          <Input placeholder="分配的唯一 IP 地址" />
-        </Form.Item>
-        <Form.Item<MysqlDeviceData> label="采购价" name="purchase">
-          <InputNumber
-            min={0}
-            formatter={(value) =>
-              `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-            }
-            style={{ width: "100%" }}
-            addonAfter="￥"
-            placeholder="采购时的价格"
-          />
-        </Form.Item>
-        <Form.Item<MysqlDeviceData> label="二手价" name="depreciation">
-          <InputNumber
-            min={0}
-            formatter={(value) =>
-              `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-            }
-            style={{ width: "100%" }}
-            addonAfter="￥"
-            placeholder="二手市场的价格"
-          />
-        </Form.Item>
+        <div className="flex gap-6 flex-wrap">
+          <div className="flex-1">
+            <Form.Item<MysqlDeviceData> label="姓名" name="name">
+              <Input placeholder="设备使用者" />
+            </Form.Item>
+            <Form.Item<MysqlDeviceData> label="编号" name="number">
+              <Input placeholder="设备唯一标识编号" />
+            </Form.Item>
+            <Form.Item<MysqlDeviceData> label="状态" name="state">
+              <Select options={device_status} />
+            </Form.Item>
+            <Form.Item<MysqlDeviceData> label="部门" name="department">
+              <SelectInput
+                options={deviceCategoryOption}
+                defaultValue={drawerData.department}
+                onChange={(value) =>
+                  form?.setFieldsValue({ department: value })
+                }
+              />
+            </Form.Item>
+          </div>
+          <div className="flex-1">
+            <Form.Item<MysqlDeviceData>
+              label="IP 地址"
+              name="ip"
+              rules={[{ validator: validateIPv4 }]}
+            >
+              <Input placeholder="分配的唯一 IP 地址" />
+            </Form.Item>
+            <Form.Item<MysqlDeviceData> label="采购价" name="purchase">
+              <InputNumber
+                min={0}
+                formatter={(value) =>
+                  `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                }
+                style={{ width: "100%" }}
+                addonAfter="￥"
+                placeholder="采购时的价格"
+              />
+            </Form.Item>
+            <Form.Item<MysqlDeviceData> label="二手价" name="depreciation">
+              <InputNumber
+                min={0}
+                formatter={(value) =>
+                  `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                }
+                style={{ width: "100%" }}
+                addonAfter="￥"
+                placeholder="二手市场的价格"
+              />
+            </Form.Item>
+          </div>
+        </div>
         <Form.Item<MysqlDeviceData> label="相关参数">
           <table>
             <thead>
