@@ -69,8 +69,8 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           <Space direction="vertical" size={4} style={{ display: "flex" }}>
             {/*设备型号*/}
             <Tooltip
-              title={"主板型号：" + data.meat.model}
-              className=" w-full truncate"
+              title={"主板型号：" + data.meat.motherboard}
+              className="text-[10px]"
             >
               {data.meat.motherboard}
             </Tooltip>
@@ -81,7 +81,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
               }
               className=" text-[10px]"
             >
-              {data.meat.cpu} /{data.meat.cpuModel}
+              {data.meat.cpuModel}
             </Tooltip>
 
             <Tooltip

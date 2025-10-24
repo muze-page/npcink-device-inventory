@@ -99,7 +99,11 @@ const replaceString = (input: string, obj: repType[]): string => {
   }
 };
 
-//处理多张显卡，按显存大小从大到小排序，输出字符串数组
+/**
+ * 处理多张显卡，按显存大小从大到小排序，输出字符串数组
+ * @param data
+ * @returns
+ */
 export const handleGraphics = (data: ComputerControllers[]) => {
   //对值进行处理，出现如下字符串的，去掉
   const filteredData = data.filter(
@@ -121,6 +125,13 @@ export const handleGraphics = (data: ComputerControllers[]) => {
   return value;
 };
 
+//显卡、主板和CPU的字符串数组
+const graphicsReplace = [
+  "NVIDIA GeForce",
+  "Intel\\(R\\)",
+  "\\(MS-7D48\\)",
+  "with Radeon Graphics",
+];
 //添加需要的筛选标记数据
 export const updateOSType = (
   dataArrays: MysqlDeviceChange[]
@@ -130,6 +141,16 @@ export const updateOSType = (
     const value = obj.data; //拿到对象
     const memory = calculateTotalSize(value.memLayout); //内存数组
     const disk = calculateTotalSize(value.diskLayout); //混合计算，不分固态和机械
+
+    const motherboard = value.baseboard.model
+      ? removeSubstring(value.baseboard.model, graphicsReplace)
+      : "暂无主板型号"; //去除主板中的指定字符串
+
+    const graphicsData = handleGraphics(value.graphics.controllers)[0]; //拿显存最大的卡
+    const graphics = graphicsData
+      ? removeSubstring(graphicsData, graphicsReplace)
+      : "暂无显卡型号"; //去除显卡中的指定字符串
+
     //整理添加的信息
     const meat = {
       os: replaceString(value.os.distro, osTypeReplace), //系统版本 Windows 10
@@ -137,8 +158,8 @@ export const updateOSType = (
       cpu: value.cpu.manufacturer || "暂无 CPU 品牌", //CPU品牌 Intel
       cpuModel: value.cpu.brand || "暂无 CPU 型号", //CPU型号 Core™ i5-9400F
       model: value.system.model || "暂无设备型号", //设备型号
-      motherboard: value.baseboard.model || "暂无主板型号", //主板型号
-      graphics: handleGraphics(value.graphics.controllers)[0] || "暂无显卡型号", //仅展示显存最大的显卡
+      motherboard: motherboard, //主板型号
+      graphics: graphics, //仅展示显存最大的显卡
       memory: memory.toString() || "暂无内存容量", //内存容量
       disk: disk.toString() || "暂无硬盘容量", //硬盘容量
     };
@@ -181,4 +202,17 @@ export const removeEmpty = (data: DataItemArr[]) => {
         key: obj.label,
       };
     });
+};
+
+/**
+ * 提供待检测字符串a，和字符串数组b，若a中有部分字符串是在b中出现，则去除a中的这段字符串
+ * @param a 待检测
+ * @param b 待匹配的字符串数组
+ */
+export const removeSubstring = (a: string, b: string[]) => {
+  // 创建一个正则表达式，将字符串数组中的字符串连接成 | 匹配模式
+  const regex = new RegExp(b.join("|"), "gi");
+
+  // 使用正则表达式去除a中的匹配字符串
+  return a.replace(regex, "");
 };
