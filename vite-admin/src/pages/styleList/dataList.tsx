@@ -72,7 +72,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         */}
 
         {/**底部数据 */}
-        <div className="text-xs text-zinc-500  rounded whitespace-nowrap min-h-[190px] mt-4">
+        <div className="text-xs text-zinc-500  rounded whitespace-nowrap min-h-[190px] mt-4 overflow-hidden">
           {/*设备名称*/}
           <p className="text-sm font-bold text-zinc-800 leading-2 h-10 m-0 whitespace-normal break-words">
             <Tooltip title={"设备名称：" + data.data.title}>
@@ -82,7 +82,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           {/*设备编号*/}
           <p className="mt-2">
             <Tooltip title={"设备编号：" + data.number}>
-              <b> 设备编号：</b>
+              <b>编号：</b>
               {isName ? (
                 data.number
               ) : (
@@ -93,7 +93,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           {/*设备分类*/}
           <p className="mt-2">
             <Tooltip title={"设备分类：" + data.category}>
-              <b> 设备分类：</b>
+              <b>分类：</b>
               {isName ? (
                 data.category
               ) : (
@@ -103,8 +103,8 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
           </p>
           {/*使用人*/}
           <p className="mt-2">
-            <Tooltip title={"使用人：" + data.name}>
-              <b> 使用人：</b>
+            <Tooltip title={"使用人或位置：" + data.name}>
+              <b>使用：</b>
               {isName ? (
                 data.name
               ) : (

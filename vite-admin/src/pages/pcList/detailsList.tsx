@@ -54,7 +54,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         </div>
 
         {/**底部数据 */}
-        <div className="mt-1 text-xs text-zinc-500 rounded whitespace-nowrap min-h-[190px]">
+        <div className="mt-1 text-xs text-zinc-500 rounded whitespace-nowrap min-h-[190px] overflow-hidden">
           {/*姓名*/}
           <div className="text-sm font-bold text-zinc-800 leading-8 m-0  ">
             {isName ? (
@@ -66,7 +66,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             {/** </div> */}
           </div>
 
-          <Space direction="vertical" size="small" style={{ display: "flex" }}>
+          <Space direction="vertical" size={4} style={{ display: "flex" }}>
             {/*设备型号*/}
             <Tooltip
               title={"主板型号：" + data.meat.model}
@@ -100,6 +100,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
                 data.meat.disk
               }
             >
+              <b>配置：</b>
               {data.meat.memory} / {data.meat.disk}
             </Tooltip>
 
