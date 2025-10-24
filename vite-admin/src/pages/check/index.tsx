@@ -78,7 +78,7 @@ const App: React.FC = () => {
       label: `CPU（个）`,
       sum: combinedData.length,
       color: "from-blue-100 to-blue-200",
-      activeColor: "bg-blue-400",
+      activeColor: "from-blue-200 to-blue-300",
       children: <Cpu data={cpuArrData} />,
     },
     {
@@ -86,7 +86,7 @@ const App: React.FC = () => {
       label: `硬盘（块）`,
       sum: diskArrData.length,
       color: "from-orange-100 to-orange-200",
-      activeColor: "bg-orange-400",
+      activeColor: "from-orange-200 to-orange-300",
       children: <Disk data={diskArrData} />,
     },
     {
@@ -94,7 +94,7 @@ const App: React.FC = () => {
       label: `内存（条）`,
       sum: memoryArrData.length,
       color: "from-red-100 to-red-200",
-      activeColor: "bg-red-400",
+      activeColor: "from-red-200 to-red-300",
       children: <Memory data={memoryArrData} />,
     },
     {
@@ -102,7 +102,7 @@ const App: React.FC = () => {
       label: `主板（个）`,
       sum: combinedData.length,
       color: "from-green-100 to-green-200",
-      activeColor: "bg-green-400",
+      activeColor: "from-green-200 to-green-300",
       children: <Baseboard data={baseboardArrData} />,
     },
   ];

@@ -9,7 +9,7 @@ import { ComputerDevice } from "@/type/index";
 
 const meat = {
   thData: ["型号", "数量（块）"], //表头
-  bgColor: "from-orange-100 to-orange-200 bg-orange-50", //颜色
+  bgColor: "bg-orange-50", //颜色
 };
 
 interface Props {

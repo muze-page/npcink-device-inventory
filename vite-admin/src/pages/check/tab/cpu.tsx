@@ -8,7 +8,7 @@ import { ComputerCpu } from "@/type/index";
 
 const meat = {
   thData: ["品牌", "数量（个）"], //表头
-  bgColor: "from-blue-100 to-blue-200 bg-blue-50", //颜色
+  bgColor: "bg-blue-50", //颜色
 };
 
 interface Props {

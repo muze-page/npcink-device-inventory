@@ -9,7 +9,7 @@ import { ComputerBaseboard, TableData } from "@/type/index";
 
 const meat = {
   thData: ["型号", "数量（个）"], //表头
-  bgColor: "from-green-100 to-green-200 bg-green-50", //颜色
+  bgColor: "bg-green-50", //颜色
 };
 
 interface Props {

@@ -8,7 +8,7 @@ import { ComputerRam } from "@/type/index";
 
 const meat = {
   thData: ["型号", "数量（条）"], //表头
-  bgColor: "from-red-100 to-red-200 bg-red-50", //颜色
+  bgColor: "bg-red-50", //颜色
 };
 
 //内存替换列表TODO:优化，有内存的，将相关内存统计在一起
