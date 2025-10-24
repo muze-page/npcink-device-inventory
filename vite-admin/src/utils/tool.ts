@@ -3,25 +3,18 @@ import {
   Replacements,
   TableData,
   OsTypeArray,
-  MysqlDeviceChange,
-  MysqlDeviceChangeMeat,
   DataItemArr,
-  ComputerRam,
-  ComputerDevice,
-  ComputerControllers,
-  MysqlDevice,
 } from "@/type/index";
-import { defaultOption } from "@/utils/index";
+
 import dayjs, { Dayjs } from "dayjs";
 import Unknown from "@/assets/type/unknown.png";
 
 //替换用数组
-import {
-  device_status,
-  osReplace,
-  osTypeReplace,
-  excludeGraphics,
-} from "@/utils/replace";
+import { device_status } from "@/utils/replace";
+
+export { totalResidualValue } from "@/utils/check";
+export { exportTable } from "@/utils/config";
+export { handleGraphics, updateOSType } from "@/utils/pc";
 
 //开发环境状态,各种调试按钮用
 export const devStatus: boolean = import.meta.env.VITE_STATE;
@@ -263,227 +256,12 @@ export const findOsTypeObj = (array: OsTypeArray[], value: string) => {
 };
 
 /**
- * 将字符串数组转换为对象，方便下拉选择，TODO:检查有没有使用
- */
-export const changeSelectData = (data: string[] | undefined) => {
-  if (data && data.length > 0) {
-    return data.map((str) => ({
-      value: str,
-      label: str,
-    }));
-  } else {
-    // 如果 defaultOption.department 不存在或为空数组，返回一个空数组或其他默认值
-    return [];
-  }
-};
-
-/**
  * 查找对象中，符合要求对象的另一个键的值
  */
 
 export const findBValue = (arr: DataItemArr[], targetAValue: string) => {
   const foundObject = arr.find((obj) => obj.value === targetAValue);
   return foundObject ? foundObject.label : "未找到";
-};
-
-/**
- *
- * @param jsonData 对象数组
- * @param tableName 下载的文件名称
- * @returns 数组对象导出为表格
- */
-export const exportTable = (
-  jsonData: MysqlDevice[] | undefined,
-  tableName: string
-) => {
-  // 如果没有拿到值，就此结束
-  if (!jsonData) {
-    return;
-  }
-
-  // 创建一个表格元素
-  const table = document.createElement("table");
-
-  // 添加表头
-  const thead = document.createElement("thead");
-  const headers = Object.keys(jsonData[0]);
-  const headerRow = document.createElement("tr");
-  headers.forEach((headerText) => {
-    const th = document.createElement("th");
-    th.appendChild(document.createTextNode(headerText));
-    headerRow.appendChild(th);
-  });
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
-
-  // 添加数据行
-  const tbody = document.createElement("tbody");
-  jsonData.forEach((rowData: { [x: string]: string }) => {
-    const row = document.createElement("tr");
-    headers.forEach((header) => {
-      const cell = document.createElement("td");
-      cell.appendChild(document.createTextNode(rowData[header]));
-      row.appendChild(cell);
-    });
-    tbody.appendChild(row);
-  });
-  table.appendChild(tbody);
-
-  // 将表格转换为 Excel 文件
-  const blob = new Blob([table.outerHTML], {
-    type: "application/vnd.ms-excel",
-  });
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = tableName + ".xlsx";
-  link.click();
-
-  // 等待一段时间后释放 URL 对象
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-  }, 1000);
-};
-
-/**
- * 提供设备信息，算出采购价和使用月数组成的数组
- */
-
-interface ProcessedItem {
-  purchase: number;
-  monthsUsed: number;
-}
-
-//计算月份差
-const processArray = (arr: MysqlDeviceChange[]): ProcessedItem[] => {
-  const now = dayjs();
-  return arr.map((item) => {
-    // 直接使用 dayjs 方法计算月份差
-    const monthsUsed = Math.abs(now.diff(item.created_at, "month"));
-    return {
-      purchase: item.purchase,
-      monthsUsed: monthsUsed,
-    };
-  });
-};
-
-//计算残值 输入采购价 使用月数，算出当前残值
-const calculateResidualValue = (purchasePrice: number, monthsUsed: number) => {
-  const salvageRate = defaultOption.residual_value_rate * 0.01; // 残值率（5%）
-  const totalDepreciationPeriod = defaultOption.depreciation_year; // 折旧年限（月）
-  //console.log("残值率", salvageRate);
-  //console.log("折旧月数", totalDepreciationPeriod);
-  return (
-    purchasePrice -
-    ((purchasePrice * (1 - salvageRate)) / totalDepreciationPeriod) * monthsUsed
-  );
-};
-
-/**
- *
- * 将包含采购价和使用月数组成的对象数组，分别算出残值并累计相加输出
- */
-const calculateTotalResidualValue = (data: ProcessedItem[]): number => {
-  return data.reduce((total, item) => {
-    const residualValue = calculateResidualValue(
-      item.purchase,
-      item.monthsUsed
-    );
-    return total + residualValue;
-  }, 0);
-};
-
-//算出总残值
-export const totalResidualValue = (data: MysqlDeviceChange[]) => {
-  //计算出采购价和使用月数组
-  const array = processArray(data);
-  //计算出总残值
-  return Number(calculateTotalResidualValue(array).toFixed(2));
-};
-
-/**
- * 电脑设备列表首页用
- */
-
-//收集数组中的指定键值的总和，并转为GB单位
-type DataType = ComputerRam | ComputerDevice;
-const calculateTotalSize = (dataArrays: DataType[]) => {
-  const totalSize = dataArrays.reduce((sum: number, obj: { size: number }) => {
-    return sum + obj.size;
-  }, 0);
-  return formatBytes(totalSize); // 单位转换
-};
-
-/**
- * 检查是否有指定字符串，有则整段替换，没有则表示为未知
- * @param dataArrays
- * @returns
- */
-interface repType {
-  value: string;
-  label: string;
-}
-const replaceString = (input: string, obj: repType[]): string => {
-  const filteredObjects = obj.filter((item) => input.includes(item.value));
-  if (filteredObjects.length === 0) {
-    // 如果没有找到匹配项，返回 "未收录"
-    return "未收录";
-  } else {
-    // 使用map方法将符合条件的label值映射为一个字符串数组
-    const labels = filteredObjects.map((item) => item.label);
-    // 使用join方法将字符串数组连接成一个字符串，以逗号分隔
-    return labels.join(", ");
-  }
-};
-
-//处理多张显卡，按显存大小从大到小排序，输出字符串数组
-export const handleGraphics = (data: ComputerControllers[]) => {
-  //对值进行处理，出现如下字符串的，去掉
-  const filteredData = data.filter(
-    (item) => !excludeGraphics.some((str) => item.model.includes(str))
-  );
-
-  // 按显存大小从大到小排序
-  const sortedData = filteredData.sort((a, b) => {
-    const vramA = a.vram || 0;
-    const vramB = b.vram || 0;
-    return vramB - vramA;
-  });
-
-  // 返回排序好的字符串数组
-  const value = sortedData.map(
-    (item) => item.model + " " + (item.vram ? formatMB(item.vram) : "")
-  );
-
-  return value;
-};
-
-//添加需要的筛选标记数据
-export const updateOSType = (
-  dataArrays: MysqlDeviceChange[]
-): MysqlDeviceChangeMeat[] => {
-  //添加meat值，方便使用
-  const updatedData = dataArrays.map((obj: MysqlDeviceChange) => {
-    const value = obj.data; //拿到对象
-    const memory = calculateTotalSize(value.memLayout); //内存数组
-    const disk = calculateTotalSize(value.diskLayout); //混合计算，不分固态和机械
-    //整理添加的信息
-    const meat = {
-      os: replaceString(value.os.distro, osTypeReplace), //系统版本 Windows 10
-      ostype: replaceString(value.os.platform, osReplace), //系统类型，windows linux macos
-      cpu: value.cpu.manufacturer || "暂无 CPU 品牌", //CPU品牌 Intel
-      cpuModel: value.cpu.brand || "暂无 CPU 型号", //CPU型号 Core™ i5-9400F
-      model: value.system.model || "暂无设备型号", //设备型号
-      motherboard: value.baseboard.model || "暂无主板型号", //主板型号
-      graphics: handleGraphics(value.graphics.controllers)[0] || "暂无显卡型号", //仅展示显存最大的显卡
-      memory: memory.toString() || "暂无内存容量", //内存容量
-      disk: disk.toString() || "暂无硬盘容量", //硬盘容量
-    };
-    const mac = value.uuid.macs; //获取mac地址
-    return { ...obj, meat, mac };
-  });
-  return updatedData;
 };
 
 /**

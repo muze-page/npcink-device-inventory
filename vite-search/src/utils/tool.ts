@@ -212,20 +212,7 @@ export const findOsTypeObj = (
   return array.find((item) => item.name === data.meat.ostype);
 };
 
-/**
- * 将字符串数组转换为对象，方便下拉选择
- */
-export const changeSelectData = (data: string[] | undefined) => {
-  if (data && data.length > 0) {
-    return data.map((str) => ({
-      value: str,
-      label: str,
-    }));
-  } else {
-    // 如果 defaultOption.department 不存在或为空数组，返回一个空数组或其他默认值
-    return [];
-  }
-};
+
 
 /**
  * 查找对象中，符合要求对象的另一个键的值
