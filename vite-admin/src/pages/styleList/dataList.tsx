@@ -3,7 +3,7 @@
  *  {JSON.stringify(data, null, 2)}
  */
 import { useContext } from "react";
-import { Tooltip, Skeleton } from "antd";
+import { Tooltip, Skeleton, Space } from "antd";
 
 //跨组件提供方法
 import { StyleContext } from "@/context/StyleContext";
@@ -67,15 +67,16 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         */}
 
         {/**底部数据 */}
-        <div className="text-xs text-zinc-500  rounded whitespace-nowrap min-h-[190px] mt-4 overflow-hidden">
+        <div className="text-xs text-zinc-500  rounded whitespace-nowrap min-h-[190px]  overflow-hidden">
           {/*设备名称*/}
           <p className="text-sm font-bold text-zinc-800 leading-2 h-10 m-0 whitespace-normal break-words">
             <Tooltip title={"设备名称：" + data.data.title}>
               {data.data.title}
             </Tooltip>
           </p>
-          {/*设备编号*/}
-          <p className="mt-2">
+          <Space direction="vertical" size={"small"} className="mt-2">
+            {/*设备编号*/}
+
             <Tooltip title={"设备编号：" + data.number}>
               <b>编号：</b>
               {isName ? (
@@ -84,9 +85,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
                 <Skeleton.Input active={true} size={"small"} className="!h-4" />
               )}
             </Tooltip>
-          </p>
-          {/*设备分类*/}
-          <p className="mt-2">
+
+            {/*设备分类*/}
+
             <Tooltip title={"设备分类：" + data.category}>
               <b>分类：</b>
               {isName ? (
@@ -95,9 +96,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
                 <Skeleton.Input active={true} size={"small"} className="!h-4" />
               )}
             </Tooltip>
-          </p>
-          {/*使用人*/}
-          <p className="mt-2">
+
+            {/*使用人*/}
+
             <Tooltip title={"使用人或位置：" + data.name}>
               <b>使用：</b>
               {isName ? (
@@ -106,26 +107,26 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
                 <Skeleton.Input active={true} size={"small"} className="!h-4" />
               )}
             </Tooltip>
-          </p>
-          {/*设备价格*/}
-          <p className="mt-2">
-            <b>价格：</b>
-            {formatNumber(data.data.total)} 元
-          </p>
-          {/*状态*/}
-          <p className="mt-2 w-full truncate">
-            <b>状态：</b>
-            {statusLabel(data.state)}
-          </p>
 
-          {/*时间*/}
-          <p className="grid gap-y-1 items-center  mt-2">
+            {/*设备价格*/}
+            <Tooltip title={"设备价格：" + formatNumber(data.data.total)}>
+              <b>价格：</b>
+              {formatNumber(data.data.total)} 元
+            </Tooltip>
+            {/*状态*/}
+            <Tooltip title={"设备状态：" + statusLabel(data.state)}>
+              <b>状态：</b>
+              {statusLabel(data.state)}
+            </Tooltip>
+
+            {/*时间*/}
+
             <Tooltip title={"设备记录时间：" + formatDate(data.created_at)}>
               <span>
                 <b>时间：</b> {formatDate(data.created_at)}
               </span>
             </Tooltip>
-          </p>
+          </Space>
         </div>
       </div>
     </>

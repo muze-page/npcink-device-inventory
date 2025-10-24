@@ -54,9 +54,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         </div>
 
         {/**底部数据 */}
-        <div className="mt-1 text-xs text-zinc-500 rounded whitespace-nowrap min-h-[190px] overflow-hidden">
+        <div className="text-xs text-zinc-500 rounded whitespace-nowrap min-h-[190px] overflow-hidden">
           {/*姓名*/}
-          <div className="text-sm font-bold text-zinc-800 leading-8 m-0  ">
+          <div className="mt-2 text-sm font-bold text-zinc-800 leading-2 h-10 m-0 whitespace-normal break-words  ">
             {isName ? (
               data.name
             ) : (
@@ -91,7 +91,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
               {data.meat.graphics}
             </Tooltip>
           </Space>
-          <Space direction="vertical" size={4} className="flex mt-1">
+          <Space direction="vertical" size={"small"} className="flex mt-1">
             {/*配置信息*/}
             <Tooltip
               title={
