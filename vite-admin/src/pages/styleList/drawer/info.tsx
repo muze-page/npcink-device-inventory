@@ -2,7 +2,7 @@
  * 自定义设备信息展示
  */
 import { useContext } from "react";
-import { Card, Skeleton, Space } from "antd";
+import { Card, Skeleton } from "antd";
 import { StyleDevice } from "@/type/index";
 
 //跨组件提供方法
@@ -42,18 +42,10 @@ const App: React.FC<Props> = ({ data }) => {
           </a>
         }
         style={{ width: "100%" }}
-        className="bg-slate-200"
+        styles={{ body: { backgroundColor: "#f3f4f6" } }} // 设置卡片body的背景色
       >
-        <div className="flex  gap-2">
-          <Card
-            title="设备信息："
-            variant="borderless"
-             style={{ flex: 1 }}
-          >
-            <p>
-              <b>用途：</b>
-              {data.purpose}
-            </p>
+        <div className="flex gap-2">
+          <Card title="设备信息" variant="borderless" style={{ flex: 1 }}>
             <p>
               <b>采购数量：</b>
               {formatNumber(deviceData.numbers)}
@@ -67,17 +59,17 @@ const App: React.FC<Props> = ({ data }) => {
               {statusLabel(data.state)}
             </p>
             <p>
-              <b>分类：</b>
+              <b>设备分类：</b>
               {data.category}
             </p>
           </Card>
-          <Card title="采购信息" variant="borderless"  style={{ flex: 1 }}>
+          <Card title="采购信息" variant="borderless" style={{ flex: 1 }}>
             <p>
               <b>采购人员：</b>
               {isName ? (
                 deviceData.purchaser
               ) : (
-                <Skeleton.Input active={true} size={"small"} />
+                <Skeleton.Input active={true} size={"small"} className="!h-4" />
               )}
             </p>
             <p>
@@ -85,7 +77,7 @@ const App: React.FC<Props> = ({ data }) => {
               {isName ? (
                 data.number
               ) : (
-                <Skeleton.Input active={true} size={"small"} />
+                <Skeleton.Input active={true} size={"small"} className="!h-4" />
               )}
             </p>
             <p>
@@ -93,36 +85,45 @@ const App: React.FC<Props> = ({ data }) => {
               {isName ? (
                 data.name
               ) : (
-                <Skeleton.Input active={true} size={"small"} />
+                <Skeleton.Input active={true} size={"small"} className="!h-4" />
+              )}
+            </p>
+            <p>
+              <b>设备用途：</b>
+              {isName ? (
+                data.purpose
+              ) : (
+                <Skeleton.Input active={true} size={"small"} className="!h-4" />
               )}
             </p>
           </Card>
         </div>
         <Card title="订单信息" variant="borderless" className="mt-2">
-          <Space size={16}>
-            <p>
+          <div className="flex justify-between">
+            <p className="flex-1">
               <b>采购单号：</b>
               {isName ? (
                 deviceData.order
               ) : (
-                <Skeleton.Input active={true} size={"small"} />
+                <Skeleton.Input active={true} size={"small"} className="!h-4" />
               )}
             </p>
-            <p>
+            <p className="flex-1">
               <b>下单时间：</b>
               {formatDate(deviceData.order_time)}
             </p>
-          </Space>
-          <Space size={16}>
-            <p>
+          </div>
+
+          <div className="flex justify-between">
+            <p className="flex-1">
               <b>采购平台：</b>
               {platfromType}
             </p>
-            <p>
+            <p className="flex-1">
               <b>支付方式：</b>
               {payType}
             </p>
-          </Space>
+          </div>
         </Card>
       </Card>
     </>

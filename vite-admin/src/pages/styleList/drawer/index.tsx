@@ -17,16 +17,20 @@ interface Props {
   onActive: () => void; //修改弹窗状态
 }
 const App: React.FC<Props> = ({ data, active, onActive }) => {
-
   //准备 Tab 栏
   const items: TabsProps["items"] = [
     {
       key: "1",
+      label: `设备信息`,
+      children: <Info data={data} />,
+    },
+    {
+      key: "2",
       label: `自动记录`,
       children: <ChangeAutoRecord uuid={data.uuid} />,
     },
     {
-      key: "2",
+      key: "3",
       label: `信息修改`,
       children: <Seting onActive={onActive} />,
     },
@@ -43,7 +47,6 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
         size="large"
         className="pt-9"
       >
-        <Info data={data} />
         <Tabs defaultActiveKey="1" items={items} />
         <PrintData title="打印当前设备信息" data={data} />
       </Drawer>
