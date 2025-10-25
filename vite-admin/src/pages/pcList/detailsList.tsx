@@ -7,7 +7,7 @@ import { Tooltip, Skeleton, Space } from "antd";
 import { MysqlDeviceChangeMeat } from "@/type/index";
 import Mac from "@/assets/pc/mac.png";
 import Win from "@/assets/pc/windows.png";
-import { findOsTypeObj, findBValue } from "@/utils/tool";
+import { findOsTypeObj,  } from "@/utils/tool";
 
 interface Props {
   data: MysqlDeviceChangeMeat; //设备数据
@@ -16,7 +16,7 @@ interface Props {
 }
 const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
   //拿到公共值
-  const { isName, deviceCategoryOption } = useContext(DevieContext);
+  const { isName,  } = useContext(DevieContext);
   //点击打开弹窗并保存选中的值
   const showDrawer = () => {
     onActive(); //打开弹窗
@@ -29,8 +29,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
     { id: 2, name: "Windows", image: Win },
   ];
 
-  //当前设备状态
-  const deviceStatus = findBValue(deviceCategoryOption.states, data.state);
+
 
   //找到需要的系统对象
   const osTypeObj = findOsTypeObj(osTypeArray, data.meat.ostype);
@@ -113,9 +112,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
               <b>部门：</b>
               {data.department}
             </Tooltip>
-            <Tooltip title={"当前状态：" + deviceStatus}>
+            <Tooltip title={"当前状态：" + data.state}>
               <b>状态：</b>
-              {deviceStatus}
+              {data.state}
             </Tooltip>
             <Tooltip title={"当前IP：" + data.ip}>
               <b>IP：</b>

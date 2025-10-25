@@ -1,10 +1,5 @@
 //公共方法
-import { DataItemArr } from "@/type/index";
-
 import dayjs, { Dayjs } from "dayjs";
-
-
-
 export {
   totalResidualValue,
   replaceKeyValues,
@@ -102,15 +97,6 @@ export const formatMB = (mb: number | null) => {
     const rounded = parseFloat(size.toFixed(1));
     return rounded + " " + units[unitIndex];
   }
-};
-
-/**
- * 查找对象中，符合要求对象的另一个键的值TODO:检查是否有用
- */
-
-export const findBValue = (arr: DataItemArr[], targetAValue: string) => {
-  const foundObject = arr.find((obj) => obj.value === targetAValue);
-  return foundObject ? foundObject.label : "未找到";
 };
 
 /**

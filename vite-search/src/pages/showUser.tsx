@@ -3,7 +3,7 @@
  */
 import React from "react";
 import { Card, Space } from "antd";
-import { findBValue, formatDate } from "@/utils/tool";
+import {  formatDate } from "@/utils/tool";
 import { MysqlDeviceChange } from "@/type/index";
 
 interface Props {
