@@ -152,7 +152,7 @@ const App: React.FC<Props> = ({ onActive }) => {
           name="purpose"
           rules={[{ required: true, message: "您的设备用途" }]}
         >
-          <TextArea rows={3} />
+          <TextArea rows={3} placeholder="此内容支持搜索" />
         </Form.Item>
 
         <Form.Item>

@@ -134,7 +134,8 @@ const App: React.FC = () => {
   const fuse = useMemo(
     () =>
       new Fuse(filteredList, {
-        keys: ["name", "data.title", "data.order", "data.purchaser"], // 允许在这两个字段里模糊搜
+        //使用人、用途、设备名称、订单号、采购人姓名
+        keys: ["name", "purpose", "data.title", "data.order", "data.purchaser"], // 允许在这五个字段里模糊搜
         threshold: 0.4, // 0=精确 1=极宽松
         shouldSort: true,
         includeScore: true,

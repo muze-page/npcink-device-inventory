@@ -195,7 +195,7 @@ export interface StyleDeviceSeting {
   number: string; //设备编号
   category: string; //分类
   purpose: string; //用途
-  state: "apply" | "idie" | "fault" | "scrap" | "repair"; //设备状态
+  state: string; //设备状态
   data: StyleDeviceData; //设备数据
 }
 
@@ -211,20 +211,12 @@ export interface StyleDeviceData {
   title: string; //设备名称
   numbers: number; //设备数量
   total: number; //单价
-  platform:
-    | "JingDong"
-    | "TaoBao"
-    | "PingDuoDuo"
-    | "MeiTuan"
-    | "XianYu"
-    | "DouYin"
-    | "Offline"
-    | "About"; //采购平台
+  platform: string; //采购平台
   shop_name: string; //店铺名称
   link: string; //购买链接
   order_time: Dayjs; //下单时间
   order: string; //订单号
-  pay_method: "Alipay" | "WeChat" | "Cash" | "BankCard" | "AboutPay"; //支付方式
+  pay_method: string; //支付方式
   purchaser: string; //采购人
 }
 
