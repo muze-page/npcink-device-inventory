@@ -223,7 +223,7 @@ const App: React.FC<Props> = ({ name }) => {
         URL.revokeObjectURL(url);
       }, 1000);
 
-      message.success("数据导出成功");
+      //message.success("数据导出成功");
     } catch (error: any) {
       console.error("导出错误:", error);
       if (error.response) {
@@ -265,7 +265,7 @@ const App: React.FC<Props> = ({ name }) => {
 
       // 如果没有拿到值，就此结束
       exportTable(jsonData.data?.data || [], tableName);
-      message.success("表格导出成功");
+      //message.success("表格导出成功");
     } catch (error: any) {
       console.error("表格导出错误:", error);
       message.error("表格导出过程中发生错误，请重试");

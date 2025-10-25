@@ -8,22 +8,50 @@ export const instance = axios.create({
 // 响应拦截器
 instance.interceptors.response.use(
   (response) => {
-    if (response.data.success) {
-      message.success(response.data.data.message);
-    } else {
-      message.error(response.data.data.message);
+    // 检查响应数据中是否有消息需要显示
+    if (response.data && response.data.data && response.data.data.message) {
+      if (response.data.success) {
+        message.success(response.data.data.message);
+      } else {
+        message.error(response.data.data.message);
+      }
     }
     return response;
   },
   (error) => {
-    //检查，有没有返回错误信息，有的话展示，没有就做其他的
+    // 检查是否有返回错误信息，有的话展示，没有就显示默认错误信息
+    let errorMessage = "请求出错";
 
-    const errorMessage =
-      error.response && error.response.status
-        ? `出错： ${error.response.data.data.error}`
-        : `出错：${error.message}`;
+    if (error.response) {
+      // 服务器返回了错误状态码
+      if (
+        error.response.data &&
+        error.response.data.data &&
+        error.response.data.data.message
+      ) {
+        // 优先使用服务器返回的错误消息
+        errorMessage = error.response.data.data.message;
+      } else if (
+        error.response.data &&
+        error.response.data.data &&
+        error.response.data.data.error
+      ) {
+        // 其次使用服务器返回的错误信息
+        errorMessage = error.response.data.data.error;
+      } else {
+        // 默认使用状态文本
+        errorMessage = `请求失败: ${error.response.status} ${error.response.statusText}`;
+      }
+    } else if (error.request) {
+      // 请求已发出但没有收到响应
+      errorMessage = "网络错误，请检查网络连接";
+    } else {
+      // 其他错误
+      errorMessage = error.message || "未知错误";
+    }
+
     message.error(errorMessage);
-    console.error(errorMessage);
+    console.error("请求错误:", error);
     return Promise.reject(error);
   }
 );
