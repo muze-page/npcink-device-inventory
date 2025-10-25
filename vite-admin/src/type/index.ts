@@ -1,16 +1,23 @@
 //类型
 import type { Dayjs } from "dayjs";
 //PC 设备
-import { PCCategoryType } from "@/type/pc";
-export type { PCCategoryType };
+import { PCCategoryType, FilterData } from "@/type/pc";
+export type { PCCategoryType, FilterData };
 //自定义设备
-import { StyleCategoryType } from "@/type/style";
-export type { StyleCategoryType };
-
-//设备状态TODO:择机删除
-export interface StateType {
-  state: "apply" | "idie" | "fault" | "scrap" | "repair"; //设备状态
-}
+import {
+  StyleCategoryType,
+  FilterStyleData,
+  StyleDeviceSeting,
+  StyleDevice,
+  StyleDeviceData,
+} from "@/type/style";
+export type {
+  StyleCategoryType,
+  FilterStyleData,
+  StyleDeviceSeting,
+  StyleDevice,
+  StyleDeviceData,
+};
 
 /**
  * 导出数据时的数据结构
@@ -25,7 +32,7 @@ export interface ImportListData {
 //上传数据时需要的值
 export interface MysqlDeviceData {
   name: string; //姓名
-  state: "apply" | "idie" | "fault" | "scrap" | "repair"; //设备状态
+  state: string; //设备状态
   number: string; //编号
   department: string; //部门
   ip: string; //ip
@@ -69,20 +76,6 @@ export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
   };
   mac: string[];
 };
-
-//筛选数据类型 - 电脑设备
-export interface FilterData {
-  state: "apply" | "idie" | "fault" | "scrap" | "repair" | "all"; //筛选电脑设备状态
-  department: string; //部门
-}
-
-//筛选数据类型 - 自定义设备
-export interface FilterStyleData {
-  state: "apply" | "idie" | "fault" | "scrap" | "repair" | "all"; //筛选自定义设备状态
-  category: string; //设备类别
-  platform: string; //筛选采购平台
-  payMethod: string; //付款方式
-}
 
 //选项数据类型
 export interface OptionType {
@@ -187,37 +180,6 @@ export interface ChangeAutoRecord {
   record_uuid: string; //对应设备的UUID
   msg: string; //描述信息
   [keysx: string]: number | string | Dayjs;
-}
-
-//自定义设备设置用类型
-export interface StyleDeviceSeting {
-  name: string; //使用人
-  number: string; //设备编号
-  category: string; //分类
-  purpose: string; //用途
-  state: string; //设备状态
-  data: StyleDeviceData; //设备数据
-}
-
-//自定义设备类型
-export type StyleDevice = StyleDeviceSeting & {
-  id: string; //设备ID，数据库自动创建
-  created_at: Dayjs; //添加时间，此时间由数据库创建新表时自动填入
-  uuid: string; //设备UUID，数据库自动创建
-};
-
-//自定义设备数据属性
-export interface StyleDeviceData {
-  title: string; //设备名称
-  numbers: number; //设备数量
-  total: number; //单价
-  platform: string; //采购平台
-  shop_name: string; //店铺名称
-  link: string; //购买链接
-  order_time: Dayjs; //下单时间
-  order: string; //订单号
-  pay_method: string; //支付方式
-  purchaser: string; //采购人
 }
 
 /**
