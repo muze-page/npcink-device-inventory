@@ -3,8 +3,7 @@ import { DataItemArr } from "@/type/index";
 
 import dayjs, { Dayjs } from "dayjs";
 
-//替换用数组
-import { device_status } from "@/utils/replace";
+
 
 export {
   totalResidualValue,
@@ -41,12 +40,6 @@ export const formatDate = (date: Dayjs) => {
 export const formatNumber = (num: number | undefined): string => {
   if (num === undefined || num === null) return "0";
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-};
-
-//准备设备状态
-type DeviceStatus = "apply" | "idie" | "fault" | "scrap" | "repair";
-export const statusLabel = (value: DeviceStatus) => {
-  return device_status.find((item) => item.value === value)?.label;
 };
 
 /**

@@ -4,7 +4,6 @@
 import React from "react";
 import { Card, Space } from "antd";
 import { findBValue, formatDate } from "@/utils/tool";
-import { device_status } from "@/utils/replace";
 import { MysqlDeviceChange } from "@/type/index";
 
 interface Props {
@@ -33,7 +32,7 @@ const App: React.FC<Props> = ({ data }) => {
           </p>
           <p>
             <b>状态：</b>
-            {findBValue(device_status, data.state)}
+            {data.state}
           </p>
         </Card>
       </Space>

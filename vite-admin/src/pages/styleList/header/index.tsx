@@ -14,9 +14,6 @@ import {
 //导入类型
 import { FilterStyleData } from "@/type/index";
 
-//导入设备状态类型
-import { device_status } from "@/utils/replace";
-
 //跨组件提供方法
 import { StyleContext } from "@/context/StyleContext";
 
@@ -40,9 +37,6 @@ interface Props {
 //准备搜索框
 const { Search } = Input;
 
-//处理状态选项，添加全部选项
-const stateOptions = [{ label: "全部", value: "all" }, ...device_status];
-
 //处理采购平台选项，添加全部选项
 const stylePlatformOptions = [
   { label: "全部", value: "all" },
@@ -65,10 +59,16 @@ const App: React.FC<Props> = ({
   //信息录入弹窗状态
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  //处理状态选项，添加全部选项
+  const stateOptions = [
+    { label: "全部", value: "all" },
+    ...styleCategoryOption.states,
+  ];
+
   //准备分类选项
   const styleCategoryOptions = [
     { label: "全部", value: "all" },
-    ...styleCategoryOption,
+    ...styleCategoryOption.categories,
   ];
 
   //展示弹窗

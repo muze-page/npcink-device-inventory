@@ -40,14 +40,7 @@ export const osTypeReplace = [
   { value: "linux", label: "Linux" },
 ];
 
-//用于选项录入
-export const device_status = [
-  { value: "apply", label: "使用" },
-  { value: "idie", label: "闲置" },
-  { value: "fault", label: "故障" },
-  { value: "repair", label: "维修" },
-  { value: "scrap", label: "报废" },
-];
+
 
 //排除出现在这里的显卡型号
 export const excludeGraphics = [

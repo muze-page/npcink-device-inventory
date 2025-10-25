@@ -92,7 +92,7 @@ const App: React.FC<Props> = ({
             状态：
             <Select
               value={filterData.state || "all"} // 使用value属性，从filterData获取当前值
-              style={{ width: 80 }}
+              style={{ width: 140 }}
               onChange={(value: any) => {
                 onChange({ ...filterData, state: value });
               }}
@@ -103,7 +103,7 @@ const App: React.FC<Props> = ({
             部门：
             <Select
               value={filterData.department || "all"} // 使用value属性，从filterData获取当前值
-              style={{ width: 120 }}
+              style={{ width: 140 }}
               onChange={(value: any) => {
                 onChange({ ...filterData, department: value });
               }}
@@ -112,12 +112,12 @@ const App: React.FC<Props> = ({
           </div>
 
           <Search
-            placeholder="搜索名字、编号、IP地址或MAC地址" //添加说明
+            placeholder="搜索名字、编号、IP或MAC地址" //添加说明
             allowClear // 可以点击清除图标删除内容
             value={inputValue} // 使用本地状态
             onChange={handleChange} // 输入回调
             onSearch={onSearch} //搜索回调
-            style={{ width: 260, lineHeight: "inherit", minHeight: "10px" }}
+            style={{ width: 280, lineHeight: "inherit", minHeight: "10px" }}
             className="searchInput"
           />
 

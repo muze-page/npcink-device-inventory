@@ -12,7 +12,6 @@ import {
   formatDate,
   findBValue,
   formatNumber,
-  statusLabel,
 } from "@/utils/tool";
 //导入自定义设备的采购和支付方式列表
 import { stylePlatform, stylePayType } from "@/utils/replace";
@@ -56,7 +55,7 @@ const App: React.FC<Props> = ({ data }) => {
             <InfoItem label="采购总价">
               {formatNumber(deviceData.total)} 元
             </InfoItem>
-            <InfoItem label="当前状态">{statusLabel(data.state)}</InfoItem>
+            <InfoItem label="当前状态">{data.state}</InfoItem>
             <InfoItem label="设备分类">{data.category}</InfoItem>
           </Card>
 

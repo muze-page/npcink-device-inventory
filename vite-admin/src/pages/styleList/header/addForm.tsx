@@ -17,7 +17,7 @@ import type { FormProps, FormInstance } from "antd";
 import dayjs from "dayjs";
 import { addStyleDeviceData } from "@/services/index";
 
-import { device_status, stylePlatform, stylePayType } from "@/utils/replace";
+import { stylePlatform, stylePayType } from "@/utils/replace";
 import { devStatus } from "@/utils/tool";
 
 //准备采购平台,付款方式
@@ -216,7 +216,11 @@ const App = ({ form, handleOk }: AddFormProps) => {
             name="state"
             rules={[{ required: true, message: "请填写设备状态" }]}
           >
-            <Select options={device_status} style={{ width: "100%" }} />
+            <SelectInput
+              options={styleCategoryOption.states}
+              defaultValue=""
+              onChange={(value) => form?.setFieldsValue({ states: value })}
+            />
           </Form.Item>
         </Col>
         <Col span={12}>
@@ -226,7 +230,7 @@ const App = ({ form, handleOk }: AddFormProps) => {
             rules={[{ required: true, message: "请填写设备分类" }]}
           >
             <SelectInput
-              options={styleCategoryOption}
+              options={styleCategoryOption.categories}
               defaultValue=""
               onChange={(value) => form?.setFieldsValue({ category: value })}
             />

@@ -3,22 +3,27 @@
  */
 import axios from "axios";
 import { Ajaxurl } from "@/utils/index";
-import { StyleDevice, StyleDeviceSeting } from "@/type/index";
+import {
+  StyleDevice,
+  StyleDeviceSeting,
+  StyleCategoryType,
+} from "@/type/index";
 import { instance, addParamIfDefined } from "@/services/axiosConfig";
+
 /**
- * 获取自定义设备分类数组
+ * 获取自定义设备分类和状态数组
  */
-export const getStyleDeviceCategory = async () => {
+export const getStyleDeviceCategory = async (): Promise<StyleCategoryType> => {
   const params = new URLSearchParams();
   params.append("action", "get_style_device_categories_callback");
   try {
     const data = await axios.post(Ajaxurl, params);
-    //console.log("拿到的值:");
-    //console.log(data);
+    console.log("拿到的值:");
+    console.log(data);
     return data.data.data;
   } catch (error) {
     console.log(error);
-    return [];
+    return { states: [], categories: [] };
   }
 };
 /**

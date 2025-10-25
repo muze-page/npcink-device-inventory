@@ -14,7 +14,7 @@ import Fuse from "fuse.js";
 import DataList from "@/pages/styleList/dataList";
 
 //拿到自定义设备数据类型
-import { StyleDevice, FilterStyleData, DataItemArr } from "@/type/index";
+import { StyleDevice, FilterStyleData, StyleCategoryType } from "@/type/index";
 
 //跨组件提供方法
 import { StyleContext } from "@/context/StyleContext";
@@ -38,19 +38,19 @@ const App: React.FC = () => {
   //共享弹窗状态
   const [active, setActive] = useState(false);
 
-  //获取自定义设备分类
-  const [styleCategoryOption, setStyleCategoryOption] = useState<DataItemArr[]>(
-    [{ label: "", value: "" }]
-  );
+  //获取自定义设备的状态和分类
+  const [styleCategoryOption, setStyleCategoryOption] =
+    useState<StyleCategoryType>({
+      states: [], //设备状态
+      categories: [], //设备分类
+    });
 
   //获取自定义设备分类数据
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const categories = await getStyleDeviceCategory();
-        if (Array.isArray(categories)) {
           setStyleCategoryOption(categories);
-        }
       } catch (error) {
         console.error("获取设备分类失败:", error);
       }

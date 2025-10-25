@@ -14,11 +14,6 @@ import { StyleDevice } from "@/type/index";
 //准备采购平台类型
 import { formatDate, formatNumber } from "@/utils/tool";
 
-//准备采购平台列表和支付平台列表
-//import { platformArray, payArray } from "@/utils/replace";
-
-//工具函数
-import { statusLabel } from "@/utils/tool";
 interface Props {
   data: StyleDevice; //拿到自定义设备数据
   onActive: () => void; //修改状态
@@ -114,9 +109,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
               {formatNumber(data.data.total)} 元
             </Tooltip>
             {/*状态*/}
-            <Tooltip title={"设备状态：" + statusLabel(data.state)}>
+            <Tooltip title={"设备状态：" + data.state}>
               <b>状态：</b>
-              {statusLabel(data.state)}
+              {data.state}
             </Tooltip>
 
             {/*时间*/}

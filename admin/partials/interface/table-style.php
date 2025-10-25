@@ -36,23 +36,67 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
                 "SELECT DISTINCT category FROM {$table_name} WHERE category IS NOT NULL AND category != ''"
             );
 
+            // 获取所有状态分类
+            $states = $wpdb->get_results(
+                "SELECT DISTINCT state FROM {$table_name} WHERE state IS NOT NULL AND state != ''"
+            );
+
             // 检查查询是否成功
             if ($wpdb->last_error) {
                 wp_send_json_error(['error' => $wpdb->last_error], 500);
                 wp_die();
             }
 
-            // 整理成键值对形式，value和label都是相同的值
-            $result = array_map(function ($item) {
+            // 整理分类数据
+            $category_result = array_map(function ($item) {
                 return [
                     'value' => $item->category,
                     'label' => $item->category
                 ];
             }, $categories);
 
-            wp_send_json_success(array_values($result));
+            // 保底状态
+            $state_labels = [
+                '使用' => '使用',
+                '闲置' => '闲置',
+                '故障' => '故障',
+                '维修' => '维修',
+                '报废' => '报废'
+            ];
+
+            // 获取数据库中实际存在的状态值
+            $existing_states = array_column($states, 'state');
+
+            // 确保所有预定义的状态选项都包含在结果中
+            $state_result = [];
+            foreach ($state_labels as $value => $label) {
+                $state_result[] = [
+                    'value' => $value,
+                    'label' => $label
+                ];
+            }
+
+            // 如果数据库中有其他未预定义的状态，也添加进去
+            foreach ($existing_states as $state) {
+                // 只添加不在预定义列表中的状态
+                if (!array_key_exists($state, $state_labels)) {
+                    $state_result[] = [
+                        'value' => $state,
+                        'label' => $state
+                    ];
+                }
+            }
+
+            // 组合结果，统一键名格式
+            $result = [
+                'states' => array_values($state_result),     // 状态
+                'categories' => array_values($category_result) // 分类（统一命名）
+            ];
+
+            wp_send_json_success($result);
             wp_die();
         }
+
 
         /**
          * 增- 添加自定义设备数据接口

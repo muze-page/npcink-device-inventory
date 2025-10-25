@@ -1,11 +1,13 @@
 //类型
 import type { Dayjs } from "dayjs";
-
+//PC 设备
 import { PCCategoryType } from "@/type/pc";
+export type { PCCategoryType };
+//自定义设备
+import { StyleCategoryType } from "@/type/style";
+export type { StyleCategoryType };
 
-export type { PCCategoryType }
-
-//设备状态TODO:合并类似类型
+//设备状态TODO:择机删除
 export interface StateType {
   state: "apply" | "idie" | "fault" | "scrap" | "repair"; //设备状态
 }
@@ -104,7 +106,7 @@ export interface TableData {
   sum: number;
 }
 
-//标准下拉
+//标准下拉TODO:择机删除
 export interface DataItemArr {
   key?: string;
   label: string;
