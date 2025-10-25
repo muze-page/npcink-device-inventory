@@ -5,7 +5,6 @@ import { useContext } from "react";
 import { DevieContext } from "@/context/DeviceContext";
 import { Tooltip, Skeleton, Space } from "antd";
 import { MysqlDeviceChangeMeat } from "@/type/index";
-import { device_status } from "@/utils/replace";
 import Mac from "@/assets/pc/mac.png";
 import Win from "@/assets/pc/windows.png";
 import { findOsTypeObj, findBValue } from "@/utils/tool";
@@ -16,9 +15,8 @@ interface Props {
   onDrawerData: () => void; //保存值
 }
 const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
-  //拿到隐藏姓名状态
-  const { isName } = useContext(DevieContext);
-
+  //拿到公共值
+  const { isName, deviceCategoryOption } = useContext(DevieContext);
   //点击打开弹窗并保存选中的值
   const showDrawer = () => {
     onActive(); //打开弹窗
@@ -32,7 +30,7 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
   ];
 
   //当前设备状态
-  const deviceStatus = findBValue(device_status, data.state);
+  const deviceStatus = findBValue(deviceCategoryOption.states, data.state);
 
   //找到需要的系统对象
   const osTypeObj = findOsTypeObj(osTypeArray, data.meat.ostype);

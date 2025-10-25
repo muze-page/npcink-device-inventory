@@ -8,7 +8,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
     {
         public static function run()
         {
-            //获取设备分类键值对
+            //获取设备状态和分类键值对
             add_action('wp_ajax_get_device_category_callback', array(__CLASS__, 'get_device_category_callback'));
 
             // 修改 - 设备信息接口
@@ -26,9 +26,14 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_pc_name;
 
-            // 获取所有设备分类
-            $categories = $wpdb->get_results(
+            // 获取所有部门分类
+            $departments = $wpdb->get_results(
                 "SELECT DISTINCT department FROM {$table_name} WHERE department IS NOT NULL AND department != ''"
+            );
+
+            // 获取所有状态分类
+            $states = $wpdb->get_results(
+                "SELECT DISTINCT state FROM {$table_name} WHERE state IS NOT NULL AND state != ''"
             );
 
             // 检查查询是否成功
@@ -37,18 +42,54 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
                 wp_die();
             }
 
-            // 整理成键值对形式，value和label都是相同的值
-            $result = array_map(function ($item) {
+            // 整理部门数据
+            $department_result = array_map(function ($item) {
                 return [
                     'value' => $item->department,
                     'label' => $item->department
                 ];
-            }, $categories);
+            }, $departments);
 
-            wp_send_json_success(array_values($result));
+            // 保底状态
+            $state_labels = [
+                '使用' => '使用',
+                '闲置' => '闲置',
+                '故障' => '故障',
+                '维修' => '维修',
+                '报废' => '报废'
+            ];
+
+            // 获取数据库中实际存在的状态值
+            $existing_states = array_column($states, 'state');
+
+            // 确保所有预定义的状态选项都包含在结果中
+            $state_result = [];
+            foreach ($state_labels as $value => $label) {
+                $state_result[] = [
+                    'value' => $value,
+                    'label' => $label
+                ];
+            }
+
+            // 如果数据库中有其他未预定义的状态，也添加进去
+            foreach ($existing_states as $state) {
+                if (!array_key_exists($state, $state_labels)) {
+                    $state_result[] = [
+                        'value' => $state,
+                        'label' => $state
+                    ];
+                }
+            }
+
+            // 组合结果
+            $result = [
+                'states' => array_values($state_result), //状态
+                'departments' => array_values($department_result), //部门
+            ];
+
+            wp_send_json_success($result);
             wp_die();
         }
-
         /**
          * 修改设备信息接口
          */

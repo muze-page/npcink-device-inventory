@@ -6,7 +6,11 @@ import { SetStateAction, useState, useMemo, useEffect } from "react";
 import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 import { dataMySql } from "@/utils/index";
-import { MysqlDeviceChangeMeat, FilterData, DataItemArr } from "@/type/index";
+import {
+  MysqlDeviceChangeMeat,
+  FilterData,
+  PCCategoryType,
+} from "@/type/index";
 import { getDeviceCategory } from "@/services/index";
 //模糊搜索
 import Fuse from "fuse.js";
@@ -30,10 +34,12 @@ import { DevieContext } from "@/context/DeviceContext";
 import { updateOSType, devStatus } from "@/utils/tool";
 
 const App: React.FC = () => {
-  //获取设备分类
-  const [deviceCategoryOption, setDeviceCategoryOption] = useState<
-    DataItemArr[]
-  >([{ label: "", value: "" }]);
+  //获取设备状态和分类
+  const [deviceCategoryOption, setDeviceCategoryOption] =
+    useState<PCCategoryType>({
+      states: [], //状态
+      departments: [], //部门
+    });
 
   //将拿到的数据进行排序，再添加需要的meat信息
   const DataMeatArray = updateOSType(dataMySql);
@@ -46,14 +52,13 @@ const App: React.FC = () => {
     console.dir(DataMeatArray);
   }
 
-  //获取设备分类数据
+  //获取设备状态和部门分类数据
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const categories = await getDeviceCategory();
-        if (Array.isArray(categories)) {
-          setDeviceCategoryOption(categories);
-        }
+        //存入分类数据
+        setDeviceCategoryOption(categories);
       } catch (error) {
         console.error("获取设备分类失败:", error);
       }
@@ -245,9 +250,6 @@ const App: React.FC = () => {
           data={drawerData}
         />
       </div>
-      {/**
-       * <Demo />
-       */}
     </DevieContext.Provider>
   );
 };

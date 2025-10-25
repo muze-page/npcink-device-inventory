@@ -2,7 +2,6 @@
 import { useContext } from "react";
 import { Skeleton, Space, Tooltip } from "antd";
 import { OsTypeArray } from "@/type/index";
-import { device_status } from "@/utils/replace";
 import { findBValue, findOsTypeObj } from "@/utils/tool";
 import { DevieContext } from "@/context/DeviceContext";
 import MacOs from "@/assets/pc/macOS.png";
@@ -10,10 +9,10 @@ import Win from "@/assets/pc/windowsOS.png";
 
 const App: React.FC = ({}) => {
   //获取数据，拿到隐藏姓名状态
-  const { drawerData, isName } = useContext(DevieContext);
+  const { drawerData, isName, deviceCategoryOption } = useContext(DevieContext);
 
   //当前设备状态
-  const deviceStatus = findBValue(device_status, drawerData.state);
+  const deviceStatus = findBValue(deviceCategoryOption.states, drawerData.state);
 
   //标识 - 不同的设备不同的图片
   const osTypeArray = [

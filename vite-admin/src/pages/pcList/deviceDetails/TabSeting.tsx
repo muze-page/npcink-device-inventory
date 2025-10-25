@@ -2,11 +2,10 @@
  * 设备详情 - 设置
  */
 import { useContext, useEffect } from "react";
-import { Form, Button, Input, InputNumber, Select } from "antd";
+import { Form, Button, Input, InputNumber } from "antd";
 import { DevieContext } from "@/context/DeviceContext";
 import { deltSQLData, changeMySql } from "@/services/index";
 import { MysqlDeviceData } from "@/type/index";
-import { device_status } from "@/utils/replace";
 import { totalResidualValue, validateIPv4 } from "@/utils/tool";
 //选择输入框
 import SelectInput from "@/components/selectInput";
@@ -118,11 +117,15 @@ const App: React.FC = () => {
               <Input placeholder="设备唯一标识编号" />
             </Form.Item>
             <Form.Item<MysqlDeviceData> label="状态" name="state">
-              <Select options={device_status} />
+              <SelectInput
+                options={deviceCategoryOption.states}
+                defaultValue={drawerData.state}
+                onChange={(value) => form?.setFieldsValue({ state: value })}
+              />
             </Form.Item>
             <Form.Item<MysqlDeviceData> label="部门" name="department">
               <SelectInput
-                options={deviceCategoryOption}
+                options={deviceCategoryOption.departments}
                 defaultValue={drawerData.department}
                 onChange={(value) =>
                   form?.setFieldsValue({ department: value })

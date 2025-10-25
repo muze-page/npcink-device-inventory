@@ -3,7 +3,7 @@
  */
 import axios from "axios";
 import { Ajaxurl } from "@/utils/index";
-import { MysqlChange, MysqlDeviceData } from "@/type/index";
+import { MysqlChange, MysqlDeviceData, PCCategoryType } from "@/type/index";
 import { instance, addParamIfDefined } from "@/services/axiosConfig";
 /**
  * 修改设备数据，一次性更新
@@ -43,17 +43,21 @@ export const deltSQLData = async (uuid: string) => {
   }
 };
 
-//获取设备分类键值对
-export const getDeviceCategory = async () => {
+//获取电脑设备状态和分类键值对
+export const getDeviceCategory = async (): Promise<PCCategoryType> => {
   const params = new URLSearchParams();
   params.append("action", "get_device_category_callback");
   try {
-    const data = await axios.post(Ajaxurl, params);
-    //console.log("拿到的值:");
-    //console.log(data);
-    return data.data.data;
+    const response = await axios.post(Ajaxurl, params);
+    //console.log("拿到的分类值:");
+    //console.log(response);
+    return response.data.data;
   } catch (error) {
     console.log(error);
-    return [];
+    // 返回默认值，确保始终返回正确的类型
+    return {
+      states: [],
+      departments: [],
+    };
   }
 };

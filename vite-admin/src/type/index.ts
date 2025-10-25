@@ -1,6 +1,10 @@
 //类型
 import type { Dayjs } from "dayjs";
 
+import { PCCategoryType } from "@/type/pc";
+
+export type { PCCategoryType }
+
 //设备状态TODO:合并类似类型
 export interface StateType {
   state: "apply" | "idie" | "fault" | "scrap" | "repair"; //设备状态

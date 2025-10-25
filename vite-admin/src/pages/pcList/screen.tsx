@@ -10,11 +10,7 @@ import {
   EyeInvisibleOutlined,
 } from "@ant-design/icons";
 import { FilterData } from "@/type/index";
-
 import { normalize } from "@/utils/tool";
-
-//设备状态
-import { device_status } from "@/utils/replace";
 import Header from "@/components/tabHeader";
 import { DevieContext } from "@/context/DeviceContext";
 interface Props {
@@ -28,8 +24,6 @@ interface Props {
 //准备搜索框
 const { Search } = Input;
 
-//处理状态选项，添加全部选项
-const stateOptions = [{ label: "全部", value: "all" }, ...device_status];
 
 const App: React.FC<Props> = ({
   filterData,
@@ -41,11 +35,16 @@ const App: React.FC<Props> = ({
   //拿到是否隐藏姓名的状态和部门选项
   const { isName, deviceCategoryOption } = useContext(DevieContext);
 
+    //准备状态筛选用选项
+  const pcStateOptions = [
+    { label: "全部", value: "all" },
+    ...deviceCategoryOption.states,
+  ];
+
   //准备部门筛选用选项
-  //准备分类选项
   const deviceCategoryOptions = [
     { label: "全部", value: "all" },
-    ...deviceCategoryOption,
+    ...deviceCategoryOption.departments,
   ];
 
   //重置按钮,
@@ -97,7 +96,7 @@ const App: React.FC<Props> = ({
               onChange={(value: any) => {
                 onChange({ ...filterData, state: value });
               }}
-              options={stateOptions}
+              options={pcStateOptions}
             />
           </div>
           <div>
