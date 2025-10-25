@@ -43,6 +43,8 @@ const App: React.FC = () => {
     useState<StyleCategoryType>({
       states: [], //设备状态
       categories: [], //设备分类
+      platforms: [], //采购平台
+      pay_methods: [], //支付方式
     });
 
   //获取自定义设备分类数据
@@ -50,7 +52,7 @@ const App: React.FC = () => {
     const fetchCategories = async () => {
       try {
         const categories = await getStyleDeviceCategory();
-          setStyleCategoryOption(categories);
+        setStyleCategoryOption(categories);
       } catch (error) {
         console.error("获取设备分类失败:", error);
       }

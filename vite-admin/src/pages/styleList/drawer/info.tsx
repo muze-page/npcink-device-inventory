@@ -8,13 +8,7 @@ import { StyleDevice } from "@/type/index";
 //跨组件提供方法
 import { StyleContext } from "@/context/StyleContext";
 
-import {
-  formatDate,
-  findBValue,
-  formatNumber,
-} from "@/utils/tool";
-//导入自定义设备的采购和支付方式列表
-import { stylePlatform, stylePayType } from "@/utils/replace";
+import { formatDate, formatNumber } from "@/utils/tool";
 
 interface Props {
   data: StyleDevice;
@@ -24,11 +18,6 @@ const App: React.FC<Props> = ({ data }) => {
   const deviceData = data.data;
   //拿到是否隐藏姓名的状态
   const { isName } = useContext(StyleContext);
-
-  //采购平台
-  const platformType = findBValue(stylePlatform, deviceData.platform);
-  //支付方式
-  const payType = findBValue(stylePayType, deviceData.pay_method);
 
   return (
     <>
@@ -101,10 +90,10 @@ const App: React.FC<Props> = ({ data }) => {
 
           <div className="flex justify-between">
             <div className="flex-1">
-              <InfoItem label="采购平台">{platformType}</InfoItem>
+              <InfoItem label="采购平台">{deviceData.platform}</InfoItem>
             </div>
             <div className="flex-1 ml-4">
-              <InfoItem label="支付方式">{payType}</InfoItem>
+              <InfoItem label="支付方式">{deviceData.pay_method}</InfoItem>
             </div>
           </div>
         </Card>

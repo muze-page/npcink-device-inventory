@@ -17,6 +17,11 @@ export const StyleContext = createContext<StyleContextType>({
   handleAddDevice: () => {},
   handleDeleteData: () => {},
   handleUpdateData: () => {}, //默认空函数
-  styleCategoryOption: { states: [], categories: [] }, //默认空数组
+  styleCategoryOption: {
+    states: [],
+    categories: [],
+    platforms: [],
+    pay_methods: [],
+  }, //默认空数组
   isName: false,
 });

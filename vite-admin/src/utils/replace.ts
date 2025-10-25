@@ -72,17 +72,7 @@ export const columnsTable = [
   },
 ];
 
-//自定义产品购买平台
-export const stylePlatform = [
-  { value: "TaoBao", label: "淘宝" },
-  { value: "JingDong", label: "京东" },
-  { value: "PingDuoDuo", label: "拼多多" },
-  { value: "MeiTuan", label: "美团" },
-  { value: "XianYu", label: "闲鱼" },
-  //{ value: "DouYin", label: "抖音" },
-  { value: "Offline", label: "线下" },
-  { value: "About", label: "其他" },
-];
+
 
 //准备图标
 import JD from "@/assets/platform/京东.png";

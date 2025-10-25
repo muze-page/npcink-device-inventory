@@ -17,9 +17,6 @@ import { FilterStyleData } from "@/type/index";
 //跨组件提供方法
 import { StyleContext } from "@/context/StyleContext";
 
-//准备采购平台,付款方式
-import { stylePlatform } from "@/utils/replace";
-
 //引入数据填写弹窗表单
 import Add from "@/pages/styleList/header/add";
 
@@ -36,15 +33,6 @@ interface Props {
 
 //准备搜索框
 const { Search } = Input;
-
-//处理采购平台选项，添加全部选项
-const stylePlatformOptions = [
-  { label: "全部", value: "all" },
-  ...stylePlatform,
-];
-
-//处理付款平台
-//const payPlatformOptions = [{ label: "全部", value: "all" }, ...stylePayType];
 
 const App: React.FC<Props> = ({
   filterData,
@@ -70,6 +58,15 @@ const App: React.FC<Props> = ({
     { label: "全部", value: "all" },
     ...styleCategoryOption.categories,
   ];
+
+  //处理采购平台选项，添加全部选项
+  const stylePlatformOptions = [
+    { label: "全部", value: "all" },
+    ...styleCategoryOption.platforms,
+  ];
+
+  //处理付款平台
+  //const payPlatformOptions = [{ label: "全部", value: "all" }, ...stylePayType];
 
   //展示弹窗
   const showModal = () => {

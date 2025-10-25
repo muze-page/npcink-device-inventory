@@ -11,13 +11,10 @@ import {
   Col,
   Row,
   DatePicker,
-  Select,
 } from "antd";
 import type { FormProps, FormInstance } from "antd";
 import dayjs from "dayjs";
 import { addStyleDeviceData } from "@/services/index";
-
-import { stylePlatform, stylePayType } from "@/utils/replace";
 import { devStatus } from "@/utils/tool";
 
 //准备采购平台,付款方式
@@ -190,7 +187,6 @@ const App = ({ form, handleOk }: AddFormProps) => {
             />
           </Form.Item>
         </Col>
-        {/*TODO:添加验证，不能为负数和0元*/}
         <Col span={12}>
           <Form.Item<FormType>
             label="总计"
@@ -308,7 +304,11 @@ const App = ({ form, handleOk }: AddFormProps) => {
             name="platform"
             rules={[{ required: true, message: "请选择采购平台" }]}
           >
-            <Select options={stylePlatform} style={{ width: "100%" }} />
+            <SelectInput
+              options={styleCategoryOption.platforms}
+              defaultValue=""
+              onChange={(value) => form?.setFieldsValue({ platform: value })}
+            />
           </Form.Item>
         </Col>
         <Col span={12}>
@@ -317,7 +317,12 @@ const App = ({ form, handleOk }: AddFormProps) => {
             name="pay_method"
             rules={[{ required: true, message: "请选择支付方式" }]}
           >
-            <Select options={stylePayType} style={{ width: "100%" }} />
+            
+            <SelectInput
+              options={styleCategoryOption.pay_methods}
+              defaultValue=""
+              onChange={(value) => form?.setFieldsValue({ pay_method: value })}
+            />
           </Form.Item>
         </Col>
       </Row>

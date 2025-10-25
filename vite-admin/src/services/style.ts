@@ -23,7 +23,7 @@ export const getStyleDeviceCategory = async (): Promise<StyleCategoryType> => {
     return data.data.data;
   } catch (error) {
     console.log(error);
-    return { states: [], categories: [] };
+    return { states: [], categories: [], platforms: [], pay_methods: [] };
   }
 };
 /**

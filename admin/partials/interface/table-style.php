@@ -41,6 +41,16 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
                 "SELECT DISTINCT state FROM {$table_name} WHERE state IS NOT NULL AND state != ''"
             );
 
+            // 获取所有采购平台
+            $platforms = $wpdb->get_results(
+                "SELECT DISTINCT JSON_EXTRACT(data, '$.platform') as platform FROM {$table_name} WHERE JSON_EXTRACT(data, '$.platform') IS NOT NULL AND JSON_EXTRACT(data, '$.platform') != ''"
+            );
+
+            // 获取所有支付方式
+            $pay_methods = $wpdb->get_results(
+                "SELECT DISTINCT JSON_EXTRACT(data, '$.pay_method') as pay_method FROM {$table_name} WHERE JSON_EXTRACT(data, '$.pay_method') IS NOT NULL AND JSON_EXTRACT(data, '$.pay_method') != ''"
+            );
+
             // 检查查询是否成功
             if ($wpdb->last_error) {
                 wp_send_json_error(['error' => $wpdb->last_error], 500);
@@ -55,7 +65,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
                 ];
             }, $categories);
 
-            // 保底状态
+            // 定义状态映射关系，与PC设备保持一致
             $state_labels = [
                 '使用' => '使用',
                 '闲置' => '闲置',
@@ -87,10 +97,75 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
                 }
             }
 
+            // 定义采购平台映射关系
+            $platform_labels = [
+                '京东' => '京东',
+                '淘宝' => '淘宝',
+                '拼多多' => '拼多多',
+                '美团' => '美团',
+                '闲鱼' => '闲鱼',
+                '线下' => '线下',
+            ];
+
+            // 获取数据库中实际存在的采购平台值
+            $existing_platforms = array_column($platforms, 'platform');
+
+            // 确保所有预定义的采购平台选项都包含在结果中
+            $platform_result = [];
+            foreach ($platform_labels as $value => $label) {
+                $platform_result[] = [
+                    'value' => $value,
+                    'label' => $label
+                ];
+            }
+
+            // 如果数据库中有其他未预定义的采购平台，也添加进去
+            foreach ($existing_platforms as $platform) {
+                // 只添加不在预定义列表中的采购平台
+                if (!array_key_exists($platform, $platform_labels)) {
+                    $platform_result[] = [
+                        'value' => $platform,
+                        'label' => $platform
+                    ];
+                }
+            }
+
+            // 定义支付方式映射关系
+            $pay_method_labels = [
+                '支付宝' => '支付宝',
+                '微信' => '微信',
+                '现金' => '现金',
+            ];
+
+            // 获取数据库中实际存在的支付方式值
+            $existing_pay_methods = array_column($pay_methods, 'pay_method');
+
+            // 确保所有预定义的支付方式选项都包含在结果中
+            $pay_method_result = [];
+            foreach ($pay_method_labels as $value => $label) {
+                $pay_method_result[] = [
+                    'value' => $value,
+                    'label' => $label
+                ];
+            }
+
+            // 如果数据库中有其他未预定义的支付方式，也添加进去
+            foreach ($existing_pay_methods as $pay_method) {
+                // 只添加不在预定义列表中的支付方式
+                if (!array_key_exists($pay_method, $pay_method_labels)) {
+                    $pay_method_result[] = [
+                        'value' => $pay_method,
+                        'label' => $pay_method
+                    ];
+                }
+            }
+
             // 组合结果，统一键名格式
             $result = [
-                'states' => array_values($state_result),     // 状态
-                'categories' => array_values($category_result) // 分类（统一命名）
+                'states' => array_values($state_result),        // 状态
+                'categories' => array_values($category_result), // 分类（统一命名）
+                'platforms' => array_values($platform_result),  // 采购平台
+                'pay_methods' => array_values($pay_method_result) // 支付方式
             ];
 
             wp_send_json_success($result);
