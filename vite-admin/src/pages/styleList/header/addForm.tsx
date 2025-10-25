@@ -29,7 +29,7 @@ import SelectInput from "@/components/selectInput";
 type FormType = StyleDeviceData & {
   name: string; //使用人
   purpose: string; //用途
-  state: "apply" | "idie" | "fault" | "scrap" | "repair"; //设备状态
+  state: string; //设备状态
   number: string; //编号
   category: string; //分类
 };

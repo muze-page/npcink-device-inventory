@@ -121,21 +121,24 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
             }
 
             // 关键值替换映射
+            // 表名
             $tableNameMap = [
-                'style' => '自定义设备',
-                'pc' => '电脑设备'
+                //'style' => '自定义设备',
+                //'pc' => '电脑设备'
             ];
 
+            //列名
             $columnNameMap = [
-                'state' => '设备状态',
+                //'state' => '设备状态',
             ];
 
+            //状态
             $oldValueMap = [
-                'apply' => '使用',
-                'idie' => '闲置',
-                'fault' => '故障',
-                'repair' => '维修',
-                'scrap' => '报废',
+                //'apply' => '使用',
+                //'idie' => '闲置',
+                //'fault' => '故障',
+                //'repair' => '维修',
+                //'scrap' => '报废',
             ];
 
             // 遍历数据并替换匹配的值
