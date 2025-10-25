@@ -11,11 +11,6 @@ export const formatDate = (date: Dayjs) => {
   return formattedTime;
 };
 
-
-
-
-
-
 /**
  * 字节转换单位 - 自动选择合适的单位（适用于硬件规格显示）
  * 对于B和KB单位显示整数（如"512 B"或"8 KB"）

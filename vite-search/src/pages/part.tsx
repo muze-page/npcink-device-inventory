@@ -53,7 +53,7 @@ const App: React.FC<Props> = ({ data }) => {
 
   return (
     <>
-      <Tabs defaultActiveKey="1" items={tabs} />
+      <Tabs defaultActiveKey="1" items={tabs} tabPosition="left"/>
     </>
   );
 };
