@@ -146,11 +146,6 @@ class Dema_Activator extends DEMA_Admin_Interface
 					VALUES ('pc', NEW.uuid, 'depreciation', OLD.depreciation, NEW.depreciation);
 				END IF;
 
-				IF OLD.updated_at != NEW.updated_at THEN
-					INSERT INTO `$auto_table_name` (table_name, record_uuid, column_name, old_value, new_value)
-					VALUES ('pc', NEW.uuid, 'updated_at', OLD.updated_at, NEW.updated_at);
-				END IF;
-				
 			END;
 			";
 
