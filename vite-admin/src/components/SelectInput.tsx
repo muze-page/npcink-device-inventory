@@ -2,7 +2,7 @@
  * 自定义筛选项
  * 可以输入，也可以筛选
  */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AutoComplete } from "antd";
 
 import {DataItemArr} from "@/type/index"
@@ -20,6 +20,10 @@ const CategoryFilter: React.FC<Props> = ({
   options,
 }) => {
   const [inputValue, setInputValue] = useState(defaultValue || ""); // 输入框的值
+
+  useEffect(() => {
+    setInputValue(defaultValue || "");
+  }, [defaultValue]);
 
   // 将预设选项转换为 AutoComplete 需要的格式
   const autoCompleteOptions = options.map((option) => ({
