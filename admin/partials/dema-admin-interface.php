@@ -22,6 +22,48 @@ if (!class_exists('DEMA_Admin_Interface')) {
         //变更自动记录表
         public static $table_auto_name = "npcink_device_auto";
 
+        /**
+         * 管理端 Ajax 请求权限校验
+         */
+        public static function ensure_admin_ajax($action = 'dema_admin')
+        {
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(['error' => '权限不足'], 403);
+                wp_die();
+            }
+
+            if (!check_ajax_referer($action, '_ajax_nonce', false)) {
+                wp_send_json_error(['error' => '非法请求'], 403);
+                wp_die();
+            }
+        }
+
+        /**
+         * 缓存键生成（支持多站点）
+         */
+        public static function get_cache_key($suffix)
+        {
+            $blog_id = function_exists('get_current_blog_id') ? get_current_blog_id() : 1;
+            return 'dema_' . $blog_id . '_' . $suffix;
+        }
+
+        /**
+         * 清理电脑设备相关缓存
+         */
+        public static function clear_pc_cache()
+        {
+            delete_transient(self::get_cache_key('pc_categories'));
+            delete_transient(self::get_cache_key('pc_summary'));
+        }
+
+        /**
+         * 清理自定义设备相关缓存
+         */
+        public static function clear_style_cache()
+        {
+            delete_transient(self::get_cache_key('style_categories'));
+        }
+
         //运行
         public static function run()
         {

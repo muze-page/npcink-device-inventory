@@ -1,26 +1,21 @@
 /**
  * 自定义设备的增删改查操作
  */
-import axios from "axios";
-import { Ajaxurl } from "@/utils/index";
 import {
   StyleDevice,
   StyleDeviceSeting,
   StyleCategoryType,
 } from "@/type/index";
-import { instance, addParamIfDefined } from "@/services/axiosConfig";
+import { restInstance } from "@/services/axiosConfig";
+import { PagedResponse } from "@/type/index";
 
 /**
  * 获取自定义设备分类和状态数组
  */
 export const getStyleDeviceCategory = async (): Promise<StyleCategoryType> => {
-  const params = new URLSearchParams();
-  params.append("action", "get_style_device_categories_callback");
   try {
-    const data = await axios.post(Ajaxurl, params);
-    console.log("拿到的值:");
-    console.log(data);
-    return data.data.data;
+    const response = await restInstance.get("/admin/style-categories");
+    return response.data as StyleCategoryType;
   } catch (error) {
     console.log(error);
     return { states: [], categories: [], platforms: [], pay_methods: [] };
@@ -33,29 +28,24 @@ export const getStyleDeviceCategory = async (): Promise<StyleCategoryType> => {
 export const addStyleDeviceData = async (
   data: StyleDeviceSeting
 ): Promise<{ success: boolean; deviceData?: StyleDevice }> => {
-  const params = new URLSearchParams();
-  params.append("action", "add_style_device_data_callback");
-  // addParamIfDefined(params, "uuid", data.uuid);
-  addParamIfDefined(params, "name", data.name);
-  addParamIfDefined(params, "number", data.number);
-  addParamIfDefined(params, "category", data.category);
-  addParamIfDefined(params, "purpose", data.purpose);
-  addParamIfDefined(params, "state", data.state);
-  addParamIfDefined(params, "data", JSON.stringify(data.data));
   try {
-    const response = await instance.post(Ajaxurl, params);
-    if (response.data.success) {
+    const response = await restInstance.post("/admin/style", data);
+    if (response.data && response.data.success) {
+      const deviceData = {
+        id: response.data.id,
+        uuid: response.data.uuid,
+        created_at: response.data.created_at,
+      } as StyleDevice;
       // 如果请求成功，返回成功状态和数据
       return {
         success: true,
-        deviceData: response.data.data as StyleDevice,
-      };
-    } else {
-      // 如果请求失败，返回失败状态
-      return {
-        success: false,
+        deviceData,
       };
     }
+    // 如果请求失败，返回失败状态
+    return {
+      success: false,
+    };
   } catch (error) {
     console.log(error);
     return {
@@ -69,12 +59,9 @@ export const addStyleDeviceData = async (
  */
 
 export const deleteStyleDeviceData = async (uuid: string): Promise<boolean> => {
-  const params = new URLSearchParams();
-  params.append("action", "delete_style_device_data_callback");
-  addParamIfDefined(params, "uuid", uuid);
   try {
-    const data = await instance.post(Ajaxurl, params);
-    return data.data.success;
+    const response = await restInstance.delete(`/admin/style/${uuid}`);
+    return response.data.success === true;
   } catch (error) {
     console.log(error);
     return false;
@@ -94,20 +81,49 @@ export const updateStyleDeviceData = async (
   uuid: string,
   data: StyleDeviceSeting
 ): Promise<boolean> => {
-  const params = new URLSearchParams();
-  params.append("action", "update_style_device_data_callback");
-  addParamIfDefined(params, "uuid", uuid);
-  addParamIfDefined(params, "name", data.name);
-  addParamIfDefined(params, "number", data.number);
-  addParamIfDefined(params, "category", data.category);
-  addParamIfDefined(params, "purpose", data.purpose);
-  addParamIfDefined(params, "state", data.state);
-  addParamIfDefined(params, "data", JSON.stringify(data.data));
   try {
-    const data = await instance.post(Ajaxurl, params);
-    return data.data.success;
+    const response = await restInstance.put(`/admin/style/${uuid}`, data);
+    return response.data.success === true;
   } catch (error) {
     console.log(error);
     return false;
   }
+};
+
+export interface StyleListParams {
+  page?: number;
+  per_page?: number;
+  search?: string;
+  state?: string;
+  category?: string;
+  platform?: string;
+  pay_method?: string;
+  orderby?: string;
+  order?: "asc" | "desc";
+}
+
+const safeParse = (value: string) => {
+  try {
+    return JSON.parse(value);
+  } catch (error) {
+    console.error("解析自定义设备数据失败:", error);
+    return {};
+  }
+};
+
+const parseStyleItem = (item: any): StyleDevice => {
+  const parsedData =
+    typeof item.data === "string" ? safeParse(item.data) : item.data;
+  return { ...item, data: parsedData } as StyleDevice;
+};
+
+export const getStyleList = async (
+  params: StyleListParams
+): Promise<PagedResponse<StyleDevice>> => {
+  const response = await restInstance.get("/admin/style", { params });
+  const payload = response.data as PagedResponse<StyleDevice>;
+  const items = Array.isArray(payload.items)
+    ? payload.items.map(parseStyleItem)
+    : [];
+  return { ...payload, items };
 };

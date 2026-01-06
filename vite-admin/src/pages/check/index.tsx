@@ -1,16 +1,10 @@
 /**
  * 电脑硬件资产盘点
  */
-import { useState } from "react";
-import { dataMySql } from "@/utils/index";
-import { totalResidualValue, getPercentage, formatNumber } from "@/utils/tool";
-import {
-  Computer,
-  ComputerCpu,
-  ComputerBaseboard,
-  ComputerRam,
-  ComputerDevice,
-} from "@/type/index";
+import { useState, useEffect } from "react";
+import { getPercentage, formatNumber } from "@/utils/tool";
+import { TableData, PcSummary } from "@/type/index";
+import { getPcSummary } from "@/services/index";
 
 import Ad from "@/pages/check/block/ad";
 import TabHeader from "@/pages/check/block/tableHeader";
@@ -21,91 +15,71 @@ import Disk from "@/pages/check/tab/disk";
 import Memory from "@/pages/check/tab/memory";
 import Header from "@/components/tabHeader";
 
-//收集最新数据并输出数组
-interface DataArray {
-  data: Computer;
-}
-const collectDataNew = (dataArrays: DataArray[]): Computer[] => {
-  return dataArrays.map((obj: { data: Computer }) => obj.data);
-};
-
-//将数组对象中对象的指定的键值取出，组成新数组
-const deviceArrData = (dataArrays: Computer[], key: keyof Computer) => {
-  return dataArrays.flatMap((obj) => obj[key]);
-};
-
-//获取折旧总价
-// 使用 reduce 方法计算总和
-//购入价
-const totalPurchase = dataMySql.reduce((accumulator, item) => {
-  return accumulator + Number(item.purchase);
-}, 0);
-
-//折旧价
-const totalDepreciation = dataMySql.reduce((accumulator, item) => {
-  return accumulator + Number(item.depreciation);
-}, 0);
+const sumTableData = (data: TableData[]) =>
+  data.reduce((accumulator, item) => accumulator + item.sum, 0);
 
 const App: React.FC = () => {
-  //收集最新数据组成数组
-  const combinedData = collectDataNew(dataMySql);
+  const [summary, setSummary] = useState<PcSummary | null>(null);
 
-  //获取CPU数组
-  const cpuArrData = deviceArrData(combinedData, "cpu") as ComputerCpu[];
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        const data = await getPcSummary();
+        setSummary(data);
+      } catch (error) {
+        console.error("获取盘点数据失败:", error);
+        setSummary(null);
+      }
+    };
 
-  //获取硬盘数组
-  const diskArrData = deviceArrData(
-    combinedData,
-    "diskLayout"
-  ) as ComputerDevice[];
+    fetchSummary();
+  }, []);
 
-  //获取内存数组
-  const memoryArrData = deviceArrData(
-    combinedData,
-    "memLayout"
-  ) as ComputerRam[];
-
-  //获取主板数组
-  const baseboardArrData = deviceArrData(
-    combinedData,
-    "baseboard"
-  ) as ComputerBaseboard[];
+  const cpuData = summary?.cpu || [];
+  const diskData = summary?.disk || [];
+  const memoryData = summary?.memory || [];
+  const baseboardData = summary?.baseboard || [];
+  const totals = summary?.totals || { purchase: 0, depreciation: 0, residual: 0 };
 
   //表头内容
   const items = [
     {
       key: "1",
       label: `CPU（个）`,
-      sum: combinedData.length,
+      sum: sumTableData(cpuData),
       color: "from-blue-100 to-blue-200",
       activeColor: "from-blue-200 to-blue-300",
-      children: <Cpu data={cpuArrData} />,
+      children: <Cpu tableData={cpuData} />,
     },
     {
       key: "2",
       label: `硬盘（块）`,
-      sum: diskArrData.length,
+      sum: sumTableData(diskData),
       color: "from-orange-100 to-orange-200",
       activeColor: "from-orange-200 to-orange-300",
-      children: <Disk data={diskArrData} />,
+      children: <Disk tableData={diskData} />,
     },
     {
       key: "3",
       label: `内存（条）`,
-      sum: memoryArrData.length,
+      sum: sumTableData(memoryData),
       color: "from-red-100 to-red-200",
       activeColor: "from-red-200 to-red-300",
-      children: <Memory data={memoryArrData} />,
+      children: <Memory tableData={memoryData} />,
     },
     {
       key: "4",
       label: `主板（个）`,
-      sum: combinedData.length,
+      sum: sumTableData(baseboardData),
       color: "from-green-100 to-green-200",
       activeColor: "from-green-200 to-green-300",
-      children: <Baseboard data={baseboardArrData} />,
+      children: <Baseboard tableData={baseboardData} />,
     },
   ];
+
+  const totalPurchase = totals.purchase || 0;
+  const totalDepreciation = totals.depreciation || 0;
+  const totalResidual = totals.residual || 0;
 
   //切换表格
   const [activeTab, setActiveTab] = useState(0);
@@ -162,10 +136,10 @@ const App: React.FC = () => {
               {getPercentage(totalDepreciation, totalPurchase)}
             </td>
             <td className="w-28 text-center">
-              {formatNumber(totalResidualValue(dataMySql))}元
+              {formatNumber(totalResidual)}元
             </td>
             <td className="w-28 text-center">
-              {getPercentage(totalResidualValue(dataMySql), totalPurchase)}
+              {getPercentage(totalResidual, totalPurchase)}
             </td>
           </tr>
         </table>

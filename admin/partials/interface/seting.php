@@ -23,6 +23,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
          */
         public static  function save_option_callback()
         {
+            self::ensure_admin_ajax();
             global $wpdb;
             // 获取通过 Ajax POST 请求传递的对象数据
             $object_data = isset($_POST['object_data']) ? sanitize_text_field($_POST['object_data']) : null;
@@ -72,6 +73,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             $result = update_option(self::$option, $object);
 
             if ($result !== false) {
+                self::clear_pc_cache();
                 // 发送成功响应
                 return wp_send_json_success(['message' => '设置选项已保存', 'msg' => $object,]);
             } else {
@@ -174,6 +176,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
          */
         public static function export_data_callback()
         {
+            self::ensure_admin_ajax();
             global $wpdb;
 
             // 获取前端传递的参数并进行输入验证
@@ -182,8 +185,13 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             if (empty($name)) {
                 return wp_send_json_error(['error' => '缺少表名'], 400);
             }
-            // 检查表名是否合法
-            if (!preg_match('/^[a-zA-Z_]+$/', $name)) {
+            $allowed_tables = array(
+                self::$table_pc_name,
+                self::$table_style_name,
+                self::$table_manual_name,
+                self::$table_auto_name,
+            );
+            if (!in_array($name, $allowed_tables, true)) {
                 return wp_send_json_error(['error' => '无效的表名'], 400);
             }
 
@@ -214,11 +222,18 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
          */
         public static function import_data_callback()
         {
+            self::ensure_admin_ajax();
             global $wpdb;
 
             // 获取前端传递的参数并进行输入验证
             $text_data = isset($_POST['data']) ? ($_POST['data']) : null; //获取数据
-            $name = isset($_POST['name']) ? ($_POST['name']) : null; //获取表名
+            $name = isset($_POST['name']) ? sanitize_text_field($_POST['name']) : null; //获取表名
+            $allowed_tables = array(
+                self::$table_pc_name,
+                self::$table_style_name,
+                self::$table_manual_name,
+                self::$table_auto_name,
+            );
 
             //拿到解析后的值
             $data_php = json_decode(stripslashes($text_data), true);
@@ -230,6 +245,9 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             // 检查传来的数据库表名是否为空
             if (empty($name)) {
                 return wp_send_json_error(['error' => '传递的数据库表名为空，请检查'], 400);
+            }
+            if (!in_array($name, $allowed_tables, true)) {
+                return wp_send_json_error(['error' => '无效的表名'], 400);
             }
 
             // 构建插入数据的数组
@@ -397,6 +415,12 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             // 检查插入结果
             if ($result !== false) {
                 $imported_count = count($insert_data);
+                if ($name == self::$table_pc_name) {
+                    self::clear_pc_cache();
+                }
+                if ($name == self::$table_style_name) {
+                    self::clear_style_cache();
+                }
                 return wp_send_json_success([
                     'message' => sprintf('成功导入 %d 条记录，刷新页面后查看', $imported_count),
                     'imported_records' => $imported_count,

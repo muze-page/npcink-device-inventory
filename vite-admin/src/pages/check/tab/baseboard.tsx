@@ -3,9 +3,9 @@
  */
 
 import TabList from "@/pages/check/block/tabList";
-import { sum_brand, replaceKeyValues } from "@/utils/tool";
+import { replaceKeyValues } from "@/utils/tool";
 import { replaceBaseboard } from "@/utils/replace";
-import { ComputerBaseboard, TableData } from "@/type/index";
+import { TableData } from "@/type/index";
 
 const meat = {
   thData: ["型号", "数量（个）"], //表头
@@ -13,18 +13,19 @@ const meat = {
 };
 
 interface Props {
-  data: ComputerBaseboard[];
+  tableData: TableData[];
 }
-const App: React.FC<Props> = ({ data }) => {
-  //统计次数，输出数组对象
-  const arr = sum_brand(data, "manufacturer");
-
+const App: React.FC<Props> = ({ tableData }) => {
   //关键词替换
-  const Data = replaceKeyValues(arr, "type", replaceBaseboard) as TableData[];
+  const Data = replaceKeyValues(
+    tableData,
+    "type",
+    replaceBaseboard
+  ) as TableData[];
 
   //合并同类项
 
-  const tableData: TableData[] = Data.reduce(
+  const mergedData: TableData[] = Data.reduce(
     (acc: TableData[], curr: TableData) => {
       const existingObj = acc.find((obj) => obj.type === curr.type);
       if (existingObj) {
@@ -38,11 +39,11 @@ const App: React.FC<Props> = ({ data }) => {
   );
 
   //从大到小，按数量排序
-  tableData.sort((a, b) => b.sum - a.sum);
+  mergedData.sort((a, b) => b.sum - a.sum);
 
   return (
     <>
-      <TabList meat={meat} tableData={tableData} />
+      <TabList meat={meat} tableData={mergedData} />
     </>
   );
 };

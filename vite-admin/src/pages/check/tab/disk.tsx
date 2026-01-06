@@ -3,9 +3,7 @@
  */
 
 import TabList from "@/pages/check/block/tabList";
-import { sum_order } from "@/utils/tool";
-
-import { ComputerDevice } from "@/type/index";
+import { TableData } from "@/type/index";
 
 const meat = {
   thData: ["型号", "数量（块）"], //表头
@@ -13,32 +11,20 @@ const meat = {
 };
 
 interface Props {
-  data: ComputerDevice[];
+  tableData: TableData[];
 }
-const App: React.FC<Props> = ({ data }) => {
-  const thresholds = {
-    "128G": 128,
-    "256G": 256,
-    "512G": 512,
-    "1T": 1024,
-    "2T": 2048,
-    "4T": 4096,
-  };
-
-  //统计次数，输出数组对象
-  const tableData = sum_order(data, thresholds);
-
+const App: React.FC<Props> = ({ tableData }) => {
   //顺序
   const sortOrder = ["128G", "256G", "512G", "1T", "2T", "4T"];
 
   //按容量大小排序
-  tableData.sort((a, b) => {
+  const sortedData = [...tableData].sort((a, b) => {
     return sortOrder.indexOf(a.type) - sortOrder.indexOf(b.type);
   });
 
   return (
     <>
-      <TabList meat={meat} tableData={tableData} />
+      <TabList meat={meat} tableData={sortedData} />
     </>
   );
 };

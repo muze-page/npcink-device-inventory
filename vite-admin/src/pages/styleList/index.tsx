@@ -1,14 +1,12 @@
 /**
  * 自定义设备类型
  */
-import { useState, useMemo, SetStateAction, useEffect } from "react";
+import { useState, SetStateAction, useEffect } from "react";
 import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 
 //自定义产品分类获取方法
-import { getStyleDeviceCategory } from "@/services/index";
-//模糊搜索
-import Fuse from "fuse.js";
+import { getStyleDeviceCategory, getStyleList } from "@/services/index";
 
 //数据渲染组件
 import DataList from "@/pages/styleList/dataList";
@@ -28,12 +26,11 @@ import Header from "@/pages/styleList/header";
 //筛序和搜索无结果时的提示
 import SearchNoData from "@/components/searchNoData";
 
-//拿到通过接口传来的数据
-import { dataStyle } from "@/utils/index";
 
 const App: React.FC = () => {
   //在设备展示列表和删除设备两个组件间同步设备数据（添加、删除设备后更新设备列表）
-  const [devices, setDevices] = useState<StyleDevice[]>(dataStyle);
+  const [devices, setDevices] = useState<StyleDevice[]>([]);
+  const [total, setTotal] = useState(0);
 
   //共享弹窗状态
   const [active, setActive] = useState(false);
@@ -72,10 +69,12 @@ const App: React.FC = () => {
   //添加自定义设备
   const handleAddDevice = (device: StyleDevice) => {
     setDevices((prev) => [device, ...prev]);
+    setTotal((prev) => prev + 1);
   };
   //删除指定UUID的设备
   const handleDeleteData = (uuid: string) => {
     setDevices((prev) => prev.filter((d) => d.uuid !== uuid));
+    setTotal((prev) => Math.max(0, prev - 1));
   };
 
   //修改自定义设备数据
@@ -97,6 +96,7 @@ const App: React.FC = () => {
 
   /* 搜索关键字 */
   const [keyword, setKeyword] = useState("");
+  const [debouncedKeyword, setDebouncedKeyword] = useState("");
 
   //每页展示数量
   const [PAGE_SIZE, setPAGE_SIZE] = useState(6); //每页展示数量
@@ -104,86 +104,40 @@ const App: React.FC = () => {
   //当前页码
   const [pageNumber, setPageNumber] = useState(1); // 当前页码（从 1 开始）
 
-  /* 3. 计算最终展示页数据（useMemo 避免重复计算） */
-  const filteredList = useMemo(() => {
-    let data = [...devices];
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedKeyword(keyword.trim());
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [keyword]);
 
-    //筛选状态
-    if (filter.state && filter.state != "all")
-      data = data.filter((v) => v.state === filter.state);
+  useEffect(() => {
+    setPageNumber(1);
+  }, [filter, debouncedKeyword, PAGE_SIZE]);
 
-    //筛选分类
-    if (filter.category && filter.category != "all")
-      data = data.filter((v) => v.category === filter.category);
+  useEffect(() => {
+    const fetchList = async () => {
+      try {
+        const response = await getStyleList({
+          page: pageNumber,
+          per_page: PAGE_SIZE,
+          search: debouncedKeyword || undefined,
+          state: filter.state !== "all" ? filter.state : undefined,
+          category: filter.category !== "all" ? filter.category : undefined,
+          platform: filter.platform !== "all" ? filter.platform : undefined,
+          pay_method: filter.payMethod !== "all" ? filter.payMethod : undefined,
+        });
+        setDevices(response.items);
+        setTotal(response.total);
+      } catch (error) {
+        console.error("获取设备列表失败:", error);
+        setDevices([]);
+        setTotal(0);
+      }
+    };
 
-    //筛选采购平台
-    if (filter.platform && filter.platform != "all")
-      data = data.filter((v) => v.data.platform === filter.platform);
-
-    //筛选付款方式
-    if (filter.payMethod && filter.payMethod != "all")
-      data = data.filter((v) => v.data.pay_method === filter.payMethod);
-
-    return data;
-  }, [devices, filter]);
-
-  /* Fuse 配置：可按需调阈值、权重等 */
-  /**
-   * 使用 useMemo 来创建 fuse 实例，这样当 filteredList 变化时，fuse 也会重新创建
-   */
-  const fuse = useMemo(
-    () =>
-      new Fuse(filteredList, {
-        //使用人、用途、设备名称、订单号、采购人姓名
-        keys: ["name", "purpose", "data.title", "data.order", "data.purchaser"], // 允许在这五个字段里模糊搜
-        threshold: 0.4, // 0=精确 1=极宽松
-        shouldSort: true,
-        includeScore: true,
-      }),
-    [filteredList]
-  );
-
-  /* 4. 模糊搜索（useMemo 避免重复计算） */
-  //先精确搜索，再模糊搜索
-  const searchList = useMemo(() => {
-    let data = [...filteredList];
-    //关键字转小写，减低搜索出错概率
-    const lowerKeyword = keyword.toLowerCase();
-    //console.log("拿到的列表值", data);
-    //console.dir(data);
-    //console.log("keyword", keyword);
-
-    //查找使用人姓名、设备名称、订单号、采购人姓名
-    //精确匹配
-    const exactMatches = data.filter(
-      (v) =>
-        (v.name && v.name.toLowerCase().includes(lowerKeyword)) ||
-        (v.data.title && v.data.title.toLowerCase().includes(lowerKeyword)) ||
-        (v.data.order && v.data.order.toLowerCase().includes(lowerKeyword)) ||
-        (v.data.purchaser &&
-          v.data.purchaser.toLowerCase().includes(lowerKeyword))
-    );
-
-    if (exactMatches.length > 0) {
-      data = exactMatches;
-      //console.log("精确匹配的data值：");
-      //console.dir(data);
-    } else {
-      //模糊搜索
-      data = fuse.search(keyword).map((r) => r.item); //搜索出结果
-      //console.log("模糊搜索匹配的data值：");
-      //console.dir(data);
-    }
-    return data;
-  }, [filteredList, keyword]);
-
-  // 计算分页后的数据
-  const pagedFilteredList = useMemo(() => {
-    /* 3-3 分页切片 */
-    const startIndex = (pageNumber - 1) * PAGE_SIZE;
-    //截取数据
-    return searchList.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [searchList, pageNumber, PAGE_SIZE]);
+    fetchList();
+  }, [pageNumber, PAGE_SIZE, filter, debouncedKeyword]);
 
   //设置当前页码
   const handlePageChange = (page: SetStateAction<number>) => {
@@ -225,7 +179,7 @@ const App: React.FC = () => {
         <div className="flex content-start items-center flex-wrap w-full">
           <Flex wrap gap="large">
             {/**开始循环 */}
-            {pagedFilteredList.map((tab) => (
+            {devices.map((tab) => (
               <DataList
                 key={tab.id}
                 data={tab}
@@ -237,15 +191,15 @@ const App: React.FC = () => {
         </div>
 
         {/**没有数据 */}
-        {pagedFilteredList.length === 0 && <SearchNoData />}
+        {devices.length === 0 && <SearchNoData />}
 
         {/**分页 */}
-        {searchList.length > PAGE_SIZE && (
+        {total > PAGE_SIZE && (
           <div className="mt-4 float-right">
             <Pagination
               current={pageNumber} //当前页数
               pageSize={PAGE_SIZE} //每页条数
-              total={searchList.length} //数据总数
+              total={total} //数据总数
               onChange={handlePageChange} //页码或 pageSize 改变的回调，参数是改变后的页码及每页条数
               showSizeChanger //显示每页展示数据数量切换器
               onShowSizeChange={onShowSizeChange} //每页数量改变的回调

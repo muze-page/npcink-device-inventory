@@ -1,9 +1,10 @@
 /**
  * 设备变更自动记录
  */
-import axios from "axios";
 import { Ajaxurl } from "@/utils/index";
 import { axiosType } from "@/type/index";
+import axios from "axios";
+import { appendAjaxNonce } from "@/services/axiosConfig";
 
 /**
  * 输入设备的UUID，输出查到的变更数组
@@ -19,6 +20,7 @@ export const searchAutoChangeAllData = async (
   if (uuid !== undefined && uuid !== null && uuid.trim() !== "") {
     params.append("uuid", uuid);
   }
+  appendAjaxNonce(params);
 
   try {
     const response = await axios.post<axiosType, axiosType>(Ajaxurl, params);

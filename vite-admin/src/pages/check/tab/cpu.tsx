@@ -3,8 +3,7 @@
  */
 
 import TabList from "@/pages/check/block/tabList";
-import { sum_brand } from "@/utils/tool";
-import { ComputerCpu } from "@/type/index";
+import { TableData } from "@/type/index";
 
 const meat = {
   thData: ["品牌", "数量（个）"], //表头
@@ -12,18 +11,15 @@ const meat = {
 };
 
 interface Props {
-  data: ComputerCpu[];
+  tableData: TableData[];
 }
-const App: React.FC<Props> = ({ data }) => {
-  //统计次数，输出数组对象
-  const tableData = sum_brand(data, "manufacturer");
-
+const App: React.FC<Props> = ({ tableData }) => {
   //从大到小，按数量排序
-  tableData.sort((a, b) => b.sum - a.sum);
+  const sortedData = [...tableData].sort((a, b) => b.sum - a.sum);
 
   return (
     <>
-      <TabList meat={meat} tableData={tableData} />
+      <TabList meat={meat} tableData={sortedData} />
     </>
   );
 };

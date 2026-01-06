@@ -76,14 +76,21 @@ if (!class_exists('DEMA_Admin_Menu')) {
             ];
 
 
+            $option = get_option(self::$option);
+            if (is_object($option)) {
+                $option->password = '已设定';
+            } elseif (is_array($option)) {
+                $option['password'] = '已设定';
+            }
+
             $pf_api_translation_array = array(
                 'site' => get_home_url(), //首页网址
                 'ajaxurl' => admin_url('admin-ajax.php'),
-                'data' => self::get_device_data(), //传递设备数据
-                'styleData' => self::get_style_device_data(), //传递自定义设备数据'
-                'option' => get_option(self::$option), //传递选项
+                'ajax_nonce' => wp_create_nonce('dema_admin'),
+                'rest_url' => rest_url('npcink/v1'), //REST API 基础地址
+                'rest_nonce' => wp_create_nonce('wp_rest'),
+                'option' => $option, //传递选项（脱敏）
                 'sqlTableName' => $sql_table_name, //数据库表名
-
             );
             wp_localize_script($name, 'dataLocal', $pf_api_translation_array); //传给vite项目
         }

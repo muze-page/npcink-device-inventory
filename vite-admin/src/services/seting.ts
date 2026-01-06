@@ -3,7 +3,11 @@
  */
 import { Ajaxurl } from "@/utils/index";
 import {   axiosType } from "@/type/index";
-import { instance, addParamIfDefined } from "@/services/axiosConfig";
+import {
+  instance,
+  addParamIfDefined,
+  appendAjaxNonce,
+} from "@/services/axiosConfig";
 
 //成功响应传出的接口数据
 
@@ -11,6 +15,7 @@ export const saveSQLData = async (optionObj: object) => {
   const params = new URLSearchParams();
   params.append("action", "save_object_option");
   addParamIfDefined(params, "object_data", JSON.stringify(optionObj));
+  appendAjaxNonce(params);
   try {
     await instance.post(Ajaxurl, params);
   } catch (error: any) {
@@ -29,6 +34,7 @@ export const exportSQLData = async (name: string): Promise<axiosType> => {
   const params = new URLSearchParams();
   params.append("action", "export_data_callback");
   addParamIfDefined(params, "name", name);
+  appendAjaxNonce(params);
 
   try {
     const response = await instance.post<axiosType>(Ajaxurl, params);
@@ -54,6 +60,7 @@ export const importSQLData = async (
   params.append("action", "import_data_callback");
   addParamIfDefined(params, "name", name);
   addParamIfDefined(params, "data", data);
+  appendAjaxNonce(params);
 
   try {
     const response = await instance.post<axiosType>(Ajaxurl, params);
@@ -74,6 +81,7 @@ export const addPublicSearchPage = async (route: string) => {
   const params = new URLSearchParams();
   params.append("action", "add_public_search_page_callback");
   addParamIfDefined(params, "route", route);
+  appendAjaxNonce(params);
   try {
     const res = await instance.post(Ajaxurl, params); //执行
     return res.data.success;

@@ -23,8 +23,16 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
          */
         public static function get_device_category_callback()
         {
+            self::ensure_admin_ajax();
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_pc_name;
+
+            $cache_key = self::get_cache_key('pc_categories');
+            $cached = get_transient($cache_key);
+            if ($cached !== false) {
+                wp_send_json_success($cached);
+                wp_die();
+            }
 
             // 获取所有部门分类
             $departments = $wpdb->get_results(
@@ -87,6 +95,8 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
                 'departments' => array_values($department_result), //部门
             ];
 
+            set_transient($cache_key, $result, 5 * MINUTE_IN_SECONDS);
+
             wp_send_json_success($result);
             wp_die();
         }
@@ -95,6 +105,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
          */
         public static function modify_device_callback()
         {
+            self::ensure_admin_ajax();
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_pc_name;
 
@@ -185,6 +196,22 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
                 wp_die();
             }
 
+            if (isset($update_data['number'])) {
+                $number = sanitize_text_field($update_data['number']);
+                $number_exists = $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM $table_name WHERE number = %s AND uuid != %s",
+                    $number,
+                    $uuid
+                ));
+                if ($number_exists > 0) {
+                    wp_send_json_error([
+                        'error' => '设备编号已存在'
+                    ], 409);
+                    wp_die();
+                }
+                $update_data['number'] = $number;
+            }
+
             try {
                 // 执行更新操作
                 $result = $wpdb->update(
@@ -196,6 +223,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
                 );
 
                 if ($result !== false) {
+                    self::clear_pc_cache();
                     wp_send_json_success([
                         'message' => '设备信息更新成功',
                         'updated_fields' => array_keys($update_data),
@@ -243,6 +271,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
          */
         public static function delt_device_callback()
         {
+            self::ensure_admin_ajax();
             global $wpdb;
             $data_name = $wpdb->prefix . self::$table_pc_name; //数据表名
             $change_name = $wpdb->prefix . self::$table_manual_name; //变更记录表
@@ -278,6 +307,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
 
                 // 提交事务
                 $wpdb->query('COMMIT');
+                self::clear_pc_cache();
 
                 // 返回成功响应
                 wp_send_json_success(['message' => '此设备已移除']);

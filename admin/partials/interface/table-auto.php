@@ -21,6 +21,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
          */
         public static function auto_change_data_callback()
         {
+            self::ensure_admin_ajax();
             global $wpdb;
             $table_auto = $wpdb->prefix . self::$table_auto_name; // 自动记录
             $table_pc = $wpdb->prefix . self::$table_pc_name; // 电脑设备
@@ -29,10 +30,20 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
             // 获取UUID参数
             $uuid = isset($_POST['uuid']) ? sanitize_text_field($_POST['uuid']) : null;
 
+            $select_sql = "SELECT a.*,
+                CASE
+                    WHEN a.table_name = 'pc' THEN CONCAT(COALESCE(p.name, ''), ' _ ', COALESCE(p.number, ''))
+                    WHEN a.table_name = 'style' THEN CONCAT(COALESCE(s.name, ''), ' _ ', COALESCE(s.number, ''))
+                    ELSE NULL
+                END AS msg
+                FROM $table_auto a
+                LEFT JOIN $table_pc p ON a.table_name = 'pc' AND a.record_uuid = p.uuid
+                LEFT JOIN $table_style s ON a.table_name = 'style' AND a.record_uuid = s.uuid";
+
             // 如果提供了UUID，则查询指定设备的变更记录
             if (!empty($uuid)) {
                 $object = $wpdb->get_results(
-                    $wpdb->prepare("SELECT * FROM $table_auto WHERE record_uuid = %s ORDER BY id DESC", $uuid),
+                    $wpdb->prepare("$select_sql WHERE a.record_uuid = %s ORDER BY a.id DESC", $uuid),
                     ARRAY_A
                 );
 
@@ -40,7 +51,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
                     // 返回查询结果
                     wp_send_json_success([
                         'message' => '查询指定设备变更自动记录成功',
-                        'data' => $object,
+                        'data' => self::process_auto_change_data($object),
                     ]);
                 } else {
                     // 返回空数组表示没有找到符合条件的记录
@@ -52,7 +63,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
             }
 
             // 没有提供UUID，则查询所有变更记录
-            $results = $wpdb->get_results("SELECT * FROM $table_auto ORDER BY id DESC", ARRAY_A);
+            $results = $wpdb->get_results("$select_sql ORDER BY a.id DESC", ARRAY_A);
 
             if (is_wp_error($results)) {
                 wp_send_json_error([
@@ -63,7 +74,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
             }
 
             // 处理数据，添加设备信息
-            $data_array = self::process_auto_change_data($results, $table_pc, $table_style);
+            $data_array = self::process_auto_change_data($results);
 
             wp_send_json_success([
                 'message' => '查询全部变更自动记录数据成功',
@@ -75,49 +86,12 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
          * 处理自动变更数据，添加设备相关信息
          *
          * @param array $data 变更记录数据
-         * @param string $table_pc 电脑设备表名
-         * @param string $table_style 自定义设备表名
          * @return array 处理后的数据
          */
-        private static function process_auto_change_data($data, $table_pc, $table_style)
+        private static function process_auto_change_data($data)
         {
-            global $wpdb;
-
             if (empty($data)) {
                 return [];
-            }
-
-            // 遍历数组对象，根据UUID值查询第二张表，获取name字段的值并更新原始数组对象
-            foreach ($data as $key => $record) {
-                $uuid = $record['record_uuid']; // 拿到UUID
-                $table_name = $record['table_name']; // 表名
-                $name_result = null;
-
-                // 根据表名查询对应设备信息
-                switch ($table_name) {
-                    case 'style':
-                        // 自定义设备
-                        $name_result = $wpdb->get_row(
-                            $wpdb->prepare("SELECT name, number FROM $table_style WHERE uuid = %s", $uuid),
-                            ARRAY_A
-                        );
-                        break;
-
-                    case 'pc':
-                        // 电脑设备
-                        $name_result = $wpdb->get_row(
-                            $wpdb->prepare("SELECT name, number FROM $table_pc WHERE uuid = %s", $uuid),
-                            ARRAY_A
-                        );
-                        break;
-                }
-
-                if ($name_result) {
-                    // 更新原始数组对象中的msg键
-                    $name = $name_result['name'];
-                    $number = $name_result['number'];
-                    $data[$key]['msg'] = $name . " _ " . $number;
-                }
             }
 
             // 关键值替换映射

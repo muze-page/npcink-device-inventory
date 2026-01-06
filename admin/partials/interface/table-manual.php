@@ -26,6 +26,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
          */
         public static function add_change_data_callback()
         {
+            self::ensure_admin_ajax();
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_manual_name;
 
@@ -82,6 +83,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
          */
         public static function modify_change_data_callback()
         {
+            self::ensure_admin_ajax();
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_manual_name;
             // 获取前端传递的参数并进行输入验证
@@ -140,6 +142,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
          */
         public static function search_change_data_callback()
         {
+            self::ensure_admin_ajax();
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_manual_name;//手动变更表
 
@@ -168,33 +171,23 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
         //输出全部变更数据
         public static function search_change_all_data_callback()
         {
+            self::ensure_admin_ajax();
             global $wpdb;
             $table_data_pc = $wpdb->prefix . self::$table_pc_name; //获取电脑设备数据表
             $table_data_manual = $wpdb->prefix . self::$table_manual_name; //获取手动变更数据表
 
-            // 使用 $wpdb 对象执行 SQL 查询
-            $results = $wpdb->get_results("SELECT * FROM $table_data_manual", OBJECT);
+            $sql = "SELECT m.*, p.name AS pc_name, p.number AS pc_number, p.department AS pc_department
+                FROM $table_data_manual m
+                LEFT JOIN $table_data_pc p ON m.record_uuid = p.uuid";
+            $results = $wpdb->get_results($sql, ARRAY_A);
 
-            // 将查询结果转换为数组对象
             $data_array = array();
-            foreach ($results as $result) {
-                $data_array[] = (array) $result;
-            }
-
-            // 遍历数组对象，根据变更数据表中的record_uuid的值查询电脑设备表，获取name字段的值并更新原始数组对象
-            foreach ($data_array as $key => $data) {
-                $record_uuid = $data['record_uuid'];
-
-                // 查询第二张表获取name字段的值
-                $name_result = $wpdb->get_row($wpdb->prepare("SELECT name, number, department FROM $table_data_pc WHERE uuid = %s", $record_uuid), ARRAY_A);
-                if ($name_result) {
-                    // 更新原始数组对象中的name键名
-                    $name = $name_result['name'];
-                    $number = $name_result['number'];
-                    $department = $name_result['department'];
-                    //$data_array[$key]['number'] =  $number;
-                    $data_array[$key]['msg'] = $name   . " _ "  . $department . " _ "  . $number;
+            foreach ($results as $row) {
+                if (!empty($row['pc_name'])) {
+                    $row['msg'] = $row['pc_name'] . " _ " . $row['pc_department'] . " _ " . $row['pc_number'];
                 }
+                unset($row['pc_name'], $row['pc_number'], $row['pc_department']);
+                $data_array[] = $row;
             }
             return wp_send_json_success(['message' => '查询成功', 'data' =>  $data_array,]);
         }

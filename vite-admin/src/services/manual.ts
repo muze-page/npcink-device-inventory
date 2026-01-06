@@ -5,7 +5,11 @@
 import axios from "axios";
 import { Ajaxurl } from "@/utils/index";
 import { MysqlChange, ComputerChangeReturn, axiosType } from "@/type/index";
-import { instance, addParamIfDefined } from "@/services/axiosConfig";
+import {
+  instance,
+  addParamIfDefined,
+  appendAjaxNonce,
+} from "@/services/axiosConfig";
 /**
  * 增 - 添加变更数据
  * @param uuid 设备的唯一标识符
@@ -24,6 +28,7 @@ export const addChangeData = async (
   addParamIfDefined(params, "user", data.user);
   addParamIfDefined(params, "type", data.type);
   addParamIfDefined(params, "data", data.data);
+  appendAjaxNonce(params);
   try {
     const data = await instance.post(Ajaxurl, params);
     return data.data.success;
@@ -57,6 +62,7 @@ export const changeMySqlData = async (
   addParamIfDefined(params, "id", id);
   addParamIfDefined(params, "data", data);
   addParamIfDefined(params, "type", type);
+  appendAjaxNonce(params);
 
   try {
     await instance.post<MysqlChange>(Ajaxurl, params);
@@ -76,6 +82,7 @@ export const searchChangeData = async (record_uuid: string) => {
     action: "search_change_data_callback",
     record_uuid,
   });
+  appendAjaxNonce(params);
   const response = await axios.post(Ajaxurl, params);
   return response.data as axiosType;
 };
@@ -87,6 +94,7 @@ export const searchChangeAllData = async () => {
   const params = new URLSearchParams({
     action: "search_change_all_data_callback",
   });
+  appendAjaxNonce(params);
   const response = await axios.post(Ajaxurl, params);
   return response.data as axiosType;
 };

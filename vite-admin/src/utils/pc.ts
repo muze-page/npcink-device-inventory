@@ -14,7 +14,7 @@ import {
 //替换用数组
 import { osReplace, osTypeReplace, excludeGraphics } from "@/utils/replace";
 
-import { formatBytes, formatMB } from "@/utils/tool";
+import { formatBytes, formatMB } from "@/utils/format";
 import Unknown from "@/assets/type/unknown.png";
 
 /**

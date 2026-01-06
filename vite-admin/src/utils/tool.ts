@@ -16,6 +16,7 @@ export {
   updateOSType,
   removeEmpty,
 } from "@/utils/pc";
+export { formatBytes, formatMB } from "@/utils/format";
 
 //开发环境状态,各种调试按钮用
 export const devStatus: boolean = import.meta.env.VITE_STATE;
@@ -37,67 +38,7 @@ export const formatNumber = (num: number | undefined): string => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
 
-/**
- * 字节转换单位 - 自动选择合适的单位（适用于硬件规格显示）
- * 对于B和KB单位显示整数（如"512 B"或"8 KB"）
- * 对于MB及以上单位只保留1位小数，并自动去除尾部的0（如"8 GB"而不是"8.0 GB"）
- */
-export const formatBytes = (bytes: number | null) => {
-  if (bytes === null || bytes === 0) {
-    return "0";
-  }
-
-  // 自动选择合适的单位，包含PB（Petabyte）单位
-  const units = ["B", "KB", "MB", "GB", "TB", "PB"];
-  let size = bytes;
-  let unitIndex = 0;
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
-  }
-
-  // 对于硬件规格显示，通常使用整数或1位小数就足够了
-  if (unitIndex <= 1) {
-    // B和KB单位显示整数
-    return Math.round(size) + " " + units[unitIndex];
-  } else {
-    // MB及以上单位显示最多1位小数，去除尾部的0
-    const rounded = parseFloat(size.toFixed(1));
-    return rounded + " " + units[unitIndex];
-  }
-};
-
-/**
- * MB单位转换 - 自动选择合适的单位（适用于内存和显存显示）
- */
-export const formatMB = (mb: number | null) => {
-  if (mb === null || mb === 0) {
-    return "0";
-  }
-
-  // 如果是MB单位，我们可以直接处理
-  // 自动选择合适的单位，适用于内存和显存显示
-  const units = ["MB", "GB", "TB", "PB"];
-  let size = mb;
-  let unitIndex = 0;
-
-  // 从MB开始，1024 MB = 1 GB
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
-  }
-
-  // 对于内存和显存显示，通常使用整数或1位小数就足够了
-  if (unitIndex === 0) {
-    // MB单位显示整数
-    return Math.round(size) + " " + units[unitIndex];
-  } else {
-    // GB及以上单位显示最多1位小数，去除尾部的0
-    const rounded = parseFloat(size.toFixed(1));
-    return rounded + " " + units[unitIndex];
-  }
-};
+// formatBytes/formatMB moved to utils/format to avoid circular imports.
 
 /**
  * 通用函数

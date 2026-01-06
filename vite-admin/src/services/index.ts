@@ -11,7 +11,13 @@ export {
   searchChangeAllData,
 } from "@/services/manual";
 
-export { changeMySql, deltSQLData, getDeviceCategory } from "@/services/pc";
+export {
+  changeMySql,
+  deltSQLData,
+  getDeviceCategory,
+  getPcList,
+  getPcSummary,
+} from "@/services/pc";
 
 //自定义硬件设备数据
 export {
@@ -19,6 +25,7 @@ export {
   deleteStyleDeviceData,
   updateStyleDeviceData,
   getStyleDeviceCategory,
+  getStyleList,
 } from "@/services/style";
 
 //硬件设备数据变更自动记录

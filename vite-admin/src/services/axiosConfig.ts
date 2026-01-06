@@ -1,60 +1,118 @@
 import axios from "axios";
 import { message } from "antd";
+import { AjaxNonce, RestNonce, RestUrl } from "@/utils/index";
+
 // 创建 axios 实例
 export const instance = axios.create({
   //baseURL: Ajaxurl, // 设置请求的基础URL
 });
 
-// 响应拦截器
-instance.interceptors.response.use(
-  (response) => {
-    // 检查响应数据中是否有消息需要显示
-    if (response.data && response.data.data && response.data.data.message) {
-      if (response.data.success) {
-        message.success(response.data.data.message);
-      } else {
-        message.error(response.data.data.message);
-      }
-    }
-    return response;
-  },
-  (error) => {
-    // 检查是否有返回错误信息，有的话展示，没有就显示默认错误信息
-    let errorMessage = "请求出错";
+// REST API 实例
+export const restInstance = axios.create({
+  baseURL: RestUrl,
+});
 
-    if (error.response) {
-      // 服务器返回了错误状态码
-      if (
-        error.response.data &&
-        error.response.data.data &&
-        error.response.data.data.message
-      ) {
-        // 优先使用服务器返回的错误消息
-        errorMessage = error.response.data.data.message;
-      } else if (
-        error.response.data &&
-        error.response.data.data &&
-        error.response.data.data.error
-      ) {
-        // 其次使用服务器返回的错误信息
-        errorMessage = error.response.data.data.error;
-      } else {
-        // 默认使用状态文本
-        errorMessage = `请求失败: ${error.response.status} ${error.response.statusText}`;
-      }
-    } else if (error.request) {
-      // 请求已发出但没有收到响应
-      errorMessage = "网络错误，请检查网络连接";
+if (RestNonce) {
+  restInstance.defaults.headers.common["X-WP-Nonce"] = RestNonce;
+}
+
+const responseInterceptor = (response: any) => {
+  // 检查响应数据中是否有消息需要显示
+  if (response.data && response.data.data && response.data.data.message) {
+    if (response.data.success) {
+      message.success(response.data.data.message);
     } else {
-      // 其他错误
-      errorMessage = error.message || "未知错误";
+      message.error(response.data.data.message);
     }
-
-    message.error(errorMessage);
-    console.error("请求错误:", error);
-    return Promise.reject(error);
   }
-);
+  return response;
+};
+
+const friendlyErrorCodeMap: Record<string, string> = {
+  duplicate_number: "设备编号已存在，请换一个编号再保存",
+  forbidden: "权限不足，请联系管理员",
+  missing_uuid: "缺少设备标识，请刷新页面后重试",
+  not_found: "资源不存在或已被删除",
+  invalid_data: "提交的数据格式不正确，请检查后重试",
+  invalid_fields: "没有可更新的字段，请检查表单内容",
+  missing_params: "缺少必要参数，请补全后重试",
+  json_encode_failed: "数据处理失败，请稍后重试",
+  insert_failed: "保存失败，请稍后重试",
+  update_failed: "保存失败，请稍后重试",
+  delete_failed: "删除失败，请稍后重试",
+  db_error: "数据库错误，请联系管理员",
+  rest_forbidden: "权限不足或登录已过期，请刷新页面重试",
+  rest_cookie_invalid_nonce: "登录已过期，请刷新页面重试",
+  rest_cannot_edit: "没有权限修改该资源",
+  rest_cannot_delete: "没有权限删除该资源",
+};
+
+const friendlyStatusMap: Record<number, string> = {
+  400: "请求参数有误，请检查填写内容",
+  401: "登录已过期，请刷新页面重试",
+  403: "权限不足或登录已过期，请刷新页面重试",
+  404: "资源不存在或已被删除",
+  409: "数据冲突，请检查唯一字段（如编号）",
+  413: "提交内容过大，请缩小后重试",
+  429: "操作过于频繁，请稍后重试",
+  500: "服务器开小差了，请稍后再试",
+  503: "服务暂不可用，请稍后再试",
+};
+
+const friendlyErrorTextMap: Record<string, string> = {
+  非法请求: "登录已过期，请刷新页面重试",
+  权限不足: "权限不足，请联系管理员",
+  设备编号已存在: "设备编号已存在，请换一个编号再保存",
+};
+
+const errorInterceptor = (error: any) => {
+  // 检查是否有返回错误信息，有的话展示，没有就显示默认错误信息
+  let errorMessage = "请求出错";
+
+  if (error.response) {
+    // 服务器返回了错误状态码
+    const status = error.response.status;
+    const data = error.response.data;
+    const code = data?.code;
+    const rawText =
+      data?.data?.error ||
+      data?.data?.message ||
+      data?.message ||
+      data?.error;
+
+    if (code && friendlyErrorCodeMap[code]) {
+      errorMessage = friendlyErrorCodeMap[code];
+    } else if (rawText && friendlyErrorTextMap[rawText]) {
+      errorMessage = friendlyErrorTextMap[rawText];
+    } else if (status && friendlyStatusMap[status]) {
+      errorMessage = friendlyStatusMap[status];
+    } else if (data && data.data && data.data.message) {
+      // 优先使用服务器返回的错误消息
+      errorMessage = data.data.message;
+    } else if (data && data.data && data.data.error) {
+      // 其次使用服务器返回的错误信息
+      errorMessage = data.data.error;
+    } else if (data && data.message) {
+      errorMessage = data.message;
+    } else {
+      // 默认使用状态文本
+      errorMessage = `请求失败: ${status} ${error.response.statusText}`;
+    }
+  } else if (error.request) {
+    // 请求已发出但没有收到响应
+    errorMessage = "网络错误，请检查网络连接";
+  } else {
+    // 其他错误
+    errorMessage = error.message || "未知错误";
+  }
+
+  message.error(errorMessage);
+  console.error("请求错误:", error);
+  return Promise.reject(error);
+};
+
+instance.interceptors.response.use(responseInterceptor, errorInterceptor);
+restInstance.interceptors.response.use(responseInterceptor, errorInterceptor);
 
 /**
  * 检查它们的值是否为 undefined 并据此决定是否将它们添加到 URLSearchParams 实例中
@@ -71,4 +129,14 @@ export const addParamIfDefined = (
   if (value !== undefined) {
     params.append(key, value);
   }
+};
+
+/**
+ * 追加 admin-ajax nonce
+ */
+export const appendAjaxNonce = (params: URLSearchParams) => {
+  if (AjaxNonce) {
+    params.append("_ajax_nonce", AjaxNonce);
+  }
+  return params;
 };

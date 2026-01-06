@@ -20,6 +20,7 @@ if (!class_exists('DEMA_Admin_Interface_Search_Page')) {
          */
         public static function add_public_search_page_callback()
         {
+            self::ensure_admin_ajax();
             //接收传来的值并清理路由参数
             $route = isset($_POST['route']) ? sanitize_text_field($_POST['route']) : null;
             // 检查路由参数是否为空，是否是纯数字
@@ -99,7 +100,6 @@ if (!class_exists('DEMA_Admin_Interface_Search_Page')) {
 
             $pf_api_translation_array = array(
                 'site' => get_home_url(), //首页网址
-                'option' => get_option(self::$option), //传递选项 - 需密码验证
             );
             wp_localize_script($name, 'dataLocal', $pf_api_translation_array); //传给search项目
         }

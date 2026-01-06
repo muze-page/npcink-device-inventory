@@ -28,8 +28,16 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
          */
         public static function get_style_device_categories_callback()
         {
+            self::ensure_admin_ajax();
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_style_name;
+
+            $cache_key = self::get_cache_key('style_categories');
+            $cached = get_transient($cache_key);
+            if ($cached !== false) {
+                wp_send_json_success($cached);
+                wp_die();
+            }
 
             // 获取所有设备分类
             $categories = $wpdb->get_results(
@@ -168,6 +176,8 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
                 'pay_methods' => array_values($pay_method_result) // 支付方式
             ];
 
+            set_transient($cache_key, $result, 5 * MINUTE_IN_SECONDS);
+
             wp_send_json_success($result);
             wp_die();
         }
@@ -178,6 +188,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
          */
         public static function add_style_device_data_callback()
         {
+            self::ensure_admin_ajax();
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_style_name;
 
@@ -250,6 +261,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
 
             // 检查插入是否成功
             if ($result !== false) {
+                self::clear_style_cache();
                 // 插入成功后，获取自动生成的ID、UUID和time
                 $inserted_id = $wpdb->insert_id;
 
@@ -295,6 +307,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
          */
         public static function delete_style_device_data_callback()
         {
+            self::ensure_admin_ajax();
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_style_name;
             $table_auto = $wpdb->prefix . self::$table_auto_name;
@@ -335,6 +348,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
                 if ($result !== false && $result_auto !== false) {
                     // 提交事务
                     $wpdb->query('COMMIT');
+                    self::clear_style_cache();
                     wp_send_json_success(['message' => '删除成功']);
                 } else {
                     throw new Exception('删除操作失败');
@@ -357,6 +371,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
          */
         public static function update_style_device_data_callback()
         {
+            self::ensure_admin_ajax();
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_style_name;
 
@@ -438,6 +453,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
 
             // 检查更新是否成功
             if ($result !== false) {
+                self::clear_style_cache();
                 wp_send_json_success([
                     'message' => '更新自定义设备数据成功'
                 ]);

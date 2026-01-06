@@ -79,6 +79,26 @@ export interface TableData {
   sum: number;
 }
 
+export interface PagedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+}
+
+export interface PcSummary {
+  cpu: TableData[];
+  disk: TableData[];
+  memory: TableData[];
+  baseboard: TableData[];
+  totals: {
+    purchase: number;
+    depreciation: number;
+    residual: number;
+  };
+}
+
 //标准下拉TODO:择机删除
 export interface DataItemArr {
   key?: string;
