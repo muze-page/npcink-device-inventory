@@ -1,7 +1,7 @@
 /**
  * 自定义设备类型
  */
-import { useState, SetStateAction, useEffect } from "react";
+import { useState, SetStateAction, useEffect, useRef } from "react";
 import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 
@@ -31,6 +31,7 @@ const App: React.FC = () => {
   //在设备展示列表和删除设备两个组件间同步设备数据（添加、删除设备后更新设备列表）
   const [devices, setDevices] = useState<StyleDevice[]>([]);
   const [total, setTotal] = useState(0);
+  const listRequestId = useRef(0);
 
   //共享弹窗状态
   const [active, setActive] = useState(false);
@@ -117,6 +118,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const fetchList = async () => {
+      const requestId = ++listRequestId.current;
       try {
         const response = await getStyleList({
           page: pageNumber,
@@ -127,10 +129,16 @@ const App: React.FC = () => {
           platform: filter.platform !== "all" ? filter.platform : undefined,
           pay_method: filter.payMethod !== "all" ? filter.payMethod : undefined,
         });
+        if (requestId !== listRequestId.current) {
+          return;
+        }
         setDevices(response.items);
         setTotal(response.total);
       } catch (error) {
         console.error("获取设备列表失败:", error);
+        if (requestId !== listRequestId.current) {
+          return;
+        }
         setDevices([]);
         setTotal(0);
       }

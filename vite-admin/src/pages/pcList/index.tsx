@@ -2,7 +2,7 @@
  * 设备列表
  * TODO:翻页时才获取数据，一开始仅获取两页的数据
  */
-import { SetStateAction, useState, useEffect } from "react";
+import { SetStateAction, useState, useEffect, useRef } from "react";
 import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 import {
@@ -56,6 +56,7 @@ const App: React.FC = () => {
   //设置列表数据
   const [listData, setListData] = useState<MysqlDeviceChangeMeat[]>([]);
   const [total, setTotal] = useState(0);
+  const listRequestId = useRef(0);
 
   //筛选条件
   const [filter, setFilter] = useState<FilterData>({
@@ -87,6 +88,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const fetchList = async () => {
+      const requestId = ++listRequestId.current;
       try {
         const response = await getPcList({
           page: pageNumber,
@@ -96,11 +98,17 @@ const App: React.FC = () => {
           department:
             filter.department !== "all" ? filter.department : undefined,
         });
+        if (requestId !== listRequestId.current) {
+          return;
+        }
         const updated = updateOSType(response.items);
         setListData(updated);
         setTotal(response.total);
       } catch (error) {
         console.error("获取设备列表失败:", error);
+        if (requestId !== listRequestId.current) {
+          return;
+        }
         setListData([]);
         setTotal(0);
       }

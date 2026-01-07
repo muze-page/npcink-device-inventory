@@ -1,5 +1,5 @@
 //手动记录设备变更
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getManualChangeList } from "@/services/index";
 import { Table, Input, Space } from "antd";
 import type { TableColumnsType } from "antd";
@@ -21,8 +21,10 @@ const App: React.FC<Props> = ({ isActive }) => {
     users: [],
     types: [],
   });
+  const requestIdRef = useRef(0);
 
   const getData = async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     try {
       const response = await getManualChangeList({
@@ -32,13 +34,11 @@ const App: React.FC<Props> = ({ isActive }) => {
         user: userFilter,
         type: typeFilter,
       });
-      const addKeyData = (response.items || []).map(
-        (obj: DeviceChangeList, index: number) => ({
-          ...obj,
-          key: (page - 1) * pageSize + index + 1,
-        })
-      );
-      setDataAxios(addKeyData);
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+      const records = Array.isArray(response.items) ? response.items : [];
+      setDataAxios(records);
       setTotal(response.total || 0);
       if (response.filters) {
         setFilters({
@@ -47,10 +47,15 @@ const App: React.FC<Props> = ({ isActive }) => {
         });
       }
     } catch {
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
       setDataAxios([]);
       setTotal(0);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -73,8 +78,8 @@ const App: React.FC<Props> = ({ isActive }) => {
   const columns: TableColumnsType<DeviceChangeList> = [
     {
       title: "序号",
-      dataIndex: "key",
-      sorter: (a, b) => a.key - b.key,
+      dataIndex: "id",
+      render: (_, __, index) => (page - 1) * pageSize + index + 1,
       width: "10%",
     },
     {
@@ -141,6 +146,7 @@ const App: React.FC<Props> = ({ isActive }) => {
         dataSource={dataAxios}
         columns={columns}
         loading={loading}
+        rowKey="id"
         pagination={{
           current: page,
           pageSize,
@@ -148,14 +154,18 @@ const App: React.FC<Props> = ({ isActive }) => {
           showSizeChanger: true,
         }}
         onChange={(pagination, tableFilters) => {
-          setPage(pagination.current || 1);
-          setPageSize(pagination.pageSize || 20);
+          const nextPageSize = pagination.pageSize || 20;
           const user = Array.isArray(tableFilters.user)
             ? (tableFilters.user[0] as string)
             : undefined;
           const type = Array.isArray(tableFilters.type)
             ? (tableFilters.type[0] as string)
             : undefined;
+          const filterChanged = user !== userFilter || type !== typeFilter;
+          const pageSizeChanged = nextPageSize !== pageSize;
+
+          setPage(filterChanged || pageSizeChanged ? 1 : pagination.current || 1);
+          setPageSize(nextPageSize);
           setUserFilter(user);
           setTypeFilter(type);
         }}

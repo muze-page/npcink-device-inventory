@@ -127,6 +127,7 @@ const App: React.FC<Props> = ({ uuid }) => {
     users: [],
     types: [],
   });
+  const requestIdRef = useRef(0);
 
   // 获取数据并处理
   const getData = async () => {
@@ -136,6 +137,7 @@ const App: React.FC<Props> = ({ uuid }) => {
       return;
     }
 
+    const requestId = ++requestIdRef.current;
     setLoading(true); // 开始加载
     try {
       const response = await getManualChangeList({
@@ -147,6 +149,9 @@ const App: React.FC<Props> = ({ uuid }) => {
         type: typeFilter,
       });
 
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
       const addKeyData = (response.items || []).map(
         (obj: DeviceChangeList, index: number) => ({
           ...obj,
@@ -162,10 +167,15 @@ const App: React.FC<Props> = ({ uuid }) => {
         });
       }
     } catch {
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
       setDataAxios([]);
       setTotal(0);
     } finally {
-      setLoading(false); // 结束加载
+      if (requestId === requestIdRef.current) {
+        setLoading(false); // 结束加载
+      }
     }
   };
 

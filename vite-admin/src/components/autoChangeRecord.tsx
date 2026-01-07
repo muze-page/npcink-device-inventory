@@ -1,7 +1,7 @@
 /**
  * 展示设备信息自动变更记录
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Table, Space, Empty, Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { getAutoChangeList } from "@/services/index";
@@ -26,6 +26,7 @@ const App: React.FC<Props> = ({ uuid, recordHint, refreshKey }) => {
   const [filters, setFilters] = useState<{ columns: string[] }>({
     columns: [],
   });
+  const requestIdRef = useRef(0);
 
   const getData = async () => {
     // 检查UUID是否有效
@@ -35,6 +36,7 @@ const App: React.FC<Props> = ({ uuid, recordHint, refreshKey }) => {
       return;
     }
 
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     try {
       const res = await getAutoChangeList({
@@ -44,6 +46,9 @@ const App: React.FC<Props> = ({ uuid, recordHint, refreshKey }) => {
         search,
         column_name: columnFilter,
       });
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
       const records = Array.isArray(res.items) ? res.items : [];
       setData(records);
       setTotal(res.total || 0);
@@ -53,10 +58,15 @@ const App: React.FC<Props> = ({ uuid, recordHint, refreshKey }) => {
         });
       }
     } catch {
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
       setData([]);
       setTotal(0);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 

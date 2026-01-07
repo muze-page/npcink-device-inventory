@@ -1,5 +1,5 @@
 //自动记录设备变更
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getAutoChangeList } from "@/services/index";
 import { Table, Input, Space } from "antd";
 import type { TableColumnsType } from "antd";
@@ -23,8 +23,10 @@ const App: React.FC<Props> = ({ isActive }) => {
     tables: [],
     columns: [],
   });
+  const requestIdRef = useRef(0);
 
   const getData = async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     try {
       const response = await getAutoChangeList({
@@ -34,13 +36,11 @@ const App: React.FC<Props> = ({ isActive }) => {
         table_name: tableFilter,
         column_name: columnFilter,
       });
-      const addKeyData = (response.items || []).map(
-        (obj: ChangeAutoRecord, index: number) => ({
-          ...obj,
-          key: (page - 1) * pageSize + index + 1,
-        })
-      );
-      setDataAxios(addKeyData);
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+      const records = Array.isArray(response.items) ? response.items : [];
+      setDataAxios(records);
       setTotal(response.total || 0);
       if (response.filters) {
         setFilters({
@@ -49,10 +49,15 @@ const App: React.FC<Props> = ({ isActive }) => {
         });
       }
     } catch {
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
       setDataAxios([]);
       setTotal(0);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -76,8 +81,8 @@ const App: React.FC<Props> = ({ isActive }) => {
   const columns: TableColumnsType<ChangeAutoRecord> = [
     {
       title: "序号",
-      dataIndex: "key",
-      sorter: (a, b) => a.id - b.id,
+      dataIndex: "id",
+      render: (_, __, index) => (page - 1) * pageSize + index + 1,
       width: "10%",
     },
     {
@@ -149,6 +154,7 @@ const App: React.FC<Props> = ({ isActive }) => {
         dataSource={dataAxios}
         columns={columns}
         loading={loading}
+        rowKey="id"
         pagination={{
           current: page,
           pageSize,
@@ -156,14 +162,19 @@ const App: React.FC<Props> = ({ isActive }) => {
           showSizeChanger: true,
         }}
         onChange={(pagination, tableFilters) => {
-          setPage(pagination.current || 1);
-          setPageSize(pagination.pageSize || 20);
+          const nextPageSize = pagination.pageSize || 20;
           const tableName = Array.isArray(tableFilters.table_name)
             ? (tableFilters.table_name[0] as string)
             : undefined;
           const columnName = Array.isArray(tableFilters.column_name)
             ? (tableFilters.column_name[0] as string)
             : undefined;
+          const filterChanged =
+            tableName !== tableFilter || columnName !== columnFilter;
+          const pageSizeChanged = nextPageSize !== pageSize;
+
+          setPage(filterChanged || pageSizeChanged ? 1 : pagination.current || 1);
+          setPageSize(nextPageSize);
           setTableFilter(tableName);
           setColumnFilter(columnName);
         }}

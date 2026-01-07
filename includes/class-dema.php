@@ -153,6 +153,7 @@ class Dema
 
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
+		$this->loader->add_action('admin_init', $this, 'maybe_upgrade');
 	}
 
 
@@ -165,6 +166,25 @@ class Dema
 	public function run()
 	{
 		$this->loader->run();
+	}
+
+	/**
+	 * 插件升级时执行数据库与触发器校验
+	 */
+	public function maybe_upgrade()
+	{
+		if (!current_user_can('manage_options')) {
+			return;
+		}
+
+		$installed_version = get_option('dema_plugin_version');
+		if ($installed_version === $this->version) {
+			return;
+		}
+
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-dema-activator.php';
+		Dema_Activator::run();
+		update_option('dema_plugin_version', $this->version);
 	}
 
 	/**
