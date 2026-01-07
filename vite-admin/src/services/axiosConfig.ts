@@ -16,6 +16,61 @@ if (RestNonce) {
   restInstance.defaults.headers.common["X-WP-Nonce"] = RestNonce;
 }
 
+const isDevMode = import.meta.env.DEV || Boolean(import.meta.env.VITE_STATE);
+let devRestNoncePromise: Promise<string | null> | null = null;
+
+const requestDevRestNonce = async (): Promise<string | null> => {
+  try {
+    const params = new URLSearchParams();
+    params.append("action", "dema_get_rest_nonce");
+    const response = await fetch("/api/wp-admin/admin-ajax.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+      },
+      body: params.toString(),
+      credentials: "include",
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const payload = await response.json().catch(() => null);
+    const nonce = payload?.data?.nonce;
+    return typeof nonce === "string" ? nonce : null;
+  } catch {
+    return null;
+  }
+};
+
+export const ensureRestNonce = async (): Promise<string | null> => {
+  const existingNonce = restInstance.defaults.headers.common[
+    "X-WP-Nonce"
+  ] as string | undefined;
+
+  if (existingNonce) {
+    return existingNonce;
+  }
+
+  if (RestNonce) {
+    restInstance.defaults.headers.common["X-WP-Nonce"] = RestNonce;
+    return RestNonce;
+  }
+
+  if (!isDevMode) {
+    return null;
+  }
+
+  if (!devRestNoncePromise) {
+    devRestNoncePromise = requestDevRestNonce();
+  }
+
+  const nonce = await devRestNoncePromise;
+  if (nonce) {
+    restInstance.defaults.headers.common["X-WP-Nonce"] = nonce;
+  }
+  return nonce || null;
+};
+
 const responseInterceptor = (response: any) => {
   // 检查响应数据中是否有消息需要显示
   const payload = response.data;

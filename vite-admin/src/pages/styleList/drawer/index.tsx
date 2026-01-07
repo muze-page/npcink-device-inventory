@@ -48,7 +48,7 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
         open={active}
         onCancel={onActive}
         style={{ top: 50 }}
-        width={"800px"}
+        width={"700px"}
         footer={null}
       >
         <Tabs defaultActiveKey="1" items={items} />

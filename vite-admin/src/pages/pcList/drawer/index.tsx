@@ -20,7 +20,7 @@ const App: React.FC<Props> = ({ active, onActive, data }) => {
         open={active}
         onCancel={onActive}
         style={{ top: 50 }}
-        width={"800px"}
+        width={"700px"}
         footer={null}
       >
         {/**标识栏 */}

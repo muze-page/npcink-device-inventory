@@ -38,6 +38,10 @@ export default defineConfig({
     //port: 3000,
     //open: true,
     proxy: {
+      "/wp-json": {
+        target: "http://localhost:10048/",
+        changeOrigin: true,
+      },
       "/api": {
         target: "http://localhost:10048/",
         changeOrigin: true,

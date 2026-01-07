@@ -108,8 +108,8 @@ const App: React.FC = () => {
         form={form}
         onFinish={onFinish}
         labelAlign="left"
-        labelCol={{ span: 4 }}
-        wrapperCol={{ span: 20 }}
+        labelCol={{ span: 6 }}
+        wrapperCol={{ span: 18 }}
         initialValues={drawerData}
       >
         <div className="flex gap-6 flex-wrap">

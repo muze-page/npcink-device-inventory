@@ -13,6 +13,14 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
         public static function run()
         {
+            /**
+             * 开发态：获取 REST nonce（用于 Vite dev）
+             */
+            $is_dev = (defined('WP_DEBUG') && WP_DEBUG)
+                || (function_exists('wp_get_environment_type') && wp_get_environment_type() === 'development');
+            if ($is_dev) {
+                add_action('wp_ajax_dema_get_rest_nonce', array(__CLASS__, 'get_rest_nonce_callback'));
+            }
 
             /**
              * 添加接收设备数据api接口
@@ -30,6 +38,26 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
              * 管理端 REST 接口（分页/搜索/增删改查）
              */
             add_action('rest_api_init', array(__CLASS__, 'create_admin_endpoints'));
+        }
+
+        /**
+         * 开发态 - 获取 REST nonce
+         */
+        public static function get_rest_nonce_callback()
+        {
+            $is_dev = (defined('WP_DEBUG') && WP_DEBUG)
+                || (function_exists('wp_get_environment_type') && wp_get_environment_type() === 'development');
+            if (!$is_dev) {
+                wp_send_json_error(['error' => '接口仅在开发环境可用'], 403);
+            }
+
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(['error' => '权限不足'], 403);
+            }
+
+            wp_send_json_success([
+                'nonce' => wp_create_nonce('wp_rest'),
+            ]);
         }
 
         /**
