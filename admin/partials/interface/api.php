@@ -438,6 +438,67 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 'callback' => array(__CLASS__, 'admin_get_pc_summary'),
                 'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
             ));
+
+            register_rest_route('npcink/v1', '/admin/settings', array(
+                array(
+                    'methods' => WP_REST_Server::EDITABLE,
+                    'callback' => array(__CLASS__, 'admin_update_settings'),
+                    'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
+                ),
+            ));
+
+            register_rest_route('npcink/v1', '/admin/export', array(
+                array(
+                    'methods' => WP_REST_Server::READABLE,
+                    'callback' => array(__CLASS__, 'admin_export_data'),
+                    'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
+                ),
+            ));
+
+            register_rest_route('npcink/v1', '/admin/import', array(
+                array(
+                    'methods' => WP_REST_Server::CREATABLE,
+                    'callback' => array(__CLASS__, 'admin_import_data'),
+                    'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
+                ),
+            ));
+
+            register_rest_route('npcink/v1', '/admin/public-search-page', array(
+                array(
+                    'methods' => WP_REST_Server::CREATABLE,
+                    'callback' => array(__CLASS__, 'admin_create_public_search_page'),
+                    'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
+                ),
+            ));
+
+            register_rest_route('npcink/v1', '/admin/changes/manual', array(
+                array(
+                    'methods' => WP_REST_Server::READABLE,
+                    'callback' => array(__CLASS__, 'admin_get_manual_changes'),
+                    'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
+                ),
+                array(
+                    'methods' => WP_REST_Server::CREATABLE,
+                    'callback' => array(__CLASS__, 'admin_create_manual_change'),
+                    'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
+                ),
+            ));
+
+            register_rest_route('npcink/v1', '/admin/changes/manual/(?P<id>\\d+)', array(
+                array(
+                    'methods' => WP_REST_Server::EDITABLE,
+                    'callback' => array(__CLASS__, 'admin_update_manual_change'),
+                    'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
+                ),
+            ));
+
+            register_rest_route('npcink/v1', '/admin/changes/auto', array(
+                array(
+                    'methods' => WP_REST_Server::READABLE,
+                    'callback' => array(__CLASS__, 'admin_get_auto_changes'),
+                    'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
+                ),
+            ));
         }
 
         /**
@@ -1311,6 +1372,619 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             set_transient($cache_key, $response, 5 * MINUTE_IN_SECONDS);
 
             return rest_ensure_response($response);
+        }
+
+        /**
+         * 管理端 - 保存设置
+         */
+        public static function admin_update_settings($request)
+        {
+            global $wpdb;
+
+            $json_data = $request->get_json_params();
+            if (empty($json_data) || !is_array($json_data)) {
+                return new WP_Error('invalid_data', '保存设置失败：提交数据为空', array('status' => 400));
+            }
+
+            $object = json_decode(wp_json_encode($json_data));
+            if (!$object) {
+                return new WP_Error('invalid_data', '保存设置失败：数据格式错误', array('status' => 400));
+            }
+
+            $validation_result = DEMA_Admin_Interface_Seting::validate_object($object);
+            if ($validation_result !== true) {
+                return new WP_Error('invalid_data', '保存设置失败：' . $validation_result, array('status' => 400));
+            }
+
+            $raw_password = $object->password;
+            if ($raw_password !== '已设定') {
+                $object->password = wp_hash_password($raw_password);
+            } else {
+                $random_string = uniqid(mt_rand(), true);
+                $object->password = self::get_seting('password') ? self::get_seting('password') : wp_hash_password($random_string);
+            }
+
+            $result = update_option(self::$option, $object);
+            if ($result === false) {
+                if (empty($wpdb->last_error)) {
+                    return rest_ensure_response(array(
+                        'success' => true,
+                        'message' => '设置未变化',
+                    ));
+                }
+                return new WP_Error('update_failed', '保存设置失败：数据库错误', array(
+                    'status' => 500,
+                    'detail' => $wpdb->last_error,
+                ));
+            }
+
+            self::clear_pc_cache();
+
+            return rest_ensure_response(array(
+                'success' => true,
+                'message' => '设置已保存',
+            ));
+        }
+
+        /**
+         * 管理端 - 导出数据
+         */
+        public static function admin_export_data($request)
+        {
+            global $wpdb;
+            $name = sanitize_text_field((string) $request->get_param('name'));
+            if (empty($name)) {
+                return new WP_Error('missing_params', '导出失败：缺少表名', array('status' => 400));
+            }
+
+            $allowed_tables = array(
+                self::$table_pc_name,
+                self::$table_style_name,
+                self::$table_manual_name,
+                self::$table_auto_name,
+            );
+            if (!in_array($name, $allowed_tables, true)) {
+                return new WP_Error('invalid_table', '导出失败：表名不合法', array('status' => 400));
+            }
+
+            $table_name = $wpdb->prefix . $name;
+            $rows = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);
+
+            if ($wpdb->last_error) {
+                return new WP_Error('db_error', '导出失败：数据库错误', array(
+                    'status' => 500,
+                    'detail' => $wpdb->last_error,
+                ));
+            }
+
+            return rest_ensure_response(array(
+                'success' => true,
+                'message' => '导出成功',
+                'data' => $rows ?: array(),
+            ));
+        }
+
+        /**
+         * 管理端 - 导入数据
+         */
+        public static function admin_import_data($request)
+        {
+            global $wpdb;
+
+            $json_data = $request->get_json_params();
+            if (empty($json_data) || !is_array($json_data)) {
+                return new WP_Error('invalid_data', '导入失败：数据为空', array('status' => 400));
+            }
+
+            $name = isset($json_data['name']) ? sanitize_text_field($json_data['name']) : null;
+            $data = isset($json_data['data']) ? $json_data['data'] : null;
+
+            if (empty($name)) {
+                return new WP_Error('missing_params', '导入失败：缺少表名', array('status' => 400));
+            }
+            if (!is_array($data)) {
+                return new WP_Error('invalid_data', '导入失败：数据格式错误', array('status' => 400));
+            }
+
+            $allowed_tables = array(
+                self::$table_pc_name,
+                self::$table_style_name,
+                self::$table_manual_name,
+                self::$table_auto_name,
+            );
+            if (!in_array($name, $allowed_tables, true)) {
+                return new WP_Error('invalid_table', '导入失败：表名不合法', array('status' => 400));
+            }
+
+            if (empty($data)) {
+                return rest_ensure_response(array(
+                    'success' => true,
+                    'message' => '导入完成：没有可导入的数据',
+                    'imported_records' => 0,
+                    'total_records' => 0,
+                ));
+            }
+
+            $insert_data = array();
+
+            if ($name == self::$table_pc_name) {
+                foreach ($data as $item) {
+                    if (empty($item['data']) || empty($item['uuid'])) {
+                        return new WP_Error('invalid_data', '导入失败：设备信息不完整', array('status' => 400));
+                    }
+                    $uuid = isset($item['uuid']) ? $item['uuid'] : null;
+                    $table_name = $wpdb->prefix . self::$table_pc_name;
+                    $existingData = $wpdb->get_row(
+                        $wpdb->prepare(
+                            "SELECT * FROM $table_name WHERE uuid = %s",
+                            $uuid
+                        ),
+                        ARRAY_A
+                    );
+
+                    if (!$existingData) {
+                        $insert_data[] = array(
+                            'name' => isset($item['name']) ? $item['name'] : '',
+                            'state' => isset($item['state']) ? $item['state'] : 'apply',
+                            'number' => isset($item['number']) ? $item['number'] : 0,
+                            'department' => isset($item['department']) ? $item['department'] : 0,
+                            'purchase' => isset($item['purchase']) ? $item['purchase'] : 0,
+                            'depreciation' => isset($item['depreciation']) ? $item['depreciation'] : 0,
+                            'ip' => isset($item['ip']) ? $item['ip'] : '',
+                            'created_at' => isset($item['created_at']) ? ($item['created_at']) : null,
+                            'updated_at' => isset($item['updated_at']) ? ($item['updated_at']) : null,
+                            'uuid' => isset($item['uuid']) ? $item['uuid'] : '',
+                            'data' => isset($item['data']) ? ($item['data']) : null,
+                        );
+                    }
+                }
+            }
+
+            if ($name == self::$table_style_name) {
+                foreach ($data as $item) {
+                    $uuid = isset($item['uuid']) ? $item['uuid'] : null;
+                    $table_name = $wpdb->prefix . self::$table_style_name;
+                    $existingData = $wpdb->get_row(
+                        $wpdb->prepare(
+                            "SELECT * FROM $table_name WHERE uuid = %s",
+                            $uuid
+                        ),
+                        ARRAY_A
+                    );
+                    if (!$existingData) {
+                        $insert_data[] = array(
+                            'name' => isset($item['name']) ? $item['name'] :  null,
+                            'number' => isset($item['number']) ? $item['number'] :  null,
+                            'state' => isset($item['state']) ? $item['state'] :  null,
+                            'category' => isset($item['category']) ? $item['category'] :  null,
+                            'purpose' => isset($item['purpose']) ? $item['purpose'] :  null,
+                            'created_at' => isset($item['created_at']) ? $item['created_at'] :  null,
+                            'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
+                            'data' => isset($item['data']) ? $item['data'] :  null,
+                        );
+                    }
+                }
+            }
+
+            if ($name == self::$table_manual_name) {
+                foreach ($data as $item) {
+                    $record_uuid = isset($item['record_uuid']) ? $item['record_uuid'] : null;
+                    $created_at = isset($item['created_at']) ? $item['created_at'] : null;
+
+                    if (!$record_uuid || !$created_at) {
+                        continue;
+                    }
+
+                    $table_name = $wpdb->prefix . self::$table_manual_name;
+                    $existingData = $wpdb->get_row(
+                        $wpdb->prepare(
+                            "SELECT * FROM $table_name WHERE record_uuid = %s AND created_at = %s",
+                            $record_uuid,
+                            $created_at
+                        ),
+                        ARRAY_A
+                    );
+
+                    if (!$existingData) {
+                        $insert_data[] = array(
+                            'record_uuid' => isset($item['record_uuid']) ? $item['record_uuid'] :  null,
+                            'created_at' => isset($item['created_at']) ? $item['created_at'] : null,
+                            'user' => isset($item['user']) ? $item['user'] :  null,
+                            'type' => isset($item['type']) ? $item['type'] :  null,
+                            'data' => isset($item['data']) ? $item['data'] :  null,
+                        );
+                    }
+                }
+            }
+
+            if ($name == self::$table_auto_name) {
+                foreach ($data as $item) {
+                    $record_uuid = isset($item['record_uuid']) ? $item['record_uuid'] : null;
+                    $changed_at = isset($item['changed_at']) ? $item['changed_at'] : null;
+
+                    if (!$record_uuid || !$changed_at) {
+                        continue;
+                    }
+
+                    $table_name = $wpdb->prefix . self::$table_auto_name;
+                    $existingData = $wpdb->get_row(
+                        $wpdb->prepare(
+                            "SELECT * FROM $table_name WHERE record_uuid = %s AND changed_at = %s",
+                            $record_uuid,
+                            $changed_at
+                        ),
+                        ARRAY_A
+                    );
+
+                    if (!$existingData) {
+                        $insert_data[] = array(
+                            'table_name' => isset($item['table_name']) ? $item['table_name'] :  null,
+                            'column_name' => isset($item['column_name']) ? $item['column_name'] : null,
+                            'old_value' => isset($item['old_value']) ? $item['old_value'] :  null,
+                            'new_value' => isset($item['new_value']) ? $item['new_value'] :  null,
+                            'changed_at' => isset($item['changed_at']) ? $item['changed_at'] :  null,
+                            'record_uuid' => isset($item['record_uuid']) ? $item['record_uuid'] :  null,
+                        );
+                    }
+                }
+            }
+
+            if (empty($insert_data)) {
+                $total_records = is_array($data) ? count($data) : 0;
+                return rest_ensure_response(array(
+                    'success' => true,
+                    'message' => $total_records > 0 ? '导入完成：所有记录已存在' : '导入完成：没有可导入的数据',
+                    'total_records' => $total_records,
+                    'imported_records' => 0,
+                ));
+            }
+
+            $table_name = $wpdb->prefix . $name;
+            foreach ($insert_data as $item) {
+                $result = $wpdb->insert($table_name, $item);
+            }
+
+            if ($result !== false) {
+                $imported_count = count($insert_data);
+                if ($name == self::$table_pc_name) {
+                    self::clear_pc_cache();
+                }
+                if ($name == self::$table_style_name) {
+                    self::clear_style_cache();
+                }
+                return rest_ensure_response(array(
+                    'success' => true,
+                    'message' => sprintf('成功导入 %d 条记录，刷新页面后查看', $imported_count),
+                    'imported_records' => $imported_count,
+                    'total_records' => is_array($data) ? count($data) : 0
+                ));
+            }
+
+            return new WP_Error('insert_failed', '导入失败：数据库写入错误', array(
+                'status' => 500,
+                'detail' => $wpdb->last_error,
+            ));
+        }
+
+        /**
+         * 管理端 - 创建公共查询页面
+         */
+        public static function admin_create_public_search_page($request)
+        {
+            $route = sanitize_text_field((string) $request->get_param('route'));
+            if (empty($route)) {
+                return new WP_Error('missing_params', '创建公共查询页失败：缺少路由参数', array('status' => 400));
+            }
+            if (ctype_digit($route)) {
+                return new WP_Error('invalid_route', '创建公共查询页失败：路由不能是纯数字', array('status' => 400));
+            }
+
+            $state = get_page_by_path($route, OBJECT, array('page'));
+            if ($state) {
+                return new WP_Error('route_exists', '创建公共查询页失败：页面已存在', array(
+                    'status' => 409,
+                    'url' => $state->guid,
+                ));
+            }
+
+            $insert_result = DEMA_Admin_Interface_Search_Page::add_page($route);
+            if (!is_wp_error($insert_result) && $insert_result != 0) {
+                return rest_ensure_response(array(
+                    'success' => true,
+                    'message' => '公共查询页已创建',
+                    'id' => $insert_result,
+                ));
+            }
+
+            return new WP_Error('insert_failed', '创建公共查询页失败：插入页面失败', array('status' => 500));
+        }
+
+        /**
+         * 管理端 - 手动变更记录列表（分页/筛选/搜索）
+         */
+        public static function admin_get_manual_changes($request)
+        {
+            global $wpdb;
+            $table_manual = $wpdb->prefix . self::$table_manual_name;
+            $table_pc = $wpdb->prefix . self::$table_pc_name;
+
+            $page = max(1, intval($request->get_param('page') ?: 1));
+            $per_page = intval($request->get_param('per_page') ?: 20);
+            $per_page = max(1, min(100, $per_page));
+            $offset = ($page - 1) * $per_page;
+
+            $search = sanitize_text_field((string) $request->get_param('search'));
+            $search = trim($search);
+            $record_uuid = sanitize_text_field((string) $request->get_param('record_uuid'));
+            $column_name = sanitize_text_field((string) $request->get_param('column_name'));
+            $user = sanitize_text_field((string) $request->get_param('user'));
+            $type = sanitize_text_field((string) $request->get_param('type'));
+
+            $where = array();
+            $params = array();
+
+            if (!empty($record_uuid)) {
+                $where[] = 'm.record_uuid = %s';
+                $params[] = $record_uuid;
+            }
+
+            if (!empty($user)) {
+                $where[] = 'm.user = %s';
+                $params[] = $user;
+            }
+
+            if (!empty($type)) {
+                $where[] = 'm.type = %s';
+                $params[] = $type;
+            }
+
+            if (empty($type) && !empty($column_name)) {
+                $where[] = 'm.type = %s';
+                $params[] = $column_name;
+            }
+
+            if ($search !== '') {
+                $like = '%' . $wpdb->esc_like($search) . '%';
+                $where[] = '(m.user LIKE %s OR m.type LIKE %s OR m.data LIKE %s OR m.record_uuid LIKE %s OR p.name LIKE %s OR p.number LIKE %s OR p.department LIKE %s)';
+                $params[] = $like;
+                $params[] = $like;
+                $params[] = $like;
+                $params[] = $like;
+                $params[] = $like;
+                $params[] = $like;
+                $params[] = $like;
+            }
+
+            $where_sql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+            $base_from = "FROM $table_manual m LEFT JOIN $table_pc p ON m.record_uuid = p.uuid";
+
+            $total_sql = "SELECT COUNT(*) $base_from $where_sql";
+            $total = $params ? $wpdb->get_var($wpdb->prepare($total_sql, $params)) : $wpdb->get_var($total_sql);
+
+            $query_sql = "SELECT m.*, 
+                CASE 
+                    WHEN p.uuid IS NULL THEN NULL 
+                    ELSE CONCAT(p.name, ' _ ', p.department, ' _ ', p.number) 
+                END AS msg
+                $base_from
+                $where_sql
+                ORDER BY m.id DESC
+                LIMIT %d OFFSET %d";
+
+            $query_params = array_merge($params, array($per_page, $offset));
+            $items = $wpdb->get_results($wpdb->prepare($query_sql, $query_params), ARRAY_A);
+
+            $filters = array(
+                'users' => $wpdb->get_col("SELECT DISTINCT user FROM $table_manual WHERE user IS NOT NULL AND user != ''"),
+                'types' => $wpdb->get_col("SELECT DISTINCT type FROM $table_manual WHERE type IS NOT NULL AND type != ''"),
+            );
+
+            return rest_ensure_response(array(
+                'items' => $items ?: array(),
+                'total' => intval($total),
+                'page' => $page,
+                'per_page' => $per_page,
+                'total_pages' => $per_page > 0 ? (int) ceil($total / $per_page) : 0,
+                'filters' => $filters,
+            ));
+        }
+
+        /**
+         * 管理端 - 添加手动变更记录
+         */
+        public static function admin_create_manual_change($request)
+        {
+            global $wpdb;
+            $table_name = $wpdb->prefix . self::$table_manual_name;
+
+            $json_data = $request->get_json_params();
+            if (empty($json_data) || !is_array($json_data)) {
+                return new WP_Error('invalid_data', '添加变更记录失败：提交数据为空', array('status' => 400));
+            }
+
+            $record_uuid = isset($json_data['record_uuid']) ? sanitize_text_field($json_data['record_uuid']) : null;
+            $user = isset($json_data['user']) ? sanitize_text_field($json_data['user']) : null;
+            $type = isset($json_data['type']) ? sanitize_text_field($json_data['type']) : null;
+            $data = isset($json_data['data']) ? sanitize_text_field($json_data['data']) : null;
+
+            if (empty($record_uuid) || empty($user) || empty($type) || empty($data)) {
+                return new WP_Error('missing_params', '添加变更记录失败：缺少必要参数', array('status' => 400));
+            }
+
+            $result = $wpdb->insert(
+                $table_name,
+                array(
+                    'record_uuid' => $record_uuid,
+                    'user' => $user,
+                    'type' => $type,
+                    'data' => $data
+                ),
+                array('%s', '%s', '%s', '%s')
+            );
+
+            if ($result === false) {
+                return new WP_Error('insert_failed', '添加变更记录失败：写入数据库失败', array(
+                    'status' => 500,
+                    'detail' => $wpdb->last_error,
+                ));
+            }
+
+            return rest_ensure_response(array(
+                'success' => true,
+                'message' => '变更记录已添加',
+                'id' => $wpdb->insert_id,
+            ));
+        }
+
+        /**
+         * 管理端 - 更新手动变更记录
+         */
+        public static function admin_update_manual_change($request)
+        {
+            global $wpdb;
+            $table_name = $wpdb->prefix . self::$table_manual_name;
+            $id = intval($request['id']);
+
+            if ($id <= 0) {
+                return new WP_Error('missing_id', '更新变更记录失败：缺少记录ID', array('status' => 400));
+            }
+
+            $json_data = $request->get_json_params();
+            if (empty($json_data) || !is_array($json_data)) {
+                return new WP_Error('invalid_data', '更新变更记录失败：提交数据为空', array('status' => 400));
+            }
+
+            $field_map = array(
+                'user' => 'user',
+                'type' => 'type',
+                'data' => 'data',
+            );
+
+            $update_data = array();
+            $update_format = array();
+
+            foreach ($json_data as $key => $value) {
+                if (!array_key_exists($key, $field_map)) {
+                    continue;
+                }
+                $update_data[$field_map[$key]] = sanitize_text_field($value);
+                $update_format[] = '%s';
+            }
+
+            if (empty($update_data)) {
+                return new WP_Error('invalid_fields', '更新变更记录失败：没有可更新字段', array('status' => 400));
+            }
+
+            $result = $wpdb->update(
+                $table_name,
+                $update_data,
+                array('id' => $id),
+                $update_format,
+                array('%d')
+            );
+
+            if ($result === false) {
+                return new WP_Error('update_failed', '更新变更记录失败：数据库更新失败', array(
+                    'status' => 500,
+                    'detail' => $wpdb->last_error,
+                ));
+            }
+
+            return rest_ensure_response(array(
+                'success' => true,
+                'message' => '变更记录已更新',
+            ));
+        }
+
+        /**
+         * 管理端 - 自动变更记录列表（分页/筛选/搜索）
+         */
+        public static function admin_get_auto_changes($request)
+        {
+            global $wpdb;
+            $table_auto = $wpdb->prefix . self::$table_auto_name;
+            $table_pc = $wpdb->prefix . self::$table_pc_name;
+            $table_style = $wpdb->prefix . self::$table_style_name;
+
+            $page = max(1, intval($request->get_param('page') ?: 1));
+            $per_page = intval($request->get_param('per_page') ?: 20);
+            $per_page = max(1, min(100, $per_page));
+            $offset = ($page - 1) * $per_page;
+
+            $search = sanitize_text_field((string) $request->get_param('search'));
+            $search = trim($search);
+            $record_uuid = sanitize_text_field((string) $request->get_param('record_uuid'));
+            $table_name_filter = sanitize_text_field((string) $request->get_param('table_name'));
+            $column_name = sanitize_text_field((string) $request->get_param('column_name'));
+
+            $where = array();
+            $params = array();
+
+            if (!empty($record_uuid)) {
+                $where[] = 'a.record_uuid = %s';
+                $params[] = $record_uuid;
+            }
+
+            if (!empty($table_name_filter) && $table_name_filter !== 'all') {
+                $where[] = 'a.table_name = %s';
+                $params[] = $table_name_filter;
+            }
+
+            if (!empty($column_name) && $column_name !== 'all') {
+                $where[] = 'a.column_name = %s';
+                $params[] = $column_name;
+            }
+
+            if ($search !== '') {
+                $like = '%' . $wpdb->esc_like($search) . '%';
+                $where[] = '(a.table_name LIKE %s OR a.column_name LIKE %s OR a.old_value LIKE %s OR a.new_value LIKE %s OR a.record_uuid LIKE %s OR p.name LIKE %s OR p.number LIKE %s OR s.name LIKE %s OR s.number LIKE %s)';
+                $params[] = $like;
+                $params[] = $like;
+                $params[] = $like;
+                $params[] = $like;
+                $params[] = $like;
+                $params[] = $like;
+                $params[] = $like;
+                $params[] = $like;
+                $params[] = $like;
+            }
+
+            $where_sql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+            $base_from = "FROM $table_auto a
+                LEFT JOIN $table_pc p ON a.table_name = 'pc' AND a.record_uuid = p.uuid
+                LEFT JOIN $table_style s ON a.table_name = 'style' AND a.record_uuid = s.uuid";
+
+            $total_sql = "SELECT COUNT(*) $base_from $where_sql";
+            $total = $params ? $wpdb->get_var($wpdb->prepare($total_sql, $params)) : $wpdb->get_var($total_sql);
+
+            $query_sql = "SELECT a.*,
+                CASE
+                    WHEN a.table_name = 'pc' THEN CONCAT(COALESCE(p.name, ''), ' _ ', COALESCE(p.number, ''))
+                    WHEN a.table_name = 'style' THEN CONCAT(COALESCE(s.name, ''), ' _ ', COALESCE(s.number, ''))
+                    ELSE NULL
+                END AS msg
+                $base_from
+                $where_sql
+                ORDER BY a.id DESC
+                LIMIT %d OFFSET %d";
+
+            $query_params = array_merge($params, array($per_page, $offset));
+            $items = $wpdb->get_results($wpdb->prepare($query_sql, $query_params), ARRAY_A);
+
+            $filters = array(
+                'tables' => $wpdb->get_col("SELECT DISTINCT table_name FROM $table_auto WHERE table_name IS NOT NULL AND table_name != ''"),
+                'columns' => $wpdb->get_col("SELECT DISTINCT column_name FROM $table_auto WHERE column_name IS NOT NULL AND column_name != ''"),
+            );
+
+            return rest_ensure_response(array(
+                'items' => $items ?: array(),
+                'total' => intval($total),
+                'page' => $page,
+                'per_page' => $per_page,
+                'total_pages' => $per_page > 0 ? (int) ceil($total / $per_page) : 0,
+                'filters' => $filters,
+            ));
         }
 
         /**

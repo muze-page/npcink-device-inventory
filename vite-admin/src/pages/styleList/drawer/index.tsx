@@ -27,7 +27,12 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
     {
       key: "2",
       label: `自动记录`,
-      children: <ChangeAutoRecord uuid={data.uuid} />,
+      children: (
+        <ChangeAutoRecord
+          uuid={data.uuid}
+          recordHint="自动记录字段：使用人、编号、用途、状态（仅记录这些字段）"
+        />
+      ),
     },
     {
       key: "3",

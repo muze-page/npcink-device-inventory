@@ -1,7 +1,7 @@
 //自动记录设备变更
 import React, { useState, useEffect } from "react";
-import { searchAutoChangeAllData } from "@/services/index";
-import { Table, message } from "antd";
+import { getAutoChangeList } from "@/services/index";
+import { Table, Input, Space } from "antd";
 import type { TableColumnsType } from "antd";
 import { ChangeAutoRecord } from "@/type/index";
 type Props = {
@@ -9,43 +9,68 @@ type Props = {
 };
 const App: React.FC<Props> = ({ isActive }) => {
   const [dataAxios, setDataAxios] = useState<ChangeAutoRecord[]>([]); //待渲染的值
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState("");
+  const [tableFilter, setTableFilter] = useState<string | undefined>();
+  const [columnFilter, setColumnFilter] = useState<string | undefined>();
+  const [filters, setFilters] = useState<{
+    tables: string[];
+    columns: string[];
+  }>({
+    tables: [],
+    columns: [],
+  });
 
-  // 获取数据并处理TODO:优化报错机制
   const getData = async () => {
-    const response = await searchAutoChangeAllData(); // 获取自定义设备变更数据
-    if (response.success) {
-      const addKeyData = response.data.data
-        .map((obj: ChangeAutoRecord, index: number) => ({
+    setLoading(true);
+    try {
+      const response = await getAutoChangeList({
+        page,
+        per_page: pageSize,
+        search,
+        table_name: tableFilter,
+        column_name: columnFilter,
+      });
+      const addKeyData = (response.items || []).map(
+        (obj: ChangeAutoRecord, index: number) => ({
           ...obj,
-          key: index + 1,
-        }))
-        .reverse();
-      setDataAxios(addKeyData); // 传值
-      //console.log(addKeyData);
-    } else {
-      message.error(response.data.error);
+          key: (page - 1) * pageSize + index + 1,
+        })
+      );
+      setDataAxios(addKeyData);
+      setTotal(response.total || 0);
+      if (response.filters) {
+        setFilters({
+          tables: response.filters.tables || [],
+          columns: response.filters.columns || [],
+        });
+      }
+    } catch {
+      setDataAxios([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
     }
   };
 
   //拿到最新UUID
   useEffect(() => {
     getData();
-  }, []);
+  }, [page, pageSize, search, tableFilter, columnFilter]);
 
   //准备姓名，类型数组
   //从数组对象中，提取指定键的值，去重后输出为指定的对象数组
-  const uniqueTypess = (data: ChangeAutoRecord[], name: string) => {
-    const uniqueNames = [...new Set(data.map((obj) => obj[name]))];
-    return uniqueNames.map((item) => ({
-      text: item.toString(),
-      value: item.toString(),
-    }));
-  };
-
-  //表名
-  const userArr = uniqueTypess(dataAxios, "table_name");
-  //字段名
-  const typeArr = uniqueTypess(dataAxios, "column_name");
+  const userArr = filters.tables.map((item) => ({
+    text: item,
+    value: item,
+  }));
+  const typeArr = filters.columns.map((item) => ({
+    text: item,
+    value: item,
+  }));
 
   //筛选
   const columns: TableColumnsType<ChangeAutoRecord> = [
@@ -61,8 +86,7 @@ const App: React.FC<Props> = ({ isActive }) => {
       filters: userArr,
       filterMode: "tree",
       filterSearch: true,
-      onFilter: (value, record) =>
-        record.table_name.startsWith(value.toString()),
+      filteredValue: tableFilter ? [tableFilter] : null,
       width: "10%",
     },
     {
@@ -71,8 +95,7 @@ const App: React.FC<Props> = ({ isActive }) => {
       filters: typeArr,
       filterMode: "tree",
       filterSearch: true,
-      onFilter: (value, record) =>
-        record.column_name.startsWith(value.toString()),
+      filteredValue: columnFilter ? [columnFilter] : null,
       width: "10%",
     },
 
@@ -105,7 +128,46 @@ const App: React.FC<Props> = ({ isActive }) => {
 
   return (
     <>
-      <Table dataSource={dataAxios} columns={columns} />
+      <Space className="mb-4">
+        <Input.Search
+          placeholder="搜索变更记录"
+          allowClear
+          onSearch={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
+          onChange={(e) => {
+            if (e.target.value === "") {
+              setSearch("");
+              setPage(1);
+            }
+          }}
+          style={{ width: 240 }}
+        />
+      </Space>
+      <Table
+        dataSource={dataAxios}
+        columns={columns}
+        loading={loading}
+        pagination={{
+          current: page,
+          pageSize,
+          total,
+          showSizeChanger: true,
+        }}
+        onChange={(pagination, tableFilters) => {
+          setPage(pagination.current || 1);
+          setPageSize(pagination.pageSize || 20);
+          const tableName = Array.isArray(tableFilters.table_name)
+            ? (tableFilters.table_name[0] as string)
+            : undefined;
+          const columnName = Array.isArray(tableFilters.column_name)
+            ? (tableFilters.column_name[0] as string)
+            : undefined;
+          setTableFilter(tableName);
+          setColumnFilter(columnName);
+        }}
+      />
     </>
   );
 };

@@ -144,6 +144,26 @@ export interface axiosType {
 }
 
 /**
+ * REST 接口标准返回
+ */
+export interface RestResponse<T = any> {
+  success: boolean;
+  message?: string;
+  data?: T;
+}
+
+export interface ChangeListFilters {
+  users?: string[];
+  types?: string[];
+  tables?: string[];
+  columns?: string[];
+}
+
+export interface ChangeListResponse<T> extends PagedResponse<T> {
+  filters?: ChangeListFilters;
+}
+
+/**
  * 变更类型
  */
 export interface MysqlChange {

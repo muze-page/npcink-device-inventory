@@ -2,51 +2,58 @@
  * 展示设备信息自动变更记录
  */
 import { useState, useEffect } from "react";
-import { Table, Space, Empty } from "antd";
-import type { ColumnsType} from "antd/es/table";
-import { searchAutoChangeAllData } from "@/services/index";
+import { Table, Space, Empty, Input } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import { getAutoChangeList } from "@/services/index";
 import { ChangeAutoRecord } from "@/type/index";
 import { formatDate } from "@/utils/tool";
 import { Dayjs } from "dayjs";
 
 interface Props {
   uuid: string;
+  recordHint?: string;
 }
 
-const App: React.FC<Props> = ({ uuid }) => {
+const App: React.FC<Props> = ({ uuid, recordHint }) => {
   const [data, setData] = useState<ChangeAutoRecord[]>([]); // 变更记录数据
   const [loading, setLoading] = useState(false); // 加载状态
-  const [errorMsg, setErrorMsg] = useState(""); //错误信息
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState("");
+  const [columnFilter, setColumnFilter] = useState<string | undefined>();
+  const [filters, setFilters] = useState<{ columns: string[] }>({
+    columns: [],
+  });
 
   const getData = async () => {
     // 检查UUID是否有效
     if (!uuid) {
       setData([]);
+      setTotal(0);
       return;
     }
 
     setLoading(true);
     try {
-      const res = await searchAutoChangeAllData(uuid);
-      if (res.success) {
-        // 确保数据存在且为数组
-        const records = Array.isArray(res.data?.data) ? res.data.data : [];
-        setData(records);
-      } else {
-        // 处理业务逻辑错误
-        const errorMsg = res.data?.data?.error || "获取变更记录失败";
-        setErrorMsg(errorMsg);
-        //message.error(errorMsg);
-        setData([]);
+      const res = await getAutoChangeList({
+        record_uuid: uuid,
+        page,
+        per_page: pageSize,
+        search,
+        column_name: columnFilter,
+      });
+      const records = Array.isArray(res.items) ? res.items : [];
+      setData(records);
+      setTotal(res.total || 0);
+      if (res.filters) {
+        setFilters({
+          columns: res.filters.columns || [],
+        });
       }
-    } catch (error: any) {
-      // 处理网络或其他异常错误
-      //console.error("获取变更记录失败:", error);
-      //message.error("网络请求失败，请稍后重试");
-      console.log(error);
-      const errorMsg = error.response?.data?.data?.error || "获取变更记录失败";
-      setErrorMsg(errorMsg);
+    } catch {
       setData([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -57,8 +64,14 @@ const App: React.FC<Props> = ({ uuid }) => {
    * uuid变化时，自动执行
    */
   useEffect(() => {
-    getData();
+    setPage(1);
+    setSearch("");
+    setColumnFilter(undefined);
   }, [uuid]);
+
+  useEffect(() => {
+    getData();
+  }, [uuid, page, pageSize, search, columnFilter]);
 
   // 准备翻译表
   type ChangeRecordFieldNames = {
@@ -85,19 +98,12 @@ const App: React.FC<Props> = ({ uuid }) => {
 
   // 获取所有唯一字段名作为筛选选项
   const getFieldFilters = () => {
-    const uniqueFields = Array.from(
-      new Set(data.map((item) => item.column_name))
-    )
-      .filter((field): field is string => field !== undefined)
-      .map((field) => ({
-        text:
-          changeRecordFieldNames[
-            field as keyof typeof changeRecordFieldNames
-          ] || field,
-        value: field,
-      }));
-
-    return uniqueFields;
+    return filters.columns.map((field) => ({
+      text:
+        changeRecordFieldNames[field as keyof typeof changeRecordFieldNames] ||
+        field,
+      value: field,
+    }));
   };
 
   const columns: ColumnsType<ChangeAutoRecord> = [
@@ -113,7 +119,7 @@ const App: React.FC<Props> = ({ uuid }) => {
       dataIndex: "column_name",
       key: "column_name",
       filters: getFieldFilters(),
-      onFilter: (value, record) => record.column_name === value,
+      filteredValue: columnFilter ? [columnFilter] : null,
       render: (text: string) => {
         if (!text) return "未知字段";
         return (
@@ -157,14 +163,45 @@ const App: React.FC<Props> = ({ uuid }) => {
   return (
     <div>
       <Space direction="vertical" style={{ width: "100%" }}>
+        {recordHint ? (
+          <div className="text-xs text-zinc-500">{recordHint}</div>
+        ) : null}
+        <Input.Search
+          placeholder="搜索变更记录"
+          allowClear
+          onSearch={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
+          onChange={(e) => {
+            if (e.target.value === "") {
+              setSearch("");
+              setPage(1);
+            }
+          }}
+          style={{ width: 240 }}
+        />
         <Table
           dataSource={data}
           columns={columns}
           loading={loading}
           rowKey="id"
-          pagination={{ pageSize: 10 }}
+          pagination={{
+            current: page,
+            pageSize,
+            total,
+            showSizeChanger: true,
+          }}
+          onChange={(pagination, tableFilters) => {
+            setPage(pagination.current || 1);
+            setPageSize(pagination.pageSize || 10);
+            const columnName = Array.isArray(tableFilters.column_name)
+              ? (tableFilters.column_name[0] as string)
+              : undefined;
+            setColumnFilter(columnName);
+          }}
           locale={{
-            emptyText: <Empty description={errorMsg} />,
+            emptyText: <Empty description="暂无数据" />,
           }}
         />
       </Space>

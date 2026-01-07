@@ -42,11 +42,10 @@ const App: React.FC = () => {
   //保存选项动作
   const postData = async (optionObj: object) => {
     try {
-      const res = await saveSQLData(optionObj);
-      if (res?.success) {
-        message.success(res.data?.message || "设置已保存");
-      }
-    } catch {}
+      return await saveSQLData(optionObj);
+    } catch {
+      return null;
+    }
   };
 
   //数据验证成功回调
@@ -77,16 +76,17 @@ const App: React.FC = () => {
     if (publicSearch.trim() === "") {
       return message.error("请输入公共查询页面路由地址");
     }
-    const state = await addPublicSearchPage(publicSearch); //添加页面
-    if (state) {
-      const newOption = {
-        ...option,
-        public_search_route: publicSearch,
-      };
-      setOption(newOption); //设定值
-      postData(newOption); //保存选项
-      return;
-    }
+    try {
+      const res = await addPublicSearchPage(publicSearch); //添加页面
+      if (res?.success) {
+        const newOption = {
+          ...option,
+          public_search_route: publicSearch,
+        };
+        setOption(newOption); //设定值
+        postData(newOption); //保存选项
+      }
+    } catch {}
   };
 
   //拼接公共搜索路由

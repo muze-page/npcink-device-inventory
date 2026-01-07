@@ -1,10 +1,24 @@
 /**
  * 设备变更自动记录
  */
-import { Ajaxurl } from "@/utils/index";
-import { axiosType } from "@/type/index";
-import axios from "axios";
-import { appendAjaxNonce } from "@/services/axiosConfig";
+import { restInstance } from "@/services/axiosConfig";
+import type { ChangeListResponse, ChangeAutoRecord } from "@/type/index";
+
+export interface AutoChangeParams {
+  page?: number;
+  per_page?: number;
+  search?: string;
+  record_uuid?: string;
+  table_name?: string;
+  column_name?: string;
+}
+
+export const getAutoChangeList = async (
+  params: AutoChangeParams
+): Promise<ChangeListResponse<ChangeAutoRecord>> => {
+  const response = await restInstance.get("/admin/changes/auto", { params });
+  return response.data as ChangeListResponse<ChangeAutoRecord>;
+};
 
 /**
  * 输入设备的UUID，输出查到的变更数组
@@ -12,22 +26,10 @@ import { appendAjaxNonce } from "@/services/axiosConfig";
  */
 export const searchAutoChangeAllData = async (
   uuid?: string
-): Promise<axiosType> => {
-  const params = new URLSearchParams();
-  params.append("action", "auto_change_data_callback");
-
-  // 当uuid为有效字符串时才添加到参数中
-  if (uuid !== undefined && uuid !== null && uuid.trim() !== "") {
-    params.append("uuid", uuid);
-  }
-  appendAjaxNonce(params);
-
-  try {
-    const response = await axios.post<axiosType, axiosType>(Ajaxurl, params);
-    return response.data as axiosType;
-  } catch (error: any) {
-    // 错误已在拦截器中处理
-    console.error("查询变更数据时出错：" + error);
-    throw error;
-  }
+): Promise<ChangeListResponse<ChangeAutoRecord>> => {
+  return getAutoChangeList({
+    record_uuid: uuid,
+    page: 1,
+    per_page: 20,
+  });
 };

@@ -41,7 +41,12 @@ const App: React.FC = () => {
     {
       key: "4",
       label: <span>自动记录</span>,
-      children: <ChangeAutoRecord uuid={drawerData.uuid} />,
+      children: (
+        <ChangeAutoRecord
+          uuid={drawerData.uuid}
+          recordHint="自动记录字段：姓名、状态、编号、部门、IP、采购价、二手价（仅记录这些字段）"
+        />
+      ),
     },
     {
       key: "5",

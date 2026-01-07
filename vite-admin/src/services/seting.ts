@@ -1,32 +1,14 @@
 /**
  * 设置
  */
-import { Ajaxurl } from "@/utils/index";
-import { axiosType } from "@/type/index";
-import {
-  instance,
-  addParamIfDefined,
-  appendAjaxNonce,
-} from "@/services/axiosConfig";
-import type { RequestConfig } from "@/services/axiosConfig";
-
-//成功响应传出的接口数据
+import type { RestResponse } from "@/type/index";
+import { restInstance } from "@/services/axiosConfig";
 
 export const saveSQLData = async (
   optionObj: object
-): Promise<axiosType | undefined> => {
-  const params = new URLSearchParams();
-  params.append("action", "save_object_option");
-  addParamIfDefined(params, "object_data", JSON.stringify(optionObj));
-  appendAjaxNonce(params);
-  try {
-    const config: RequestConfig = { showSuccessMessage: false };
-    const response = await instance.post<axiosType>(Ajaxurl, params, config);
-    return response.data;
-  } catch (error: any) {
-    console.error(`保存设置选项时出错：${error}`);
-    throw error;
-  }
+): Promise<RestResponse> => {
+  const response = await restInstance.put("/admin/settings", optionObj);
+  return response.data as RestResponse;
 };
 
 /**
@@ -35,20 +17,11 @@ export const saveSQLData = async (
  * @returns
  */
 
-export const exportSQLData = async (name: string): Promise<axiosType> => {
-  const params = new URLSearchParams();
-  params.append("action", "export_data_callback");
-  addParamIfDefined(params, "name", name);
-  appendAjaxNonce(params);
-
-  try {
-    const response = await instance.post<axiosType>(Ajaxurl, params);
-    return response.data;
-  } catch (error: any) {
-    // 将错误信息保存到全局状态中
-    console.log("传出数据时出错：" + error.message);
-    throw new Error("传出数据时出错：" + error.message);
-  }
+export const exportSQLData = async (name: string): Promise<RestResponse> => {
+  const response = await restInstance.get("/admin/export", {
+    params: { name },
+  });
+  return response.data as RestResponse;
 };
 
 /**
@@ -60,39 +33,33 @@ export const exportSQLData = async (name: string): Promise<axiosType> => {
 export const importSQLData = async (
   name: string,
   data: string
-): Promise<axiosType> => {
-  const params = new URLSearchParams();
-  params.append("action", "import_data_callback");
-  addParamIfDefined(params, "name", name);
-  addParamIfDefined(params, "data", data);
-  appendAjaxNonce(params);
-
-  try {
-    const response = await instance.post<axiosType>(Ajaxurl, params);
-    // 只导入目前不存在的数据
-    return response.data;
-  } catch (error: any) {
-    // 将错误信息保存到全局状态中
-    console.log("保存数据时出错：" + error.message);
-    throw new Error("保存数据时出错：" + error.message);
+): Promise<RestResponse> => {
+  let payload: any = data;
+  if (typeof data === "string") {
+    try {
+      payload = JSON.parse(data);
+    } catch (error) {
+      throw new Error("导入数据解析失败");
+    }
   }
+
+  const payloadName = payload?.name || name;
+  const payloadData = payload?.data || payload;
+
+  const response = await restInstance.post("/admin/import", {
+    name: payloadName,
+    data: payloadData,
+  });
+  return response.data as RestResponse;
 };
 
 /**
  * 添加自定义公共引导页
  * 接收路由字符串
  */
-export const addPublicSearchPage = async (route: string) => {
-  const params = new URLSearchParams();
-  params.append("action", "add_public_search_page_callback");
-  addParamIfDefined(params, "route", route);
-  appendAjaxNonce(params);
-  try {
-    const res = await instance.post(Ajaxurl, params); //执行
-    return res.data.success;
-  } catch {
-    console.log("添加自定义公共引导页失败");
-    return false;
-  } finally {
-  }
+export const addPublicSearchPage = async (
+  route: string
+): Promise<RestResponse> => {
+  const res = await restInstance.post("/admin/public-search-page", { route });
+  return res.data as RestResponse;
 };

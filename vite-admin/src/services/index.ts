@@ -7,6 +7,7 @@ export {
 export {
   addChangeData,
   changeMySqlData,
+  getManualChangeList,
   searchChangeData,
   searchChangeAllData,
 } from "@/services/manual";
@@ -29,4 +30,4 @@ export {
 } from "@/services/style";
 
 //硬件设备数据变更自动记录
-export { searchAutoChangeAllData } from "@/services/auto";
+export { getAutoChangeList, searchAutoChangeAllData } from "@/services/auto";

@@ -2,40 +2,37 @@
  * 手动记录
  */
 
-import axios from "axios";
-import { Ajaxurl } from "@/utils/index";
-import { MysqlChange, ComputerChangeReturn, axiosType } from "@/type/index";
-import {
-  instance,
-  addParamIfDefined,
-  appendAjaxNonce,
-} from "@/services/axiosConfig";
+import { restInstance } from "@/services/axiosConfig";
+import type {
+  ChangeListResponse,
+  DeviceChangeList,
+  ComputerChangeReturn,
+} from "@/type/index";
+
+export interface ManualChangeParams {
+  page?: number;
+  per_page?: number;
+  search?: string;
+  record_uuid?: string;
+  user?: string;
+  type?: string;
+  column_name?: string;
+}
+
 /**
  * 增 - 添加变更数据
- * @param uuid 设备的唯一标识符
- * @param user 变更人、
- * @param data 变更内容
- * @returns 返回一个Promise，表示添加操作的结果，成功返回true，否则返回false
  */
-
 export const addChangeData = async (
   uuid: string, //设备的UUID
   data: ComputerChangeReturn
 ): Promise<boolean> => {
-  const params = new URLSearchParams();
-  params.append("action", "add_change_data_callback");
-  addParamIfDefined(params, "record_uuid", uuid);
-  addParamIfDefined(params, "user", data.user);
-  addParamIfDefined(params, "type", data.type);
-  addParamIfDefined(params, "data", data.data);
-  appendAjaxNonce(params);
-  try {
-    const data = await instance.post(Ajaxurl, params);
-    return data.data.success;
-  } catch (error) {
-    console.log(error);
-    return false;
-  }
+  const response = await restInstance.post("/admin/changes/manual", {
+    record_uuid: uuid,
+    user: data.user,
+    type: data.type,
+    data: data.data,
+  });
+  return response.data.success === true;
 };
 
 /**
@@ -56,45 +53,35 @@ export const changeMySqlData = async (
   id: string,
   type: string,
   data: string
-) => {
-  const params = new URLSearchParams();
-  params.append("action", "modify_change_data_callback");
-  addParamIfDefined(params, "id", id);
-  addParamIfDefined(params, "data", data);
-  addParamIfDefined(params, "type", type);
-  appendAjaxNonce(params);
-
-  try {
-    await instance.post<MysqlChange>(Ajaxurl, params);
-  } catch (error: any) {
-    console.log("保存设置选项时出错：" + error.message);
-  } finally {
-    //console.log(false);
-  }
+): Promise<boolean> => {
+  const response = await restInstance.put(`/admin/changes/manual/${id}`, {
+    [type]: data,
+  });
+  return response.data.success === true;
 };
 
 /**
  * 查
  * TODO:优化下，使用try catch ,配和调用端
  */
-export const searchChangeData = async (record_uuid: string) => {
-  const params = new URLSearchParams({
-    action: "search_change_data_callback",
-    record_uuid,
-  });
-  appendAjaxNonce(params);
-  const response = await axios.post(Ajaxurl, params);
-  return response.data as axiosType;
+export const searchChangeData = async (
+  record_uuid: string
+): Promise<ChangeListResponse<DeviceChangeList>> => {
+  return getManualChangeList({ record_uuid, page: 1, per_page: 20 });
 };
 
 /**
  * 查全部电脑数据
  */
-export const searchChangeAllData = async () => {
-  const params = new URLSearchParams({
-    action: "search_change_all_data_callback",
-  });
-  appendAjaxNonce(params);
-  const response = await axios.post(Ajaxurl, params);
-  return response.data as axiosType;
+export const searchChangeAllData = async (
+  params: ManualChangeParams
+): Promise<ChangeListResponse<DeviceChangeList>> => {
+  return getManualChangeList(params);
+};
+
+export const getManualChangeList = async (
+  params: ManualChangeParams
+): Promise<ChangeListResponse<DeviceChangeList>> => {
+  const response = await restInstance.get("/admin/changes/manual", { params });
+  return response.data as ChangeListResponse<DeviceChangeList>;
 };

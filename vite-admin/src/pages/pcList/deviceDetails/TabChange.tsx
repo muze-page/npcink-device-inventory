@@ -2,13 +2,13 @@
  * 设备详情 - 变更记录
  */
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { Table, Form, Input, Empty, message } from "antd";
+import { Table, Form, Input, Empty, Space } from "antd";
 import type { InputRef } from "antd";
 import type { FormInstance } from "antd/es/form";
 
-import { changeMySqlData, searchChangeData } from "@/services/index";
+import { changeMySqlData, getManualChangeList } from "@/services/index";
 
-import { ComputerChangeReturn } from "@/type/index";
+import { DeviceChangeList } from "@/type/index";
 
 import TabChangeAdd from "@/pages/pcList/deviceDetails/block/TabChangeAdd";
 
@@ -35,9 +35,9 @@ interface EditableCellProps {
   title: React.ReactNode;
   editable: boolean;
   children: React.ReactNode;
-  dataIndex: keyof ComputerChangeReturn;
-  record: ComputerChangeReturn;
-  handleSave: (record: ComputerChangeReturn) => void;
+  dataIndex: keyof DeviceChangeList;
+  record: DeviceChangeList;
+  handleSave: (record: DeviceChangeList) => void;
 }
 
 const EditableCell: React.FC<EditableCellProps> = ({
@@ -111,88 +111,59 @@ type EditableTableProps = Parameters<typeof Table>[0];
 
 type ColumnTypes = Exclude<EditableTableProps["columns"], undefined>;
 
-//准备表头
-//const columns: ColumnsType<ComputerChangeReturn> = [
-const columns: (ColumnTypes[number] & {
-  editable?: boolean;
-  dataIndex: string;
-})[] = [
-  {
-    title: "序号",
-    dataIndex: "key",
-    key: "key",
-  },
-  {
-    title: "变更项目",
-    dataIndex: "type",
-    key: "type",
-    editable: true,
-  },
-
-  {
-    title: "变更说明",
-    dataIndex: "data",
-    key: "data",
-    editable: true,
-  },
-  {
-    title: "变更人",
-    dataIndex: "user",
-    key: "user",
-    editable: true,
-  },
-  {
-    title: "变更时间",
-    dataIndex: "created_at",
-    key: "created_at",
-  },
-];
-
 interface Props {
   uuid: string; //UUID
 }
 const App: React.FC<Props> = ({ uuid }) => {
-  const [dataAxios, setDataAxios] = useState<ComputerChangeReturn[]>([]); //待渲染的值
+  const [dataAxios, setDataAxios] = useState<DeviceChangeList[]>([]); //待渲染的值
   const [loading, setLoading] = useState(false); //加载状态
-  const [error, setError] = useState(false); //错误状态
-  const [errorData, setErrorData] = useState(""); //报错
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState("");
+  const [userFilter, setUserFilter] = useState<string | undefined>();
+  const [typeFilter, setTypeFilter] = useState<string | undefined>();
+  const [filters, setFilters] = useState<{ users: string[]; types: string[] }>({
+    users: [],
+    types: [],
+  });
 
   // 获取数据并处理
-  const getData = async (uuid: string) => {
+  const getData = async () => {
     if (!uuid) {
-      setErrorData("设备标识无效");
-      setError(true);
+      setDataAxios([]);
+      setTotal(0);
       return;
     }
 
     setLoading(true); // 开始加载
     try {
-      const response = await searchChangeData(uuid); // 获取数据
+      const response = await getManualChangeList({
+        record_uuid: uuid,
+        page,
+        per_page: pageSize,
+        search,
+        user: userFilter,
+        type: typeFilter,
+      });
 
-      if (response.success) {
-        // 如果成功获取数据
-        // 添加 key （提升列表性能） 并倒序
-        const data = response.data?.data || [];
-        const addKeyData = data
-          .map((obj: ComputerChangeReturn, index: number) => ({
-            ...obj,
-            key: index + 1,
-          }))
-          .reverse();
-
-        setDataAxios(addKeyData); // 传值
-        setError(false); // 重置错误状态为 false
-      } else {
-        // 如果获取数据失败
-        const errorMsg = response.data?.error || "获取数据失败";
-        setErrorData("获取数据时出错：" + errorMsg); // 设置错误消息
-        setError(true); //展示错误状态下的信息
+      const addKeyData = (response.items || []).map(
+        (obj: DeviceChangeList, index: number) => ({
+          ...obj,
+          key: (page - 1) * pageSize + index + 1,
+        })
+      );
+      setDataAxios(addKeyData); // 传值
+      setTotal(response.total || 0);
+      if (response.filters) {
+        setFilters({
+          users: response.filters.users || [],
+          types: response.filters.types || [],
+        });
       }
-    } catch (error: any) {
-      //请求数据失败
-      const errorMsg = error.response?.data?.data?.error || "网络请求失败";
-      setErrorData(errorMsg); // 设置错误消息
-      setError(true); //展示错误状态下的信息
+    } catch {
+      setDataAxios([]);
+      setTotal(0);
     } finally {
       setLoading(false); // 结束加载
     }
@@ -200,11 +171,26 @@ const App: React.FC<Props> = ({ uuid }) => {
 
   //拿到最新UUID
   useEffect(() => {
-    getData(uuid);
+    setPage(1);
+    setSearch("");
+    setUserFilter(undefined);
+    setTypeFilter(undefined);
   }, [uuid]);
 
+  useEffect(() => {
+    getData();
+  }, [uuid, page, pageSize, search, userFilter, typeFilter]);
+
+  const refreshData = () => {
+    if (page !== 1) {
+      setPage(1);
+      return;
+    }
+    getData();
+  };
+
   //保存
-  const handleSave = async (row: ComputerChangeReturn) => {
+  const handleSave = async (row: DeviceChangeList) => {
     // 浅拷贝 创建副本
     const newData = [...dataAxios];
 
@@ -213,7 +199,6 @@ const App: React.FC<Props> = ({ uuid }) => {
 
     // 如果找不到对应的记录，直接返回
     if (index === -1) {
-      message.error("未找到要更新的记录");
       return;
     }
 
@@ -233,21 +218,25 @@ const App: React.FC<Props> = ({ uuid }) => {
       if (oldData[key] !== row[key]) {
         hasChanges = true;
         try {
+          let updated = true;
           switch (key) {
             case "user":
-              await changeMySqlData(row.id, "user", row.user); //更新姓名
+              updated = await changeMySqlData(row.id, "user", row.user); //更新姓名
               break;
             case "type":
-              await changeMySqlData(row.id, "type", row.type); //更新类型
+              updated = await changeMySqlData(row.id, "type", row.type); //更新类型
               break;
             case "data":
-              await changeMySqlData(row.id, "data", row.data); //更新描述
+              updated = await changeMySqlData(row.id, "data", row.data); //更新描述
               break;
             default:
               break;
           }
+          if (!updated) {
+            setDataAxios([...dataAxios]);
+            return;
+          }
         } catch (error) {
-          message.error("保存失败，请重试");
           // 恢复原数据
           setDataAxios([...dataAxios]);
           return;
@@ -269,6 +258,53 @@ const App: React.FC<Props> = ({ uuid }) => {
     },
   };
 
+  const userFilters = filters.users.map((item) => ({
+    text: item,
+    value: item,
+  }));
+  const typeFilters = filters.types.map((item) => ({
+    text: item,
+    value: item,
+  }));
+
+  const columns: (ColumnTypes[number] & {
+    editable?: boolean;
+    dataIndex: string;
+  })[] = [
+    {
+      title: "序号",
+      dataIndex: "key",
+      key: "key",
+    },
+    {
+      title: "变更项目",
+      dataIndex: "type",
+      key: "type",
+      editable: true,
+      filters: typeFilters,
+      filteredValue: typeFilter ? [typeFilter] : null,
+    },
+    {
+      title: "变更说明",
+      dataIndex: "data",
+      key: "data",
+      editable: true,
+    },
+    {
+      title: "变更人",
+      dataIndex: "user",
+      key: "user",
+      editable: true,
+      filters: userFilters,
+      filteredValue: userFilter ? [userFilter] : null,
+    },
+    {
+      title: "变更时间",
+      dataIndex: "created_at",
+      key: "created_at",
+    },
+  ];
+
   //编辑
   const columnss = columns.map((col) => {
     if (!col.editable) {
@@ -276,7 +312,7 @@ const App: React.FC<Props> = ({ uuid }) => {
     }
     return {
       ...col,
-      onCell: (record: ComputerChangeReturn) => ({
+      onCell: (record: DeviceChangeList) => ({
         record,
         editable: col.editable,
         dataIndex: col.dataIndex,
@@ -286,80 +322,63 @@ const App: React.FC<Props> = ({ uuid }) => {
     };
   });
 
-  //显示配置
-  const pagination = {
-    pageSize: 6, // 每页显示的数据条数
-  };
-
   return (
     <>
-      {/* 加载状态 */}
-      {loading ? <Loading /> : ""}
-      {/* 错误状态 */}
-      {error ? (
-        <>
-          <Error message={errorData} />
-          <TabChangeAdd uuid={uuid} onUpdata={getData} />
-        </>
-      ) : (
-        <>
-          {/**展示数据 */}
-          {
-            <div className="pl-5 relative">
-              {/* 正常状态 */}
-              {/* 列表 */}
-              <div className="mt-1">
-                <p className="mb-4 text-base font-bold text-[#333]">
-                  硬件信息变更
-                </p>
-                {/* 有数据 */}
-                {dataAxios.length !== 0 ? (
-                  <Table
-                    components={components}
-                    rowClassName={() => "editable-row"}
-                    bordered
-                    size="small"
-                    columns={columnss as ColumnTypes}
-                    dataSource={dataAxios}
-                    pagination={pagination}
-                    locale={{ emptyText: "暂无数据" }}
-                  />
-                ) : (
-                  <Empty description={<span>暂无记录</span>} />
-                )}
-                {/* 添加 - 修改记录 */}
-                <TabChangeAdd uuid={uuid} onUpdata={getData} />
-              </div>
-            </div>
-          }
-        </>
-      )}
-    </>
-  );
-};
-
-/**
- * 加载中
- * @returns
- */
-const Loading = () => {
-  return <p>加载中···</p>;
-};
-
-/**
- * 报错
- * @param param0
- * @returns
- */
-interface PropsError {
-  message: string;
-}
-
-const Error: React.FC<PropsError> = ({ message }) => {
-  return (
-    <>
-      <p className="mb-4 text-base font-bold text-[#333]">硬件信息变更</p>
-      <Empty description={message} />
+      <div className="pl-5 relative">
+        <div className="mt-1">
+          <p className="mb-4 text-base font-bold text-[#333]">硬件信息变更</p>
+          <Space className="mb-4">
+            <Input.Search
+              placeholder="搜索变更记录"
+              allowClear
+              onSearch={(value) => {
+                setSearch(value);
+                setPage(1);
+              }}
+              onChange={(e) => {
+                if (e.target.value === "") {
+                  setSearch("");
+                  setPage(1);
+                }
+              }}
+              style={{ width: 240 }}
+            />
+          </Space>
+          {dataAxios.length !== 0 ? (
+            <Table
+              components={components}
+              rowClassName={() => "editable-row"}
+              bordered
+              size="small"
+              columns={columnss as ColumnTypes}
+              dataSource={dataAxios}
+              loading={loading}
+              pagination={{
+                current: page,
+                pageSize,
+                total,
+                showSizeChanger: true,
+              }}
+              onChange={(pagination, tableFilters) => {
+                setPage(pagination.current || 1);
+                setPageSize(pagination.pageSize || 6);
+                const user = Array.isArray(tableFilters.user)
+                  ? (tableFilters.user[0] as string)
+                  : undefined;
+                const type = Array.isArray(tableFilters.type)
+                  ? (tableFilters.type[0] as string)
+                  : undefined;
+                setUserFilter(user);
+                setTypeFilter(type);
+              }}
+              locale={{ emptyText: "暂无数据" }}
+            />
+          ) : (
+            <Empty description={<span>暂无记录</span>} />
+          )}
+          <TabChangeAdd uuid={uuid} onUpdata={refreshData} />
+        </div>
+      </div>
     </>
   );
 };

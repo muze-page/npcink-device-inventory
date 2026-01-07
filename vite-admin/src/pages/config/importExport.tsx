@@ -144,24 +144,12 @@ const App: React.FC<Props> = ({ name }) => {
   const handleImport = async () => {
     try {
       setLoading(true);
-      const result = await importSQLData(name, JSON.stringify(jsonContent));
-
-      if (result.success) {
-        message.success(result.data?.message || "数据导入成功");
-      } else {
-        // 只显示 error 信息给用户
-        const errorMsg = result.data?.error || "导入失败";
-        // 如果有 message 信息，只在控制台打印
-        if (result.data?.message) {
-          console.log("导入信息:", result.data.message);
-        }
-        message.error(errorMsg);
-      }
+      await importSQLData(name, JSON.stringify(jsonContent));
     } catch (error: any) {
       console.error("导入错误:", error);
-      let errorMsg = "导入过程中发生错误，请重试";
-      message.error(errorMsg);
-      // 不再 reject，避免控制台错误
+      if (!error?.response) {
+        message.error("导入过程中发生错误，请重试");
+      }
     } finally {
       setLoading(false);
     }
@@ -172,17 +160,7 @@ const App: React.FC<Props> = ({ name }) => {
     try {
       setLoading(true);
       const jsonData = await exportSQLData(name);
-
-      // 如果没有拿到值，就此结束
-      if (!jsonData) {
-        message.error("未能获取到数据");
-        return;
-      }
-
-      // 检查返回的数据是否包含错误
-      if (!jsonData.success) {
-        const errorMsg = jsonData.data?.error || "数据导出失败";
-        message.error(errorMsg);
+      if (!jsonData?.success) {
         return;
       }
 
@@ -190,7 +168,7 @@ const App: React.FC<Props> = ({ name }) => {
       const currentTime = new Date().toLocaleString();
 
       //准备拿到数据
-      const devices: MysqlDevice[] = jsonData.data.data; // 正确访问数据
+      const devices: MysqlDevice[] = jsonData.data || []; // 正确访问数据
       //添加网址
       const dataWithTime = {
         site: Site,
@@ -226,13 +204,7 @@ const App: React.FC<Props> = ({ name }) => {
       //message.success("数据导出成功");
     } catch (error: any) {
       console.error("导出错误:", error);
-      if (error.response) {
-        const errorMsg =
-          error.response.data?.data?.error ||
-          error.response.data?.error ||
-          "数据导出失败";
-        message.error(errorMsg);
-      } else {
+      if (!error?.response) {
         message.error("导出过程中发生错误，请重试");
       }
     } finally {
@@ -245,16 +217,7 @@ const App: React.FC<Props> = ({ name }) => {
     try {
       setLoading(true);
       const jsonData = await exportSQLData(name);
-
-      // 检查返回的数据
-      if (!jsonData) {
-        message.error("未能获取到数据");
-        return;
-      }
-
-      if (!jsonData.success) {
-        const errorMsg = jsonData.data?.error || "数据获取失败";
-        message.error(errorMsg);
+      if (!jsonData?.success) {
         return;
       }
 
@@ -264,11 +227,13 @@ const App: React.FC<Props> = ({ name }) => {
         : "数据导出文件";
 
       // 如果没有拿到值，就此结束
-      exportTable(jsonData.data?.data || [], tableName);
+      exportTable(jsonData.data || [], tableName);
       //message.success("表格导出成功");
     } catch (error: any) {
       console.error("表格导出错误:", error);
-      message.error("表格导出过程中发生错误，请重试");
+      if (!error?.response) {
+        message.error("表格导出过程中发生错误，请重试");
+      }
     } finally {
       setLoading(false);
     }
