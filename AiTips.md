@@ -99,3 +99,31 @@ Decisions Needed
 是否要加数据库索引/生成列（如 name/number/ip、data.platform/pay_method）并提供升级脚本？
 如果你确认范围，我可以继续落地。
 未跑自动化测试；建议手动验证：后台设置保存、导入/导出、变更记录页、分类筛选与盘点页统计是否正常。
+
+
+按我们前面的分阶段规划，下一步建议重点落在这几块（按优先级）：
+
+1) 完整迁移 admin‑ajax → REST（减少耦合、统一鉴权与提示）
+
+设置保存/导入导出/变更记录/公共搜索页创建，都改 REST
+统一走 manage_options + REST nonce
+前端统一使用 restInstance，提示完全由全局拦截器接管
+2) 变更记录接口做分页与筛选
+
+目前自动/手动记录是全量查询，4096 设备时会明显拖慢
+新增分页参数：page / per_page / search / record_uuid / table_name / column_name
+前端表格用分页 + 服务端搜索，避免全量加载
+3) 数据库索引/查询优化（4096 设备 + 并发 20）
+
+PC 表建议补索引：(number), (state), (department), (created_at), (updated_at)
+Style 表对 JSON 字段可用生成列 + 索引（platform/pay_method）
+变更表：record_uuid、changed_at 建索引
+4) 导入导出升级
+
+支持大数据分页导出
+导入增加校验报告（成功/失败条数）
+可选：CSV 导出（更适合大数据）
+5) 前端性能
+
+列表按需字段渲染、虚拟滚动（如果列表 > 200）
+详情页只请求所需字段（减少 data JSON 解析）

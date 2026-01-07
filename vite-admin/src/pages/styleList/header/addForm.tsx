@@ -11,6 +11,7 @@ import {
   Col,
   Row,
   DatePicker,
+  Modal,
 } from "antd";
 import type { FormProps, FormInstance } from "antd";
 import dayjs from "dayjs";
@@ -66,10 +67,22 @@ type AddFormProps = {
 const App = ({ form, handleOk }: AddFormProps) => {
   //拿到添加设备的回调函数
   const { handleAddDevice, styleCategoryOption } = useContext(StyleContext);
+  const confirmSubmit = () =>
+    new Promise<boolean>((resolve) => {
+      Modal.confirm({
+        title: "确认提交",
+        content: "已检查好数据，并确定提交吗？",
+        okText: "确认",
+        cancelText: "取消",
+        onOk: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
   //提交拿到的值
   const onFinish: FormProps<FormType>["onFinish"] = async (values) => {
     //添加弹窗提示，确定提交则继续，不提交则取消
-    if (!window.confirm("已检查好数据，并确定提交吗？")) {
+    const confirmed = await confirmSubmit();
+    if (!confirmed) {
       return;
     }
     //将设备信息存入data,方便后续存入数据库
@@ -114,7 +127,6 @@ const App = ({ form, handleOk }: AddFormProps) => {
         handleAddDevice(deviceData); // 调用添加设备的回调函数
       }
     } else {
-      alert("添加自定义设备失败");
       console.log("失败原因:", state);
     }
     //console.log("成功，表单原始值:", values);

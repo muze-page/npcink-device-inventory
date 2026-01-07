@@ -2,7 +2,7 @@
  * 设备详情 - 设置
  */
 import { useContext, useEffect } from "react";
-import { Form, Button, Input, InputNumber } from "antd";
+import { Form, Button, Input, InputNumber, Modal } from "antd";
 import { DevieContext } from "@/context/DeviceContext";
 import { deltSQLData, changeMySql } from "@/services/index";
 import { MysqlDeviceData } from "@/type/index";
@@ -78,21 +78,25 @@ const App: React.FC = () => {
         )
       );
       //console.log("更新列表数据成功" + JSON.stringify(listData));
-    } else {
-      alert("修改失败");
     }
   };
 
   //移除设备
   const deltData = () => {
-    //二次确认
-    if (window.confirm("您确定要删除此设备吗？\n相关变更记录将一并删除！")) {
-      setListData((prevData) =>
-        prevData.filter((item) => item.uuid !== drawerData.uuid)
-      ); //更新列表数据，移除当前设备
-      deltSQLData(drawerData.uuid); //删除数据库数据
-      setActive(false); //关闭弹窗
-    }
+    Modal.confirm({
+      title: "确认删除",
+      content: "您确定要删除此设备吗？相关变更记录将一并删除！",
+      okText: "删除",
+      cancelText: "取消",
+      okButtonProps: { danger: true },
+      onOk: () => {
+        setListData((prevData) =>
+          prevData.filter((item) => item.uuid !== drawerData.uuid)
+        ); //更新列表数据，移除当前设备
+        deltSQLData(drawerData.uuid); //删除数据库数据
+        setActive(false); //关闭弹窗
+      },
+    });
   };
 
   //理论折旧值 - 根据设定的折旧年限和残值率算出

@@ -41,8 +41,12 @@ const App: React.FC = () => {
 
   //保存选项动作
   const postData = async (optionObj: object) => {
-    await saveSQLData(optionObj);
-    //console.log(Data);
+    try {
+      const res = await saveSQLData(optionObj);
+      if (res?.success) {
+        message.success(res.data?.message || "设置已保存");
+      }
+    } catch {}
   };
 
   //数据验证成功回调

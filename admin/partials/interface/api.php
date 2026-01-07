@@ -354,7 +354,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         public static function admin_permissions_check()
         {
             if (!current_user_can('manage_options')) {
-                return new WP_Error('forbidden', '权限不足', array('status' => 403));
+                return new WP_Error('forbidden', '权限不足：需要管理员权限', array('status' => 403));
             }
             return true;
         }
@@ -544,7 +544,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $uuid = sanitize_text_field((string) $request['uuid']);
 
             if (empty($uuid)) {
-                return new WP_Error('missing_uuid', '缺少uuid参数', array('status' => 400));
+                return new WP_Error('missing_uuid', '获取设备失败：缺少设备UUID', array('status' => 400));
             }
 
             $row = $wpdb->get_row(
@@ -553,7 +553,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             );
 
             if (empty($row)) {
-                return new WP_Error('not_found', '设备不存在', array('status' => 404));
+                return new WP_Error('not_found', '获取设备失败：设备不存在或已删除', array('status' => 404));
             }
 
             return rest_ensure_response($row);
@@ -569,7 +569,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $uuid = sanitize_text_field((string) $request['uuid']);
 
             if (empty($uuid)) {
-                return new WP_Error('missing_uuid', '缺少uuid参数', array('status' => 400));
+                return new WP_Error('missing_uuid', '保存设备失败：缺少设备UUID', array('status' => 400));
             }
 
             $device_exists = $wpdb->get_var($wpdb->prepare(
@@ -578,12 +578,12 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             ));
 
             if ($device_exists == 0) {
-                return new WP_Error('not_found', '设备不存在', array('status' => 404));
+                return new WP_Error('not_found', '保存设备失败：设备不存在或已删除', array('status' => 404));
             }
 
             $json_data = $request->get_json_params();
             if (empty($json_data) || !is_array($json_data)) {
-                return new WP_Error('invalid_data', '更新数据为空', array('status' => 400));
+                return new WP_Error('invalid_data', '保存设备失败：提交数据为空', array('status' => 400));
             }
 
             $field_map = array(
@@ -614,7 +614,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             }
 
             if (empty($update_data)) {
-                return new WP_Error('invalid_fields', '没有有效的更新字段', array('status' => 400));
+                return new WP_Error('invalid_fields', '保存设备失败：没有可更新的字段', array('status' => 400));
             }
 
             if (isset($update_data['number'])) {
@@ -624,7 +624,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                     $uuid
                 ));
                 if ($number_exists > 0) {
-                    return new WP_Error('duplicate_number', '设备编号已存在', array('status' => 409));
+                    return new WP_Error('duplicate_number', '保存设备失败：设备编号已存在', array('status' => 409));
                 }
             }
 
@@ -637,13 +637,14 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             );
 
             if ($result === false) {
-                return new WP_Error('update_failed', '更新设备信息时发生错误', array('status' => 500));
+                return new WP_Error('update_failed', '保存设备失败：数据库更新失败', array('status' => 500));
             }
 
             self::clear_pc_cache();
 
             return rest_ensure_response(array(
                 'success' => true,
+                'message' => '设备信息已保存',
                 'updated_fields' => array_keys($update_data),
             ));
         }
@@ -660,7 +661,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $uuid = sanitize_text_field((string) $request['uuid']);
 
             if (empty($uuid)) {
-                return new WP_Error('missing_uuid', '缺少uuid参数', array('status' => 400));
+                return new WP_Error('missing_uuid', '删除设备失败：缺少设备UUID', array('status' => 400));
             }
 
             $wpdb->query('START TRANSACTION');
@@ -680,10 +681,16 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
                 $wpdb->query('COMMIT');
                 self::clear_pc_cache();
-                return rest_ensure_response(array('success' => true));
+                return rest_ensure_response(array(
+                    'success' => true,
+                    'message' => '设备已删除',
+                ));
             } catch (Exception $e) {
                 $wpdb->query('ROLLBACK');
-                return new WP_Error('delete_failed', $e->getMessage(), array('status' => 500));
+                return new WP_Error('delete_failed', '删除设备失败：数据库操作失败', array(
+                    'status' => 500,
+                    'detail' => $e->getMessage(),
+                ));
             }
         }
 
@@ -709,7 +716,10 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             );
 
             if ($wpdb->last_error) {
-                return new WP_Error('db_error', $wpdb->last_error, array('status' => 500));
+                return new WP_Error('db_error', '获取设备分类失败：数据库错误', array(
+                    'status' => 500,
+                    'detail' => $wpdb->last_error,
+                ));
             }
 
             $department_result = array_map(function ($item) {
@@ -858,7 +868,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $uuid = sanitize_text_field((string) $request['uuid']);
 
             if (empty($uuid)) {
-                return new WP_Error('missing_uuid', '缺少uuid参数', array('status' => 400));
+                return new WP_Error('missing_uuid', '获取自定义设备失败：缺少设备UUID', array('status' => 400));
             }
 
             $row = $wpdb->get_row(
@@ -867,7 +877,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             );
 
             if (empty($row)) {
-                return new WP_Error('not_found', '设备不存在', array('status' => 404));
+                return new WP_Error('not_found', '获取自定义设备失败：设备不存在或已删除', array('status' => 404));
             }
 
             return rest_ensure_response($row);
@@ -883,7 +893,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
             $json_data = $request->get_json_params();
             if (empty($json_data) || !is_array($json_data)) {
-                return new WP_Error('invalid_data', '参数为空', array('status' => 400));
+                return new WP_Error('invalid_data', '添加自定义设备失败：请求数据为空', array('status' => 400));
             }
 
             $name = isset($json_data['name']) ? sanitize_text_field($json_data['name']) : null;
@@ -894,16 +904,16 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $data = isset($json_data['data']) ? $json_data['data'] : null;
 
             if ($name === null || $number === null || $category === null || $purpose === null || $state === null || $data === null) {
-                return new WP_Error('missing_params', '缺少必要参数', array('status' => 400));
+                return new WP_Error('missing_params', '添加自定义设备失败：缺少必要参数', array('status' => 400));
             }
 
             if (!is_array($data)) {
-                return new WP_Error('invalid_data', 'data 参数格式错误', array('status' => 400));
+                return new WP_Error('invalid_data', '添加自定义设备失败：data 参数格式错误', array('status' => 400));
             }
 
             $json = wp_json_encode($data, JSON_UNESCAPED_UNICODE);
             if ($json === false) {
-                return new WP_Error('json_encode_failed', 'data JSON 编码失败', array('status' => 400));
+                return new WP_Error('json_encode_failed', '添加自定义设备失败：data 编码失败', array('status' => 400));
             }
 
             $result = $wpdb->insert(
@@ -920,7 +930,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             );
 
             if ($result === false) {
-                return new WP_Error('insert_failed', '添加自定义设备数据失败', array('status' => 500));
+                return new WP_Error('insert_failed', '添加自定义设备失败：写入数据库失败', array('status' => 500));
             }
 
             $inserted_id = $wpdb->insert_id;
@@ -930,13 +940,14 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             ));
 
             if (!$inserted_record) {
-                return new WP_Error('insert_failed', '无法获取插入记录', array('status' => 500));
+                return new WP_Error('insert_failed', '添加自定义设备失败：无法获取新记录', array('status' => 500));
             }
 
             self::clear_style_cache();
 
             return rest_ensure_response(array(
                 'success' => true,
+                'message' => '自定义设备已添加',
                 'id' => $inserted_id,
                 'uuid' => $inserted_record->uuid,
                 'created_at' => $inserted_record->created_at,
@@ -953,12 +964,12 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $uuid = sanitize_text_field((string) $request['uuid']);
 
             if (empty($uuid)) {
-                return new WP_Error('missing_uuid', '缺少uuid参数', array('status' => 400));
+                return new WP_Error('missing_uuid', '保存自定义设备失败：缺少设备UUID', array('status' => 400));
             }
 
             $json_data = $request->get_json_params();
             if (empty($json_data) || !is_array($json_data)) {
-                return new WP_Error('invalid_data', '更新数据为空', array('status' => 400));
+                return new WP_Error('invalid_data', '保存自定义设备失败：请求数据为空', array('status' => 400));
             }
 
             $name = isset($json_data['name']) ? sanitize_text_field($json_data['name']) : null;
@@ -969,16 +980,16 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $data = isset($json_data['data']) ? $json_data['data'] : null;
 
             if ($name === null || $number === null || $category === null || $purpose === null || $state === null || $data === null) {
-                return new WP_Error('missing_params', '缺少必要参数', array('status' => 400));
+                return new WP_Error('missing_params', '保存自定义设备失败：缺少必要参数', array('status' => 400));
             }
 
             if (!is_array($data)) {
-                return new WP_Error('invalid_data', 'data 参数格式错误', array('status' => 400));
+                return new WP_Error('invalid_data', '保存自定义设备失败：data 参数格式错误', array('status' => 400));
             }
 
             $json = wp_json_encode($data, JSON_UNESCAPED_UNICODE);
             if ($json === false) {
-                return new WP_Error('json_encode_failed', 'data JSON 编码失败', array('status' => 400));
+                return new WP_Error('json_encode_failed', '保存自定义设备失败：data 编码失败', array('status' => 400));
             }
 
             $result = $wpdb->update(
@@ -997,12 +1008,15 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             );
 
             if ($result === false) {
-                return new WP_Error('update_failed', '更新自定义设备数据失败', array('status' => 500));
+                return new WP_Error('update_failed', '保存自定义设备失败：数据库更新失败', array('status' => 500));
             }
 
             self::clear_style_cache();
 
-            return rest_ensure_response(array('success' => true));
+            return rest_ensure_response(array(
+                'success' => true,
+                'message' => '自定义设备已保存',
+            ));
         }
 
         /**
@@ -1016,12 +1030,12 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $uuid = sanitize_text_field((string) $request['uuid']);
 
             if (empty($uuid)) {
-                return new WP_Error('missing_uuid', '缺少uuid参数', array('status' => 400));
+                return new WP_Error('missing_uuid', '删除自定义设备失败：缺少设备UUID', array('status' => 400));
             }
 
             $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE uuid = %s", $uuid));
             if ($exists == 0) {
-                return new WP_Error('not_found', '指定的UUID不存在', array('status' => 404));
+                return new WP_Error('not_found', '删除自定义设备失败：设备不存在或已删除', array('status' => 404));
             }
 
             $wpdb->query('START TRANSACTION');
@@ -1045,10 +1059,16 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
                 $wpdb->query('COMMIT');
                 self::clear_style_cache();
-                return rest_ensure_response(array('success' => true));
+                return rest_ensure_response(array(
+                    'success' => true,
+                    'message' => '自定义设备已删除',
+                ));
             } catch (Exception $e) {
                 $wpdb->query('ROLLBACK');
-                return new WP_Error('delete_failed', $e->getMessage(), array('status' => 500));
+                return new WP_Error('delete_failed', '删除自定义设备失败：数据库操作失败', array(
+                    'status' => 500,
+                    'detail' => $e->getMessage(),
+                ));
             }
         }
 
@@ -1080,7 +1100,10 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             );
 
             if ($wpdb->last_error) {
-                return new WP_Error('db_error', $wpdb->last_error, array('status' => 500));
+                return new WP_Error('db_error', '获取自定义设备分类失败：数据库错误', array(
+                    'status' => 500,
+                    'detail' => $wpdb->last_error,
+                ));
             }
 
             $category_result = array_map(function ($item) {

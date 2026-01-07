@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosRequestConfig } from "axios";
 import { message } from "antd";
 import { AjaxNonce, RestNonce, RestUrl } from "@/utils/index";
 
@@ -18,11 +18,17 @@ if (RestNonce) {
 
 const responseInterceptor = (response: any) => {
   // 检查响应数据中是否有消息需要显示
-  if (response.data && response.data.data && response.data.data.message) {
-    if (response.data.success) {
-      message.success(response.data.data.message);
-    } else {
-      message.error(response.data.data.message);
+  const payload = response.data;
+  const nestedMessage = payload?.data?.message;
+  const topMessage = payload?.message;
+  if (nestedMessage || topMessage) {
+    const showSuccessMessage =
+      (response.config as RequestConfig)?.showSuccessMessage !== false;
+    const messageText = nestedMessage || topMessage;
+    if (payload?.success === false) {
+      message.error(messageText);
+    } else if (showSuccessMessage) {
+      message.success(messageText);
     }
   }
   return response;
@@ -80,10 +86,18 @@ const errorInterceptor = (error: any) => {
       data?.message ||
       data?.error;
 
-    if (code && friendlyErrorCodeMap[code]) {
+    const isEnglishText =
+      typeof rawText === "string" && /^[\x00-\x7F]+$/.test(rawText);
+
+    if (rawText && !isEnglishText) {
+      // Prefer REST-provided localized messages.
+      errorMessage = rawText;
+    } else if (code && friendlyErrorCodeMap[code]) {
       errorMessage = friendlyErrorCodeMap[code];
     } else if (rawText && friendlyErrorTextMap[rawText]) {
       errorMessage = friendlyErrorTextMap[rawText];
+    } else if (rawText) {
+      errorMessage = rawText;
     } else if (status && friendlyStatusMap[status]) {
       errorMessage = friendlyStatusMap[status];
     } else if (data && data.data && data.data.message) {
@@ -139,4 +153,7 @@ export const appendAjaxNonce = (params: URLSearchParams) => {
     params.append("_ajax_nonce", AjaxNonce);
   }
   return params;
+};
+export type RequestConfig = AxiosRequestConfig & {
+  showSuccessMessage?: boolean;
 };

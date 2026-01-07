@@ -3,7 +3,7 @@
  */
 import { useContext, useEffect } from "react";
 import { StyleContext } from "@/context/StyleContext";
-import { Form, Button, Input } from "antd";
+import { Form, Button, Input, Modal, message } from "antd";
 import type { FormProps } from "antd";
 import { deleteStyleDeviceData, updateStyleDeviceData } from "@/services/index";
 import { StyleDeviceSeting } from "@/type/index";
@@ -28,28 +28,29 @@ const App: React.FC<Props> = ({ onActive }) => {
   //删除动作
   const onDeleteData = async () => {
     if (!uuid) {
-      alert("设备UUID不存在");
+      message.error("设备UUID不存在");
       return;
     }
 
-    //二次确认
-    if (!window.confirm("您确定要删除此设备吗？\n相关变更记录将一并删除！")) {
-      return;
-    }
-    // 删除数据
-    const state = await deleteStyleDeviceData(uuid);
+    Modal.confirm({
+      title: "确认删除",
+      content: "您确定要删除此设备吗？相关变更记录将一并删除！",
+      okText: "删除",
+      cancelText: "取消",
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        const state = await deleteStyleDeviceData(uuid);
 
-    //成功删除则清除输入框
-    if (state) {
-      //alert("删除成功");
-      handleDeleteData(uuid); //调用父组件的删除方法
-      //1秒后关闭弹窗
-      setTimeout(() => {
-        onActive();
-      }, 1000);
-    } else {
-      alert("删除失败");
-    }
+        //成功删除则清除输入框
+        if (state) {
+          handleDeleteData(uuid); //调用父组件的删除方法
+          //1秒后关闭弹窗
+          setTimeout(() => {
+            onActive();
+          }, 1000);
+        }
+      },
+    });
   };
 
   // 创建 Form 实例
@@ -85,8 +86,6 @@ const App: React.FC<Props> = ({ onActive }) => {
       //alert("修改成功");
       setDrawerData(valuesData); //更新弹窗数据
       handleUpdateData(uuid, valuesData); //调用父组件的更新方法
-    } else {
-      alert("修改失败");
     }
   };
   //提交失败

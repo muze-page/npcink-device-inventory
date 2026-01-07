@@ -2,22 +2,27 @@
  * 设置
  */
 import { Ajaxurl } from "@/utils/index";
-import {   axiosType } from "@/type/index";
+import { axiosType } from "@/type/index";
 import {
   instance,
   addParamIfDefined,
   appendAjaxNonce,
 } from "@/services/axiosConfig";
+import type { RequestConfig } from "@/services/axiosConfig";
 
 //成功响应传出的接口数据
 
-export const saveSQLData = async (optionObj: object) => {
+export const saveSQLData = async (
+  optionObj: object
+): Promise<axiosType | undefined> => {
   const params = new URLSearchParams();
   params.append("action", "save_object_option");
   addParamIfDefined(params, "object_data", JSON.stringify(optionObj));
   appendAjaxNonce(params);
   try {
-    await instance.post(Ajaxurl, params);
+    const config: RequestConfig = { showSuccessMessage: false };
+    const response = await instance.post<axiosType>(Ajaxurl, params, config);
+    return response.data;
   } catch (error: any) {
     console.error(`保存设置选项时出错：${error}`);
     throw error;
