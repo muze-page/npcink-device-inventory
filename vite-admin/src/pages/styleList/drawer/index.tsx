@@ -2,6 +2,7 @@
  * 自定义设备信息展出弹窗
  */
 import { Modal, Tabs } from "antd";
+import { useState } from "react";
 import type { TabsProps } from "antd";
 //跨组件提供方法
 import { StyleDevice } from "@/type/index";
@@ -17,6 +18,12 @@ interface Props {
   onActive: () => void; //修改弹窗状态
 }
 const App: React.FC<Props> = ({ data, active, onActive }) => {
+  const [autoRecordRefreshKey, setAutoRecordRefreshKey] = useState(0);
+
+  const refreshAutoRecord = () => {
+    setAutoRecordRefreshKey((prev) => prev + 1);
+  };
+
   //准备 Tab 栏
   const items: TabsProps["items"] = [
     {
@@ -31,13 +38,14 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
         <ChangeAutoRecord
           uuid={data.uuid}
           recordHint="自动记录字段：使用人、编号、用途、状态（仅记录这些字段）"
+          refreshKey={autoRecordRefreshKey}
         />
       ),
     },
     {
       key: "3",
       label: `信息修改`,
-      children: <Seting onActive={onActive} />,
+      children: <Seting onActive={onActive} onSaved={refreshAutoRecord} />,
     },
   ];
 

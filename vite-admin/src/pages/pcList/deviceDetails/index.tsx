@@ -1,7 +1,7 @@
 /**
  * 设备详情 - 展开
  */
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { Tabs } from "antd";
 import type { TabsProps } from "antd";
 
@@ -19,6 +19,11 @@ const App: React.FC = () => {
   //获取数据
   //拿到父组件传入的删除方法
   const { drawerData } = useContext(DevieContext);
+  const [autoRecordRefreshKey, setAutoRecordRefreshKey] = useState(0);
+
+  const refreshAutoRecord = () => {
+    setAutoRecordRefreshKey((prev) => prev + 1);
+  };
 
   //Tab 栏
   const items: TabsProps["items"] = [
@@ -45,13 +50,14 @@ const App: React.FC = () => {
         <ChangeAutoRecord
           uuid={drawerData.uuid}
           recordHint="自动记录字段：姓名、状态、编号、部门、IP、采购价、二手价（仅记录这些字段）"
+          refreshKey={autoRecordRefreshKey}
         />
       ),
     },
     {
       key: "5",
       label: <span>设置</span>,
-      children: <Seting />,
+      children: <Seting onSaved={refreshAutoRecord} />,
     },
   ];
   return <Tabs defaultActiveKey="1" items={items} />;

@@ -12,8 +12,9 @@ import SelectInput from "@/components/selectInput";
 const { TextArea } = Input;
 interface Props {
   onActive: () => void; //修改弹窗状态
+  onSaved?: () => void;
 }
-const App: React.FC<Props> = ({ onActive }) => {
+const App: React.FC<Props> = ({ onActive, onSaved }) => {
   //拿到父组件传入的方法
   const {
     drawerData,
@@ -86,6 +87,7 @@ const App: React.FC<Props> = ({ onActive }) => {
       //alert("修改成功");
       setDrawerData(valuesData); //更新弹窗数据
       handleUpdateData(uuid, valuesData); //调用父组件的更新方法
+      onSaved?.();
     }
   };
   //提交失败

@@ -11,7 +11,11 @@ import { totalResidualValue, validateIPv4 } from "@/utils/tool";
 import SelectInput from "@/components/selectInput";
 /**残值组件 */
 import Scrap from "@/pages/pcList/deviceDetails/block/scrap";
-const App: React.FC = () => {
+interface Props {
+  onSaved?: () => void;
+}
+
+const App: React.FC<Props> = ({ onSaved }) => {
   //接收上下文中的值
   const {
     setListData,
@@ -77,6 +81,7 @@ const App: React.FC = () => {
           item.uuid === drawerData.uuid ? { ...item, ...valuesData } : item
         )
       );
+      onSaved?.();
       //console.log("更新列表数据成功" + JSON.stringify(listData));
     }
   };

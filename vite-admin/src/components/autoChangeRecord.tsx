@@ -12,9 +12,10 @@ import { Dayjs } from "dayjs";
 interface Props {
   uuid: string;
   recordHint?: string;
+  refreshKey?: number;
 }
 
-const App: React.FC<Props> = ({ uuid, recordHint }) => {
+const App: React.FC<Props> = ({ uuid, recordHint, refreshKey }) => {
   const [data, setData] = useState<ChangeAutoRecord[]>([]); // 变更记录数据
   const [loading, setLoading] = useState(false); // 加载状态
   const [page, setPage] = useState(1);
@@ -71,7 +72,7 @@ const App: React.FC<Props> = ({ uuid, recordHint }) => {
 
   useEffect(() => {
     getData();
-  }, [uuid, page, pageSize, search, columnFilter]);
+  }, [uuid, page, pageSize, search, columnFilter, refreshKey]);
 
   // 准备翻译表
   type ChangeRecordFieldNames = {
