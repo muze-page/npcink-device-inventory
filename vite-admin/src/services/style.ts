@@ -102,28 +102,16 @@ export interface StyleListParams {
   order?: "asc" | "desc";
 }
 
-const safeParse = (value: string) => {
-  try {
-    return JSON.parse(value);
-  } catch (error) {
-    console.error("解析自定义设备数据失败:", error);
-    return {};
-  }
-};
-
-const parseStyleItem = (item: any): StyleDevice => {
-  const parsedData =
-    typeof item.data === "string" ? safeParse(item.data) : item.data;
-  return { ...item, data: parsedData } as StyleDevice;
-};
-
 export const getStyleList = async (
   params: StyleListParams
 ): Promise<PagedResponse<StyleDevice>> => {
-  const response = await restInstance.get("/admin/style", { params });
-  const payload = response.data as PagedResponse<StyleDevice>;
-  const items = Array.isArray(payload.items)
-    ? payload.items.map(parseStyleItem)
-    : [];
-  return { ...payload, items };
+  const response = await restInstance.get("/admin/style", {
+    params: { ...params, fields: "summary" },
+  });
+  return response.data as PagedResponse<StyleDevice>;
+};
+
+export const getStyleDetail = async (uuid: string): Promise<StyleDevice> => {
+  const response = await restInstance.get(`/admin/style/${uuid}`);
+  return response.data as StyleDevice;
 };

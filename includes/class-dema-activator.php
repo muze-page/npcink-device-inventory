@@ -84,6 +84,7 @@ class Dema_Activator extends DEMA_Admin_Interface
         UNIQUE (uuid),
 		-- 添加复合索引
         KEY idx_dept_state (department, state),
+        KEY idx_department (department),
         KEY idx_created_at (created_at),
         KEY idx_dept_created (department, created_at),
 		KEY idx_state (state),
@@ -194,20 +195,33 @@ class Dema_Activator extends DEMA_Admin_Interface
 		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 		dbDelta($sql);
 
-		// 添加触发器
-		$trigger_sql = "
-        CREATE TRIGGER before_insert_style_device
-        BEFORE INSERT ON `$style_table_name`
-        FOR EACH ROW
-        BEGIN
-            IF NEW.uuid IS NULL OR NEW.uuid = '' THEN
-                SET NEW.uuid = UUID();
-            END IF;
-        END;
-        ";
+		// 生成列与索引（按需）
+		self::maybe_add_style_generated_columns($style_table_name);
 
-		// 执行触发器 SQL
-		$wpdb->query($trigger_sql);
+		// 检查插入触发器是否已存在且指向正确的表
+		$before_trigger_table = $wpdb->get_var($wpdb->prepare(
+			"SELECT EVENT_OBJECT_TABLE FROM INFORMATION_SCHEMA.TRIGGERS
+			 WHERE TRIGGER_NAME = %s
+			 AND TRIGGER_SCHEMA = DATABASE()
+			 LIMIT 1",
+			'before_insert_style_device'
+		));
+
+		$before_needs_recreate = empty($before_trigger_table) || $before_trigger_table !== $style_table_name;
+		if ($before_needs_recreate) {
+			$wpdb->query("DROP TRIGGER IF EXISTS before_insert_style_device");
+			$trigger_sql = "
+			CREATE TRIGGER before_insert_style_device
+			BEFORE INSERT ON `$style_table_name`
+			FOR EACH ROW
+			BEGIN
+				IF NEW.uuid IS NULL OR NEW.uuid = '' THEN
+					SET NEW.uuid = UUID();
+				END IF;
+			END;
+			";
+			$wpdb->query($trigger_sql);
+		}
 
 		// 检查自定义设备表的触发器是否已存在且指向正确的表
 		$style_trigger_table = $wpdb->get_var($wpdb->prepare(
@@ -321,6 +335,73 @@ class Dema_Activator extends DEMA_Admin_Interface
 		// 执行 SQL 语句
 		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 		dbDelta($sql);
+	}
+
+	/**
+	 * 为自定义设备表添加 JSON 生成列与索引（仅在支持时执行）
+	 */
+	private static function maybe_add_style_generated_columns($table_name)
+	{
+		if (!self::supports_generated_columns()) {
+			return;
+		}
+
+		global $wpdb;
+
+		if (!self::column_exists($table_name, 'platform')) {
+			$wpdb->query(
+				"ALTER TABLE `$table_name`
+				 ADD COLUMN platform VARCHAR(64)
+				 GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(data, '$.platform'))) STORED"
+			);
+		}
+
+		if (!self::column_exists($table_name, 'pay_method')) {
+			$wpdb->query(
+				"ALTER TABLE `$table_name`
+				 ADD COLUMN pay_method VARCHAR(64)
+				 GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(data, '$.pay_method'))) STORED"
+			);
+		}
+
+		if (!self::index_exists($table_name, 'idx_platform')) {
+			$wpdb->query("ALTER TABLE `$table_name` ADD KEY idx_platform (platform)");
+		}
+
+		if (!self::index_exists($table_name, 'idx_pay_method')) {
+			$wpdb->query("ALTER TABLE `$table_name` ADD KEY idx_pay_method (pay_method)");
+		}
+	}
+
+	/**
+	 * 判断数据库是否支持生成列
+	 */
+	private static function supports_generated_columns()
+	{
+		global $wpdb;
+		$version = $wpdb->get_var('SELECT VERSION()');
+		if (empty($version)) {
+			return false;
+		}
+
+		if (stripos($version, 'mariadb') !== false) {
+			$ver = self::extract_version_number($version);
+			return $ver && version_compare($ver, '10.2.1', '>=');
+		}
+
+		$ver = self::extract_version_number($version);
+		return $ver && version_compare($ver, '5.7.0', '>=');
+	}
+
+	/**
+	 * 提取版本号（数字部分）
+	 */
+	private static function extract_version_number($version)
+	{
+		if (preg_match('/(\d+\.\d+(?:\.\d+)?)/', $version, $matches)) {
+			return $matches[1];
+		}
+		return null;
 	}
 
 	/**

@@ -2,7 +2,7 @@
  * 设备列表
  * TODO:翻页时才获取数据，一开始仅获取两页的数据
  */
-import { SetStateAction, useState, useEffect, useRef } from "react";
+import { SetStateAction, useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 import {
@@ -10,7 +10,7 @@ import {
   FilterData,
   PCCategoryType,
 } from "@/type/index";
-import { getDeviceCategory, getPcList } from "@/services/index";
+import { getDeviceCategory, getPcDetail, getPcList } from "@/services/index";
 
 //展示列表
 import DetailsList from "@/pages/pcList/detailsList";
@@ -18,17 +18,13 @@ import DetailsList from "@/pages/pcList/detailsList";
 //筛选
 import Screen from "@/pages/pcList/screen";
 
-//弹窗
-import Drawer from "@/pages/pcList/drawer";
+const Drawer = lazy(() => import("@/pages/pcList/drawer"));
 
 //筛序和搜索无结果时的提示
 import SearchNoData from "@/components/searchNoData";
 
 //公共方法
 import { DevieContext } from "@/context/DeviceContext";
-
-//导入处理工具
-import { updateOSType } from "@/utils/tool";
 
 const App: React.FC = () => {
   //获取设备状态和分类
@@ -57,6 +53,7 @@ const App: React.FC = () => {
   const [listData, setListData] = useState<MysqlDeviceChangeMeat[]>([]);
   const [total, setTotal] = useState(0);
   const listRequestId = useRef(0);
+  const detailRequestId = useRef(0);
 
   //筛选条件
   const [filter, setFilter] = useState<FilterData>({
@@ -101,8 +98,7 @@ const App: React.FC = () => {
         if (requestId !== listRequestId.current) {
           return;
         }
-        const updated = updateOSType(response.items);
-        setListData(updated);
+        setListData(response.items);
         setTotal(response.total);
       } catch (error) {
         console.error("获取设备列表失败:", error);
@@ -144,9 +140,40 @@ const App: React.FC = () => {
 
   //当前选中弹窗的数据
   const [drawerData, setDrawerData] = useState({} as MysqlDeviceChangeMeat);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   //隐藏姓名
   const [isName, setIsName] = useState(true);
+
+  useEffect(() => {
+    const fetchDetail = async () => {
+      if (!active || !drawerData.uuid) {
+        setDetailLoading(false);
+        return;
+      }
+
+      const requestId = ++detailRequestId.current;
+      setDetailLoading(true);
+      try {
+        const detail = await getPcDetail(drawerData.uuid);
+        if (requestId !== detailRequestId.current) {
+          return;
+        }
+        setDrawerData((prev) => ({ ...prev, ...detail }));
+      } catch (error) {
+        if (requestId !== detailRequestId.current) {
+          return;
+        }
+        console.error("获取设备详情失败:", error);
+      } finally {
+        if (requestId === detailRequestId.current) {
+          setDetailLoading(false);
+        }
+      }
+    };
+
+    fetchDetail();
+  }, [active, drawerData.uuid]);
 
   return (
     <DevieContext.Provider
@@ -156,6 +183,7 @@ const App: React.FC = () => {
         setDrawerData,
         isName,
         setActive,
+        detailLoading,
         deviceCategoryOption,
       }}
     >
@@ -199,11 +227,15 @@ const App: React.FC = () => {
         )}
 
         {/**弹窗 */}
-        <Drawer
-          active={active}
-          onActive={() => changeActive()}
-          data={drawerData}
-        />
+        {active ? (
+          <Suspense fallback={null}>
+            <Drawer
+              active={active}
+              onActive={() => changeActive()}
+              data={drawerData}
+            />
+          </Suspense>
+        ) : null}
       </div>
     </DevieContext.Provider>
   );

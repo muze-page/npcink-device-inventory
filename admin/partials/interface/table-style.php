@@ -10,17 +10,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Style')) {
         public static $style_table_name;
         public static function run()
         {
-            // 增 - 自定义设备添加信息接口
-            add_action('wp_ajax_add_style_device_data_callback',  array(__CLASS__, 'add_style_device_data_callback'));
-
-            //删
-            add_action('wp_ajax_delete_style_device_data_callback',  array(__CLASS__, 'delete_style_device_data_callback'));
-
-            //改
-            add_action('wp_ajax_update_style_device_data_callback',  array(__CLASS__, 'update_style_device_data_callback'));
-
-            //提供自定义设备分类列表接口
-            add_action('wp_ajax_get_style_device_categories_callback',  array(__CLASS__, 'get_style_device_categories_callback'));
+            // admin-ajax 已迁移到 REST，保留类方法供 REST 复用
         }
 
         /**

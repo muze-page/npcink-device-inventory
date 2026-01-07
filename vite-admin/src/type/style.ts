@@ -38,14 +38,14 @@ export type StyleDevice = StyleDeviceSeting & {
 
 //自定义设备数据属性
 export interface StyleDeviceData {
-  title: string; //设备名称
-  numbers: number; //设备数量
-  total: number; //单价
-  platform: string; //采购平台
-  shop_name: string; //店铺名称
-  link: string; //购买链接
-  order_time: Dayjs; //下单时间
-  order: string; //订单号
-  pay_method: string; //支付方式
-  purchaser: string; //采购人
+  title?: string; //设备名称
+  numbers?: number; //设备数量
+  total?: number; //单价
+  platform?: string; //采购平台
+  shop_name?: string; //店铺名称
+  link?: string; //购买链接
+  order_time?: Dayjs; //下单时间
+  order?: string; //订单号
+  pay_method?: string; //支付方式
+  purchaser?: string; //采购人
 }

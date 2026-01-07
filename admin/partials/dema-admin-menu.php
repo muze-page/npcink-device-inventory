@@ -85,8 +85,6 @@ if (!class_exists('DEMA_Admin_Menu')) {
 
             $pf_api_translation_array = array(
                 'site' => get_home_url(), //首页网址
-                'ajaxurl' => admin_url('admin-ajax.php'),
-                'ajax_nonce' => wp_create_nonce('dema_admin'),
                 'rest_url' => rest_url('npcink/v1'), //REST API 基础地址
                 'rest_nonce' => wp_create_nonce('wp_rest'),
                 'option' => $option, //传递选项（脱敏）

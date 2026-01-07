@@ -1,7 +1,12 @@
 /**
  * 硬件设置选项
  */
-import { MysqlDeviceData, PCCategoryType, MysqlDeviceChange } from "@/type/index";
+import {
+  MysqlDeviceData,
+  PCCategoryType,
+  MysqlDeviceChange,
+  MysqlDeviceChangeMeat,
+} from "@/type/index";
 import { restInstance } from "@/services/axiosConfig";
 import { PagedResponse, PcSummary } from "@/type/index";
 /**
@@ -61,43 +66,23 @@ export interface PcListParams {
   order?: "asc" | "desc";
 }
 
-const emptyComputer = {
-  os: { distro: "", platform: "" },
-  cpu: { manufacturer: "", brand: "" },
-  baseboard: { model: "", manufacturer: "" },
-  graphics: { controllers: [] },
-  memLayout: [],
-  diskLayout: [],
-  uuid: { macs: [] },
-};
-
-const safeParse = (value: string) => {
-  try {
-    return JSON.parse(value);
-  } catch (error) {
-    console.error("解析设备数据失败:", error);
-    return emptyComputer;
-  }
-};
-
-const parsePcItem = (item: any): MysqlDeviceChange => {
-  const parsedData =
-    typeof item.data === "string" ? safeParse(item.data) : item.data;
-  return { ...item, data: parsedData } as MysqlDeviceChange;
-};
-
 export const getPcList = async (
   params: PcListParams
-): Promise<PagedResponse<MysqlDeviceChange>> => {
-  const response = await restInstance.get("/admin/pc", { params });
-  const payload = response.data as PagedResponse<MysqlDeviceChange>;
-  const items = Array.isArray(payload.items)
-    ? payload.items.map(parsePcItem)
-    : [];
-  return { ...payload, items };
+): Promise<PagedResponse<MysqlDeviceChangeMeat>> => {
+  const response = await restInstance.get("/admin/pc", {
+    params: { ...params, fields: "summary" },
+  });
+  return response.data as PagedResponse<MysqlDeviceChangeMeat>;
 };
 
 export const getPcSummary = async (): Promise<PcSummary> => {
   const response = await restInstance.get("/admin/pc-summary");
   return response.data as PcSummary;
+};
+
+export const getPcDetail = async (
+  uuid: string
+): Promise<MysqlDeviceChange> => {
+  const response = await restInstance.get(`/admin/pc/${uuid}`);
+  return response.data as MysqlDeviceChange;
 };

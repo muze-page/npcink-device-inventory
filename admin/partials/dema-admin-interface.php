@@ -48,6 +48,58 @@ if (!class_exists('DEMA_Admin_Interface')) {
         }
 
         /**
+         * 检查数据表是否包含指定列
+         */
+        public static function column_exists($table_name, $column_name)
+        {
+            static $column_cache = array();
+            $cache_key = $table_name . '::' . $column_name;
+            if (array_key_exists($cache_key, $column_cache)) {
+                return $column_cache[$cache_key];
+            }
+
+            global $wpdb;
+            $exists = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                     WHERE TABLE_SCHEMA = DATABASE()
+                     AND TABLE_NAME = %s
+                     AND COLUMN_NAME = %s",
+                    $table_name,
+                    $column_name
+                )
+            );
+            $column_cache[$cache_key] = intval($exists) > 0;
+            return $column_cache[$cache_key];
+        }
+
+        /**
+         * 检查数据表是否包含指定索引
+         */
+        public static function index_exists($table_name, $index_name)
+        {
+            static $index_cache = array();
+            $cache_key = $table_name . '::' . $index_name;
+            if (array_key_exists($cache_key, $index_cache)) {
+                return $index_cache[$cache_key];
+            }
+
+            global $wpdb;
+            $exists = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+                     WHERE TABLE_SCHEMA = DATABASE()
+                     AND TABLE_NAME = %s
+                     AND INDEX_NAME = %s",
+                    $table_name,
+                    $index_name
+                )
+            );
+            $index_cache[$cache_key] = intval($exists) > 0;
+            return $index_cache[$cache_key];
+        }
+
+        /**
          * 清理电脑设备相关缓存
          */
         public static function clear_pc_cache()

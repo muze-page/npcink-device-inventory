@@ -8,9 +8,6 @@ if (!class_exists('DEMA_Admin_Interface_Search_Page')) {
     {
         public static function run()
         {
-            // 添加自定义页面
-            add_action('wp_ajax_add_public_search_page_callback',  array(__CLASS__, 'add_public_search_page_callback'));
-
             //加载JS
             add_action('wp_enqueue_scripts', array(__CLASS__, 'load_search_page_script'));
         }

@@ -23,8 +23,6 @@ const data = {
   data: DemoData, //演示用设备
   styleData: StyleData, //自定义设备数据类型
   option: option, //选项
-  ajaxurl: "/wp-admin/admin-ajax.php", //这里需要配置代理，所以没有用完整地址，仅影响开发，不影响正式打包
-  ajax_nonce: "", //开发环境可为空
   site: "http://localhost:10048", //网址
   rest_url: "/wp-json/npcink/v1", //REST API 基础地址
   rest_nonce: "", //开发环境可为空

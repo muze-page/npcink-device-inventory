@@ -8,14 +8,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
     {
         public static function run()
         {
-            // 保存设置选项接口
-            add_action('wp_ajax_save_object_option', array(__CLASS__, 'save_option_callback'));
-
-            //导出数据接口
-            add_action('wp_ajax_export_data_callback', array(__CLASS__, 'export_data_callback'));
-
-            //导入数据接口
-            add_action('wp_ajax_import_data_callback', array(__CLASS__, 'import_data_callback'));
+            // admin-ajax 已迁移到 REST，保留类方法供 REST 复用
         }
 
         /**

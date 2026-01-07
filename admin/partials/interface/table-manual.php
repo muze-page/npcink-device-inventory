@@ -8,17 +8,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Manual')) {
     {
         public static function run()
         {
-            // 增 - 设备变更信息接口
-            add_action('wp_ajax_add_change_data_callback',  array(__CLASS__, 'add_change_data_callback'));
-
-            // 改 - 设备变更信息接口
-            add_action('wp_ajax_modify_change_data_callback',  array(__CLASS__, 'modify_change_data_callback'));
-
-            //查 - 设备变更信息接口
-            add_action('wp_ajax_search_change_data_callback',  array(__CLASS__, 'search_change_data_callback'));
-
-            //查 - 全部设备变更信息接口
-            add_action('wp_ajax_search_change_all_data_callback',  array(__CLASS__, 'search_change_all_data_callback'));
+            // admin-ajax 已迁移到 REST，保留类方法供 REST 复用
         }
 
         /**

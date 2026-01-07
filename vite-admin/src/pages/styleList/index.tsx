@@ -1,12 +1,16 @@
 /**
  * 自定义设备类型
  */
-import { useState, SetStateAction, useEffect, useRef } from "react";
+import { useState, SetStateAction, useEffect, useRef, lazy, Suspense } from "react";
 import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 
 //自定义产品分类获取方法
-import { getStyleDeviceCategory, getStyleList } from "@/services/index";
+import {
+  getStyleDeviceCategory,
+  getStyleDetail,
+  getStyleList,
+} from "@/services/index";
 
 //数据渲染组件
 import DataList from "@/pages/styleList/dataList";
@@ -17,8 +21,7 @@ import { StyleDevice, FilterStyleData, StyleCategoryType } from "@/type/index";
 //跨组件提供方法
 import { StyleContext } from "@/context/StyleContext";
 
-//拿到弹窗组件
-import Drawer from "@/pages/styleList/drawer/index";
+const Drawer = lazy(() => import("@/pages/styleList/drawer/index"));
 
 //拿到顶部组件
 import Header from "@/pages/styleList/header";
@@ -32,6 +35,7 @@ const App: React.FC = () => {
   const [devices, setDevices] = useState<StyleDevice[]>([]);
   const [total, setTotal] = useState(0);
   const listRequestId = useRef(0);
+  const detailRequestId = useRef(0);
 
   //共享弹窗状态
   const [active, setActive] = useState(false);
@@ -66,6 +70,7 @@ const App: React.FC = () => {
 
   //当前选中弹窗的数据
   const [drawerData, setDrawerData] = useState({} as StyleDevice);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   //添加自定义设备
   const handleAddDevice = (device: StyleDevice) => {
@@ -147,6 +152,36 @@ const App: React.FC = () => {
     fetchList();
   }, [pageNumber, PAGE_SIZE, filter, debouncedKeyword]);
 
+  useEffect(() => {
+    const fetchDetail = async () => {
+      if (!active || !drawerData.uuid) {
+        setDetailLoading(false);
+        return;
+      }
+
+      const requestId = ++detailRequestId.current;
+      setDetailLoading(true);
+      try {
+        const detail = await getStyleDetail(drawerData.uuid);
+        if (requestId !== detailRequestId.current) {
+          return;
+        }
+        setDrawerData((prev) => ({ ...prev, ...detail }));
+      } catch (error) {
+        if (requestId !== detailRequestId.current) {
+          return;
+        }
+        console.error("获取设备详情失败:", error);
+      } finally {
+        if (requestId === detailRequestId.current) {
+          setDetailLoading(false);
+        }
+      }
+    };
+
+    fetchDetail();
+  }, [active, drawerData.uuid]);
+
   //设置当前页码
   const handlePageChange = (page: SetStateAction<number>) => {
     setPageNumber(page); // 设置当前页码
@@ -174,6 +209,7 @@ const App: React.FC = () => {
         handleUpdateData,
         styleCategoryOption,
         isName,
+        detailLoading,
       }}
     >
       <div className="pb-6 px-5">
@@ -217,11 +253,15 @@ const App: React.FC = () => {
         )}
 
         {/**弹窗 */}
-        <Drawer
-          data={drawerData}
-          active={active}
-          onActive={() => changeActive()}
-        />
+        {active ? (
+          <Suspense fallback={null}>
+            <Drawer
+              data={drawerData}
+              active={active}
+              onActive={() => changeActive()}
+            />
+          </Suspense>
+        ) : null}
       </div>
     </StyleContext.Provider>
   );

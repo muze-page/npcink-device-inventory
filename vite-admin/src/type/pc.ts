@@ -33,7 +33,7 @@ export interface MysqlDevice extends MysqlDeviceData {
   created_at: Dayjs; //添加时间
   updated_at: Dayjs; //更新时间
   uuid: string; //唯一编号
-  data: string; //数据
+  data: string | Computer; //数据
   [key: string]: any; //索引签名
 }
 
@@ -43,7 +43,7 @@ export type MysqlDeviceChange = MysqlDeviceData & {
   created_at: Dayjs; //添加时间
   updated_at: Dayjs; //更新时间
   uuid: string; //唯一编号
-  data: Computer; //数据
+  data?: Computer; //数据
   [key: string]: any;
 };
 

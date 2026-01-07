@@ -1,11 +1,6 @@
 import axios, { type AxiosRequestConfig } from "axios";
 import { message } from "antd";
-import { AjaxNonce, RestNonce, RestUrl } from "@/utils/index";
-
-// 创建 axios 实例
-export const instance = axios.create({
-  //baseURL: Ajaxurl, // 设置请求的基础URL
-});
+import { RestNonce, RestUrl } from "@/utils/index";
 
 // REST API 实例
 export const restInstance = axios.create({
@@ -184,7 +179,6 @@ const errorInterceptor = (error: any) => {
   return Promise.reject(error);
 };
 
-instance.interceptors.response.use(responseInterceptor, errorInterceptor);
 restInstance.interceptors.response.use(responseInterceptor, errorInterceptor);
 
 /**
@@ -204,15 +198,6 @@ export const addParamIfDefined = (
   }
 };
 
-/**
- * 追加 admin-ajax nonce
- */
-export const appendAjaxNonce = (params: URLSearchParams) => {
-  if (AjaxNonce) {
-    params.append("_ajax_nonce", AjaxNonce);
-  }
-  return params;
-};
 export type RequestConfig = AxiosRequestConfig & {
   showSuccessMessage?: boolean;
 };

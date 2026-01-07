@@ -12,8 +12,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_Auto')) {
          */
         public static function run()
         {
-            // 查数据，提供UUID是查指定设备，不提供则查全部设备
-            add_action('wp_ajax_auto_change_data_callback',  array(__CLASS__, 'auto_change_data_callback'));
+            // admin-ajax 已迁移到 REST，保留类方法供 REST 复用
         }
 
         /**

@@ -3,12 +3,17 @@
  */
 import { handleGraphics, formatDate } from "@/utils/tool";
 import { Computer, ComputerControllers } from "@/type/index";
+import { Empty } from "antd";
 import { Dayjs } from "dayjs";
 interface Props {
-  data: Computer;
+  data?: Computer;
   time: Dayjs;
+  loading?: boolean;
 }
-const App: React.FC<Props> = ({ data, time }) => {
+const App: React.FC<Props> = ({ data, time, loading }) => {
+  if (!data || loading) {
+    return <Empty description="设备详情加载中" />;
+  }
   //显示器
   const displayData = data.graphics.displays[0];
 

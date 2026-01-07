@@ -140,34 +140,40 @@ export const updateOSType = (
   //添加meat值，方便使用
   const updatedData = dataArrays.map((obj: MysqlDeviceChange) => {
     const value = obj.data; //拿到对象
-    const memory = calculateTotalSize(value.memLayout) || "暂无内存容量"; //内存数组
-    const disk = calculateTotalSize(value.diskLayout) || "暂无硬盘容量"; //混合计算，不分固态和机械
+    const memory =
+      value?.memLayout && value.memLayout.length > 0
+        ? calculateTotalSize(value.memLayout)
+        : "暂无内存容量"; //内存数组
+    const disk =
+      value?.diskLayout && value.diskLayout.length > 0
+        ? calculateTotalSize(value.diskLayout)
+        : "暂无硬盘容量"; //混合计算，不分固态和机械
 
-    const motherboard = value.baseboard.model
+    const motherboard = value?.baseboard?.model
       ? removeSubstring(value.baseboard.model, graphicsReplace)
       : "暂无主板型号"; //去除主板中的指定字符串
 
-    const cpuModel = value.cpu.brand
+    const cpuModel = value?.cpu?.brand
       ? removeSubstring(value.cpu.brand, graphicsReplace)
       : "暂无 CPU 型号";
 
-    const graphicsData = handleGraphics(value.graphics.controllers)[0]; //拿显存最大的卡
+    const graphicsData = handleGraphics(value?.graphics?.controllers || [])[0]; //拿显存最大的卡
     const graphics = graphicsData
       ? removeSubstring(graphicsData, graphicsReplace)
       : "暂无显卡型号"; //去除显卡中的指定字符串
 
     //整理添加的信息
     const meat = {
-      os: replaceString(value.os.distro, osTypeReplace), //系统版本 Windows 10
-      ostype: replaceString(value.os.platform, osReplace), //系统类型，windows linux macos
-      cpu: value.cpu.manufacturer || "暂无 CPU 品牌", //CPU品牌 Intel
+      os: replaceString(value?.os?.distro || "", osTypeReplace), //系统版本 Windows 10
+      ostype: replaceString(value?.os?.platform || "", osReplace), //系统类型，windows linux macos
+      cpu: value?.cpu?.manufacturer || "暂无 CPU 品牌", //CPU品牌 Intel
       cpuModel: cpuModel, //CPU型号 Core™ i5-9400F
       motherboard: motherboard, //主板型号
       graphics: graphics, //仅展示显存最大的显卡
       memory: memory, //内存容量
       disk: disk, //硬盘容量
     };
-    const mac = value.uuid.macs; //获取mac地址
+    const mac = value?.uuid?.macs || []; //获取mac地址
     return { ...obj, meat, mac };
   });
   return updatedData;

@@ -119,3 +119,9 @@ Style 表对 JSON 字段可用生成列 + 索引（platform/pay_method）
 
 列表按需字段渲染、虚拟滚动（如果列表 > 200）
 详情页只请求所需字段（减少 data JSON 解析）
+
+如果要继续推进，建议下一步选其一：
+
+做 Phase 0 基线与指标（出一份性能基线报告）
+做 Phase 4 构建/渲染优化（分包 + 懒加载 + 体积优化）
+做 Phase 2 的 React Query/SWR 与缓存策略

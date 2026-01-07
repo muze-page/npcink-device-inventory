@@ -197,6 +197,8 @@ const App: React.FC<Props> = ({ uuid, recordHint, refreshKey }) => {
           columns={columns}
           loading={loading}
           rowKey="id"
+          scroll={{ y: 360 }}
+          virtual
           pagination={{
             current: page,
             pageSize,

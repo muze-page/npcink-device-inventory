@@ -2,7 +2,7 @@
  * 自定义设备信息展示
  */
 import { useContext } from "react";
-import { Card, Skeleton } from "antd";
+import { Card, Skeleton, Empty } from "antd";
 import { StyleDevice } from "@/type/index";
 
 //跨组件提供方法
@@ -17,21 +17,27 @@ interface Props {
 const App: React.FC<Props> = ({ data }) => {
   const deviceData = data.data;
   //拿到是否隐藏姓名的状态
-  const { isName } = useContext(StyleContext);
+  const { isName, detailLoading } = useContext(StyleContext);
+
+  if (detailLoading || !deviceData) {
+    return <Empty description="设备详情加载中" />;
+  }
 
   return (
     <>
       <Card
-        title={deviceData.title}
+        title={deviceData.title || "未命名设备"}
         extra={
-          <a
-            href={deviceData.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: "#1890ff" }}
-          >
-            {deviceData.shop_name}
-          </a>
+          deviceData.link ? (
+            <a
+              href={deviceData.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "#1890ff" }}
+            >
+              {deviceData.shop_name || "查看链接"}
+            </a>
+          ) : null
         }
         style={{ width: "100%" }}
         styles={{ body: { backgroundColor: "#f3f4f6" } }}
@@ -39,10 +45,10 @@ const App: React.FC<Props> = ({ data }) => {
         <div className="flex gap-2">
           <Card title="设备信息" variant="borderless" style={{ flex: 1 }}>
             <InfoItem label="采购数量">
-              {formatNumber(deviceData.numbers)}
+              {formatNumber(deviceData.numbers ?? 0)}
             </InfoItem>
             <InfoItem label="采购总价">
-              {formatNumber(deviceData.total)} 元
+              {formatNumber(deviceData.total ?? 0)} 元
             </InfoItem>
             <InfoItem label="当前状态">{data.state}</InfoItem>
             <InfoItem label="设备分类">{data.category}</InfoItem>
@@ -76,24 +82,30 @@ const App: React.FC<Props> = ({ data }) => {
           <div className="flex justify-between mb-2">
             <div className="flex-1">
               <ConditionalInfoItem
-                label="采购单号"
-                value={deviceData.order}
-                condition={isName}
-              />
+              label="采购单号"
+              value={deviceData.order}
+              condition={isName}
+            />
             </div>
             <div className="flex-1 ml-4">
               <InfoItem label="下单时间">
-                {formatDate(deviceData.order_time)}
+                {deviceData.order_time
+                  ? formatDate(deviceData.order_time)
+                  : "暂无"}
               </InfoItem>
             </div>
           </div>
 
           <div className="flex justify-between">
             <div className="flex-1">
-              <InfoItem label="采购平台">{deviceData.platform}</InfoItem>
+              <InfoItem label="采购平台">
+                {deviceData.platform || "暂无"}
+              </InfoItem>
             </div>
             <div className="flex-1 ml-4">
-              <InfoItem label="支付方式">{deviceData.pay_method}</InfoItem>
+              <InfoItem label="支付方式">
+                {deviceData.pay_method || "暂无"}
+              </InfoItem>
             </div>
           </div>
         </Card>

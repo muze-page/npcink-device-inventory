@@ -23,9 +23,13 @@ import System from "@/pages/pcList/deviceDetails/detailed/system";
 import Uuid from "@/pages/pcList/deviceDetails/detailed/uuid";
 
 interface Props {
-  data: Computer;
+  data?: Computer;
+  loading?: boolean;
 }
-const App: React.FC<Props> = ({ data }) => {
+const App: React.FC<Props> = ({ data, loading }) => {
+  if (!data || loading) {
+    return <Empty description="设备详情加载中" />;
+  }
   //准备组件
 
   const tabs = [

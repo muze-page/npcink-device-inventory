@@ -24,10 +24,18 @@ const combineData = (dataArrays?: MysqlDevice[]) => {
   if (!Array.isArray(dataArrays)) return [];
   return dataArrays
     .map((item) => {
-      // 解析 "data" 字符串为对象
-      const parsedData = JSON.parse(item.data) as Computer;
-      // 返回更新后的对象
-      return { ...item, data: parsedData };
+      if (typeof item.data === "string") {
+        try {
+          return { ...item, data: JSON.parse(item.data) as Computer };
+        } catch (error) {
+          console.error("解析设备数据失败:", error);
+          return { ...item, data: {} as Computer };
+        }
+      }
+      if (item.data && typeof item.data === "object") {
+        return { ...item, data: item.data as Computer };
+      }
+      return { ...item, data: {} as Computer };
     })
     .reverse(); //倒序;
 };
@@ -56,10 +64,6 @@ export const dataStyle = combineDataStyle(dataLocal.styleData);
 //拿到选项值并传出
 
 export const defaultOption: OptionType = dataLocal.option || ({} as OptionType);
-
-//输出接口地址
-export const Ajaxurl: string = dataLocal.ajaxurl;
-export const AjaxNonce: string = dataLocal.ajax_nonce || "";
 
 //输出站点网址
 export const Site: string = dataLocal.site;

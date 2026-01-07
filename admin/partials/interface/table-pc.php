@@ -8,14 +8,7 @@ if (!class_exists('DEMA_Admin_Interface_Table_PC')) {
     {
         public static function run()
         {
-            //获取设备状态和分类键值对
-            add_action('wp_ajax_get_device_category_callback', array(__CLASS__, 'get_device_category_callback'));
-
-            // 修改 - 设备信息接口
-            add_action('wp_ajax_modify_device_callback',  array(__CLASS__, 'modify_device_callback'));
-
-            // 删除设备接口
-            add_action('wp_ajax_delt_device_callback', array(__CLASS__, 'delt_device_callback'));
+            // admin-ajax 已迁移到 REST，保留类方法供 REST 复用
         }
 
         /**

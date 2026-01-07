@@ -22,6 +22,8 @@ interface Props {
 const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
   //拿到是否隐藏姓名的状态
   const { isName } = useContext(StyleContext);
+  const title = data.data?.title || "未命名设备";
+  const total = data.data?.total ?? 0;
 
   //点击打开弹窗
   const showDrawer = () => {
@@ -65,8 +67,8 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
         <div className="text-xs text-zinc-500  rounded whitespace-nowrap min-h-[190px]  overflow-hidden">
           {/*设备名称*/}
           <p className="text-sm font-bold text-zinc-800 leading-2 h-10 m-0 whitespace-normal break-words">
-            <Tooltip title={"设备名称：" + data.data.title}>
-              {data.data.title}
+            <Tooltip title={"设备名称：" + title}>
+              {title}
             </Tooltip>
           </p>
           <Space direction="vertical" size={"small"} className="mt-2">
@@ -104,9 +106,9 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
             </Tooltip>
 
             {/*设备价格*/}
-            <Tooltip title={"设备价格：" + formatNumber(data.data.total)}>
+            <Tooltip title={"设备价格：" + formatNumber(total)}>
               <b>价格：</b>
-              {formatNumber(data.data.total)} 元
+              {formatNumber(total)} 元
             </Tooltip>
             {/*状态*/}
             <Tooltip title={"设备状态：" + data.state}>

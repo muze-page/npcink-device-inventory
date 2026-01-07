@@ -18,6 +18,7 @@ export {
   getDeviceCategory,
   getPcList,
   getPcSummary,
+  getPcDetail,
 } from "@/services/pc";
 
 //自定义硬件设备数据
@@ -27,6 +28,7 @@ export {
   updateStyleDeviceData,
   getStyleDeviceCategory,
   getStyleList,
+  getStyleDetail,
 } from "@/services/style";
 
 //硬件设备数据变更自动记录

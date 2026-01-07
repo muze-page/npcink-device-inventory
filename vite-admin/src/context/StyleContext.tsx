@@ -10,6 +10,7 @@ interface StyleContextType {
   handleUpdateData: (uuid: string, device: StyleDevice) => void; //修改自定义设备数据
   styleCategoryOption: StyleCategoryType; //自定义设备分类数组
   isName: boolean; //是否隐藏隐私
+  detailLoading: boolean; //详情加载状态
 }
 export const StyleContext = createContext<StyleContextType>({
   drawerData: {} as StyleDevice, //默认空对象
@@ -24,4 +25,5 @@ export const StyleContext = createContext<StyleContextType>({
     pay_methods: [],
   }, //默认空数组
   isName: false,
+  detailLoading: false,
 });

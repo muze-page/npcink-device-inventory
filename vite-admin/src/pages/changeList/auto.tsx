@@ -155,6 +155,8 @@ const App: React.FC<Props> = ({ isActive }) => {
         columns={columns}
         loading={loading}
         rowKey="id"
+        scroll={{ y: 520 }}
+        virtual
         pagination={{
           current: page,
           pageSize,

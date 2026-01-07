@@ -538,6 +538,244 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         }
 
         /**
+         * 安全解析 JSON 字段
+         */
+        private static function decode_json_field($raw)
+        {
+            if (empty($raw)) {
+                return array();
+            }
+            if (is_array($raw)) {
+                return $raw;
+            }
+            $decoded = json_decode($raw, true);
+            return is_array($decoded) ? $decoded : array();
+        }
+
+        /**
+         * 字节格式化
+         */
+        private static function format_bytes($bytes)
+        {
+            $size = floatval($bytes);
+            if ($size <= 0) {
+                return '0';
+            }
+
+            $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB');
+            $unit_index = 0;
+            while ($size >= 1024 && $unit_index < count($units) - 1) {
+                $size /= 1024;
+                $unit_index++;
+            }
+
+            if ($unit_index <= 1) {
+                return strval(round($size)) . ' ' . $units[$unit_index];
+            }
+
+            $rounded = round($size, 1);
+            if (intval($rounded) == $rounded) {
+                $rounded = intval($rounded);
+            }
+            return strval($rounded) . ' ' . $units[$unit_index];
+        }
+
+        /**
+         * MB 格式化
+         */
+        private static function format_mb($mb)
+        {
+            $size = floatval($mb);
+            if ($size <= 0) {
+                return '0';
+            }
+
+            $units = array('MB', 'GB', 'TB');
+            $unit_index = 0;
+            while ($size >= 1024 && $unit_index < count($units) - 1) {
+                $size /= 1024;
+                $unit_index++;
+            }
+
+            $rounded = round($size, 1);
+            if (intval($rounded) == $rounded) {
+                $rounded = intval($rounded);
+            }
+            return strval($rounded) . ' ' . $units[$unit_index];
+        }
+
+        /**
+         * 求数组 size 字段总和并格式化
+         */
+        private static function sum_sizes($items)
+        {
+            if (!is_array($items)) {
+                return self::format_bytes(0);
+            }
+            $total = 0;
+            foreach ($items as $item) {
+                if (is_array($item) && isset($item['size'])) {
+                    $total += floatval($item['size']);
+                }
+            }
+            return self::format_bytes($total);
+        }
+
+        /**
+         * 简单字符串替换（按值包含匹配）
+         */
+        private static function replace_string($input, $pairs)
+        {
+            if (!is_string($input) || $input === '') {
+                return '未收录';
+            }
+
+            $labels = array();
+            foreach ($pairs as $pair) {
+                if (isset($pair['value']) && strpos($input, $pair['value']) !== false) {
+                    $labels[] = $pair['label'];
+                }
+            }
+
+            if (empty($labels)) {
+                return '未收录';
+            }
+
+            return implode(', ', $labels);
+        }
+
+        /**
+         * 移除指定子串
+         */
+        private static function remove_substring($input, $patterns)
+        {
+            if (!is_string($input) || $input === '') {
+                return $input;
+            }
+            if (empty($patterns)) {
+                return trim($input);
+            }
+            $regex = '/' . implode('|', $patterns) . '/i';
+            return trim(preg_replace($regex, '', $input));
+        }
+
+        /**
+         * 处理显卡列表，按显存排序输出字符串数组
+         */
+        private static function handle_graphics($controllers, $exclude)
+        {
+            if (!is_array($controllers)) {
+                return array();
+            }
+
+            $filtered = array_filter($controllers, function ($item) use ($exclude) {
+                $model = is_array($item) && isset($item['model']) ? $item['model'] : '';
+                if ($model === '') {
+                    return false;
+                }
+                foreach ($exclude as $str) {
+                    if (strpos($model, $str) !== false) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            usort($filtered, function ($a, $b) {
+                $vram_a = isset($a['vram']) ? floatval($a['vram']) : 0;
+                $vram_b = isset($b['vram']) ? floatval($b['vram']) : 0;
+                if ($vram_a == $vram_b) {
+                    return 0;
+                }
+                return ($vram_a < $vram_b) ? 1 : -1;
+            });
+
+            $values = array();
+            foreach ($filtered as $item) {
+                $model = isset($item['model']) ? $item['model'] : '';
+                if ($model === '') {
+                    continue;
+                }
+                $vram = isset($item['vram']) ? self::format_mb($item['vram']) : '';
+                $values[] = trim($model . ' ' . $vram);
+            }
+            return $values;
+        }
+
+        /**
+         * 生成电脑设备列表摘要
+         */
+        private static function build_pc_summary($data)
+        {
+            $os_replace = array(
+                array('value' => 'Windows', 'label' => 'Windows'),
+                array('value' => 'darwin', 'label' => 'Mac'),
+                array('value' => 'linux', 'label' => 'linux'),
+            );
+            $os_type_replace = array(
+                array('value' => 'Windows 11', 'label' => 'Windows 11'),
+                array('value' => 'Windows 10', 'label' => 'Windows 10'),
+                array('value' => 'macOS', 'label' => 'Apple'),
+                array('value' => 'linux', 'label' => 'Linux'),
+            );
+            $exclude_graphics = array(
+                'Parsec Virtual Display Adapter',
+                'OrayIddDriver Device',
+                'System Product Name',
+                'OrayIddDriver Device',
+                'Virtual Display Device',
+            );
+            $graphics_replace = array(
+                'NVIDIA GeForce',
+                'Intel\\(R\\)',
+                '\\(MS-7D48\\)',
+                '\\(MS-7D46\\)',
+                'with Radeon Graphics',
+            );
+
+            $memory = self::sum_sizes(isset($data['memLayout']) ? $data['memLayout'] : array());
+            $disk = self::sum_sizes(isset($data['diskLayout']) ? $data['diskLayout'] : array());
+
+            $motherboard = isset($data['baseboard']['model']) && $data['baseboard']['model'] !== ''
+                ? self::remove_substring($data['baseboard']['model'], $graphics_replace)
+                : '暂无主板型号';
+
+            $cpu_model = isset($data['cpu']['brand']) && $data['cpu']['brand'] !== ''
+                ? self::remove_substring($data['cpu']['brand'], $graphics_replace)
+                : '暂无 CPU 型号';
+
+            $graphics_list = self::handle_graphics(
+                isset($data['graphics']['controllers']) ? $data['graphics']['controllers'] : array(),
+                $exclude_graphics
+            );
+            $graphics_value = !empty($graphics_list) ? $graphics_list[0] : '';
+            $graphics = $graphics_value !== ''
+                ? self::remove_substring($graphics_value, $graphics_replace)
+                : '暂无显卡型号';
+
+            $meat = array(
+                'os' => self::replace_string(isset($data['os']['distro']) ? $data['os']['distro'] : '', $os_type_replace),
+                'ostype' => self::replace_string(isset($data['os']['platform']) ? $data['os']['platform'] : '', $os_replace),
+                'cpu' => isset($data['cpu']['manufacturer']) && $data['cpu']['manufacturer'] !== '' ? $data['cpu']['manufacturer'] : '暂无 CPU 品牌',
+                'cpuModel' => $cpu_model,
+                'motherboard' => $motherboard,
+                'graphics' => $graphics,
+                'memory' => $memory,
+                'disk' => $disk,
+            );
+
+            $macs = array();
+            if (isset($data['uuid']['macs']) && is_array($data['uuid']['macs'])) {
+                $macs = $data['uuid']['macs'];
+            }
+
+            return array(
+                'meat' => $meat,
+                'mac' => $macs,
+            );
+        }
+
+        /**
          * 管理端 - 查询电脑设备列表（分页/筛选/搜索）
          */
         public static function admin_get_pc_list($request)
@@ -549,6 +787,9 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $per_page = intval($request->get_param('per_page') ?: 20);
             $per_page = max(1, min(100, $per_page));
             $offset = ($page - 1) * $per_page;
+
+            $fields = sanitize_text_field((string) $request->get_param('fields'));
+            $fields = ($fields === 'summary') ? 'summary' : 'full';
 
             $search = sanitize_text_field((string) $request->get_param('search'));
             $search = trim($search);
@@ -614,6 +855,21 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $query_params = array_merge($params, array($per_page, $offset));
             $items = $wpdb->get_results($wpdb->prepare($query_sql, $query_params), ARRAY_A);
 
+            if (!empty($items)) {
+                foreach ($items as &$item) {
+                    $decoded = self::decode_json_field(isset($item['data']) ? $item['data'] : null);
+                    if ($fields === 'summary') {
+                        $summary = self::build_pc_summary($decoded);
+                        $item['meat'] = $summary['meat'];
+                        $item['mac'] = $summary['mac'];
+                        unset($item['data']);
+                    } else {
+                        $item['data'] = $decoded;
+                    }
+                }
+                unset($item);
+            }
+
             return rest_ensure_response(array(
                 'items' => $items ?: array(),
                 'total' => intval($total),
@@ -644,6 +900,8 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             if (empty($row)) {
                 return new WP_Error('not_found', '获取设备失败：设备不存在或已删除', array('status' => 404));
             }
+
+            $row['data'] = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
 
             return rest_ensure_response($row);
         }
@@ -868,6 +1126,9 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $per_page = max(1, min(100, $per_page));
             $offset = ($page - 1) * $per_page;
 
+            $fields = sanitize_text_field((string) $request->get_param('fields'));
+            $fields = ($fields === 'summary') ? 'summary' : 'full';
+
             $search = sanitize_text_field((string) $request->get_param('search'));
             $search = trim($search);
             $state = sanitize_text_field((string) $request->get_param('state'));
@@ -895,13 +1156,20 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 $params[] = $category;
             }
 
+            $platform_column = self::column_exists($table_name, 'platform')
+                ? 'platform'
+                : "JSON_UNQUOTE(JSON_EXTRACT(data, '$.platform'))";
+            $pay_method_column = self::column_exists($table_name, 'pay_method')
+                ? 'pay_method'
+                : "JSON_UNQUOTE(JSON_EXTRACT(data, '$.pay_method'))";
+
             if (!empty($platform) && $platform !== 'all') {
-                $where[] = "JSON_UNQUOTE(JSON_EXTRACT(data, '$.platform')) = %s";
+                $where[] = $platform_column . ' = %s';
                 $params[] = $platform;
             }
 
             if (!empty($pay_method) && $pay_method !== 'all') {
-                $where[] = "JSON_UNQUOTE(JSON_EXTRACT(data, '$.pay_method')) = %s";
+                $where[] = $pay_method_column . ' = %s';
                 $params[] = $pay_method;
             }
 
@@ -938,6 +1206,24 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $query_params = array_merge($params, array($per_page, $offset));
             $items = $wpdb->get_results($wpdb->prepare($query_sql, $query_params), ARRAY_A);
 
+            if (!empty($items)) {
+                foreach ($items as &$item) {
+                    $decoded = self::decode_json_field(isset($item['data']) ? $item['data'] : null);
+                    if ($fields === 'summary') {
+                        $item['data'] = array(
+                            'title' => isset($decoded['title']) ? $decoded['title'] : '',
+                            'total' => isset($decoded['total']) ? $decoded['total'] : 0,
+                            'platform' => isset($decoded['platform']) ? $decoded['platform'] : '',
+                            'pay_method' => isset($decoded['pay_method']) ? $decoded['pay_method'] : '',
+                            'numbers' => isset($decoded['numbers']) ? $decoded['numbers'] : 0,
+                        );
+                    } else {
+                        $item['data'] = $decoded;
+                    }
+                }
+                unset($item);
+            }
+
             return rest_ensure_response(array(
                 'items' => $items ?: array(),
                 'total' => intval($total),
@@ -968,6 +1254,8 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             if (empty($row)) {
                 return new WP_Error('not_found', '获取自定义设备失败：设备不存在或已删除', array('status' => 404));
             }
+
+            $row['data'] = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
 
             return rest_ensure_response($row);
         }
@@ -1181,11 +1469,18 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $states = $wpdb->get_results(
                 "SELECT DISTINCT state FROM {$table_name} WHERE state IS NOT NULL AND state != ''"
             );
+            $platform_column = self::column_exists($table_name, 'platform')
+                ? 'platform'
+                : "JSON_UNQUOTE(JSON_EXTRACT(data, '$.platform'))";
+            $pay_method_column = self::column_exists($table_name, 'pay_method')
+                ? 'pay_method'
+                : "JSON_UNQUOTE(JSON_EXTRACT(data, '$.pay_method'))";
+
             $platforms = $wpdb->get_results(
-                "SELECT DISTINCT JSON_EXTRACT(data, '$.platform') as platform FROM {$table_name} WHERE JSON_EXTRACT(data, '$.platform') IS NOT NULL AND JSON_EXTRACT(data, '$.platform') != ''"
+                "SELECT DISTINCT {$platform_column} as platform FROM {$table_name} WHERE {$platform_column} IS NOT NULL AND {$platform_column} != ''"
             );
             $pay_methods = $wpdb->get_results(
-                "SELECT DISTINCT JSON_EXTRACT(data, '$.pay_method') as pay_method FROM {$table_name} WHERE JSON_EXTRACT(data, '$.pay_method') IS NOT NULL AND JSON_EXTRACT(data, '$.pay_method') != ''"
+                "SELECT DISTINCT {$pay_method_column} as pay_method FROM {$table_name} WHERE {$pay_method_column} IS NOT NULL AND {$pay_method_column} != ''"
             );
 
             if ($wpdb->last_error) {

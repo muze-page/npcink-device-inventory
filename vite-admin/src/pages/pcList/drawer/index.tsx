@@ -2,11 +2,13 @@
  * 弹窗
  */
 
-import { Modal } from "antd";
+import { Modal, Spin } from "antd";
+import { lazy, Suspense } from "react";
 import { MysqlDeviceChangeMeat } from "@/type/index";
-import Property from "@/pages/pcList/deviceDetails";
-import TabHeader from "@/pages/pcList/drawer/tabHeader";
-import PrintData from "@/components/printData";
+
+const Property = lazy(() => import("@/pages/pcList/deviceDetails"));
+const TabHeader = lazy(() => import("@/pages/pcList/drawer/tabHeader"));
+const PrintData = lazy(() => import("@/components/printData"));
 interface Props {
   active: boolean; //弹窗状态
   onActive: () => void; //关闭弹窗的回调函数
@@ -23,12 +25,20 @@ const App: React.FC<Props> = ({ active, onActive, data }) => {
         width={"700px"}
         footer={null}
       >
-        {/**标识栏 */}
-        <TabHeader />
-        {/**Tab栏 */}
-        <Property />
-        {/** 测试用 */}
-        <PrintData data={data} title="打印当前设备信息" />
+        <Suspense
+          fallback={
+            <div className="py-6 text-center">
+              <Spin />
+            </div>
+          }
+        >
+          {/**标识栏 */}
+          <TabHeader />
+          {/**Tab栏 */}
+          <Property />
+          {/** 测试用 */}
+          <PrintData data={data} title="打印当前设备信息" />
+        </Suspense>
       </Modal>
     </>
   );
