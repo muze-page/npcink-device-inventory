@@ -92,20 +92,22 @@ class Dema_Activator extends DEMA_Admin_Interface
 			dbDelta($sql);
 		}
 
-		// 检查触发器是否已存在
-		$trigger_exists = $wpdb->get_var($wpdb->prepare(
-			"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TRIGGERS 
+		// 检查触发器是否已存在且指向正确的表
+		$trigger_table = $wpdb->get_var($wpdb->prepare(
+			"SELECT EVENT_OBJECT_TABLE FROM INFORMATION_SCHEMA.TRIGGERS 
 			 WHERE TRIGGER_NAME = %s 
-			 AND TRIGGER_SCHEMA = DATABASE()",
+			 AND TRIGGER_SCHEMA = DATABASE()
+			 LIMIT 1",
 			'after_update_device_data'
 		));
 
-		// 如果触发器不存在，则创建它
-		if ($trigger_exists == 0) {
-			// 创建UPDATE触发器，当name、state、number、depreciation、ip、purchase、department、updated_at字段发生变化时记录到自动记录表
+		$needs_recreate = empty($trigger_table) || $trigger_table !== $pc_table_name;
+
+		if ($needs_recreate) {
+			$wpdb->query("DROP TRIGGER IF EXISTS after_update_device_data");
+			// 创建UPDATE触发器，当name、state、number、depreciation、ip、purchase、department字段发生变化时记录到自动记录表
 			$auto_table_name = $wpdb->prefix . self::$table_auto_name;
 
-			// 创建新的UPDATE触发器
 			$update_trigger_sql = "
 			CREATE TRIGGER after_update_device_data
 			AFTER UPDATE ON `$pc_table_name`
@@ -204,16 +206,19 @@ class Dema_Activator extends DEMA_Admin_Interface
 			$wpdb->query($trigger_sql);
 		}
 
-		// 检查自定义设备表的触发器是否已存在
-		$style_trigger_exists = $wpdb->get_var($wpdb->prepare(
-			"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TRIGGERS 
+		// 检查自定义设备表的触发器是否已存在且指向正确的表
+		$style_trigger_table = $wpdb->get_var($wpdb->prepare(
+			"SELECT EVENT_OBJECT_TABLE FROM INFORMATION_SCHEMA.TRIGGERS 
 			 WHERE TRIGGER_NAME = %s 
-			 AND TRIGGER_SCHEMA = DATABASE()",
+			 AND TRIGGER_SCHEMA = DATABASE()
+			 LIMIT 1",
 			'after_update_style_device'
 		));
 
-		// 如果触发器不存在，则创建它
-		if ($style_trigger_exists == 0) {
+		$style_needs_recreate = empty($style_trigger_table) || $style_trigger_table !== $style_table_name;
+
+		if ($style_needs_recreate) {
+			$wpdb->query("DROP TRIGGER IF EXISTS after_update_style_device");
 			// 创建自定义设备表的UPDATE触发器
 			$auto_table_name = $wpdb->prefix . self::$table_auto_name;
 
