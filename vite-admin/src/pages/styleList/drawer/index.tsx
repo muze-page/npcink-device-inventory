@@ -56,7 +56,7 @@ const App: React.FC<Props> = ({ data, active, onActive }) => {
         open={active}
         onCancel={onActive}
         style={{ top: 50 }}
-        width={"700px"}
+        width={"800px"}
         footer={null}
       >
         <Suspense

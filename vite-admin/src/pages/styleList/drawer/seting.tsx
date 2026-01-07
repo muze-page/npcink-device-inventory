@@ -2,11 +2,13 @@
  * 自定义设备信息 - 设置
  */
 import { useContext, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { StyleContext } from "@/context/StyleContext";
 import { Form, Button, Input, Modal, message } from "antd";
 import type { FormProps } from "antd";
 import { deleteStyleDeviceData, updateStyleDeviceData } from "@/services/index";
 import { StyleDeviceSeting } from "@/type/index";
+import { queryKeys } from "@/services/queryKeys";
 //选择输入框
 import SelectInput from "@/components/selectInput";
 const { TextArea } = Input;
@@ -15,6 +17,7 @@ interface Props {
   onSaved?: () => void;
 }
 const App: React.FC<Props> = ({ onActive, onSaved }) => {
+  const queryClient = useQueryClient();
   //拿到父组件传入的方法
   const {
     drawerData,
@@ -45,6 +48,9 @@ const App: React.FC<Props> = ({ onActive, onSaved }) => {
         //成功删除则清除输入框
         if (state) {
           handleDeleteData(uuid); //调用父组件的删除方法
+          queryClient.removeQueries({
+            queryKey: queryKeys.styleDetail(uuid),
+          });
           //1秒后关闭弹窗
           setTimeout(() => {
             onActive();
@@ -87,6 +93,11 @@ const App: React.FC<Props> = ({ onActive, onSaved }) => {
       //alert("修改成功");
       setDrawerData(valuesData); //更新弹窗数据
       handleUpdateData(uuid, valuesData); //调用父组件的更新方法
+      queryClient.setQueryData(
+        queryKeys.styleDetail(uuid),
+        (prev: typeof drawerData | undefined) =>
+          prev ? { ...prev, ...valuesData } : valuesData
+      );
       onSaved?.();
     }
   };

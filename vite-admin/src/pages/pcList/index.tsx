@@ -2,7 +2,15 @@
  * 设备列表
  * TODO:翻页时才获取数据，一开始仅获取两页的数据
  */
-import { SetStateAction, useState, useEffect, useRef, lazy, Suspense } from "react";
+import {
+  SetStateAction,
+  Dispatch,
+  useState,
+  useEffect,
+  lazy,
+  Suspense,
+} from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 import {
@@ -11,6 +19,7 @@ import {
   PCCategoryType,
 } from "@/type/index";
 import { getDeviceCategory, getPcDetail, getPcList } from "@/services/index";
+import { queryKeys } from "@/services/queryKeys";
 
 //展示列表
 import DetailsList from "@/pages/pcList/detailsList";
@@ -27,33 +36,7 @@ import SearchNoData from "@/components/searchNoData";
 import { DevieContext } from "@/context/DeviceContext";
 
 const App: React.FC = () => {
-  //获取设备状态和分类
-  const [deviceCategoryOption, setDeviceCategoryOption] =
-    useState<PCCategoryType>({
-      states: [], //状态
-      departments: [], //部门
-    });
-
-  //获取设备状态和部门分类数据
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const categories = await getDeviceCategory();
-        //存入分类数据
-        setDeviceCategoryOption(categories);
-      } catch (error) {
-        console.error("获取设备分类失败:", error);
-      }
-    };
-
-    fetchCategories();
-  }, []);
-
-  //设置列表数据
-  const [listData, setListData] = useState<MysqlDeviceChangeMeat[]>([]);
-  const [total, setTotal] = useState(0);
-  const listRequestId = useRef(0);
-  const detailRequestId = useRef(0);
+  const queryClient = useQueryClient();
 
   //筛选条件
   const [filter, setFilter] = useState<FilterData>({
@@ -83,35 +66,44 @@ const App: React.FC = () => {
     setPageNumber(1);
   }, [filter, debouncedKeyword, PAGE_SIZE]);
 
-  useEffect(() => {
-    const fetchList = async () => {
-      const requestId = ++listRequestId.current;
-      try {
-        const response = await getPcList({
-          page: pageNumber,
-          per_page: PAGE_SIZE,
-          search: debouncedKeyword || undefined,
-          state: filter.state !== "all" ? filter.state : undefined,
-          department:
-            filter.department !== "all" ? filter.department : undefined,
-        });
-        if (requestId !== listRequestId.current) {
-          return;
-        }
-        setListData(response.items);
-        setTotal(response.total);
-      } catch (error) {
-        console.error("获取设备列表失败:", error);
-        if (requestId !== listRequestId.current) {
-          return;
-        }
-        setListData([]);
-        setTotal(0);
-      }
-    };
+  const listParams = {
+    page: pageNumber,
+    per_page: PAGE_SIZE,
+    search: debouncedKeyword || undefined,
+    state: filter.state !== "all" ? filter.state : undefined,
+    department: filter.department !== "all" ? filter.department : undefined,
+  };
 
-    fetchList();
-  }, [pageNumber, PAGE_SIZE, filter, debouncedKeyword]);
+  const listQuery = useQuery({
+    queryKey: queryKeys.pcList(listParams),
+    queryFn: () => getPcList(listParams),
+    keepPreviousData: true,
+  });
+
+  const listData = listQuery.data?.items ?? [];
+  const total = listQuery.data?.total ?? 0;
+
+  const setListData: Dispatch<SetStateAction<MysqlDeviceChangeMeat[]>> = (
+    value
+  ) => {
+    queryClient.setQueryData(queryKeys.pcList(listParams), (old: any) => {
+      if (!old) return old;
+      const prevItems: MysqlDeviceChangeMeat[] = old.items || [];
+      const nextItems =
+        typeof value === "function"
+          ? value(prevItems)
+          : (value as MysqlDeviceChangeMeat[]);
+      const delta = nextItems.length - prevItems.length;
+      const nextTotal = Math.max(0, (old.total || 0) + delta);
+      return {
+        ...old,
+        items: nextItems,
+        total: nextTotal,
+        total_pages:
+          old.per_page > 0 ? Math.ceil(nextTotal / old.per_page) : old.total_pages,
+      };
+    });
+  };
 
   //设置当前页码
   const handlePageChange = (page: SetStateAction<number>) => {
@@ -140,40 +132,35 @@ const App: React.FC = () => {
 
   //当前选中弹窗的数据
   const [drawerData, setDrawerData] = useState({} as MysqlDeviceChangeMeat);
-  const [detailLoading, setDetailLoading] = useState(false);
 
   //隐藏姓名
   const [isName, setIsName] = useState(true);
 
+  const detailQuery = useQuery({
+    queryKey: queryKeys.pcDetail(drawerData.uuid || ""),
+    queryFn: () => getPcDetail(drawerData.uuid),
+    enabled: active && Boolean(drawerData.uuid),
+  });
+
+  const detailLoading = detailQuery.isLoading || detailQuery.isFetching;
+
   useEffect(() => {
-    const fetchDetail = async () => {
-      if (!active || !drawerData.uuid) {
-        setDetailLoading(false);
-        return;
-      }
+    if (detailQuery.data) {
+      setDrawerData((prev) => ({ ...prev, ...detailQuery.data }));
+    }
+  }, [detailQuery.data]);
 
-      const requestId = ++detailRequestId.current;
-      setDetailLoading(true);
-      try {
-        const detail = await getPcDetail(drawerData.uuid);
-        if (requestId !== detailRequestId.current) {
-          return;
-        }
-        setDrawerData((prev) => ({ ...prev, ...detail }));
-      } catch (error) {
-        if (requestId !== detailRequestId.current) {
-          return;
-        }
-        console.error("获取设备详情失败:", error);
-      } finally {
-        if (requestId === detailRequestId.current) {
-          setDetailLoading(false);
-        }
-      }
-    };
+  const categoryQuery = useQuery({
+    queryKey: queryKeys.pcCategories,
+    queryFn: getDeviceCategory,
+    staleTime: 5 * 60 * 1000,
+  });
 
-    fetchDetail();
-  }, [active, drawerData.uuid]);
+  const deviceCategoryOption: PCCategoryType =
+    categoryQuery.data || ({
+      states: [],
+      departments: [],
+    } as PCCategoryType);
 
   return (
     <DevieContext.Provider

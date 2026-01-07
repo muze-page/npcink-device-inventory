@@ -1,13 +1,15 @@
 /**
  * 展示设备信息自动变更记录
  */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Table, Space, Empty, Input } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { getAutoChangeList } from "@/services/index";
 import { ChangeAutoRecord } from "@/type/index";
 import { formatDate } from "@/utils/tool";
 import { Dayjs } from "dayjs";
+import { queryKeys } from "@/services/queryKeys";
 
 interface Props {
   uuid: string;
@@ -16,59 +18,10 @@ interface Props {
 }
 
 const App: React.FC<Props> = ({ uuid, recordHint, refreshKey }) => {
-  const [data, setData] = useState<ChangeAutoRecord[]>([]); // 变更记录数据
-  const [loading, setLoading] = useState(false); // 加载状态
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [columnFilter, setColumnFilter] = useState<string | undefined>();
-  const [filters, setFilters] = useState<{ columns: string[] }>({
-    columns: [],
-  });
-  const requestIdRef = useRef(0);
-
-  const getData = async () => {
-    // 检查UUID是否有效
-    if (!uuid) {
-      setData([]);
-      setTotal(0);
-      return;
-    }
-
-    const requestId = ++requestIdRef.current;
-    setLoading(true);
-    try {
-      const res = await getAutoChangeList({
-        record_uuid: uuid,
-        page,
-        per_page: pageSize,
-        search,
-        column_name: columnFilter,
-      });
-      if (requestId !== requestIdRef.current) {
-        return;
-      }
-      const records = Array.isArray(res.items) ? res.items : [];
-      setData(records);
-      setTotal(res.total || 0);
-      if (res.filters) {
-        setFilters({
-          columns: res.filters.columns || [],
-        });
-      }
-    } catch {
-      if (requestId !== requestIdRef.current) {
-        return;
-      }
-      setData([]);
-      setTotal(0);
-    } finally {
-      if (requestId === requestIdRef.current) {
-        setLoading(false);
-      }
-    }
-  };
 
   /**
    * 严格模式下，这里会执行两次
@@ -80,9 +33,25 @@ const App: React.FC<Props> = ({ uuid, recordHint, refreshKey }) => {
     setColumnFilter(undefined);
   }, [uuid]);
 
-  useEffect(() => {
-    getData();
-  }, [uuid, page, pageSize, search, columnFilter, refreshKey]);
+  const listParams = {
+    record_uuid: uuid,
+    page,
+    per_page: pageSize,
+    search,
+    column_name: columnFilter,
+  };
+
+  const listQuery = useQuery({
+    queryKey: [...queryKeys.autoChanges(listParams), refreshKey || 0],
+    queryFn: () => getAutoChangeList(listParams),
+    enabled: Boolean(uuid),
+    keepPreviousData: true,
+  });
+
+  const data = listQuery.data?.items ?? [];
+  const total = listQuery.data?.total ?? 0;
+  const columnsFilter = listQuery.data?.filters?.columns ?? [];
+  const loading = listQuery.isFetching;
 
   // 准备翻译表
   type ChangeRecordFieldNames = {
@@ -109,7 +78,7 @@ const App: React.FC<Props> = ({ uuid, recordHint, refreshKey }) => {
 
   // 获取所有唯一字段名作为筛选选项
   const getFieldFilters = () => {
-    return filters.columns.map((field) => ({
+    return columnsFilter.map((field: string) => ({
       text:
         changeRecordFieldNames[field as keyof typeof changeRecordFieldNames] ||
         field,

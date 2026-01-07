@@ -1,7 +1,14 @@
 /**
  * 自定义设备类型
  */
-import { useState, SetStateAction, useEffect, useRef, lazy, Suspense } from "react";
+import {
+  useState,
+  SetStateAction,
+  useEffect,
+  lazy,
+  Suspense,
+} from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
 
@@ -11,6 +18,7 @@ import {
   getStyleDetail,
   getStyleList,
 } from "@/services/index";
+import { queryKeys } from "@/services/queryKeys";
 
 //数据渲染组件
 import DataList from "@/pages/styleList/dataList";
@@ -31,37 +39,10 @@ import SearchNoData from "@/components/searchNoData";
 
 
 const App: React.FC = () => {
-  //在设备展示列表和删除设备两个组件间同步设备数据（添加、删除设备后更新设备列表）
-  const [devices, setDevices] = useState<StyleDevice[]>([]);
-  const [total, setTotal] = useState(0);
-  const listRequestId = useRef(0);
-  const detailRequestId = useRef(0);
+  const queryClient = useQueryClient();
 
   //共享弹窗状态
   const [active, setActive] = useState(false);
-
-  //获取自定义设备的状态和分类
-  const [styleCategoryOption, setStyleCategoryOption] =
-    useState<StyleCategoryType>({
-      states: [], //设备状态
-      categories: [], //设备分类
-      platforms: [], //采购平台
-      pay_methods: [], //支付方式
-    });
-
-  //获取自定义设备分类数据
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const categories = await getStyleDeviceCategory();
-        setStyleCategoryOption(categories);
-      } catch (error) {
-        console.error("获取设备分类失败:", error);
-      }
-    };
-
-    fetchCategories();
-  }, []);
 
   //修改弹窗状态
   const changeActive = () => {
@@ -70,23 +51,6 @@ const App: React.FC = () => {
 
   //当前选中弹窗的数据
   const [drawerData, setDrawerData] = useState({} as StyleDevice);
-  const [detailLoading, setDetailLoading] = useState(false);
-
-  //添加自定义设备
-  const handleAddDevice = (device: StyleDevice) => {
-    setDevices((prev) => [device, ...prev]);
-    setTotal((prev) => prev + 1);
-  };
-  //删除指定UUID的设备
-  const handleDeleteData = (uuid: string) => {
-    setDevices((prev) => prev.filter((d) => d.uuid !== uuid));
-    setTotal((prev) => Math.max(0, prev - 1));
-  };
-
-  //修改自定义设备数据
-  const handleUpdateData = (uuid: string, device: StyleDevice) => {
-    setDevices((prev) => prev.map((d) => (d.uuid === uuid ? device : d)));
-  };
 
   /**
    * 筛选
@@ -121,66 +85,87 @@ const App: React.FC = () => {
     setPageNumber(1);
   }, [filter, debouncedKeyword, PAGE_SIZE]);
 
+  const listParams = {
+    page: pageNumber,
+    per_page: PAGE_SIZE,
+    search: debouncedKeyword || undefined,
+    state: filter.state !== "all" ? filter.state : undefined,
+    category: filter.category !== "all" ? filter.category : undefined,
+    platform: filter.platform !== "all" ? filter.platform : undefined,
+    pay_method: filter.payMethod !== "all" ? filter.payMethod : undefined,
+  };
+
+  const listQuery = useQuery({
+    queryKey: queryKeys.styleList(listParams),
+    queryFn: () => getStyleList(listParams),
+    keepPreviousData: true,
+  });
+
+  const devices = listQuery.data?.items ?? [];
+  const total = listQuery.data?.total ?? 0;
+
+  const updateListCache = (
+    updater: (items: StyleDevice[]) => StyleDevice[]
+  ) => {
+    queryClient.setQueryData(queryKeys.styleList(listParams), (old: any) => {
+      if (!old) return old;
+      const prevItems: StyleDevice[] = old.items || [];
+      const nextItems = updater(prevItems);
+      const delta = nextItems.length - prevItems.length;
+      const nextTotal = Math.max(0, (old.total || 0) + delta);
+      return {
+        ...old,
+        items: nextItems,
+        total: nextTotal,
+        total_pages:
+          old.per_page > 0 ? Math.ceil(nextTotal / old.per_page) : old.total_pages,
+      };
+    });
+  };
+
+  //添加自定义设备
+  const handleAddDevice = (device: StyleDevice) => {
+    updateListCache((items) => [device, ...items]);
+  };
+  //删除指定UUID的设备
+  const handleDeleteData = (uuid: string) => {
+    updateListCache((items) => items.filter((d) => d.uuid !== uuid));
+  };
+
+  //修改自定义设备数据
+  const handleUpdateData = (uuid: string, device: StyleDevice) => {
+    updateListCache((items) =>
+      items.map((d) => (d.uuid === uuid ? device : d))
+    );
+  };
+
+  const detailQuery = useQuery({
+    queryKey: queryKeys.styleDetail(drawerData.uuid || ""),
+    queryFn: () => getStyleDetail(drawerData.uuid),
+    enabled: active && Boolean(drawerData.uuid),
+  });
+
+  const detailLoading = detailQuery.isLoading || detailQuery.isFetching;
+
   useEffect(() => {
-    const fetchList = async () => {
-      const requestId = ++listRequestId.current;
-      try {
-        const response = await getStyleList({
-          page: pageNumber,
-          per_page: PAGE_SIZE,
-          search: debouncedKeyword || undefined,
-          state: filter.state !== "all" ? filter.state : undefined,
-          category: filter.category !== "all" ? filter.category : undefined,
-          platform: filter.platform !== "all" ? filter.platform : undefined,
-          pay_method: filter.payMethod !== "all" ? filter.payMethod : undefined,
-        });
-        if (requestId !== listRequestId.current) {
-          return;
-        }
-        setDevices(response.items);
-        setTotal(response.total);
-      } catch (error) {
-        console.error("获取设备列表失败:", error);
-        if (requestId !== listRequestId.current) {
-          return;
-        }
-        setDevices([]);
-        setTotal(0);
-      }
-    };
+    if (detailQuery.data) {
+      setDrawerData((prev) => ({ ...prev, ...detailQuery.data }));
+    }
+  }, [detailQuery.data]);
 
-    fetchList();
-  }, [pageNumber, PAGE_SIZE, filter, debouncedKeyword]);
+  const categoryQuery = useQuery({
+    queryKey: queryKeys.styleCategories,
+    queryFn: getStyleDeviceCategory,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    const fetchDetail = async () => {
-      if (!active || !drawerData.uuid) {
-        setDetailLoading(false);
-        return;
-      }
-
-      const requestId = ++detailRequestId.current;
-      setDetailLoading(true);
-      try {
-        const detail = await getStyleDetail(drawerData.uuid);
-        if (requestId !== detailRequestId.current) {
-          return;
-        }
-        setDrawerData((prev) => ({ ...prev, ...detail }));
-      } catch (error) {
-        if (requestId !== detailRequestId.current) {
-          return;
-        }
-        console.error("获取设备详情失败:", error);
-      } finally {
-        if (requestId === detailRequestId.current) {
-          setDetailLoading(false);
-        }
-      }
-    };
-
-    fetchDetail();
-  }, [active, drawerData.uuid]);
+  const styleCategoryOption: StyleCategoryType =
+    categoryQuery.data || ({
+      states: [],
+      categories: [],
+      platforms: [],
+      pay_methods: [],
+    } as StyleCategoryType);
 
   //设置当前页码
   const handlePageChange = (page: SetStateAction<number>) => {
@@ -223,7 +208,7 @@ const App: React.FC = () => {
         <div className="flex content-start items-center flex-wrap w-full">
           <Flex wrap gap="large">
             {/**开始循环 */}
-            {devices.map((tab) => (
+            {devices.map((tab: StyleDevice) => (
               <DataList
                 key={tab.id}
                 data={tab}

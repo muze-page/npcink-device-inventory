@@ -2,11 +2,13 @@
  * 设备详情 - 设置
  */
 import { useContext, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Form, Button, Input, InputNumber, Modal } from "antd";
 import { DevieContext } from "@/context/DeviceContext";
 import { deltSQLData, changeMySql } from "@/services/index";
 import { MysqlDeviceData } from "@/type/index";
 import { totalResidualValue, validateIPv4 } from "@/utils/tool";
+import { queryKeys } from "@/services/queryKeys";
 //选择输入框
 import SelectInput from "@/components/selectInput";
 /**残值组件 */
@@ -16,6 +18,7 @@ interface Props {
 }
 
 const App: React.FC<Props> = ({ onSaved }) => {
+  const queryClient = useQueryClient();
   //接收上下文中的值
   const {
     setListData,
@@ -81,6 +84,11 @@ const App: React.FC<Props> = ({ onSaved }) => {
           item.uuid === drawerData.uuid ? { ...item, ...valuesData } : item
         )
       );
+      queryClient.setQueryData(
+        queryKeys.pcDetail(drawerData.uuid),
+        (prev: typeof drawerData | undefined) =>
+          prev ? { ...prev, ...valuesData } : valuesData
+      );
       onSaved?.();
       //console.log("更新列表数据成功" + JSON.stringify(listData));
     }
@@ -99,6 +107,9 @@ const App: React.FC<Props> = ({ onSaved }) => {
           prevData.filter((item) => item.uuid !== drawerData.uuid)
         ); //更新列表数据，移除当前设备
         deltSQLData(drawerData.uuid); //删除数据库数据
+        queryClient.removeQueries({
+          queryKey: queryKeys.pcDetail(drawerData.uuid),
+        });
         setActive(false); //关闭弹窗
       },
     });
@@ -113,8 +124,8 @@ const App: React.FC<Props> = ({ onSaved }) => {
         form={form}
         onFinish={onFinish}
         labelAlign="left"
-        labelCol={{ span: 6 }}
-        wrapperCol={{ span: 18 }}
+        labelCol={{ span: 4 }}
+        wrapperCol={{ span: 20 }}
         initialValues={drawerData}
       >
         <div className="flex gap-6 flex-wrap">

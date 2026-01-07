@@ -1,76 +1,49 @@
 //手动记录设备变更
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getManualChangeList } from "@/services/index";
 import { Table, Input, Space } from "antd";
 import type { TableColumnsType } from "antd";
 import { DeviceChangeList } from "@/type/index";
+import { queryKeys } from "@/services/queryKeys";
 
 type Props = {
   isActive: boolean; //控制显示
 };
 const App: React.FC<Props> = ({ isActive }) => {
-  const [dataAxios, setDataAxios] = useState<DeviceChangeList[]>([]); //待渲染的值
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [userFilter, setUserFilter] = useState<string | undefined>();
   const [typeFilter, setTypeFilter] = useState<string | undefined>();
-  const [filters, setFilters] = useState<{ users: string[]; types: string[] }>({
-    users: [],
-    types: [],
-  });
-  const requestIdRef = useRef(0);
 
-  const getData = async () => {
-    const requestId = ++requestIdRef.current;
-    setLoading(true);
-    try {
-      const response = await getManualChangeList({
-        page,
-        per_page: pageSize,
-        search,
-        user: userFilter,
-        type: typeFilter,
-      });
-      if (requestId !== requestIdRef.current) {
-        return;
-      }
-      const records = Array.isArray(response.items) ? response.items : [];
-      setDataAxios(records);
-      setTotal(response.total || 0);
-      if (response.filters) {
-        setFilters({
-          users: response.filters.users || [],
-          types: response.filters.types || [],
-        });
-      }
-    } catch {
-      if (requestId !== requestIdRef.current) {
-        return;
-      }
-      setDataAxios([]);
-      setTotal(0);
-    } finally {
-      if (requestId === requestIdRef.current) {
-        setLoading(false);
-      }
-    }
+  const listParams = {
+    page,
+    per_page: pageSize,
+    search,
+    user: userFilter,
+    type: typeFilter,
   };
 
-  //拿到最新UUID
-  useEffect(() => {
-    getData();
-  }, [page, pageSize, search, userFilter, typeFilter]);
+  const listQuery = useQuery({
+    queryKey: queryKeys.manualChanges(listParams),
+    queryFn: () => getManualChangeList(listParams),
+    keepPreviousData: true,
+  });
+
+  const dataAxios = listQuery.data?.items ?? [];
+  const total = listQuery.data?.total ?? 0;
+  const userFilters = listQuery.data?.filters?.users ?? [];
+  const typeFilters = listQuery.data?.filters?.types ?? [];
+  const loading = listQuery.isFetching;
 
   //准备姓名，类型数组
   //从数组对象中，提取指定键的值，去重后输出为指定的对象数组
-  const userArr = filters.users.map((item) => ({
+  const userArr = userFilters.map((item) => ({
     text: item,
     value: item,
   }));
-  const typeArr = filters.types.map((item) => ({
+  const typeArr = typeFilters.map((item) => ({
     text: item,
     value: item,
   }));
