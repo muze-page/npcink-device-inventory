@@ -69,7 +69,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             register_rest_route('npcink/v1', '/query', array(
                 'methods' => 'GET',
                 'callback' => array(__CLASS__, 'query_data'),
-                'permission_callback' => '__return_true', // 无需验权（验证密码即可）
+                'permission_callback' => array(__CLASS__, 'public_permissions_check'),
             ));
         }
 
@@ -87,38 +87,16 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
             // 获取传递过来的字符串参数并进行安全过滤
             $query_data = isset($request['data']) ? sanitize_text_field($request['data']) : null;
-            $query_password = isset($request['password']) ? sanitize_text_field($request['password']) : null;
 
             /**
              * 安全检查 - 是否为空
              */
-            if (empty($query_password)) {
-                return wp_send_json_error(
-                    [
-                        'error' => '请填写客户端传输数据用的验证密码',
-                    ],
-                    400
-                );
-            }
             if (empty($query_data)) {
                 return wp_send_json_error(
                     [
                         'error' => '请填写需要查询的值',
                     ],
                     400
-                );
-            }
-
-
-            // 验证密码
-            $is_valid_password = self::password_verification($query_password);
-            if (!$is_valid_password) {
-                // 密码验证失败
-                return wp_send_json_error(
-                    [
-                        'error' => '密码验证失败，请检查！',
-                    ],
-                    403
                 );
             }
 
@@ -154,7 +132,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             register_rest_route('npcink/v1', $styleRoute, array(
                 'methods'  => 'POST',
                 'callback' => array(__CLASS__, 'submit_data_callback'),
-                'permission_callback' => '__return_true', // 无需验权（验证密码即可）
+                'permission_callback' => array(__CLASS__, 'public_permissions_check'),
             ));
         }
 
@@ -171,9 +149,6 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             //拿到传来的姓名，检查字符串
             $name = isset($request['name']) ? sanitize_text_field($request['name']) : null;
 
-            //拿到传来的密码，检查密码
-            $password = isset($request['password']) ? sanitize_text_field($request['password']) : null;
-
             //拿到传来的JSON对象字符串，检查字符串
             $data = isset($request['data']) ? sanitize_text_field($request['data']) : null;
 
@@ -181,13 +156,6 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             if (empty($name)) {
                 return wp_send_json_error([
                     'error' => '姓名为空，请填写',
-                ], 400);
-            }
-
-            //密码是否为空
-            if (empty($password)) {
-                return wp_send_json_error([
-                    'error' => '密码为空，请填写',
                 ], 400);
             }
 
@@ -199,18 +167,6 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 return wp_send_json_error([
                     'error' => '硬件数据为空，请检查',
                 ], 400);
-            }
-
-
-            //验证密码
-            $proving =  self::password_verification($password);
-            if (!$proving) {
-                return wp_send_json_error(
-                    [
-                        'error' => '密码验证失败，请检查密码！',
-                    ],
-                    400
-                );
             }
 
             //为了防止硬件UUID重复，这里再加上第一张网卡的MAC地址以防万一
@@ -383,6 +339,44 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         {
             if (!current_user_can('manage_options')) {
                 return new WP_Error('forbidden', '权限不足：需要管理员权限', array('status' => 403));
+            }
+            return true;
+        }
+
+        /**
+         * 公共接口 - 读取密码（header 或参数）
+         */
+        private static function get_public_password($request)
+        {
+            $password = '';
+            if ($request instanceof WP_REST_Request) {
+                $password = $request->get_header('x-npcink-password');
+                if ($password === '') {
+                    $password = $request->get_param('password');
+                }
+            } elseif (is_array($request)) {
+                $password = isset($request['password']) ? $request['password'] : '';
+            }
+
+            if (!is_string($password)) {
+                $password = '';
+            }
+
+            $password = wp_unslash($password);
+            return sanitize_text_field($password);
+        }
+
+        /**
+         * 公共接口 - 密码校验
+         */
+        public static function public_permissions_check($request)
+        {
+            $password = self::get_public_password($request);
+            if ($password === '') {
+                return new WP_Error('missing_password', '请填写客户端传输数据用的验证密码', array('status' => 403));
+            }
+            if (!self::password_verification($password)) {
+                return new WP_Error('invalid_password', '密码验证失败，请检查！', array('status' => 403));
             }
             return true;
         }
@@ -870,13 +864,15 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 unset($item);
             }
 
-            return rest_ensure_response(array(
+            $payload = array(
                 'items' => $items ?: array(),
                 'total' => intval($total),
                 'page' => $page,
                 'per_page' => $per_page,
                 'total_pages' => $per_page > 0 ? (int) ceil($total / $per_page) : 0,
-            ));
+            );
+            $last_modified = self::extract_latest_timestamp($items, array('updated_at', 'created_at'));
+            return self::rest_response_with_cache($request, $payload, $last_modified);
         }
 
         /**
@@ -918,7 +914,8 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 $row['data'] = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
             }
 
-            return rest_ensure_response($row);
+            $last_modified = self::extract_latest_timestamp(array($row), array('updated_at', 'created_at'));
+            return self::rest_response_with_cache($request, $row, $last_modified);
         }
 
         /**
@@ -1059,7 +1056,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         /**
          * 管理端 - 获取电脑设备分类
          */
-        public static function admin_get_pc_categories()
+        public static function admin_get_pc_categories($request)
         {
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_pc_name;
@@ -1067,7 +1064,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $cache_key = self::get_cache_key('pc_categories');
             $cached = get_transient($cache_key);
             if ($cached !== false) {
-                return rest_ensure_response($cached);
+                return self::rest_response_with_cache($request, $cached);
             }
 
             $departments = $wpdb->get_results(
@@ -1125,7 +1122,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
             set_transient($cache_key, $response, 5 * MINUTE_IN_SECONDS);
 
-            return rest_ensure_response($response);
+            return self::rest_response_with_cache($request, $response);
         }
 
         /**
@@ -1239,13 +1236,15 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 unset($item);
             }
 
-            return rest_ensure_response(array(
+            $payload = array(
                 'items' => $items ?: array(),
                 'total' => intval($total),
                 'page' => $page,
                 'per_page' => $per_page,
                 'total_pages' => $per_page > 0 ? (int) ceil($total / $per_page) : 0,
-            ));
+            );
+            $last_modified = self::extract_latest_timestamp($items, array('updated_at'));
+            return self::rest_response_with_cache($request, $payload, $last_modified);
         }
 
         /**
@@ -1287,7 +1286,8 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 $row['data'] = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
             }
 
-            return rest_ensure_response($row);
+            $last_modified = self::extract_latest_timestamp(array($row), array('updated_at'));
+            return self::rest_response_with_cache($request, $row, $last_modified);
         }
 
         /**
@@ -1482,7 +1482,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         /**
          * 管理端 - 获取自定义设备分类
          */
-        public static function admin_get_style_categories()
+        public static function admin_get_style_categories($request)
         {
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_style_name;
@@ -1490,7 +1490,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $cache_key = self::get_cache_key('style_categories');
             $cached = get_transient($cache_key);
             if ($cached !== false) {
-                return rest_ensure_response($cached);
+                return self::rest_response_with_cache($request, $cached);
             }
 
             $categories = $wpdb->get_results(
@@ -1608,13 +1608,13 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
             set_transient($cache_key, $response, 5 * MINUTE_IN_SECONDS);
 
-            return rest_ensure_response($response);
+            return self::rest_response_with_cache($request, $response);
         }
 
         /**
          * 管理端 - 资产盘点汇总
          */
-        public static function admin_get_pc_summary()
+        public static function admin_get_pc_summary($request)
         {
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_pc_name;
@@ -1622,7 +1622,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $cache_key = self::get_cache_key('pc_summary');
             $cached = get_transient($cache_key);
             if ($cached !== false) {
-                return rest_ensure_response($cached);
+                return self::rest_response_with_cache($request, $cached);
             }
 
             $rows = $wpdb->get_results("SELECT purchase, depreciation, created_at, data FROM $table_name", ARRAY_A);
@@ -1724,7 +1724,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
             set_transient($cache_key, $response, 5 * MINUTE_IN_SECONDS);
 
-            return rest_ensure_response($response);
+            return self::rest_response_with_cache($request, $response);
         }
 
         /**
@@ -2258,14 +2258,16 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 'types' => $wpdb->get_col("SELECT DISTINCT type FROM $table_manual WHERE type IS NOT NULL AND type != ''"),
             );
 
-            return rest_ensure_response(array(
+            $payload = array(
                 'items' => $items ?: array(),
                 'total' => intval($total),
                 'page' => $page,
                 'per_page' => $per_page,
                 'total_pages' => $per_page > 0 ? (int) ceil($total / $per_page) : 0,
                 'filters' => $filters,
-            ));
+            );
+            $last_modified = self::extract_latest_timestamp($items, array('created_at'));
+            return self::rest_response_with_cache($request, $payload, $last_modified);
         }
 
         /**
@@ -2456,14 +2458,16 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 'columns' => $wpdb->get_col("SELECT DISTINCT column_name FROM $table_auto WHERE column_name IS NOT NULL AND column_name != ''"),
             );
 
-            return rest_ensure_response(array(
+            $payload = array(
                 'items' => $items ?: array(),
                 'total' => intval($total),
                 'page' => $page,
                 'per_page' => $per_page,
                 'total_pages' => $per_page > 0 ? (int) ceil($total / $per_page) : 0,
                 'filters' => $filters,
-            ));
+            );
+            $last_modified = self::extract_latest_timestamp($items, array('changed_at'));
+            return self::rest_response_with_cache($request, $payload, $last_modified);
         }
 
         /**

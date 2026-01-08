@@ -24,7 +24,7 @@ const App: React.FC = () => {
   const onSearch: SearchProps["onSearch"] = async (value, _e, _info) => {
     const data = await fetchData(inputValue, value); //获取数据
     //空对象
-    if (Object.keys(data).length === 0) {
+    if (!data) {
       return;
     }
     /**

@@ -84,6 +84,120 @@ if (!class_exists('DEMA_Admin_Interface')) {
         }
 
         /**
+         * 计算数组行的最新时间戳
+         */
+        protected static function extract_latest_timestamp($rows, $fields)
+        {
+            if (!is_array($rows) || empty($fields)) {
+                return null;
+            }
+            $latest = 0;
+            foreach ($rows as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                foreach ($fields as $field) {
+                    if (empty($row[$field])) {
+                        continue;
+                    }
+                    $timestamp = strtotime($row[$field]);
+                    if ($timestamp && $timestamp > $latest) {
+                        $latest = $timestamp;
+                    }
+                }
+            }
+            return $latest > 0 ? $latest : null;
+        }
+
+        /**
+         * 构建带 ETag/Last-Modified 的 REST 响应
+         */
+        protected static function rest_response_with_cache($request, $payload, $last_modified = null)
+        {
+            $encoded = wp_json_encode($payload);
+            if ($encoded === false) {
+                $encoded = maybe_serialize($payload);
+            }
+            $etag = '"' . md5($encoded) . '"';
+
+            $last_modified_ts = null;
+            if (!empty($last_modified)) {
+                $last_modified_ts = is_numeric($last_modified)
+                    ? intval($last_modified)
+                    : strtotime($last_modified);
+            }
+            $last_modified_header = $last_modified_ts
+                ? gmdate('D, d M Y H:i:s', $last_modified_ts) . ' GMT'
+                : null;
+
+            $headers = array(
+                'ETag' => $etag,
+                'Cache-Control' => 'private, max-age=0, must-revalidate',
+                'Vary' => 'Cookie',
+            );
+            if ($last_modified_header) {
+                $headers['Last-Modified'] = $last_modified_header;
+            }
+
+            if ($request instanceof WP_REST_Request) {
+                $if_none_match = $request->get_header('if-none-match');
+                if (self::etag_matches($if_none_match, $etag)) {
+                    $not_modified = new WP_REST_Response(null, 304);
+                    $not_modified->set_headers($headers);
+                    return $not_modified;
+                }
+
+                $if_modified_since = $request->get_header('if-modified-since');
+                if (!$if_none_match && $last_modified_ts && $if_modified_since) {
+                    $since_ts = strtotime($if_modified_since);
+                    if ($since_ts && $since_ts >= $last_modified_ts) {
+                        $not_modified = new WP_REST_Response(null, 304);
+                        $not_modified->set_headers($headers);
+                        return $not_modified;
+                    }
+                }
+            }
+
+            $response = rest_ensure_response($payload);
+            $response->set_headers($headers);
+            return $response;
+        }
+
+        /**
+         * 判断 ETag 是否匹配
+         */
+        protected static function etag_matches($if_none_match, $etag)
+        {
+            if (empty($if_none_match) || empty($etag)) {
+                return false;
+            }
+            $if_none_match = trim($if_none_match);
+            if ($if_none_match === '*') {
+                return true;
+            }
+            $needle = self::normalize_etag($etag);
+            $parts = array_map('trim', explode(',', $if_none_match));
+            foreach ($parts as $part) {
+                if (self::normalize_etag($part) === $needle) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * 规范化 ETag
+         */
+        protected static function normalize_etag($etag)
+        {
+            $etag = trim($etag);
+            if (stripos($etag, 'W/') === 0) {
+                $etag = substr($etag, 2);
+            }
+            return trim($etag, "\"'");
+        }
+
+        /**
          * 清理电脑设备相关缓存
          */
         public static function clear_pc_cache()
