@@ -29,12 +29,11 @@ export default defineConfig(({ mode }) => {
               id.includes("@rc-component") ||
               /[\\/]rc-/.test(id)
             ) {
-              return "antd";
+              return "vendor";
             }
-            if (id.includes("react")) return "react";
-            if (id.includes("dayjs")) return "dayjs";
-            if (id.includes("axios")) return "axios";
-            if (id.includes("fuse.js")) return "fuse";
+            const reactChunkRE =
+              /[\\/]node_modules[\\/](react|react-dom|react-is|scheduler)[\\/]/;
+            if (reactChunkRE.test(id)) return "react";
             return "vendor";
           },
         },

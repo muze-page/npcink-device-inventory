@@ -33,8 +33,13 @@ export type {
   StyleDeviceData,
 };
 //设置
-import { ImportListData, OptionType } from "@/type/config";
-export type { ImportListData, OptionType };
+import {
+  ImportListData,
+  OptionType,
+  ExportPageData,
+  ImportReport,
+} from "@/type/config";
+export type { ImportListData, OptionType, ExportPageData, ImportReport };
 
 import {
   Computer,

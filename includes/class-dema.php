@@ -183,8 +183,7 @@ class Dema
 		}
 
 		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-dema-activator.php';
-		Dema_Activator::run();
-		update_option('dema_plugin_version', $this->version);
+		Dema_Activator::upgrade_schema($installed_version, $this->version);
 	}
 
 	/**

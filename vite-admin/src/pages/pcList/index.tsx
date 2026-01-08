@@ -7,12 +7,15 @@ import {
   Dispatch,
   useState,
   useEffect,
+  useMemo,
+  useRef,
   lazy,
   Suspense,
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
+import { FixedSizeGrid as Grid, type GridChildComponentProps } from "react-window";
 import {
   MysqlDeviceChangeMeat,
   FilterData,
@@ -20,6 +23,7 @@ import {
 } from "@/type/index";
 import { getDeviceCategory, getPcDetail, getPcList } from "@/services/index";
 import { queryKeys } from "@/services/queryKeys";
+import { useElementSize } from "@/hooks/useElementSize";
 
 //展示列表
 import DetailsList from "@/pages/pcList/detailsList";
@@ -37,6 +41,10 @@ import { DevieContext } from "@/context/DeviceContext";
 
 const App: React.FC = () => {
   const queryClient = useQueryClient();
+  const VIRTUALIZE_THRESHOLD = 200;
+  const ITEM_WIDTH = 224;
+  const ITEM_HEIGHT = 312;
+  const GRID_GAP = 16;
 
   //筛选条件
   const [filter, setFilter] = useState<FilterData>({
@@ -82,6 +90,7 @@ const App: React.FC = () => {
 
   const listData = listQuery.data?.items ?? [];
   const total = listQuery.data?.total ?? 0;
+  const shouldVirtualize = listData.length > VIRTUALIZE_THRESHOLD;
 
   const setListData: Dispatch<SetStateAction<MysqlDeviceChangeMeat[]>> = (
     value
@@ -137,8 +146,8 @@ const App: React.FC = () => {
   const [isName, setIsName] = useState(true);
 
   const detailQuery = useQuery({
-    queryKey: queryKeys.pcDetail(drawerData.uuid || ""),
-    queryFn: () => getPcDetail(drawerData.uuid),
+    queryKey: queryKeys.pcDetailSummary(drawerData.uuid || ""),
+    queryFn: () => getPcDetail(drawerData.uuid, "summary"),
     enabled: active && Boolean(drawerData.uuid),
   });
 
@@ -162,6 +171,50 @@ const App: React.FC = () => {
       departments: [],
     } as PCCategoryType);
 
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const { width: listWidth } = useElementSize(listContainerRef);
+  const [gridHeight, setGridHeight] = useState(640);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const updateHeight = () => {
+      setGridHeight(Math.max(360, window.innerHeight - 280));
+    };
+    updateHeight();
+    window.addEventListener("resize", updateHeight);
+    return () => window.removeEventListener("resize", updateHeight);
+  }, []);
+
+  const columnCount = useMemo(() => {
+    if (!listWidth) return 1;
+    return Math.max(1, Math.floor(listWidth / ITEM_WIDTH));
+  }, [listWidth, ITEM_WIDTH]);
+  const rowCount = Math.ceil(listData.length / columnCount);
+
+  const renderGridCell = ({
+    columnIndex,
+    rowIndex,
+    style,
+  }: GridChildComponentProps) => {
+    const index = rowIndex * columnCount + columnIndex;
+    if (index >= listData.length) {
+      return null;
+    }
+    const item = listData[index];
+    return (
+      <div style={{ ...style, padding: GRID_GAP / 2 }}>
+        <DetailsList
+          key={item.id}
+          data={item}
+          onActive={() => changeActive()}
+          onDrawerData={() => setDrawerData(item)}
+        />
+      </div>
+    );
+  };
+
   return (
     <DevieContext.Provider
       value={{
@@ -182,18 +235,34 @@ const App: React.FC = () => {
           setKeyword={setKeyword}
           onName={setIsName}
         />
-        <div className="flex content-start items-center flex-wrap w-full">
+        <div
+          className="flex content-start items-center flex-wrap w-full"
+          ref={listContainerRef}
+        >
           {/**开始循环 */}
-          <Flex wrap gap="large">
-            {listData.map((tab: MysqlDeviceChangeMeat) => (
-              <DetailsList
-                key={tab.id}
-                data={tab}
-                onActive={() => changeActive()}
-                onDrawerData={() => setDrawerData(tab)}
-              />
-            ))}
-          </Flex>
+          {shouldVirtualize && listWidth > 0 ? (
+            <Grid
+              height={gridHeight}
+              width={Math.max(listWidth, ITEM_WIDTH)}
+              columnWidth={ITEM_WIDTH}
+              rowHeight={ITEM_HEIGHT}
+              columnCount={columnCount}
+              rowCount={rowCount}
+            >
+              {renderGridCell}
+            </Grid>
+          ) : (
+            <Flex wrap gap="large">
+              {listData.map((tab: MysqlDeviceChangeMeat) => (
+                <DetailsList
+                  key={tab.id}
+                  data={tab}
+                  onActive={() => changeActive()}
+                  onDrawerData={() => setDrawerData(tab)}
+                />
+              ))}
+            </Flex>
+          )}
         </div>
         {/**没有数据 */}
         {listData.length === 0 && <SearchNoData />}

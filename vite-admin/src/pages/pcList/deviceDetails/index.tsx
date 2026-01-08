@@ -1,10 +1,11 @@
 /**
  * 设备详情 - 展开
  */
-import { useContext, useState, lazy, Suspense } from "react";
+import { useContext, useState, useEffect, lazy, Suspense } from "react";
 import type { ReactNode } from "react";
 import { Tabs, Spin } from "antd";
 import type { TabsProps } from "antd";
+import { useQuery } from "@tanstack/react-query";
 
 const Info = lazy(() => import("@/pages/pcList/deviceDetails/TabInfo"));
 const Change = lazy(() => import("@/pages/pcList/deviceDetails/TabChange"));
@@ -16,12 +17,21 @@ const ChangeAutoRecord = lazy(() => import("@/components/autoChangeRecord"));
 
 //公共方法
 import { DevieContext } from "@/context/DeviceContext";
+import { getPcDetail } from "@/services/index";
+import { queryKeys } from "@/services/queryKeys";
 
 const App: React.FC = () => {
   //获取数据
   //拿到父组件传入的删除方法
-  const { drawerData, detailLoading } = useContext(DevieContext);
+  const { drawerData } = useContext(DevieContext);
   const [autoRecordRefreshKey, setAutoRecordRefreshKey] = useState(0);
+  const [activeTab, setActiveTab] = useState("1");
+
+  useEffect(() => {
+    if (drawerData.uuid) {
+      setActiveTab("1");
+    }
+  }, [drawerData.uuid]);
 
   const refreshAutoRecord = () => {
     setAutoRecordRefreshKey((prev) => prev + 1);
@@ -39,26 +49,30 @@ const App: React.FC = () => {
     </Suspense>
   );
 
+  const shouldLoadHardware = activeTab === "1" || activeTab === "2";
+  const fullDetailQuery = useQuery({
+    queryKey: queryKeys.pcDetailFull(drawerData.uuid || ""),
+    queryFn: () => getPcDetail(drawerData.uuid, "full"),
+    enabled: Boolean(drawerData.uuid) && shouldLoadHardware,
+  });
+
+  const fullData = fullDetailQuery.data?.data ?? drawerData.data;
+  const fullLoading = fullDetailQuery.isFetching;
+
   //Tab 栏
   const items: TabsProps["items"] = [
     {
       key: "1",
       label: <span>硬件信息</span>,
       children: renderLazy(
-        <Info
-          data={drawerData.data}
-          time={drawerData.created_at}
-          loading={detailLoading}
-        />
+        <Info data={fullData} time={drawerData.created_at} loading={fullLoading} />
       ),
     },
 
     {
       key: "2",
       label: <span>详细信息</span>,
-      children: renderLazy(
-        <Detailed data={drawerData.data} loading={detailLoading} />
-      ),
+      children: renderLazy(<Detailed data={fullData} loading={fullLoading} />),
     },
     {
       key: "3",
@@ -82,7 +96,13 @@ const App: React.FC = () => {
       children: renderLazy(<Seting onSaved={refreshAutoRecord} />),
     },
   ];
-  return <Tabs defaultActiveKey="1" items={items} />;
+  return (
+    <Tabs
+      activeKey={activeTab}
+      onChange={setActiveTab}
+      items={items}
+    />
+  );
 };
 
 export default App;

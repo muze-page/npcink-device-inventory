@@ -85,7 +85,12 @@ const App: React.FC<Props> = ({ onSaved }) => {
         )
       );
       queryClient.setQueryData(
-        queryKeys.pcDetail(drawerData.uuid),
+        queryKeys.pcDetailSummary(drawerData.uuid),
+        (prev: typeof drawerData | undefined) =>
+          prev ? { ...prev, ...valuesData } : valuesData
+      );
+      queryClient.setQueryData(
+        queryKeys.pcDetailFull(drawerData.uuid),
         (prev: typeof drawerData | undefined) =>
           prev ? { ...prev, ...valuesData } : valuesData
       );
@@ -108,7 +113,10 @@ const App: React.FC<Props> = ({ onSaved }) => {
         ); //更新列表数据，移除当前设备
         deltSQLData(drawerData.uuid); //删除数据库数据
         queryClient.removeQueries({
-          queryKey: queryKeys.pcDetail(drawerData.uuid),
+          queryKey: queryKeys.pcDetailSummary(drawerData.uuid),
+        });
+        queryClient.removeQueries({
+          queryKey: queryKeys.pcDetailFull(drawerData.uuid),
         });
         setActive(false); //关闭弹窗
       },

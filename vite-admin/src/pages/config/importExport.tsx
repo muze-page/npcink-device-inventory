@@ -4,7 +4,7 @@ import { Space, Button, message, Modal, Spin } from "antd";
 import { exportSQLData, importSQLData } from "@/services/index";
 import { Site } from "@/utils/index";
 import { exportTable, formatDate } from "@/utils/tool";
-import { ImportListData, MysqlDevice } from "@/type/index";
+import { ImportListData, ImportReport } from "@/type/index";
 
 interface Props {
   name: string; //数据库表名
@@ -27,6 +27,9 @@ const translateTableName = (name: string) => {
 };
 
 const App: React.FC<Props> = ({ name }) => {
+  const EXPORT_PAGE_SIZE = 500;
+  const MAX_ERROR_DISPLAY = 20;
+
   //导入数据
   const [jsonContent, setJsonContent] = useState<ImportListData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -70,7 +73,7 @@ const App: React.FC<Props> = ({ name }) => {
         const jsonData = JSON.parse(content);
 
         // 验证必要的字段
-        if (!jsonData.name || !jsonData.data) {
+        if (!jsonData.name || !Array.isArray(jsonData.data)) {
           message.error("文件格式不正确，请选择有效的导出文件");
           return;
         }
@@ -141,10 +144,42 @@ const App: React.FC<Props> = ({ name }) => {
   };
 
   // 独立的导入处理函数
+  const showImportReport = (report: ImportReport) => {
+    const errors = report.errors || [];
+    const visibleErrors = errors.slice(0, MAX_ERROR_DISPLAY);
+    Modal.info({
+      title: "导入报告",
+      width: 520,
+      content: (
+        <div>
+          <p>总记录：{report.total_records}</p>
+          <p>成功：{report.imported_records}</p>
+          <p>跳过：{report.skipped_records}</p>
+          <p>失败：{report.failed_records}</p>
+          {visibleErrors.length > 0 ? (
+            <div className="mt-3">
+              <p className="text-sm text-zinc-500">失败明细（仅展示前 {MAX_ERROR_DISPLAY} 条）</p>
+              <div className="max-h-40 overflow-auto text-sm">
+                {visibleErrors.map((item, index) => (
+                  <div key={`${item.index}-${index}`}>
+                    #{item.index} {item.id ? `(${item.id})` : ""}：{item.reason}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ),
+    });
+  };
+
   const handleImport = async () => {
     try {
       setLoading(true);
-      await importSQLData(name, JSON.stringify(jsonContent));
+      const res = await importSQLData(name, JSON.stringify(jsonContent));
+      if (res?.data) {
+        showImportReport(res.data);
+      }
     } catch (error: any) {
       console.error("导入错误:", error);
       if (!error?.response) {
@@ -156,25 +191,52 @@ const App: React.FC<Props> = ({ name }) => {
   };
 
   //导出数据
+  const fetchExportPages = async (format: "json" | "csv") => {
+    let page = 1;
+    let totalPages = 1;
+    const items: Array<Record<string, unknown>> = [];
+    const csvChunks: string[] = [];
+
+    while (page <= totalPages) {
+      const res = await exportSQLData(name, {
+        page,
+        per_page: EXPORT_PAGE_SIZE,
+        format,
+      });
+      if (!res?.success || !res.data) {
+        throw new Error(res?.message || "导出失败");
+      }
+      const payload = res.data;
+      totalPages = payload.total_pages > 0 ? payload.total_pages : 1;
+      if (format === "csv") {
+        if (payload.csv) {
+          csvChunks.push(payload.csv);
+        }
+      } else {
+        items.push(...(payload.items || []));
+      }
+      page += 1;
+    }
+
+    return {
+      items,
+      csv: csvChunks.join(""),
+    };
+  };
+
   const downloadData = async () => {
     try {
       setLoading(true);
-      const jsonData = await exportSQLData(name);
-      if (!jsonData?.success) {
-        return;
-      }
-
+      const exportResult = await fetchExportPages("json");
       // 添加时间键值对
       const currentTime = new Date().toLocaleString();
 
-      //准备拿到数据
-      const devices: MysqlDevice[] = jsonData.data || []; // 正确访问数据
       //添加网址
       const dataWithTime = {
         site: Site,
         time: currentTime,
         name: name,
-        data: devices || [],
+        data: exportResult.items || [],
       };
 
       // 将数据转换为 JSON 字符串
@@ -216,10 +278,7 @@ const App: React.FC<Props> = ({ name }) => {
   const exportTableData = async () => {
     try {
       setLoading(true);
-      const jsonData = await exportSQLData(name);
-      if (!jsonData?.success) {
-        return;
-      }
+      const exportResult = await fetchExportPages("json");
 
       //准备导出文件名
       const tableName = translateTableName(name)
@@ -227,12 +286,46 @@ const App: React.FC<Props> = ({ name }) => {
         : "数据导出文件";
 
       // 如果没有拿到值，就此结束
-      exportTable(jsonData.data || [], tableName);
+      exportTable(exportResult.items || [], tableName);
       //message.success("表格导出成功");
     } catch (error: any) {
       console.error("表格导出错误:", error);
       if (!error?.response) {
         message.error("表格导出过程中发生错误，请重试");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportCsvData = async () => {
+    try {
+      setLoading(true);
+      const exportResult = await fetchExportPages("csv");
+      const currentTime = new Date().toLocaleString();
+      const tableName = translateTableName(name) || "数据";
+      const csvContent = exportResult.csv ? `\uFEFF${exportResult.csv}` : "";
+
+      const blob = new Blob([csvContent], {
+        type: "text/csv;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${tableName}_导出文件_${Site}_${currentTime}.csv`;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 1000);
+    } catch (error: any) {
+      console.error("CSV导出错误:", error);
+      if (!error?.response) {
+        message.error("CSV 导出过程中发生错误，请重试");
       }
     } finally {
       setLoading(false);
@@ -260,6 +353,9 @@ const App: React.FC<Props> = ({ name }) => {
         </Button>
         <Button onClick={downloadData} disabled={loading}>
           导出
+        </Button>
+        <Button onClick={exportCsvData} disabled={loading}>
+          导出CSV
         </Button>
         <Button onClick={exportTableData} disabled={loading}>
           导出表格

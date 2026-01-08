@@ -12,14 +12,16 @@ import { formatDate, formatNumber } from "@/utils/tool";
 
 interface Props {
   data: StyleDevice;
+  loading?: boolean;
 }
 
-const App: React.FC<Props> = ({ data }) => {
+const App: React.FC<Props> = ({ data, loading }) => {
   const deviceData = data.data;
   //拿到是否隐藏姓名的状态
   const { isName, detailLoading } = useContext(StyleContext);
 
-  if (detailLoading || !deviceData) {
+  const isLoading = loading ?? detailLoading;
+  if (isLoading || !deviceData) {
     return <Empty description="设备详情加载中" />;
   }
 

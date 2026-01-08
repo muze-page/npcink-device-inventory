@@ -1,8 +1,8 @@
 /**
  * 设置
  */
-import type { RestResponse } from "@/type/index";
-import { restInstance } from "@/services/axiosConfig";
+import type { RestResponse, ExportPageData, ImportReport } from "@/type/index";
+import { restInstance, type RequestConfig } from "@/services/axiosConfig";
 
 export const saveSQLData = async (
   optionObj: object
@@ -17,11 +17,21 @@ export const saveSQLData = async (
  * @returns
  */
 
-export const exportSQLData = async (name: string): Promise<RestResponse> => {
+export interface ExportParams {
+  page?: number;
+  per_page?: number;
+  format?: "json" | "csv";
+}
+
+export const exportSQLData = async (
+  name: string,
+  params: ExportParams = {}
+): Promise<RestResponse<ExportPageData>> => {
   const response = await restInstance.get("/admin/export", {
-    params: { name },
-  });
-  return response.data as RestResponse;
+    params: { name, ...params },
+    showSuccessMessage: false,
+  } as RequestConfig);
+  return response.data as RestResponse<ExportPageData>;
 };
 
 /**
@@ -33,7 +43,7 @@ export const exportSQLData = async (name: string): Promise<RestResponse> => {
 export const importSQLData = async (
   name: string,
   data: string
-): Promise<RestResponse> => {
+): Promise<RestResponse<ImportReport>> => {
   let payload: any = data;
   if (typeof data === "string") {
     try {
@@ -46,11 +56,15 @@ export const importSQLData = async (
   const payloadName = payload?.name || name;
   const payloadData = payload?.data || payload;
 
-  const response = await restInstance.post("/admin/import", {
-    name: payloadName,
-    data: payloadData,
-  });
-  return response.data as RestResponse;
+  const response = await restInstance.post(
+    "/admin/import",
+    {
+      name: payloadName,
+      data: payloadData,
+    },
+    { showSuccessMessage: false } as RequestConfig
+  );
+  return response.data as RestResponse<ImportReport>;
 };
 
 /**

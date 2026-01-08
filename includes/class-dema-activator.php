@@ -30,6 +30,15 @@ class Dema_Activator extends DEMA_Admin_Interface
 	 */
 	public static function run()
 	{
+		$current_version = defined('DEMA_VERSION') ? DEMA_VERSION : '1.0.0';
+		self::upgrade_schema(null, $current_version);
+	}
+
+	/**
+	 * 版本升级时执行数据库与索引增量迁移
+	 */
+	public static function upgrade_schema($installed_version, $current_version)
+	{
 		//存储电脑设备信息用
 		self::create_table_pc();
 
@@ -42,14 +51,76 @@ class Dema_Activator extends DEMA_Admin_Interface
 		//变更自动记录表
 		self::create_table_auto();
 
+		//补齐索引（老库升级时保障）
+		self::ensure_pc_indexes();
+		self::ensure_style_indexes();
+		self::ensure_manual_indexes();
+		self::ensure_auto_indexes();
+
 		//判断，所有选项都是空的，才会给初始值
 		if (get_option(self::$option) === false) {
 			self::device_manage_create_option();
 		}
 
-		if (defined('DEMA_VERSION')) {
-			update_option('dema_plugin_version', DEMA_VERSION);
+		if (!empty($current_version)) {
+			update_option('dema_plugin_version', $current_version);
 		}
+	}
+
+	/**
+	 * 确保索引存在（老库升级）
+	 */
+	private static function ensure_index($table_name, $index_name, $index_sql)
+	{
+		if (self::index_exists($table_name, $index_name)) {
+			return;
+		}
+		global $wpdb;
+		$wpdb->query("ALTER TABLE `$table_name` ADD $index_sql");
+	}
+
+	private static function ensure_pc_indexes()
+	{
+		global $wpdb;
+		$table_name = $wpdb->prefix . self::$table_pc_name;
+		self::ensure_index($table_name, 'idx_dept_state', 'KEY idx_dept_state (department, state)');
+		self::ensure_index($table_name, 'idx_department', 'KEY idx_department (department)');
+		self::ensure_index($table_name, 'idx_created_at', 'KEY idx_created_at (created_at)');
+		self::ensure_index($table_name, 'idx_dept_created', 'KEY idx_dept_created (department, created_at)');
+		self::ensure_index($table_name, 'idx_state', 'KEY idx_state (state)');
+		self::ensure_index($table_name, 'idx_updated_at', 'KEY idx_updated_at (updated_at)');
+	}
+
+	private static function ensure_style_indexes()
+	{
+		global $wpdb;
+		$table_name = $wpdb->prefix . self::$table_style_name;
+		self::ensure_index($table_name, 'idx_name', 'KEY idx_name (name)');
+		self::ensure_index($table_name, 'idx_purpose', 'KEY idx_purpose (purpose)');
+		self::ensure_index($table_name, 'idx_category', 'KEY idx_category (category)');
+		self::ensure_index($table_name, 'idx_state_category', 'KEY idx_state_category (state, category)');
+		self::ensure_index($table_name, 'idx_created_at', 'KEY idx_created_at (created_at)');
+	}
+
+	private static function ensure_manual_indexes()
+	{
+		global $wpdb;
+		$table_name = $wpdb->prefix . self::$table_manual_name;
+		self::ensure_index($table_name, 'idx_user', 'KEY idx_user (user)');
+		self::ensure_index($table_name, 'idx_type', 'KEY idx_type (type)');
+		self::ensure_index($table_name, 'idx_record_uuid', 'KEY idx_record_uuid (record_uuid)');
+		self::ensure_index($table_name, 'idx_created_at', 'KEY idx_created_at (created_at)');
+	}
+
+	private static function ensure_auto_indexes()
+	{
+		global $wpdb;
+		$table_name = $wpdb->prefix . self::$table_auto_name;
+		self::ensure_index($table_name, 'idx_record_uuid', 'KEY idx_record_uuid (record_uuid)');
+		self::ensure_index($table_name, 'idx_table_name', 'KEY idx_table_name (table_name)');
+		self::ensure_index($table_name, 'idx_column_name', 'KEY idx_column_name (column_name)');
+		self::ensure_index($table_name, 'idx_table_column', 'KEY idx_table_column (table_name, column_name)');
+		self::ensure_index($table_name, 'idx_changed_at', 'KEY idx_changed_at (changed_at)');
 	}
 
 	/**

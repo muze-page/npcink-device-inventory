@@ -1,5 +1,4 @@
 //准备初始数据
-import axios from "axios";
 import data from "@/utils/demoConfig";
 import { MysqlDevice, OptionType, Computer, StyleDevice } from "@/type/index";
 //开发环境状态
@@ -9,7 +8,6 @@ const devStatus = import.meta.env.VITE_STATE;
 const getDataLocal = () => {
   if (devStatus) {
     //开发
-    axios.defaults.baseURL = "/api"; //开发环境下配置代理
     return data;
   } else {
     //打包

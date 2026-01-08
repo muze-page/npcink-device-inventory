@@ -80,9 +80,14 @@ export const getPcSummary = async (): Promise<PcSummary> => {
   return response.data as PcSummary;
 };
 
+export type PcDetailFields = "summary" | "full";
+
 export const getPcDetail = async (
-  uuid: string
+  uuid: string,
+  fields: PcDetailFields = "full"
 ): Promise<MysqlDeviceChange> => {
-  const response = await restInstance.get(`/admin/pc/${uuid}`);
+  const response = await restInstance.get(`/admin/pc/${uuid}`, {
+    params: { fields },
+  });
   return response.data as MysqlDeviceChange;
 };

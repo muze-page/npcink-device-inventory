@@ -23,22 +23,6 @@ if (!class_exists('DEMA_Admin_Interface')) {
         public static $table_auto_name = "npcink_device_auto";
 
         /**
-         * 管理端 Ajax 请求权限校验
-         */
-        public static function ensure_admin_ajax($action = 'dema_admin')
-        {
-            if (!current_user_can('manage_options')) {
-                wp_send_json_error(['error' => '权限不足'], 403);
-                wp_die();
-            }
-
-            if (!check_ajax_referer($action, '_ajax_nonce', false)) {
-                wp_send_json_error(['error' => '非法请求'], 403);
-                wp_die();
-            }
-        }
-
-        /**
          * 缓存键生成（支持多站点）
          */
         public static function get_cache_key($suffix)

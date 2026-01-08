@@ -5,12 +5,15 @@ import {
   useState,
   SetStateAction,
   useEffect,
+  useMemo,
+  useRef,
   lazy,
   Suspense,
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pagination, Flex } from "antd";
 import type { PaginationProps } from "antd";
+import { FixedSizeGrid as Grid, type GridChildComponentProps } from "react-window";
 
 //自定义产品分类获取方法
 import {
@@ -19,6 +22,7 @@ import {
   getStyleList,
 } from "@/services/index";
 import { queryKeys } from "@/services/queryKeys";
+import { useElementSize } from "@/hooks/useElementSize";
 
 //数据渲染组件
 import DataList from "@/pages/styleList/dataList";
@@ -40,6 +44,10 @@ import SearchNoData from "@/components/searchNoData";
 
 const App: React.FC = () => {
   const queryClient = useQueryClient();
+  const VIRTUALIZE_THRESHOLD = 200;
+  const ITEM_WIDTH = 224;
+  const ITEM_HEIGHT = 312;
+  const GRID_GAP = 16;
 
   //共享弹窗状态
   const [active, setActive] = useState(false);
@@ -103,6 +111,7 @@ const App: React.FC = () => {
 
   const devices = listQuery.data?.items ?? [];
   const total = listQuery.data?.total ?? 0;
+  const shouldVirtualize = devices.length > VIRTUALIZE_THRESHOLD;
 
   const updateListCache = (
     updater: (items: StyleDevice[]) => StyleDevice[]
@@ -140,8 +149,8 @@ const App: React.FC = () => {
   };
 
   const detailQuery = useQuery({
-    queryKey: queryKeys.styleDetail(drawerData.uuid || ""),
-    queryFn: () => getStyleDetail(drawerData.uuid),
+    queryKey: queryKeys.styleDetailSummary(drawerData.uuid || ""),
+    queryFn: () => getStyleDetail(drawerData.uuid, "summary"),
     enabled: active && Boolean(drawerData.uuid),
   });
 
@@ -184,6 +193,50 @@ const App: React.FC = () => {
   //隐藏姓名
   const [isName, setIsName] = useState(true);
 
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const { width: listWidth } = useElementSize(listContainerRef);
+  const [gridHeight, setGridHeight] = useState(640);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const updateHeight = () => {
+      setGridHeight(Math.max(360, window.innerHeight - 280));
+    };
+    updateHeight();
+    window.addEventListener("resize", updateHeight);
+    return () => window.removeEventListener("resize", updateHeight);
+  }, []);
+
+  const columnCount = useMemo(() => {
+    if (!listWidth) return 1;
+    return Math.max(1, Math.floor(listWidth / ITEM_WIDTH));
+  }, [listWidth, ITEM_WIDTH]);
+  const rowCount = Math.ceil(devices.length / columnCount);
+
+  const renderGridCell = ({
+    columnIndex,
+    rowIndex,
+    style,
+  }: GridChildComponentProps) => {
+    const index = rowIndex * columnCount + columnIndex;
+    if (index >= devices.length) {
+      return null;
+    }
+    const item = devices[index];
+    return (
+      <div style={{ ...style, padding: GRID_GAP / 2 }}>
+        <DataList
+          key={item.id}
+          data={item}
+          onActive={() => changeActive()}
+          onDrawerData={() => setDrawerData(item)}
+        />
+      </div>
+    );
+  };
+
   return (
     <StyleContext.Provider
       value={{
@@ -205,18 +258,34 @@ const App: React.FC = () => {
           setKeyword={setKeyword}
           onName={setIsName}
         />
-        <div className="flex content-start items-center flex-wrap w-full">
-          <Flex wrap gap="large">
-            {/**开始循环 */}
-            {devices.map((tab: StyleDevice) => (
-              <DataList
-                key={tab.id}
-                data={tab}
-                onActive={() => changeActive()}
-                onDrawerData={() => setDrawerData(tab)}
-              />
-            ))}
-          </Flex>
+        <div
+          className="flex content-start items-center flex-wrap w-full"
+          ref={listContainerRef}
+        >
+          {/**开始循环 */}
+          {shouldVirtualize && listWidth > 0 ? (
+            <Grid
+              height={gridHeight}
+              width={Math.max(listWidth, ITEM_WIDTH)}
+              columnWidth={ITEM_WIDTH}
+              rowHeight={ITEM_HEIGHT}
+              columnCount={columnCount}
+              rowCount={rowCount}
+            >
+              {renderGridCell}
+            </Grid>
+          ) : (
+            <Flex wrap gap="large">
+              {devices.map((tab: StyleDevice) => (
+                <DataList
+                  key={tab.id}
+                  data={tab}
+                  onActive={() => changeActive()}
+                  onDrawerData={() => setDrawerData(tab)}
+                />
+              ))}
+            </Flex>
+          )}
         </div>
 
         {/**没有数据 */}

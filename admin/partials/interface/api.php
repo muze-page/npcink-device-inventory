@@ -887,21 +887,36 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_pc_name;
             $uuid = sanitize_text_field((string) $request['uuid']);
+            $fields = sanitize_text_field((string) $request->get_param('fields'));
+            $fields = ($fields === 'summary') ? 'summary' : 'full';
 
             if (empty($uuid)) {
                 return new WP_Error('missing_uuid', '获取设备失败：缺少设备UUID', array('status' => 400));
             }
 
-            $row = $wpdb->get_row(
-                $wpdb->prepare("SELECT * FROM $table_name WHERE uuid = %s", $uuid),
-                ARRAY_A
-            );
+            if ($fields === 'summary') {
+                $row = $wpdb->get_row(
+                    $wpdb->prepare(
+                        "SELECT id, name, number, state, department, purchase, depreciation, ip, created_at, updated_at, uuid
+                         FROM $table_name WHERE uuid = %s",
+                        $uuid
+                    ),
+                    ARRAY_A
+                );
+            } else {
+                $row = $wpdb->get_row(
+                    $wpdb->prepare("SELECT * FROM $table_name WHERE uuid = %s", $uuid),
+                    ARRAY_A
+                );
+            }
 
             if (empty($row)) {
                 return new WP_Error('not_found', '获取设备失败：设备不存在或已删除', array('status' => 404));
             }
 
-            $row['data'] = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
+            if ($fields === 'full') {
+                $row['data'] = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
+            }
 
             return rest_ensure_response($row);
         }
@@ -1241,21 +1256,36 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_style_name;
             $uuid = sanitize_text_field((string) $request['uuid']);
+            $fields = sanitize_text_field((string) $request->get_param('fields'));
+            $fields = ($fields === 'summary') ? 'summary' : 'full';
 
             if (empty($uuid)) {
                 return new WP_Error('missing_uuid', '获取自定义设备失败：缺少设备UUID', array('status' => 400));
             }
 
-            $row = $wpdb->get_row(
-                $wpdb->prepare("SELECT * FROM $table_name WHERE uuid = %s", $uuid),
-                ARRAY_A
-            );
+            if ($fields === 'summary') {
+                $row = $wpdb->get_row(
+                    $wpdb->prepare(
+                        "SELECT id, name, number, state, category, purpose, created_at, uuid
+                         FROM $table_name WHERE uuid = %s",
+                        $uuid
+                    ),
+                    ARRAY_A
+                );
+            } else {
+                $row = $wpdb->get_row(
+                    $wpdb->prepare("SELECT * FROM $table_name WHERE uuid = %s", $uuid),
+                    ARRAY_A
+                );
+            }
 
             if (empty($row)) {
                 return new WP_Error('not_found', '获取自定义设备失败：设备不存在或已删除', array('status' => 404));
             }
 
-            $row['data'] = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
+            if ($fields === 'full') {
+                $row['data'] = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
+            }
 
             return rest_ensure_response($row);
         }
@@ -1771,7 +1801,26 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             }
 
             $table_name = $wpdb->prefix . $name;
-            $rows = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);
+            $page = max(1, intval($request->get_param('page') ?: 1));
+            $per_page = intval($request->get_param('per_page') ?: 500);
+            $per_page = max(1, min(2000, $per_page));
+            $offset = ($page - 1) * $per_page;
+
+            $format = sanitize_text_field((string) $request->get_param('format'));
+            $format = $format === 'csv' ? 'csv' : 'json';
+
+            $total = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+            if ($wpdb->last_error) {
+                return new WP_Error('db_error', '导出失败：数据库错误', array(
+                    'status' => 500,
+                    'detail' => $wpdb->last_error,
+                ));
+            }
+
+            $rows = $wpdb->get_results(
+                $wpdb->prepare("SELECT * FROM $table_name LIMIT %d OFFSET %d", $per_page, $offset),
+                ARRAY_A
+            );
 
             if ($wpdb->last_error) {
                 return new WP_Error('db_error', '导出失败：数据库错误', array(
@@ -1780,11 +1829,59 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 ));
             }
 
+            $payload = array(
+                'total' => intval($total),
+                'page' => $page,
+                'per_page' => $per_page,
+                'total_pages' => $per_page > 0 ? (int) ceil($total / $per_page) : 0,
+            );
+
+            if ($format === 'csv') {
+                $include_header = $page === 1;
+                $payload['csv'] = self::build_csv($rows ?: array(), $include_header);
+                $payload['columns'] = !empty($rows) ? array_keys(reset($rows)) : array();
+            } else {
+                $payload['items'] = $rows ?: array();
+            }
+
             return rest_ensure_response(array(
                 'success' => true,
                 'message' => '导出成功',
-                'data' => $rows ?: array(),
+                'data' => $payload,
             ));
+        }
+
+        /**
+         * CSV 构建
+         */
+        private static function build_csv($rows, $include_header)
+        {
+            if (!is_array($rows) || empty($rows)) {
+                return '';
+            }
+
+            $columns = array_keys(reset($rows));
+            $fp = fopen('php://temp', 'r+');
+            if ($include_header) {
+                fputcsv($fp, $columns);
+            }
+
+            foreach ($rows as $row) {
+                $line = array();
+                foreach ($columns as $col) {
+                    $value = isset($row[$col]) ? $row[$col] : '';
+                    if (is_array($value) || is_object($value)) {
+                        $value = wp_json_encode($value);
+                    }
+                    $line[] = $value;
+                }
+                fputcsv($fp, $line);
+            }
+
+            rewind($fp);
+            $csv = stream_get_contents($fp);
+            fclose($fp);
+            return $csv ? $csv : '';
         }
 
         /**
@@ -1819,173 +1916,232 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 return new WP_Error('invalid_table', '导入失败：表名不合法', array('status' => 400));
             }
 
-            if (empty($data)) {
+            $total_records = is_array($data) ? count($data) : 0;
+            $report = array(
+                'total_records' => $total_records,
+                'imported_records' => 0,
+                'skipped_records' => 0,
+                'failed_records' => 0,
+                'errors' => array(),
+            );
+
+            if ($total_records === 0) {
                 return rest_ensure_response(array(
                     'success' => true,
                     'message' => '导入完成：没有可导入的数据',
-                    'imported_records' => 0,
-                    'total_records' => 0,
-                ));
-            }
-
-            $insert_data = array();
-
-            if ($name == self::$table_pc_name) {
-                foreach ($data as $item) {
-                    if (empty($item['data']) || empty($item['uuid'])) {
-                        return new WP_Error('invalid_data', '导入失败：设备信息不完整', array('status' => 400));
-                    }
-                    $uuid = isset($item['uuid']) ? $item['uuid'] : null;
-                    $table_name = $wpdb->prefix . self::$table_pc_name;
-                    $existingData = $wpdb->get_row(
-                        $wpdb->prepare(
-                            "SELECT * FROM $table_name WHERE uuid = %s",
-                            $uuid
-                        ),
-                        ARRAY_A
-                    );
-
-                    if (!$existingData) {
-                        $insert_data[] = array(
-                            'name' => isset($item['name']) ? $item['name'] : '',
-                            'state' => isset($item['state']) ? $item['state'] : 'apply',
-                            'number' => isset($item['number']) ? $item['number'] : 0,
-                            'department' => isset($item['department']) ? $item['department'] : 0,
-                            'purchase' => isset($item['purchase']) ? $item['purchase'] : 0,
-                            'depreciation' => isset($item['depreciation']) ? $item['depreciation'] : 0,
-                            'ip' => isset($item['ip']) ? $item['ip'] : '',
-                            'created_at' => isset($item['created_at']) ? ($item['created_at']) : null,
-                            'updated_at' => isset($item['updated_at']) ? ($item['updated_at']) : null,
-                            'uuid' => isset($item['uuid']) ? $item['uuid'] : '',
-                            'data' => isset($item['data']) ? ($item['data']) : null,
-                        );
-                    }
-                }
-            }
-
-            if ($name == self::$table_style_name) {
-                foreach ($data as $item) {
-                    $uuid = isset($item['uuid']) ? $item['uuid'] : null;
-                    $table_name = $wpdb->prefix . self::$table_style_name;
-                    $existingData = $wpdb->get_row(
-                        $wpdb->prepare(
-                            "SELECT * FROM $table_name WHERE uuid = %s",
-                            $uuid
-                        ),
-                        ARRAY_A
-                    );
-                    if (!$existingData) {
-                        $insert_data[] = array(
-                            'name' => isset($item['name']) ? $item['name'] :  null,
-                            'number' => isset($item['number']) ? $item['number'] :  null,
-                            'state' => isset($item['state']) ? $item['state'] :  null,
-                            'category' => isset($item['category']) ? $item['category'] :  null,
-                            'purpose' => isset($item['purpose']) ? $item['purpose'] :  null,
-                            'created_at' => isset($item['created_at']) ? $item['created_at'] :  null,
-                            'uuid' => isset($item['uuid']) ? $item['uuid'] :  null,
-                            'data' => isset($item['data']) ? $item['data'] :  null,
-                        );
-                    }
-                }
-            }
-
-            if ($name == self::$table_manual_name) {
-                foreach ($data as $item) {
-                    $record_uuid = isset($item['record_uuid']) ? $item['record_uuid'] : null;
-                    $created_at = isset($item['created_at']) ? $item['created_at'] : null;
-
-                    if (!$record_uuid || !$created_at) {
-                        continue;
-                    }
-
-                    $table_name = $wpdb->prefix . self::$table_manual_name;
-                    $existingData = $wpdb->get_row(
-                        $wpdb->prepare(
-                            "SELECT * FROM $table_name WHERE record_uuid = %s AND created_at = %s",
-                            $record_uuid,
-                            $created_at
-                        ),
-                        ARRAY_A
-                    );
-
-                    if (!$existingData) {
-                        $insert_data[] = array(
-                            'record_uuid' => isset($item['record_uuid']) ? $item['record_uuid'] :  null,
-                            'created_at' => isset($item['created_at']) ? $item['created_at'] : null,
-                            'user' => isset($item['user']) ? $item['user'] :  null,
-                            'type' => isset($item['type']) ? $item['type'] :  null,
-                            'data' => isset($item['data']) ? $item['data'] :  null,
-                        );
-                    }
-                }
-            }
-
-            if ($name == self::$table_auto_name) {
-                foreach ($data as $item) {
-                    $record_uuid = isset($item['record_uuid']) ? $item['record_uuid'] : null;
-                    $changed_at = isset($item['changed_at']) ? $item['changed_at'] : null;
-
-                    if (!$record_uuid || !$changed_at) {
-                        continue;
-                    }
-
-                    $table_name = $wpdb->prefix . self::$table_auto_name;
-                    $existingData = $wpdb->get_row(
-                        $wpdb->prepare(
-                            "SELECT * FROM $table_name WHERE record_uuid = %s AND changed_at = %s",
-                            $record_uuid,
-                            $changed_at
-                        ),
-                        ARRAY_A
-                    );
-
-                    if (!$existingData) {
-                        $insert_data[] = array(
-                            'table_name' => isset($item['table_name']) ? $item['table_name'] :  null,
-                            'column_name' => isset($item['column_name']) ? $item['column_name'] : null,
-                            'old_value' => isset($item['old_value']) ? $item['old_value'] :  null,
-                            'new_value' => isset($item['new_value']) ? $item['new_value'] :  null,
-                            'changed_at' => isset($item['changed_at']) ? $item['changed_at'] :  null,
-                            'record_uuid' => isset($item['record_uuid']) ? $item['record_uuid'] :  null,
-                        );
-                    }
-                }
-            }
-
-            if (empty($insert_data)) {
-                $total_records = is_array($data) ? count($data) : 0;
-                return rest_ensure_response(array(
-                    'success' => true,
-                    'message' => $total_records > 0 ? '导入完成：所有记录已存在' : '导入完成：没有可导入的数据',
-                    'total_records' => $total_records,
-                    'imported_records' => 0,
+                    'data' => $report,
                 ));
             }
 
             $table_name = $wpdb->prefix . $name;
-            foreach ($insert_data as $item) {
-                $result = $wpdb->insert($table_name, $item);
+            $error_limit = 50;
+
+            foreach ($data as $index => $item) {
+                $row_index = $index + 1;
+                if (!is_array($item)) {
+                    $report['failed_records']++;
+                    if (count($report['errors']) < $error_limit) {
+                        $report['errors'][] = array(
+                            'index' => $row_index,
+                            'reason' => '数据结构错误',
+                        );
+                    }
+                    continue;
+                }
+
+                if ($name == self::$table_pc_name) {
+                    $uuid = isset($item['uuid']) ? sanitize_text_field($item['uuid']) : '';
+                    $raw_data = isset($item['data']) ? $item['data'] : null;
+
+                    if (empty($uuid) || empty($raw_data)) {
+                        $report['failed_records']++;
+                        if (count($report['errors']) < $error_limit) {
+                            $report['errors'][] = array(
+                                'index' => $row_index,
+                                'id' => $uuid,
+                                'reason' => '设备信息不完整（uuid/data 缺失）',
+                            );
+                        }
+                        continue;
+                    }
+
+                    $exists = $wpdb->get_var(
+                        $wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE uuid = %s", $uuid)
+                    );
+                    if ($exists) {
+                        $report['skipped_records']++;
+                        continue;
+                    }
+
+                    $insert_row = array(
+                        'name' => sanitize_text_field(isset($item['name']) ? $item['name'] : ''),
+                        'state' => sanitize_text_field(isset($item['state']) ? $item['state'] : 'apply'),
+                        'number' => sanitize_text_field(isset($item['number']) ? $item['number'] : ''),
+                        'department' => sanitize_text_field(isset($item['department']) ? $item['department'] : ''),
+                        'purchase' => isset($item['purchase']) ? floatval($item['purchase']) : 0,
+                        'depreciation' => isset($item['depreciation']) ? floatval($item['depreciation']) : 0,
+                        'ip' => sanitize_text_field(isset($item['ip']) ? $item['ip'] : ''),
+                        'uuid' => $uuid,
+                        'data' => is_array($raw_data) || is_object($raw_data) ? wp_json_encode($raw_data) : $raw_data,
+                    );
+
+                    if (!empty($item['created_at'])) {
+                        $insert_row['created_at'] = sanitize_text_field($item['created_at']);
+                    }
+                    if (!empty($item['updated_at'])) {
+                        $insert_row['updated_at'] = sanitize_text_field($item['updated_at']);
+                    }
+
+                    $result = $wpdb->insert($table_name, $insert_row);
+                } elseif ($name == self::$table_style_name) {
+                    $uuid = isset($item['uuid']) ? sanitize_text_field($item['uuid']) : '';
+                    if (empty($uuid)) {
+                        $report['failed_records']++;
+                        if (count($report['errors']) < $error_limit) {
+                            $report['errors'][] = array(
+                                'index' => $row_index,
+                                'reason' => '设备信息不完整（uuid 缺失）',
+                            );
+                        }
+                        continue;
+                    }
+
+                    $exists = $wpdb->get_var(
+                        $wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE uuid = %s", $uuid)
+                    );
+                    if ($exists) {
+                        $report['skipped_records']++;
+                        continue;
+                    }
+
+                    $raw_data = isset($item['data']) ? $item['data'] : null;
+                    $insert_row = array(
+                        'name' => sanitize_text_field(isset($item['name']) ? $item['name'] : ''),
+                        'number' => sanitize_text_field(isset($item['number']) ? $item['number'] : ''),
+                        'state' => sanitize_text_field(isset($item['state']) ? $item['state'] : ''),
+                        'category' => sanitize_text_field(isset($item['category']) ? $item['category'] : ''),
+                        'purpose' => sanitize_text_field(isset($item['purpose']) ? $item['purpose'] : ''),
+                        'uuid' => $uuid,
+                    );
+
+                    if (!empty($item['created_at'])) {
+                        $insert_row['created_at'] = sanitize_text_field($item['created_at']);
+                    }
+                    if (!empty($raw_data)) {
+                        $insert_row['data'] = is_array($raw_data) || is_object($raw_data) ? wp_json_encode($raw_data) : $raw_data;
+                    }
+
+                    $result = $wpdb->insert($table_name, $insert_row);
+                } elseif ($name == self::$table_manual_name) {
+                    $record_uuid = isset($item['record_uuid']) ? sanitize_text_field($item['record_uuid']) : '';
+                    $created_at = isset($item['created_at']) ? sanitize_text_field($item['created_at']) : '';
+
+                    if (empty($record_uuid) || empty($created_at)) {
+                        $report['failed_records']++;
+                        if (count($report['errors']) < $error_limit) {
+                            $report['errors'][] = array(
+                                'index' => $row_index,
+                                'id' => $record_uuid,
+                                'reason' => '记录信息不完整（record_uuid/created_at 缺失）',
+                            );
+                        }
+                        continue;
+                    }
+
+                    $exists = $wpdb->get_var(
+                        $wpdb->prepare(
+                            "SELECT COUNT(*) FROM $table_name WHERE record_uuid = %s AND created_at = %s",
+                            $record_uuid,
+                            $created_at
+                        )
+                    );
+                    if ($exists) {
+                        $report['skipped_records']++;
+                        continue;
+                    }
+
+                    $insert_row = array(
+                        'record_uuid' => $record_uuid,
+                        'created_at' => $created_at,
+                        'user' => sanitize_text_field(isset($item['user']) ? $item['user'] : ''),
+                        'type' => sanitize_text_field(isset($item['type']) ? $item['type'] : ''),
+                        'data' => sanitize_text_field(isset($item['data']) ? $item['data'] : ''),
+                    );
+
+                    $result = $wpdb->insert($table_name, $insert_row);
+                } else {
+                    $record_uuid = isset($item['record_uuid']) ? sanitize_text_field($item['record_uuid']) : '';
+                    $changed_at = isset($item['changed_at']) ? sanitize_text_field($item['changed_at']) : '';
+
+                    if (empty($record_uuid) || empty($changed_at)) {
+                        $report['failed_records']++;
+                        if (count($report['errors']) < $error_limit) {
+                            $report['errors'][] = array(
+                                'index' => $row_index,
+                                'id' => $record_uuid,
+                                'reason' => '记录信息不完整（record_uuid/changed_at 缺失）',
+                            );
+                        }
+                        continue;
+                    }
+
+                    $exists = $wpdb->get_var(
+                        $wpdb->prepare(
+                            "SELECT COUNT(*) FROM $table_name WHERE record_uuid = %s AND changed_at = %s",
+                            $record_uuid,
+                            $changed_at
+                        )
+                    );
+                    if ($exists) {
+                        $report['skipped_records']++;
+                        continue;
+                    }
+
+                    $insert_row = array(
+                        'table_name' => sanitize_text_field(isset($item['table_name']) ? $item['table_name'] : ''),
+                        'column_name' => sanitize_text_field(isset($item['column_name']) ? $item['column_name'] : ''),
+                        'old_value' => sanitize_text_field(isset($item['old_value']) ? $item['old_value'] : ''),
+                        'new_value' => sanitize_text_field(isset($item['new_value']) ? $item['new_value'] : ''),
+                        'changed_at' => $changed_at,
+                        'record_uuid' => $record_uuid,
+                    );
+
+                    $result = $wpdb->insert($table_name, $insert_row);
+                }
+
+                if ($result === false) {
+                    $report['failed_records']++;
+                    if (count($report['errors']) < $error_limit) {
+                        $report['errors'][] = array(
+                            'index' => $row_index,
+                            'reason' => '数据库写入失败',
+                        );
+                    }
+                } else {
+                    $report['imported_records']++;
+                }
             }
 
-            if ($result !== false) {
-                $imported_count = count($insert_data);
+            if ($report['imported_records'] > 0) {
                 if ($name == self::$table_pc_name) {
                     self::clear_pc_cache();
                 }
                 if ($name == self::$table_style_name) {
                     self::clear_style_cache();
                 }
-                return rest_ensure_response(array(
-                    'success' => true,
-                    'message' => sprintf('成功导入 %d 条记录，刷新页面后查看', $imported_count),
-                    'imported_records' => $imported_count,
-                    'total_records' => is_array($data) ? count($data) : 0
-                ));
             }
 
-            return new WP_Error('insert_failed', '导入失败：数据库写入错误', array(
-                'status' => 500,
-                'detail' => $wpdb->last_error,
+            $message = sprintf(
+                '导入完成：成功 %d 条，跳过 %d 条，失败 %d 条',
+                $report['imported_records'],
+                $report['skipped_records'],
+                $report['failed_records']
+            );
+
+            return rest_ensure_response(array(
+                'success' => true,
+                'message' => $message,
+                'data' => $report,
             ));
         }
 

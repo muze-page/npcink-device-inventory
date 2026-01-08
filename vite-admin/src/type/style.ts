@@ -26,7 +26,7 @@ export interface StyleDeviceSeting {
   category: string; //分类
   purpose: string; //用途
   state: string; //设备状态
-  data: StyleDeviceData; //设备数据
+  data?: StyleDeviceData; //设备数据
 }
 
 //自定义设备类型

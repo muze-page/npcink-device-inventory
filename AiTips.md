@@ -95,33 +95,73 @@ Phase 3（数据库与查询优化）
 
 按我们前面的分阶段规划，下一步建议重点落在这几块（按优先级）：
 
-1) 完整迁移 admin‑ajax → REST（减少耦合、统一鉴权与提示）
+admin‑ajax → REST：删除旧 admin‑ajax 回调与校验残留（table-pc.php, table-style.php, table-manual.php, table-auto.php, seting.php, search-page.php）
+admin‑ajax → REST：仅保留开发态 nonce 的 admin‑ajax，其余入口彻底移除（api.php, axiosConfig.ts）
+admin‑ajax → REST：前端去除非 restInstance 的 axios 配置（index.tsx）
+变更记录分页与筛选：已完成，无需改动（api.php, auto.tsx, change.tsx, autoChangeRecord.tsx）
+数据库索引/查询优化：补“老库升级”的自动迁移触发（索引/生成列落库）（class-dema-activator.php，可新增升级入口文件并在 magick-device-manage.php 触发）
+导入导出升级：导出分页/分块接口 + 前端分页导出 UI（api.php, seting.ts, importExport.tsx）
+导入导出升级：导入校验报告（成功/失败条数 + 失败明细）（api.php, importExport.tsx）
+导入导出升级：CSV 导出（可选）（api.php, importExport.tsx）
+前端性能：PC/Style 列表虚拟滚动（新增虚拟列表组件并替换当前列表渲染）（index.tsx, detailsList.tsx, index.tsx, dataList.tsx）
+前端性能：详情页字段按需进一步拆分（按 Tab 触发请求/渲染）（index.tsx, vite-admin/src/pages/pcList/deviceDetails, vite-admin/src/pages/styleList/drawer）
 
-设置保存/导入导出/变更记录/公共搜索页创建，都改 REST
-统一走 manage_options + REST nonce
-前端统一使用 restInstance，提示完全由全局拦截器接管
-2) 变更记录接口做分页与筛选
 
-目前自动/手动记录是全量查询，4096 设备时会明显拖慢
-新增分页参数：page / per_page / search / record_uuid / table_name / column_name
-前端表格用分页 + 服务端搜索，避免全量加载
-3) 数据库索引/查询优化（4096 设备 + 并发 20）
 
-PC 表建议补索引：(number), (state), (department), (created_at), (updated_at)
-Style 表对 JSON 字段可用生成列 + 索引（platform/pay_method）
-变更表：record_uuid、changed_at 建索引
-4) 导入导出升级
+## Phase 0 性能基线报告（v1.0）
 
-支持大数据分页导出
-导入增加校验报告（成功/失败条数）
-可选：CSV 导出（更适合大数据）
-5) 前端性能
+### 1) 范围与入口
+- 管理端入口：`admin/partials/dema-admin-menu.php` 注入 React 管理端
+- 默认首屏 Tab：电脑设备（`vite-admin/src/pages/index.tsx`）
 
-列表按需字段渲染、虚拟滚动（如果列表 > 200）
-详情页只请求所需字段（减少 data JSON 解析）
+### 2) 构建快照
+- 统计来源：`vite-admin/dist`（本地快照时间：2025-01-07 17:37）
+- 说明：WP 管理端只 enqueue `index.js/index.css`，依赖包由 ESM 按需拉取
 
-如果要继续推进，建议下一步选其一：
+### 3) 首屏静态资源（实际请求）
+单位：raw / gzip
 
-做 Phase 0 基线与指标（出一份性能基线报告）
-做 Phase 4 构建/渲染优化（分包 + 懒加载 + 体积优化）
-做 Phase 2 的 React Query/SWR 与缓存策略
+- index.js：49.1 KB / 17.6 KB
+- vendor.js：67.7 KB / 21.5 KB
+- antd.js：887.6 KB / 276.7 KB
+- react.js：139.4 KB / 44.7 KB
+- axios.js：35.2 KB / 14.2 KB
+- dayjs.js：15.9 KB / 6.3 KB
+- index.css：14.0 KB / 3.4 KB
+
+首屏合计：1.18 MB raw / 384.3 KB gz
+
+### 4) 全量静态资源（含懒加载块）
+- JS/CSS 合计：1.22 MB raw / 401.6 KB gz
+
+### 5) 首屏 API 请求（默认 Tab）
+- 生产：2 次
+  - GET `/admin/pc?fields=summary`
+  - GET `/admin/pc-categories`
+- 开发：+1 次
+  - POST `/wp-admin/admin-ajax.php?action=dema_get_rest_nonce`
+
+### 6) 各页面初始 API 请求
+- 电脑设备：2 次（列表 + 分类）
+- 自定义设备：2 次（列表 + 分类）
+- 变更记录：1 次（手动列表），切换到自动再 +1
+- 资产盘点：1 次（`/admin/pc-summary`）
+- 设置：0 次（初始值来自 `dataLocal`）
+
+### 7) 数据规模（当前样例）
+- Demo 数据：PC ~63 条、Style ~12 条（`vite-admin/src/utils/demoData.ts` / `demoStyleData.ts`）
+
+### 8) 待补测项（上线前必须补齐）
+- 数据库规模（SQL）
+  - `SELECT COUNT(*) FROM wp_npcink_device_pc;`
+  - `SELECT COUNT(*) FROM wp_npcink_device_style;`
+  - `SELECT COUNT(*) FROM wp_npcink_device_manual;`
+  - `SELECT COUNT(*) FROM wp_npcink_device_auto;`
+- 首屏渲染耗时：FCP/TTI/JS 执行耗时
+- 核心接口时延与返回体大小：`/admin/pc`、`/admin/pc-categories`、`/admin/pc-summary`
+
+### 9) 建议基线阈值（目标）
+- 首屏 JS/CSS 传输（gz）：≤ 450 KB（当前 384.3 KB）
+- `/admin/pc` P95：≤ 300 ms
+- 首屏渲染（数据返回后）：≤ 300–500 ms
+- 单页内 API 请求数：≤ 3（当前默认为 2）

@@ -111,7 +111,14 @@ export const getStyleList = async (
   return response.data as PagedResponse<StyleDevice>;
 };
 
-export const getStyleDetail = async (uuid: string): Promise<StyleDevice> => {
-  const response = await restInstance.get(`/admin/style/${uuid}`);
+export type StyleDetailFields = "summary" | "full";
+
+export const getStyleDetail = async (
+  uuid: string,
+  fields: StyleDetailFields = "full"
+): Promise<StyleDevice> => {
+  const response = await restInstance.get(`/admin/style/${uuid}`, {
+    params: { fields },
+  });
   return response.data as StyleDevice;
 };

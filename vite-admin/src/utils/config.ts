@@ -1,7 +1,6 @@
 /**
  * 设置页面
  */
-import { MysqlDevice } from "@/type";
 /**
  *
  * @param jsonData 对象数组
@@ -9,11 +8,11 @@ import { MysqlDevice } from "@/type";
  * @returns 数组对象导出为表格
  */
 export const exportTable = (
-  jsonData: MysqlDevice[] | undefined,
+  jsonData: Array<Record<string, unknown>> | undefined,
   tableName: string
 ) => {
   // 如果没有拿到值，就此结束
-  if (!jsonData) {
+  if (!jsonData || jsonData.length === 0) {
     return;
   }
 
@@ -34,11 +33,18 @@ export const exportTable = (
 
   // 添加数据行
   const tbody = document.createElement("tbody");
-  jsonData.forEach((rowData: { [x: string]: string }) => {
+  jsonData.forEach((rowData) => {
     const row = document.createElement("tr");
     headers.forEach((header) => {
       const cell = document.createElement("td");
-      cell.appendChild(document.createTextNode(rowData[header]));
+      const value = rowData[header];
+      const text =
+        value === null || value === undefined
+          ? ""
+          : typeof value === "string"
+          ? value
+          : JSON.stringify(value);
+      cell.appendChild(document.createTextNode(text));
       row.appendChild(cell);
     });
     tbody.appendChild(row);

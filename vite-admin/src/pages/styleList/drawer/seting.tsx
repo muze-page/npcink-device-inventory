@@ -49,7 +49,10 @@ const App: React.FC<Props> = ({ onActive, onSaved }) => {
         if (state) {
           handleDeleteData(uuid); //调用父组件的删除方法
           queryClient.removeQueries({
-            queryKey: queryKeys.styleDetail(uuid),
+            queryKey: queryKeys.styleDetailSummary(uuid),
+          });
+          queryClient.removeQueries({
+            queryKey: queryKeys.styleDetailFull(uuid),
           });
           //1秒后关闭弹窗
           setTimeout(() => {
@@ -75,6 +78,10 @@ const App: React.FC<Props> = ({ onActive, onSaved }) => {
 
   //修改数据
   const onFinish: FormProps<StyleDeviceSeting>["onFinish"] = async (values) => {
+    if (!drawerData.data) {
+      message.error("设备详情加载中，请稍后再试");
+      return;
+    }
     //准备数据
     const valuesData = {
       id: drawerData.id,
@@ -94,7 +101,12 @@ const App: React.FC<Props> = ({ onActive, onSaved }) => {
       setDrawerData(valuesData); //更新弹窗数据
       handleUpdateData(uuid, valuesData); //调用父组件的更新方法
       queryClient.setQueryData(
-        queryKeys.styleDetail(uuid),
+        queryKeys.styleDetailSummary(uuid),
+        (prev: typeof drawerData | undefined) =>
+          prev ? { ...prev, ...valuesData } : valuesData
+      );
+      queryClient.setQueryData(
+        queryKeys.styleDetailFull(uuid),
         (prev: typeof drawerData | undefined) =>
           prev ? { ...prev, ...valuesData } : valuesData
       );
