@@ -57,7 +57,7 @@ const App: React.FC = () => {
   });
 
   const fullData = fullDetailQuery.data?.data ?? drawerData.data;
-  const fullLoading = fullDetailQuery.isFetching;
+  const fullLoading = fullDetailQuery.isFetching && !fullData;
 
   //Tab 栏
   const items: TabsProps["items"] = [

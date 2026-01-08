@@ -13,7 +13,7 @@ import {
   Suspense,
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pagination, Flex } from "antd";
+import { Pagination, Flex, message } from "antd";
 import type { PaginationProps } from "antd";
 import { FixedSizeGrid as Grid, type GridChildComponentProps } from "react-window";
 import {
@@ -24,6 +24,7 @@ import {
 import { getDeviceCategory, getPcDetail, getPcList } from "@/services/index";
 import { queryKeys } from "@/services/queryKeys";
 import { useElementSize } from "@/hooks/useElementSize";
+import { updateOSType } from "@/utils/tool";
 
 //展示列表
 import DetailsList from "@/pages/pcList/detailsList";
@@ -31,7 +32,8 @@ import DetailsList from "@/pages/pcList/detailsList";
 //筛选
 import Screen from "@/pages/pcList/screen";
 
-const Drawer = lazy(() => import("@/pages/pcList/drawer"));
+const loadDrawer = () => import("@/pages/pcList/drawer");
+const Drawer = lazy(loadDrawer);
 
 //筛序和搜索无结果时的提示
 import SearchNoData from "@/components/searchNoData";
@@ -133,11 +135,9 @@ const App: React.FC = () => {
   //console.log("当前总数", total);
   //共享弹窗状态
   const [active, setActive] = useState(false);
-
-  //修改弹窗状态
-  const changeActive = () => {
-    setActive(!active);
-  };
+  const [isOpening, setIsOpening] = useState(false);
+  const openingUuidRef = useRef<string | null>(null);
+  const drawerPrefetchRef = useRef<Promise<unknown> | null>(null);
 
   //当前选中弹窗的数据
   const [drawerData, setDrawerData] = useState({} as MysqlDeviceChangeMeat);
@@ -145,19 +145,35 @@ const App: React.FC = () => {
   //隐藏姓名
   const [isName, setIsName] = useState(true);
 
-  const detailQuery = useQuery({
-    queryKey: queryKeys.pcDetailSummary(drawerData.uuid || ""),
-    queryFn: () => getPcDetail(drawerData.uuid, "summary"),
-    enabled: active && Boolean(drawerData.uuid),
-  });
+  const detailLoading = isOpening;
 
-  const detailLoading = detailQuery.isLoading || detailQuery.isFetching;
+  const prefetchDrawer = () => {
+    if (!drawerPrefetchRef.current) {
+      drawerPrefetchRef.current = loadDrawer().catch(() => null);
+    }
+    return drawerPrefetchRef.current;
+  };
 
   useEffect(() => {
-    if (detailQuery.data) {
-      setDrawerData((prev) => ({ ...prev, ...detailQuery.data }));
+    if (typeof window === "undefined" || listData.length === 0) {
+      return;
     }
-  }, [detailQuery.data]);
+    const startPrefetch = () => {
+      void prefetchDrawer();
+    };
+    const runtime = globalThis as unknown as {
+      requestIdleCallback?: (cb: () => void) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    if (runtime.requestIdleCallback) {
+      const id = runtime.requestIdleCallback(startPrefetch);
+      return () => {
+        runtime.cancelIdleCallback?.(id);
+      };
+    }
+    const timer = setTimeout(startPrefetch, 200);
+    return () => clearTimeout(timer);
+  }, [listData.length]);
 
   const categoryQuery = useQuery({
     queryKey: queryKeys.pcCategories,
@@ -208,11 +224,74 @@ const App: React.FC = () => {
         <DetailsList
           key={item.id}
           data={item}
-          onActive={() => changeActive()}
-          onDrawerData={() => setDrawerData(item)}
+          onOpen={() => openDrawer(item)}
         />
       </div>
     );
+  };
+
+  const openDrawer = async (item: MysqlDeviceChangeMeat) => {
+    if (!item?.uuid) {
+      message.error("设备信息异常，请刷新后重试");
+      return;
+    }
+    const targetUuid = item.uuid;
+    openingUuidRef.current = targetUuid;
+    setIsOpening(true);
+    const loadingKey = "pc-detail-loading";
+    message.loading({
+      content: "正在加载设备详情...",
+      key: loadingKey,
+      duration: 0,
+    });
+    try {
+      const [fullDetail] = await Promise.all([
+        queryClient.fetchQuery({
+          queryKey: queryKeys.pcDetailFull(targetUuid),
+          queryFn: () => getPcDetail(targetUuid, "full"),
+        }),
+        prefetchDrawer(),
+      ]);
+      if (openingUuidRef.current !== targetUuid) {
+        return;
+      }
+      const computed = updateOSType([
+        {
+          ...(fullDetail as MysqlDeviceChangeMeat),
+          data: fullDetail.data,
+        },
+      ])[0];
+      const merged = {
+        ...item,
+        ...fullDetail,
+        meat: item.meat,
+        mac: item.mac,
+        ...(computed?.meat ? { meat: computed.meat } : {}),
+        ...(computed?.mac ? { mac: computed.mac } : {}),
+      };
+      setDrawerData(merged);
+      queryClient.setQueryData(
+        queryKeys.pcDetailSummary(targetUuid),
+        (prev: typeof merged | undefined) => (prev ? { ...prev, ...merged } : merged)
+      );
+      setActive(true);
+    } catch (error) {
+      if (openingUuidRef.current === targetUuid) {
+        message.error("设备详情获取失败，请稍后再试");
+      }
+    } finally {
+      if (openingUuidRef.current === targetUuid) {
+        openingUuidRef.current = null;
+        setIsOpening(false);
+        message.destroy(loadingKey);
+      }
+    }
+  };
+
+  const closeDrawer = () => {
+    setActive(false);
+    openingUuidRef.current = null;
+    setIsOpening(false);
   };
 
   return (
@@ -257,8 +336,7 @@ const App: React.FC = () => {
                 <DetailsList
                   key={tab.id}
                   data={tab}
-                  onActive={() => changeActive()}
-                  onDrawerData={() => setDrawerData(tab)}
+                  onOpen={() => openDrawer(tab)}
                 />
               ))}
             </Flex>
@@ -287,7 +365,7 @@ const App: React.FC = () => {
           <Suspense fallback={null}>
             <Drawer
               active={active}
-              onActive={() => changeActive()}
+              onActive={closeDrawer}
               data={drawerData}
             />
           </Suspense>

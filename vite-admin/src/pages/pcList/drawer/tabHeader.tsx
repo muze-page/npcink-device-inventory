@@ -17,8 +17,19 @@ const App: React.FC = ({}) => {
     { id: 2, name: "Windows", image: Win },
   ];
 
+  const meat = drawerData.meat || {
+    os: "未收录",
+    ostype: "",
+    cpu: "未收录",
+    cpuModel: "未收录",
+    motherboard: "未收录",
+    graphics: "未收录",
+    memory: "未收录",
+    disk: "未收录",
+  };
+
   //找到需要的系统对象
-  const osTypeObj = findOsTypeObj(osTypeArray, drawerData.meat.ostype);
+  const osTypeObj = findOsTypeObj(osTypeArray, meat.ostype || "");
 
   //准备样式
   const styleClassName = `${
@@ -52,8 +63,7 @@ const App: React.FC = ({}) => {
           <ul>
             <li className="mt-2">
               <Tooltip title="CPU 厂家 / 内存容量 / 硬盘容量">
-                {drawerData.meat.cpu} / {drawerData.meat.memory} /{" "}
-                {drawerData.meat.disk}
+                {meat.cpu} / {meat.memory} / {meat.disk}
               </Tooltip>
             </li>
             <li className="mt-2">

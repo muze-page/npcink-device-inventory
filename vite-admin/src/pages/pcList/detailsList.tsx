@@ -11,16 +11,14 @@ import { findOsTypeObj } from "@/utils/tool";
 
 interface Props {
   data: MysqlDeviceChangeMeat; //设备数据
-  onActive: () => void; //修改弹窗状态
-  onDrawerData: () => void; //保存值
+  onOpen: () => void; //打开弹窗
 }
-const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
+const App: React.FC<Props> = ({ data, onOpen }) => {
   //拿到公共值
   const { isName } = useContext(DevieContext);
   //点击打开弹窗并保存选中的值
   const showDrawer = () => {
-    onActive(); //打开弹窗
-    onDrawerData(); //保存值
+    onOpen();
   };
 
   //展示图片
