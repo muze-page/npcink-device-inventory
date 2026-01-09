@@ -174,6 +174,12 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $uuid_one_net = $data_obj->uuid->macs[0]; //第一个网口的MAC地址
             $uuid = md5($uuid_hardware . $uuid_one_net); //拼接，进行md5处理，短点更好看
 
+            // 从网卡信息中提取有效 IP
+            $device_ip = self::extract_valid_ip($data_obj);
+            if ($device_ip === '') {
+                $device_ip = '127.0.0.1';
+            }
+
             //检查是否存在重复数据
             $repeatData = self::check_data_repeat($uuid);
             if ($repeatData) {
@@ -190,12 +196,12 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             // 数据不存在，插入新数据
             $insert_data = [
                 'name' => $name, // 姓名
-                'state' => 'idie', // 默认状态为启用
+                'state' => '使用', // 默认状态为使用
                 'number' =>  $last_six_digits, // 编号
                 'department' => '默认', // 默认部门
                 'purchase' => 0, //采购价'
                 'depreciation' => 0, //二手价
-                'ip' => '127.0.0.1', //默认IP地址
+                'ip' => $device_ip, // 默认IP地址
                 'uuid' => $uuid, // 唯一标识符
                 'data' => $data, // 数据
             ];
@@ -254,6 +260,134 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             return $valid_password; // 返回验证结果
         }
 
+        /**
+         * 从设备数据中提取有效 IP
+         * 优先使用默认网卡的 IPv4，其次为其他非内网卡 IPv4，再退回 IPv6
+         */
+        private static function extract_valid_ip($data_obj)
+        {
+            $net = null;
+            if (is_object($data_obj) && isset($data_obj->net)) {
+                $net = $data_obj->net;
+            } elseif (is_array($data_obj) && isset($data_obj['net'])) {
+                $net = $data_obj['net'];
+            }
+
+            if (!is_array($net)) {
+                return '';
+            }
+
+            $entries = array();
+            foreach ($net as $item) {
+                if (is_object($item)) {
+                    $item = (array) $item;
+                }
+                if (!is_array($item)) {
+                    continue;
+                }
+                $entries[] = array(
+                    'ip4' => isset($item['ip4']) ? trim((string) $item['ip4']) : '',
+                    'ip6' => isset($item['ip6']) ? trim((string) $item['ip6']) : '',
+                    'default' => !empty($item['default']),
+                    'internal' => !empty($item['internal']),
+                    'operstate' => isset($item['operstate']) ? (string) $item['operstate'] : '',
+                );
+            }
+
+            $ip = self::pick_ip_from_entries($entries, 'ip4', true);
+            if ($ip !== '') {
+                return $ip;
+            }
+            $ip = self::pick_ip_from_entries($entries, 'ip6', true);
+            if ($ip !== '') {
+                return $ip;
+            }
+            $ip = self::pick_ip_from_entries($entries, 'ip4', false);
+            if ($ip !== '') {
+                return $ip;
+            }
+            return self::pick_ip_from_entries($entries, 'ip6', false);
+        }
+
+        /**
+         * 从网卡列表中挑选 IP
+         */
+        private static function pick_ip_from_entries($entries, $key, $exclude_internal)
+        {
+            if (!is_array($entries) || empty($entries)) {
+                return '';
+            }
+
+            foreach ($entries as $entry) {
+                if (empty($entry[$key]) || ($exclude_internal && !empty($entry['internal']))) {
+                    continue;
+                }
+                if ($key === 'ip4' && !self::is_valid_ipv4($entry[$key])) {
+                    continue;
+                }
+                if ($key === 'ip6' && !self::is_valid_ipv6($entry[$key])) {
+                    continue;
+                }
+                if (!empty($entry['default'])) {
+                    return $entry[$key];
+                }
+            }
+
+            foreach ($entries as $entry) {
+                if (empty($entry[$key]) || ($exclude_internal && !empty($entry['internal']))) {
+                    continue;
+                }
+                if ($key === 'ip4' && !self::is_valid_ipv4($entry[$key])) {
+                    continue;
+                }
+                if ($key === 'ip6' && !self::is_valid_ipv6($entry[$key])) {
+                    continue;
+                }
+                if (isset($entry['operstate']) && $entry['operstate'] === 'up') {
+                    return $entry[$key];
+                }
+            }
+
+            foreach ($entries as $entry) {
+                if (empty($entry[$key]) || ($exclude_internal && !empty($entry['internal']))) {
+                    continue;
+                }
+                if ($key === 'ip4' && !self::is_valid_ipv4($entry[$key])) {
+                    continue;
+                }
+                if ($key === 'ip6' && !self::is_valid_ipv6($entry[$key])) {
+                    continue;
+                }
+                return $entry[$key];
+            }
+
+            return '';
+        }
+
+        /**
+         * IPv4 校验（排除 loopback/无效段）
+         */
+        private static function is_valid_ipv4($ip)
+        {
+            if ($ip === '' || $ip === '0.0.0.0' || $ip === '127.0.0.1') {
+                return false;
+            }
+            if (strpos($ip, '169.254.') === 0) {
+                return false;
+            }
+            return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false;
+        }
+
+        /**
+         * IPv6 校验（排除 loopback）
+         */
+        private static function is_valid_ipv6($ip)
+        {
+            if ($ip === '' || $ip === '::1') {
+                return false;
+            }
+            return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
+        }
 
 
         /**
