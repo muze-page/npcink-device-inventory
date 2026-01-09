@@ -83,6 +83,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 	{
 		global $wpdb;
 		$table_name = $wpdb->prefix . self::$table_pc_name;
+		self::ensure_index($table_name, 'idx_name', 'KEY idx_name (name)');
 		self::ensure_index($table_name, 'idx_dept_state', 'KEY idx_dept_state (department, state)');
 		self::ensure_index($table_name, 'idx_department', 'KEY idx_department (department)');
 		self::ensure_index($table_name, 'idx_created_at', 'KEY idx_created_at (created_at)');
@@ -153,6 +154,7 @@ class Dema_Activator extends DEMA_Admin_Interface
         PRIMARY KEY (id),
         UNIQUE (number),
         UNIQUE (uuid),
+		KEY idx_name (name),
 		-- 添加复合索引
         KEY idx_dept_state (department, state),
         KEY idx_department (department),

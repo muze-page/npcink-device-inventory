@@ -100,6 +100,12 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 );
             }
 
+            $cache_key = self::get_cache_key('public_query_' . md5($query_data));
+            $cached = get_transient($cache_key);
+            if (is_array($cached) && isset($cached['payload'])) {
+                $last_modified = isset($cached['last_modified']) ? $cached['last_modified'] : null;
+                return self::rest_response_with_cache($request, $cached['payload'], $last_modified);
+            }
 
             // 构造 SQL 查询语句
             $prepared_query = $wpdb->prepare("SELECT * FROM " . self::$table_name . " WHERE number = %s OR name = %s", $query_data, $query_data);
@@ -108,11 +114,28 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $result = $wpdb->get_row($prepared_query);
 
             if ($result) {
-                // 返回查询结果
-                wp_send_json_success([
-                    'message' => '查询成功',
-                    'data' => $result,
-                ]);
+                $payload = array(
+                    'success' => true,
+                    'data' => array(
+                        'message' => '查询成功',
+                        'data' => $result,
+                    ),
+                );
+                $last_modified = null;
+                if (!empty($result->updated_at)) {
+                    $last_modified = $result->updated_at;
+                } elseif (!empty($result->created_at)) {
+                    $last_modified = $result->created_at;
+                }
+                set_transient(
+                    $cache_key,
+                    array(
+                        'payload' => $payload,
+                        'last_modified' => $last_modified,
+                    ),
+                    2 * MINUTE_IN_SECONDS
+                );
+                return self::rest_response_with_cache($request, $payload, $last_modified);
             } else {
                 return wp_send_json_error([
                     'error' => '数据不存在，请换个姓名或编号再试试'

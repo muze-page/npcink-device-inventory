@@ -94,3 +94,21 @@ JSON 输入统一处理：wp_unslash + json_decode + wp_json_encode + 长度/结
 - `/admin/pc` P95：≤ 300 ms
 - 首屏渲染（数据返回后）：≤ 300–500 ms
 - 单页内 API 请求数：≤ 3（当前默认为 2）
+
+
+# 下一步整改意见
+结合当前模块（插件 api.php、前端 axios.tsx、客户端 seting.vue），给你一份安全 + 性能整改清单，按优先级排序：
+
+安全整改（高优先）
+
+把“共享口令”升级为“设备级令牌 / HMAC 签名”：请求里带 timestamp + nonce + signature，服务端校验并防重放。现在的单一密码一旦泄露，所有设备全失守。改动点主要在 api.php + seting.vue。
+禁止 query 参数传密码，只允许 header/body；为兼容旧客户端可做“开关+告警”。现在 public_permissions_check 接受多来源，容易被日志泄露。
+增加失败次数限制（IP + UUID 维度），用 transient 做限流/锁定；失败太多直接 429。改动点 api.php。
+CORS 从 * 改为白名单（站点域名/设置项），并显式允许 x-npcink-password 与 content-type。当前 Access-Control-Allow-Origin: * 风险较高。
+生产环境关闭 WP_DEBUG 并限制 debug.log 访问（否则凭据/路径会暴露）。
+性能整改（高优先）
+
+给 npcink_device_pc 增加索引（至少 uuid 唯一索引 + number + name + state + department），查询和统计会快很多。可在 class-dema-activator.php 里用 index_exists 动态补。
+公共查询接口不要 SELECT *，建议做“基础信息 + 详情分开”或加 detail=1 才返回完整 data。改动点 api.php 的 query_data。
+为公共查询加短时缓存（按查询 key + 最后更新时间生成 ETag / transient），减轻数据库压力。你已经在管理端用 rest_response_with_cache 了，可以复用逻辑。
+减少上传数据体积：InsPackage 只上传必要字段或压缩（若服务器支持）。当前 body 约 10KB 起步，规模化会有压力。
