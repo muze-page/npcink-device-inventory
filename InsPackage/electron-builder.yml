@@ -1,0 +1,21 @@
+{
+  "appId": "com.magick.desktop", # appid
+  "productName": "filename", # 为可执行文件指定名称，默认为 package.json 的 name
+  "copyright": "Copyright © year sywdebug", # 版权信息
+  "directories": {
+      "output": "release", # 输出路径
+    },
+  "mac": {},
+  "win": {
+      "target": "nsis", # 目标包类型：nsis 列表，nsis-webWeb 安装程序，portable 无需安装的便携式应用程序
+      "icon": "dist/icon.ico", # 应用程序图标的路径，尺寸至少256*256
+      "legalTrademarks": "", # 商标和注册商标
+    },
+  "nsis": {
+      "oneClick": true, # 是否创建一键安装程序或辅助
+      "perMachine": false, # 是否总是针对所有用户（每台机器）进行安装
+      "allowToChangeInstallationDirectory": true, # 是否允许用户更改安装目录
+      "removeDefaultUninstallWelcomePage": false, # 删除默认的卸载欢迎页面
+    },
+  "linux": {},
+}

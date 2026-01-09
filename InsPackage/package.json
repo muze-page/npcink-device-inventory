@@ -1,0 +1,37 @@
+{
+  "name": "upload-data",
+  "private": true,
+  "version": "0.1.6",
+  "description": "查看和上传当前设备硬件信息",
+  "author": "Npcink",
+  "type": "commonjs",
+  "main": "electron/main.js",
+  "build": {
+    "directories": {
+      "output": "release"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build ",
+    "builds": "vite build && electron-builder",
+    "preview": "vite preview",
+    "win32": "electron-builder --win --ia32"
+  },
+  "dependencies": {
+    "axios": "^1.5.0",
+    
+    "systeminformation": "^5.21.4",
+    "vue": "^3.3.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.9",
+    "@vitejs/plugin-vue": "^4.2.3",
+    "electron": "^29.1.6",
+    "electron-builder": "^24.6.4",
+    "less": "^4.2.0",
+    "less-loader": "^7.3.0",
+    "vite": "^4.4.0",
+    "vite-plugin-electron": "^0.14.0"
+  }
+}
