@@ -1,0 +1,81 @@
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+:root {
+  --font-display: "Newsreader", "Noto Serif SC", serif;
+  --font-body: "Space Grotesk", "Noto Sans SC", sans-serif;
+  --bg: #f7f2ec;
+  --bg-soft: #efe8df;
+  --ink: #1b262c;
+  --muted: #5b6770;
+  --accent: #f46b45;
+  --accent-2: #1f9a94;
+  --card: #fff8f1;
+  --line: rgba(27, 38, 44, 0.12);
+  --shadow: 0 24px 60px rgba(27, 38, 44, 0.16);
+  --shadow-soft: 0 14px 32px rgba(27, 38, 44, 0.12);
+  --radius: 18px;
+}
+
+#npcinkSearch,
+#npcinkSearch * {
+  box-sizing: border-box;
+}
+
+#npcinkSearch {
+  position: relative;
+  min-height: 100vh;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: radial-gradient(
+      circle at top left,
+      rgba(244, 107, 69, 0.18),
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 15% 80%,
+      rgba(31, 154, 148, 0.15),
+      transparent 50%
+    ),
+    linear-gradient(180deg, var(--bg), var(--bg-soft));
+}
+
+#npcinkSearch h1,
+#npcinkSearch h2,
+#npcinkSearch h3 {
+  font-family: var(--font-display);
+  margin: 0;
+}
+
+#npcinkSearch p {
+  margin: 0;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

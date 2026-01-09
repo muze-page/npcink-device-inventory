@@ -53,7 +53,12 @@ const App: React.FC<Props> = ({ data }) => {
 
   return (
     <>
-      <Tabs defaultActiveKey="1" items={tabs} tabPosition="left"/>
+      <Tabs
+        defaultActiveKey="1"
+        items={tabs}
+        tabPosition="top"
+        className="device-tabs"
+      />
     </>
   );
 };

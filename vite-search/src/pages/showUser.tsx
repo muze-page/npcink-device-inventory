@@ -2,40 +2,61 @@
  * 展示用户数据
  */
 import React from "react";
-import { Card, Space } from "antd";
-import {  formatDate } from "@/utils/tool";
+import { formatDate } from "@/utils/tool";
 import { MysqlDeviceChange } from "@/type/index";
 
 interface Props {
   data: MysqlDeviceChange; //设备数据
 }
 const App: React.FC<Props> = ({ data }) => {
+  const stateLabel = data.state || "未知";
+  const stateKey = stateLabel
+    .toString()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-");
+  const statusClass = stateKey ? `status-${stateKey}` : "status-default";
+  const createdAt = data.created_at ? formatDate(data.created_at) : "-";
+  const updatedAt = data.updated_at ? formatDate(data.updated_at) : "-";
+
   return (
     <>
-      <Space direction="vertical" size={16}>
-        <Card title="设备信息" style={{ width: 300, textAlign: "left" }}>
-          <p>
-            <b>姓名：</b>
-            {data.name}
-          </p>
-          <p>
-            <b>编号：</b>
-            {data.number}
-          </p>
-          <p>
-            <b>时间：</b>
-            {formatDate(data.created_at)}
-          </p>
-          <p>
-            <b>部门：</b>
-            {data.department}
-          </p>
-          <p>
-            <b>状态：</b>
-            {data.state}
-          </p>
-        </Card>
-      </Space>
+      <section className="device-summary">
+        <div className="summary-top">
+          <div>
+            <p className="summary-eyebrow">设备概览</p>
+            <h3>基础信息</h3>
+          </div>
+          <span className={`status-pill ${statusClass}`}>{stateLabel}</span>
+        </div>
+        <div className="summary-meta">
+          <span className="meta-item">
+            编号
+            <strong>{data.number || "-"}</strong>
+          </span>
+          <span className="meta-item">
+            部门
+            <strong>{data.department || "-"}</strong>
+          </span>
+        </div>
+        <dl className="summary-grid">
+          <div>
+            <dt>姓名</dt>
+            <dd>{data.name || "-"}</dd>
+          </div>
+          <div>
+            <dt>创建时间</dt>
+            <dd>{createdAt}</dd>
+          </div>
+          <div>
+            <dt>更新时间</dt>
+            <dd>{updatedAt}</dd>
+          </div>
+          <div>
+            <dt>UUID</dt>
+            <dd className="mono">{data.uuid || "-"}</dd>
+          </div>
+        </dl>
+      </section>
     </>
   );
 };
