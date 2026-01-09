@@ -87,6 +87,8 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
             // 获取传递过来的字符串参数并进行安全过滤
             $query_data = isset($request['data']) ? sanitize_text_field($request['data']) : null;
+            $detail_param = $request instanceof WP_REST_Request ? $request->get_param('detail') : (isset($request['detail']) ? $request['detail'] : null);
+            $include_detail = in_array(strtolower((string) $detail_param), array('1', 'true', 'yes'), true);
 
             /**
              * 安全检查 - 是否为空
@@ -100,7 +102,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 );
             }
 
-            $cache_key = self::get_cache_key('public_query_' . md5($query_data));
+            $cache_key = self::get_cache_key('public_query_' . md5($query_data . '|' . ($include_detail ? '1' : '0')));
             $cached = get_transient($cache_key);
             if (is_array($cached) && isset($cached['payload'])) {
                 $last_modified = isset($cached['last_modified']) ? $cached['last_modified'] : null;
@@ -108,7 +110,27 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             }
 
             // 构造 SQL 查询语句
-            $prepared_query = $wpdb->prepare("SELECT * FROM " . self::$table_name . " WHERE number = %s OR name = %s", $query_data, $query_data);
+            $fields = array(
+                'id',
+                'name',
+                'number',
+                'state',
+                'department',
+                'ip',
+                'created_at',
+                'updated_at',
+                'uuid',
+            );
+            if ($include_detail) {
+                $fields[] = 'data';
+            } else {
+                $fields[] = 'NULL AS data';
+            }
+            $prepared_query = $wpdb->prepare(
+                "SELECT " . implode(', ', $fields) . " FROM " . self::$table_name . " WHERE number = %s OR name = %s",
+                $query_data,
+                $query_data
+            );
 
             // 执行查询
             $result = $wpdb->get_row($prepared_query);
@@ -587,17 +609,196 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         }
 
         /**
+         * 获取客户端 IP
+         */
+        private static function get_client_ip()
+        {
+            $ip = '';
+            if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+                $parts = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+                $ip = trim($parts[0]);
+            } elseif (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+                $ip = trim($_SERVER['HTTP_CLIENT_IP']);
+            } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
+                $ip = trim($_SERVER['REMOTE_ADDR']);
+            }
+
+            if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+                return 'unknown';
+            }
+
+            return $ip;
+        }
+
+        /**
+         * 从请求中提取 UUID（上传请求可解析 data）
+         */
+        private static function extract_uuid_from_request($request)
+        {
+            $uuid = '';
+            $data = null;
+
+            if ($request instanceof WP_REST_Request) {
+                $uuid = $request->get_param('uuid');
+                $data = $request->get_param('data');
+            } elseif (is_array($request)) {
+                $uuid = isset($request['uuid']) ? $request['uuid'] : '';
+                $data = isset($request['data']) ? $request['data'] : null;
+            }
+
+            if (is_string($uuid) && $uuid !== '') {
+                return sanitize_text_field($uuid);
+            }
+
+            if (is_string($data)) {
+                $decoded = json_decode($data, true);
+                if (is_array($decoded)) {
+                    $uuid = self::derive_uuid_from_data($decoded);
+                }
+            } elseif (is_array($data) || is_object($data)) {
+                $uuid = self::derive_uuid_from_data($data);
+            }
+
+            return $uuid ? sanitize_text_field((string) $uuid) : '';
+        }
+
+        /**
+         * 从设备数据中计算 UUID
+         */
+        private static function derive_uuid_from_data($data_obj)
+        {
+            if (is_object($data_obj)) {
+                $data_obj = (array) $data_obj;
+            }
+            if (!is_array($data_obj)) {
+                return '';
+            }
+
+            if (!empty($data_obj['uuid']) && is_string($data_obj['uuid'])) {
+                return $data_obj['uuid'];
+            }
+
+            $uuid_data = isset($data_obj['uuid']) && is_array($data_obj['uuid']) ? $data_obj['uuid'] : array();
+            $hardware = isset($uuid_data['hardware']) ? (string) $uuid_data['hardware'] : '';
+            $macs = isset($uuid_data['macs']) && is_array($uuid_data['macs']) ? $uuid_data['macs'] : array();
+            $mac = !empty($macs[0]) ? (string) $macs[0] : '';
+
+            if ($hardware !== '' && $mac !== '') {
+                return md5($hardware . $mac);
+            }
+
+            return '';
+        }
+
+        /**
+         * 公共接口限流配置
+         */
+        private static function get_rate_limit_settings()
+        {
+            return array(
+                'max_attempts' => 8,
+                'window' => 10 * MINUTE_IN_SECONDS,
+            );
+        }
+
+        /**
+         * 获取限流缓存键
+         */
+        private static function get_rate_limit_key($request)
+        {
+            $ip = self::get_client_ip();
+            $uuid = self::extract_uuid_from_request($request);
+            if ($uuid === '') {
+                $uuid = 'no-uuid';
+            }
+            $route = $request instanceof WP_REST_Request ? $request->get_route() : '';
+            return self::get_cache_key('public_rate_' . md5($ip . '|' . $uuid . '|' . $route));
+        }
+
+        /**
+         * 获取限流状态
+         */
+        private static function get_rate_limit_state($request)
+        {
+            $settings = self::get_rate_limit_settings();
+            $key = self::get_rate_limit_key($request);
+            $state = get_transient($key);
+            if (!is_array($state)) {
+                return array('blocked' => false, 'retry_after' => 0);
+            }
+
+            $now = time();
+            $start = isset($state['start']) ? intval($state['start']) : 0;
+            $count = isset($state['count']) ? intval($state['count']) : 0;
+
+            if ($start <= 0 || ($now - $start) > $settings['window']) {
+                delete_transient($key);
+                return array('blocked' => false, 'retry_after' => 0);
+            }
+
+            $blocked = $count >= $settings['max_attempts'];
+            $retry_after = max(0, $settings['window'] - ($now - $start));
+
+            return array(
+                'blocked' => $blocked,
+                'retry_after' => $retry_after,
+            );
+        }
+
+        /**
+         * 记录一次失败
+         */
+        private static function register_rate_limit_failure($request)
+        {
+            $settings = self::get_rate_limit_settings();
+            $key = self::get_rate_limit_key($request);
+            $state = get_transient($key);
+            $now = time();
+
+            if (!is_array($state) || !isset($state['start']) || ($now - intval($state['start'])) > $settings['window']) {
+                $state = array(
+                    'count' => 0,
+                    'start' => $now,
+                );
+            }
+
+            $state['count'] = intval($state['count']) + 1;
+            set_transient($key, $state, $settings['window']);
+        }
+
+        /**
+         * 清理限流状态
+         */
+        private static function clear_rate_limit($request)
+        {
+            $key = self::get_rate_limit_key($request);
+            delete_transient($key);
+        }
+
+        /**
          * 公共接口 - 密码校验
          */
         public static function public_permissions_check($request)
         {
+            $rate_state = self::get_rate_limit_state($request);
+            if (!empty($rate_state['blocked'])) {
+                return new WP_Error('rate_limited', '请求过于频繁，请稍后再试', array(
+                    'status' => 429,
+                    'retry_after' => $rate_state['retry_after'],
+                ));
+            }
+
             $password = self::get_public_password($request);
             if ($password === '') {
+                self::register_rate_limit_failure($request);
                 return new WP_Error('missing_password', '请填写客户端传输数据用的验证密码', array('status' => 403));
             }
             if (!self::password_verification($password)) {
+                self::register_rate_limit_failure($request);
                 return new WP_Error('invalid_password', '密码验证失败，请检查！', array('status' => 403));
             }
+
+            self::clear_rate_limit($request);
             return true;
         }
 

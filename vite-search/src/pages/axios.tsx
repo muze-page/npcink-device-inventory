@@ -27,6 +27,7 @@ export const fetchData = async (password: string, id: string) => {
       params: {
         data: safeId,
         password: safePassword,
+        detail: 1,
       },
     });
     //console.log(response);
