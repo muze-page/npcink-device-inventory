@@ -349,13 +349,76 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         private static function get_public_password($request)
         {
             $password = '';
+            $source = 'none';
+            $raw_body_len = 0;
+            $content_type = '';
+            $content_length = '';
+            $route = '';
             if ($request instanceof WP_REST_Request) {
+                $content_type = $request->get_header('content-type');
+                $content_length = $request->get_header('content-length');
+                $route = $request->get_route();
                 $password = $request->get_header('x-npcink-password');
-                if ($password === '') {
+                if ($password === '' || $password === null) {
                     $password = $request->get_param('password');
+                    if ($password !== '' && $password !== null) {
+                        $source = 'param';
+                    }
+                } else {
+                    $source = 'header';
+                }
+                if ($password === '' || $password === null) {
+                    $json_params = $request->get_json_params();
+                    if (is_array($json_params) && array_key_exists('password', $json_params)) {
+                        $password = $json_params['password'];
+                        $source = 'json';
+                    }
+                }
+                if ($password === '' || $password === null) {
+                    $body_params = $request->get_body_params();
+                    if (is_array($body_params) && array_key_exists('password', $body_params)) {
+                        $password = $body_params['password'];
+                        $source = 'body';
+                    }
+                }
+                if ($password === '' || $password === null) {
+                    $raw_body = $request->get_body();
+                    $raw_body_len = !empty($raw_body) ? strlen($raw_body) : 0;
+                    if (!empty($raw_body)) {
+                        $decoded = json_decode($raw_body, true);
+                        if (is_array($decoded) && array_key_exists('password', $decoded)) {
+                            $password = $decoded['password'];
+                            $source = 'raw_json';
+                        } else {
+                            $parsed = array();
+                            parse_str($raw_body, $parsed);
+                            if (is_array($parsed) && array_key_exists('password', $parsed)) {
+                                $password = $parsed['password'];
+                                $source = 'raw_form';
+                            }
+                        }
+                    }
                 }
             } elseif (is_array($request)) {
                 $password = isset($request['password']) ? $request['password'] : '';
+                if ($password !== '') {
+                    $source = 'array';
+                }
+            }
+
+            if (($password === '' || $password === null) && isset($_REQUEST['password'])) {
+                $password = $_REQUEST['password'];
+                if ($password !== '') {
+                    $source = 'request';
+                }
+            }
+
+            if (is_array($password) || is_object($password)) {
+                $password = '';
+            } elseif (!is_string($password)) {
+                $password = strval($password);
+            } else {
+                $password = (string) $password;
             }
 
             if (!is_string($password)) {
