@@ -28,30 +28,28 @@ const App: React.FC<Props> = ({ data }) => {
           </div>
           <span className={`status-pill ${statusClass}`}>{stateLabel}</span>
         </div>
-        <div className="summary-meta">
-          <span className="meta-item">
-            编号
-            <strong>{data.number || "-"}</strong>
-          </span>
-          <span className="meta-item">
-            部门
-            <strong>{data.department || "-"}</strong>
-          </span>
-        </div>
-        <dl className="summary-grid">
-          <div>
+        <dl className="summary-list">
+          <div className="summary-item">
+            <dt>编号</dt>
+            <dd>{data.number || "-"}</dd>
+          </div>
+          <div className="summary-item">
             <dt>姓名</dt>
             <dd>{data.name || "-"}</dd>
           </div>
-          <div>
+          <div className="summary-item">
+            <dt>部门</dt>
+            <dd>{data.department || "-"}</dd>
+          </div>
+          <div className="summary-item">
             <dt>创建时间</dt>
             <dd>{createdAt}</dd>
           </div>
-          <div>
+          <div className="summary-item">
             <dt>更新时间</dt>
             <dd>{updatedAt}</dd>
           </div>
-          <div>
+          <div className="summary-item">
             <dt>UUID</dt>
             <dd className="mono">{data.uuid || "-"}</dd>
           </div>

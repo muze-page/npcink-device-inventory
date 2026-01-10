@@ -27,5 +27,5 @@ export default defineConfig({
   },
   
     //媒体资源打包前缀，避免图片无法正常显示
-    base: site + "search-admin/dist/",
+    base: site + "vite-search/dist/",
 })

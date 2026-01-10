@@ -39,8 +39,8 @@ if (!class_exists('DEMA_Admin_Interface_Search_Page')) {
             $ver = DEMA_Admin_Menu::$plugin_version;
             $name = DEMA_Admin_Menu::$plugin_name . '-search';
             //准备地址
-            // $index_css = plugin_dir_url(dirname(__DIR__)) . 'search/dist/index.css';
-            // wp_enqueue_style($name, $index_css, array(), $ver, false);
+             $index_css = plugin_dir_url(dirname(dirname(__DIR__))) . 'vite-search/dist/index.css';
+             wp_enqueue_style($name, $index_css, array(), $ver, false);
             $index_js = plugin_dir_url(dirname(dirname(__DIR__))) . 'vite-search/dist/index.js';
 
 

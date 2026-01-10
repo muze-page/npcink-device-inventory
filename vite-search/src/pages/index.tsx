@@ -58,19 +58,10 @@ const App: React.FC = () => {
               <p>
                 输入授权口令与设备号/姓名, 快速获取设备状态与硬件细节.
               </p>
-              <div className="hero-stats">
-                <div className="stat-card">
-                  <span>校验方式</span>
-                  <strong>口令验证</strong>
-                </div>
-                <div className="stat-card">
-                  <span>查询范围</span>
-                  <strong>编号 / 姓名</strong>
-                </div>
-                <div className="stat-card">
-                  <span>数据来源</span>
-                  <strong>设备上报</strong>
-                </div>
+              <div className="hero-meta">
+                <span>口令校验</span>
+                <span>编号 / 姓名</span>
+                <span>2 分钟缓存</span>
               </div>
             </div>
             <div className="hero-panel">
@@ -114,9 +105,12 @@ const App: React.FC = () => {
                 >
                   查询设备
                 </Button>
-                <span className="panel-note">
-                  如提示缺少密码, 请确认请求未被安全插件拦截.
-                </span>
+                <div className="panel-note">
+                  <span className="note-label">提示</span>
+                  <span>
+                    如提示缺少密码, 请确认请求未被安全插件拦截.
+                  </span>
+                </div>
               </div>
             </div>
           </header>
