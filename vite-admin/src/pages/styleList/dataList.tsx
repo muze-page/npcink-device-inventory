@@ -3,7 +3,7 @@
  *  {JSON.stringify(data, null, 2)}
  */
 import { useContext } from "react";
-import { Tooltip, Skeleton, Space } from "antd";
+import { Checkbox, Tooltip, Skeleton, Space } from "antd";
 
 //跨组件提供方法
 import { StyleContext } from "@/context/StyleContext";
@@ -18,15 +18,29 @@ interface Props {
   data: StyleDevice; //拿到自定义设备数据
   onActive: () => void; //修改状态
   onDrawerData: () => void; //保存值
+  selectable?: boolean; //批量选择模式
+  selected?: boolean; //是否已选中
+  onSelect?: () => void; //选中切换
 }
-const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
+const App: React.FC<Props> = ({
+  data,
+  onActive,
+  onDrawerData,
+  selectable = false,
+  selected = false,
+  onSelect,
+}) => {
   //拿到是否隐藏姓名的状态
   const { isName } = useContext(StyleContext);
   const title = data.data?.title || "未命名设备";
   const total = data.data?.total ?? 0;
 
-  //点击打开弹窗
-  const showDrawer = () => {
+  //点击打开弹窗或切换选中状态
+  const handleCardClick = () => {
+    if (selectable) {
+      onSelect?.();
+      return;
+    }
     onActive(); //打开弹窗
     onDrawerData(); //保存值
   };
@@ -35,13 +49,19 @@ const App: React.FC<Props> = ({ data, onActive, onDrawerData }) => {
     <>
       {/**开始展示设备信息 */}
       <div
-        className="
-        cursor-pointer p-4 rounded-xl  w-52 h-72 mac
-        hover:border-1 hover:border-blue-400 "
-        onClick={() => {
-          showDrawer();
-        }}
+        className={`relative cursor-pointer p-4 rounded-xl w-52 h-72 mac hover:border-1 hover:border-blue-400 ${
+          selectable && selected ? "ring-2 ring-blue-400" : ""
+        }`}
+        onClick={handleCardClick}
       >
+        {selectable ? (
+          <div
+            className="absolute top-2 right-2 z-10"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Checkbox checked={selected} onChange={() => onSelect?.()} />
+          </div>
+        ) : null}
         {/**顶部标志 */}
         {/** 
         <Space className="flex justify-between">

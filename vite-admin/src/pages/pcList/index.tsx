@@ -13,7 +13,7 @@ import {
   Suspense,
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pagination, Flex, message } from "antd";
+import { Pagination, Flex, message, Modal } from "antd";
 import type { PaginationProps } from "antd";
 import { FixedSizeGrid as Grid, type GridChildComponentProps } from "react-window";
 import {
@@ -21,10 +21,16 @@ import {
   FilterData,
   PCCategoryType,
 } from "@/type/index";
-import { getDeviceCategory, getPcDetail, getPcList } from "@/services/index";
+import {
+  getDeviceCategory,
+  getPcDetail,
+  getPcList,
+  deltSQLData,
+} from "@/services/index";
 import { queryKeys } from "@/services/queryKeys";
 import { useElementSize } from "@/hooks/useElementSize";
 import { updateOSType } from "@/utils/tool";
+import type { RequestConfig } from "@/services/axiosConfig";
 
 //展示列表
 import DetailsList from "@/pages/pcList/detailsList";
@@ -59,6 +65,11 @@ const App: React.FC = () => {
   const [keyword, setKeyword] = useState("");
   const [debouncedKeyword, setDebouncedKeyword] = useState("");
 
+  //批量删除
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedUuids, setSelectedUuids] = useState<Set<string>>(new Set());
+  const [batchDeleting, setBatchDeleting] = useState(false);
+
   //每页展示数量
   const [PAGE_SIZE, setPAGE_SIZE] = useState(10); //每页展示数量
 
@@ -75,6 +86,16 @@ const App: React.FC = () => {
   useEffect(() => {
     setPageNumber(1);
   }, [filter, debouncedKeyword, PAGE_SIZE]);
+
+  useEffect(() => {
+    setSelectedUuids(new Set());
+  }, [pageNumber, PAGE_SIZE, filter, debouncedKeyword]);
+
+  useEffect(() => {
+    if (!batchMode) {
+      setSelectedUuids(new Set());
+    }
+  }, [batchMode]);
 
   const listParams = {
     page: pageNumber,
@@ -93,6 +114,97 @@ const App: React.FC = () => {
   const listData = listQuery.data?.items ?? [];
   const total = listQuery.data?.total ?? 0;
   const shouldVirtualize = listData.length > VIRTUALIZE_THRESHOLD;
+
+  const selectedCount = selectedUuids.size;
+  const allSelected =
+    listData.length > 0 && listData.every((item) => selectedUuids.has(item.uuid));
+
+  const toggleSelect = (uuid: string) => {
+    setSelectedUuids((prev) => {
+      const next = new Set(prev);
+      if (next.has(uuid)) {
+        next.delete(uuid);
+      } else {
+        next.add(uuid);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedUuids(new Set());
+      return;
+    }
+    const next = new Set<string>();
+    listData.forEach((item) => next.add(item.uuid));
+    setSelectedUuids(next);
+  };
+
+  const handleToggleBatchMode = () => {
+    setBatchMode((prev) => !prev);
+  };
+
+  const handleBatchDelete = () => {
+    if (selectedCount === 0) {
+      message.warning("请先选择要删除的设备");
+      return;
+    }
+    const targets = Array.from(selectedUuids);
+    Modal.confirm({
+      title: "确认批量删除",
+      content: `确定删除已选 ${selectedCount} 台设备吗？相关变更记录将一并删除！`,
+      okText: "删除",
+      cancelText: "取消",
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        setBatchDeleting(true);
+        try {
+          const results = await Promise.allSettled(
+            targets.map((uuid) =>
+              deltSQLData(uuid, {
+                showSuccessMessage: false,
+              } as RequestConfig)
+            )
+          );
+          const successUuids: string[] = [];
+          const failedUuids: string[] = [];
+          results.forEach((result, index) => {
+            if (result.status === "fulfilled" && result.value) {
+              successUuids.push(targets[index]);
+            } else {
+              failedUuids.push(targets[index]);
+            }
+          });
+
+          if (successUuids.length > 0) {
+            setListData((prevData) =>
+              prevData.filter((item) => !successUuids.includes(item.uuid))
+            );
+            successUuids.forEach((uuid) => {
+              queryClient.removeQueries({
+                queryKey: queryKeys.pcDetailSummary(uuid),
+              });
+              queryClient.removeQueries({
+                queryKey: queryKeys.pcDetailFull(uuid),
+              });
+            });
+          }
+
+          if (failedUuids.length > 0) {
+            setSelectedUuids(new Set(failedUuids));
+            message.error(`删除失败 ${failedUuids.length} 台设备，请重试`);
+          } else {
+            setSelectedUuids(new Set());
+            setBatchMode(false);
+            message.success(`已删除 ${successUuids.length} 台设备`);
+          }
+        } finally {
+          setBatchDeleting(false);
+        }
+      },
+    });
+  };
 
   const setListData: Dispatch<SetStateAction<MysqlDeviceChangeMeat[]>> = (
     value
@@ -225,6 +337,9 @@ const App: React.FC = () => {
           key={item.id}
           data={item}
           onOpen={() => openDrawer(item)}
+          selectable={batchMode}
+          selected={selectedUuids.has(item.uuid)}
+          onSelect={() => toggleSelect(item.uuid)}
         />
       </div>
     );
@@ -313,6 +428,14 @@ const App: React.FC = () => {
           keyword={keyword}
           setKeyword={setKeyword}
           onName={setIsName}
+          batchMode={batchMode}
+          selectedCount={selectedCount}
+          listCount={listData.length}
+          allSelected={allSelected}
+          deleting={batchDeleting}
+          onToggleBatchMode={handleToggleBatchMode}
+          onSelectAll={toggleSelectAll}
+          onBatchDelete={handleBatchDelete}
         />
         <div
           className="flex content-start items-center flex-wrap w-full"
@@ -337,6 +460,9 @@ const App: React.FC = () => {
                   key={tab.id}
                   data={tab}
                   onOpen={() => openDrawer(tab)}
+                  selectable={batchMode}
+                  selected={selectedUuids.has(tab.uuid)}
+                  onSelect={() => toggleSelect(tab.uuid)}
                 />
               ))}
             </Flex>

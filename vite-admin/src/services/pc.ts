@@ -7,7 +7,7 @@ import {
   MysqlDeviceChange,
   MysqlDeviceChangeMeat,
 } from "@/type/index";
-import { restInstance } from "@/services/axiosConfig";
+import { restInstance, type RequestConfig } from "@/services/axiosConfig";
 import { PagedResponse, PcSummary } from "@/type/index";
 /**
  * 修改设备数据，一次性更新
@@ -29,9 +29,9 @@ export const changeMySql = async (uuid: string, data: MysqlDeviceData) => {
 };
 
 //根据指定UUID移除设备
-export const deltSQLData = async (uuid: string) => {
+export const deltSQLData = async (uuid: string, config?: RequestConfig) => {
   try {
-    const res = await restInstance.delete(`/admin/pc/${uuid}`);
+    const res = await restInstance.delete(`/admin/pc/${uuid}`, config);
     return res.data.success === true;
   } catch (error: any) {
     console.log("保存设置选项时出错：" + error.message);

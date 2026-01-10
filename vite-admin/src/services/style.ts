@@ -6,7 +6,7 @@ import {
   StyleDeviceSeting,
   StyleCategoryType,
 } from "@/type/index";
-import { restInstance } from "@/services/axiosConfig";
+import { restInstance, type RequestConfig } from "@/services/axiosConfig";
 import { PagedResponse } from "@/type/index";
 
 /**
@@ -58,9 +58,12 @@ export const addStyleDeviceData = async (
  * 删
  */
 
-export const deleteStyleDeviceData = async (uuid: string): Promise<boolean> => {
+export const deleteStyleDeviceData = async (
+  uuid: string,
+  config?: RequestConfig
+): Promise<boolean> => {
   try {
-    const response = await restInstance.delete(`/admin/style/${uuid}`);
+    const response = await restInstance.delete(`/admin/style/${uuid}`, config);
     return response.data.success === true;
   } catch (error) {
     console.log(error);

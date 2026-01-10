@@ -8,6 +8,9 @@ import {
   ReloadOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
+  DeleteOutlined,
+  CheckSquareOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 import { FilterData } from "@/type/index";
 import { normalize } from "@/utils/tool";
@@ -19,6 +22,14 @@ interface Props {
   keyword: string; //搜索关键字
   setKeyword: (value: string) => void; //修改搜索关键字
   onName: (value: boolean) => void; //传递隐藏姓名状态
+  batchMode: boolean; //批量删除模式
+  selectedCount: number; //已选数量
+  listCount: number; //当前页数据量
+  allSelected: boolean; //是否全选
+  deleting: boolean; //批量删除中
+  onToggleBatchMode: () => void; //开启/关闭批量
+  onSelectAll: () => void; //全选/取消全选
+  onBatchDelete: () => void; //执行批量删除
 }
 
 //准备搜索框
@@ -31,6 +42,14 @@ const App: React.FC<Props> = ({
   keyword,
   setKeyword,
   onName,
+  batchMode,
+  selectedCount,
+  listCount,
+  allSelected,
+  deleting,
+  onToggleBatchMode,
+  onSelectAll,
+  onBatchDelete,
 }) => {
   //拿到是否隐藏姓名的状态和部门选项
   const { isName, deviceCategoryOption } = useContext(DevieContext);
@@ -139,6 +158,34 @@ const App: React.FC<Props> = ({
               onClick={restSelect}
             />
           </Tooltip>
+
+          {batchMode ? (
+            <Space size="small" wrap>
+              <Button onClick={onToggleBatchMode} icon={<CloseOutlined />}>
+                取消
+              </Button>
+              <Button
+                onClick={onSelectAll}
+                icon={<CheckSquareOutlined />}
+                disabled={listCount === 0}
+              >
+                {allSelected ? "取消全选" : "全选本页"}
+              </Button>
+              <Button
+                danger
+                onClick={onBatchDelete}
+                icon={<DeleteOutlined />}
+                disabled={selectedCount === 0}
+                loading={deleting}
+              >
+                删除已选（{selectedCount}）
+              </Button>
+            </Space>
+          ) : (
+            <Button danger icon={<DeleteOutlined />} onClick={onToggleBatchMode}>
+              批量删除
+            </Button>
+          )}
         </Space>
       </div>
     </>

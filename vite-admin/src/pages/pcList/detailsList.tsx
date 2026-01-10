@@ -3,7 +3,7 @@
  */
 import { useContext } from "react";
 import { DevieContext } from "@/context/DeviceContext";
-import { Tooltip, Skeleton, Space } from "antd";
+import { Checkbox, Tooltip, Skeleton, Space } from "antd";
 import { MysqlDeviceChangeMeat } from "@/type/index";
 import Mac from "@/assets/pc/mac.png";
 import Win from "@/assets/pc/windows.png";
@@ -12,12 +12,25 @@ import { findOsTypeObj } from "@/utils/tool";
 interface Props {
   data: MysqlDeviceChangeMeat; //设备数据
   onOpen: () => void; //打开弹窗
+  selectable?: boolean; //批量选择模式
+  selected?: boolean; //是否已选中
+  onSelect?: () => void; //选中切换
 }
-const App: React.FC<Props> = ({ data, onOpen }) => {
+const App: React.FC<Props> = ({
+  data,
+  onOpen,
+  selectable = false,
+  selected = false,
+  onSelect,
+}) => {
   //拿到公共值
   const { isName } = useContext(DevieContext);
-  //点击打开弹窗并保存选中的值
-  const showDrawer = () => {
+  //点击打开弹窗或切换选中状态
+  const handleCardClick = () => {
+    if (selectable) {
+      onSelect?.();
+      return;
+    }
     onOpen();
   };
 
@@ -34,13 +47,19 @@ const App: React.FC<Props> = ({ data, onOpen }) => {
     <>
       {/**开始循环 */}
       <div
-        className="
-        cursor-pointer p-4 rounded-xl w-52 h-72 mac 
-        hover:border-1 hover:border-blue-400"
-        onClick={() => {
-          showDrawer();
-        }}
+        className={`relative cursor-pointer p-4 rounded-xl w-52 h-72 mac hover:border-1 hover:border-blue-400 ${
+          selectable && selected ? "ring-2 ring-blue-400" : ""
+        }`}
+        onClick={handleCardClick}
       >
+        {selectable ? (
+          <div
+            className="absolute top-2 right-2 z-10"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Checkbox checked={selected} onChange={() => onSelect?.()} />
+          </div>
+        ) : null}
         {/**顶部标志 */}
         <div>
           <img key={osTypeObj.name} src={osTypeObj.image} className="h-10" />
