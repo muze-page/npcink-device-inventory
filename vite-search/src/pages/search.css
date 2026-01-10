@@ -269,15 +269,6 @@
 }
 
 .device-summary {
-  position: relative;
-  padding: 22px;
-  border-radius: calc(var(--radius) + 2px);
-  border: 1px solid currentColor;
-  background: transparent;
-  box-shadow: none;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
   overflow: hidden;
 }
 
@@ -291,6 +282,7 @@
   justify-content: space-between;
   gap: 16px;
   z-index: 1;
+  padding-bottom: 10px;
 }
 
 .summary-eyebrow {
@@ -330,6 +322,7 @@
   font-size: 0.95rem;
   font-weight: 600;
   word-break: break-all;
+  padding-left: 0;
 }
 
 .mono {
@@ -371,13 +364,6 @@
 }
 
 .detail-card {
-  position: relative;
-  padding: 16px;
-  border-radius: calc(var(--radius) + 2px);
-  border: 1px solid currentColor;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
   overflow: hidden;
 }
 
@@ -393,29 +379,16 @@
   border: none;
 }
 
-.device-tabs .ant-tabs-nav-list {
-  gap: 8px;
-}
 
-.device-tabs .ant-tabs-tab {
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid currentColor;
-  background: transparent;
-  transition: all 0.2s ease;
-  margin: 0 6px 10px 0;
-}
+
+
 
 .device-tabs .ant-tabs-tab-btn {
   color: var(--muted);
   font-weight: 600;
 }
 
-.device-tabs .ant-tabs-tab-active {
-  border-color: currentColor;
-  background: transparent;
-  box-shadow: none;
-}
+
 
 .device-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
   color: var(--ink);
