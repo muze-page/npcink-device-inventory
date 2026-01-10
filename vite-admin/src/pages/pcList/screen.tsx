@@ -104,66 +104,79 @@ const App: React.FC<Props> = ({
 
   return (
     <>
-      <div className="flex justify-between items-center mb-4">
-        <Header title="电脑资产" />
-        <Space size={"middle"} wrap>
-          <div>
-            状态：
-            <Select
-              value={filterData.state || "all"} // 使用value属性，从filterData获取当前值
-              style={{ width: 140 }}
-              onChange={(value: any) => {
-                onChange({ ...filterData, state: value });
-              }}
-              options={pcStateOptions}
-            />
-          </div>
-          <div>
-            部门：
-            <Select
-              value={filterData.department || "all"} // 使用value属性，从filterData获取当前值
-              style={{ width: 140 }}
-              onChange={(value: any) => {
-                onChange({ ...filterData, department: value });
-              }}
-              options={deviceCategoryOptions}
-            />
-          </div>
+      <div className="mb-4">
+        <div className="flex justify-between items-center">
+          <Header title="电脑资产" />
+          <Space size={"middle"} wrap>
+            <div>
+              状态：
+              <Select
+                value={filterData.state || "all"} // 使用value属性，从filterData获取当前值
+                style={{ width: 140 }}
+                onChange={(value: any) => {
+                  onChange({ ...filterData, state: value });
+                }}
+                options={pcStateOptions}
+              />
+            </div>
+            <div>
+              部门：
+              <Select
+                value={filterData.department || "all"} // 使用value属性，从filterData获取当前值
+                style={{ width: 140 }}
+                onChange={(value: any) => {
+                  onChange({ ...filterData, department: value });
+                }}
+                options={deviceCategoryOptions}
+              />
+            </div>
 
-          <Search
-            placeholder="搜索名字、编号、IP或MAC地址" //添加说明
-            allowClear // 可以点击清除图标删除内容
-            value={inputValue} // 使用本地状态
-            onChange={handleChange} // 输入回调
-            onSearch={onSearch} //搜索回调
-            style={{ width: 280, lineHeight: "inherit", minHeight: "10px" }}
-            className="searchInput"
-          />
-
-          <Tooltip title="隐藏姓名">
-            <Button
-              type="primary"
-              shape="circle"
-              icon={isName ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-              className="bg-[#1677ff]"
-              onClick={() => onName(!isName)}
+            <Search
+              placeholder="搜索名字、编号、IP或MAC地址" //添加说明
+              allowClear // 可以点击清除图标删除内容
+              value={inputValue} // 使用本地状态
+              onChange={handleChange} // 输入回调
+              onSearch={onSearch} //搜索回调
+              style={{ width: 280, lineHeight: "inherit", minHeight: "10px" }}
+              className="searchInput"
             />
-          </Tooltip>
-          <Tooltip title="重置筛选条件">
-            <Button
-              type="primary"
-              shape="circle"
-              icon={<ReloadOutlined />}
-              className="bg-[#1677ff]"
-              onClick={restSelect}
-            />
-          </Tooltip>
 
-          {batchMode ? (
-            <Space size="small" wrap>
+            <Tooltip title="隐藏姓名">
+              <Button
+                type="primary"
+                shape="circle"
+                icon={isName ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                className="bg-[#1677ff]"
+                onClick={() => onName(!isName)}
+              />
+            </Tooltip>
+            <Tooltip title="重置筛选条件">
+              <Button
+                type="primary"
+                shape="circle"
+                icon={<ReloadOutlined />}
+                className="bg-[#1677ff]"
+                onClick={restSelect}
+              />
+            </Tooltip>
+
+            {batchMode ? (
               <Button onClick={onToggleBatchMode} icon={<CloseOutlined />}>
-                取消
+                退出批量
               </Button>
+            ) : (
+              <Button danger icon={<DeleteOutlined />} onClick={onToggleBatchMode}>
+                批量删除
+              </Button>
+            )}
+          </Space>
+        </div>
+        {batchMode ? (
+          <div className="mt-3 flex justify-end">
+            <Space size="small" wrap>
+              <span className="text-sm text-zinc-500">
+                已选 {selectedCount} 项
+              </span>
               <Button
                 onClick={onSelectAll}
                 icon={<CheckSquareOutlined />}
@@ -178,15 +191,11 @@ const App: React.FC<Props> = ({
                 disabled={selectedCount === 0}
                 loading={deleting}
               >
-                删除已选（{selectedCount}）
+                删除已选
               </Button>
             </Space>
-          ) : (
-            <Button danger icon={<DeleteOutlined />} onClick={onToggleBatchMode}>
-              批量删除
-            </Button>
-          )}
-        </Space>
+          </div>
+        ) : null}
       </div>
     </>
   );

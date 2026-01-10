@@ -138,104 +138,118 @@ const App: React.FC<Props> = ({
 
   return (
     <>
-      <div className="flex justify-between items-center mb-4">
-        <Header title="其他资产" />
-        <Space align="center" size={"middle"} wrap>
-          <div>
-            设备状态：
-            <Select
-              value={filterData.state || "all"} // 使用value属性，从filterData获取当前值
-              style={{ width: 80 }}
-              onChange={(value: any) => {
-                onChange({ ...filterData, state: value });
-              }}
-              options={stateOptions}
-            />
-          </div>
-
-          <div>
-            分类：
-            <Select
-              value={filterData.category || "all"} // 使用value属性，从filterData获取当前值
-              style={{ width: 100 }}
-              onChange={(value: string) => {
-                onChange({ ...filterData, category: value });
-              }}
-              options={styleCategoryOptions}
-            />
-          </div>
-
-          <div>
-            采购平台：
-            <Select
-              value={filterData.platform || "all"} // 使用value属性，从filterData获取当前值
-              style={{ width: 100 }}
-              onChange={(value: string) => {
-                onChange({ ...filterData, platform: value });
-              }}
-              options={stylePlatformOptions}
-            />
-          </div>
-          {/**
-             * 
+      <div className="mb-4">
+        <div className="flex justify-between items-center">
+          <Header title="其他资产" />
+          <Space align="center" size={"middle"} wrap>
             <div>
-            付款方式：
-            <Select
-              value={filterData.payMethod || "all"} // 使用value属性，从filterData获取当前值
-              style={{ width: 100 }}
-              onChange={(value: string) => {
-                onChange({ ...filterData, payMethod: value });
-              }}
-              options={payPlatformOptions}
+              设备状态：
+              <Select
+                value={filterData.state || "all"} // 使用value属性，从filterData获取当前值
+                style={{ width: 80 }}
+                onChange={(value: any) => {
+                  onChange({ ...filterData, state: value });
+                }}
+                options={stateOptions}
+              />
+            </div>
+
+            <div>
+              分类：
+              <Select
+                value={filterData.category || "all"} // 使用value属性，从filterData获取当前值
+                style={{ width: 100 }}
+                onChange={(value: string) => {
+                  onChange({ ...filterData, category: value });
+                }}
+                options={styleCategoryOptions}
+              />
+            </div>
+
+            <div>
+              采购平台：
+              <Select
+                value={filterData.platform || "all"} // 使用value属性，从filterData获取当前值
+                style={{ width: 100 }}
+                onChange={(value: string) => {
+                  onChange({ ...filterData, platform: value });
+                }}
+                options={stylePlatformOptions}
+              />
+            </div>
+            {/**
+               * 
+              <div>
+              付款方式：
+              <Select
+                value={filterData.payMethod || "all"} // 使用value属性，从filterData获取当前值
+                style={{ width: 100 }}
+                onChange={(value: string) => {
+                  onChange({ ...filterData, payMethod: value });
+                }}
+                options={payPlatformOptions}
+              />
+            </div>
+               */}
+
+            <Search
+              placeholder="搜索姓名、订单号、产品名称" //添加说明
+              allowClear // 可以点击清除图标删除内容
+              value={inputValue} // 使用本地状态
+              onChange={handleChange} // 输入回调
+              onSearch={onSearch} //搜索回调
+              style={{ width: 260, lineHeight: "inherit", minHeight: "10px" }}
+              className="searchInput"
             />
-          </div>
-             */}
 
-          <Search
-            placeholder="搜索姓名、订单号、产品名称" //添加说明
-            allowClear // 可以点击清除图标删除内容
-            value={inputValue} // 使用本地状态
-            onChange={handleChange} // 输入回调
-            onSearch={onSearch} //搜索回调
-            style={{ width: 260, lineHeight: "inherit", minHeight: "10px" }}
-            className="searchInput"
-          />
+            <Tooltip title="隐藏姓名">
+              <Button
+                type="primary"
+                shape="circle"
+                icon={isName ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                className="bg-[#1677ff]"
+                onClick={() => onName(!isName)}
+              />
+            </Tooltip>
 
-          <Tooltip title="隐藏姓名">
-            <Button
-              type="primary"
-              shape="circle"
-              icon={isName ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-              className="bg-[#1677ff]"
-              onClick={() => onName(!isName)}
-            />
-          </Tooltip>
+            <Tooltip title="添加设备">
+              <Button
+                type="primary"
+                shape="circle"
+                icon={<PlusOutlined />}
+                className="bg-[#1677ff]"
+                onClick={showModal}
+              />
+            </Tooltip>
 
-          <Tooltip title="添加设备">
-            <Button
-              type="primary"
-              shape="circle"
-              icon={<PlusOutlined />}
-              className="bg-[#1677ff]"
-              onClick={showModal}
-            />
-          </Tooltip>
+            <Tooltip title="重置筛选">
+              <Button
+                type="primary"
+                shape="circle"
+                icon={<ReloadOutlined />}
+                className="bg-[#1677ff]"
+                onClick={restSelect}
+              />
+            </Tooltip>
 
-          <Tooltip title="重置筛选">
-            <Button
-              type="primary"
-              shape="circle"
-              icon={<ReloadOutlined />}
-              className="bg-[#1677ff]"
-              onClick={restSelect}
-            />
-          </Tooltip>
-
-          {batchMode ? (
-            <Space size="small" wrap>
+            {batchMode ? (
               <Button onClick={onToggleBatchMode} icon={<CloseOutlined />}>
-                取消
+                退出批量
               </Button>
+            ) : (
+              <Button danger icon={<DeleteOutlined />} onClick={onToggleBatchMode}>
+                批量删除
+              </Button>
+            )}
+          </Space>
+          <Add isModalOpen={isModalOpen} handleOk={handleOk} />
+        </div>
+        {batchMode ? (
+          <div className="mt-3 flex justify-end">
+            <Space size="small" wrap>
+              <span className="text-sm text-zinc-500">
+                已选 {selectedCount} 项
+              </span>
               <Button
                 onClick={onSelectAll}
                 icon={<CheckSquareOutlined />}
@@ -250,16 +264,11 @@ const App: React.FC<Props> = ({
                 disabled={selectedCount === 0}
                 loading={deleting}
               >
-                删除已选（{selectedCount}）
+                删除已选
               </Button>
             </Space>
-          ) : (
-            <Button danger icon={<DeleteOutlined />} onClick={onToggleBatchMode}>
-              批量删除
-            </Button>
-          )}
-        </Space>
-        <Add isModalOpen={isModalOpen} handleOk={handleOk} />
+          </div>
+        ) : null}
       </div>
     </>
   );
