@@ -9,6 +9,7 @@ import { defaultOption, Site, sqlTableName } from "@/utils/index";
 import { saveSQLData, addPublicSearchPage } from "@/services/index";
 
 import ImportExport from "@/pages/config/importExport";
+import ExportPcExcel from "@/pages/config/exportPcExcel";
 import { OptionType } from "@/type/index";
 import Header from "@/components/tabHeader";
 
@@ -214,6 +215,12 @@ const App: React.FC = () => {
           </Form.Item>
           <Form.Item label="自动变更数据">
             <ImportExport name={sqlTableName.changeAutoData} />
+          </Form.Item>
+
+          <Header title="Excel 导出" />
+
+          <Form.Item label="电脑设备数据">
+            <ExportPcExcel />
           </Form.Item>
         </Form>
       </div>

@@ -75,6 +75,15 @@ export const getPcList = async (
   return response.data as PagedResponse<MysqlDeviceChangeMeat>;
 };
 
+export const getPcListFull = async (
+  params: PcListParams
+): Promise<PagedResponse<MysqlDeviceChange>> => {
+  const response = await restInstance.get("/admin/pc", {
+    params: { ...params, fields: "full" },
+  });
+  return response.data as PagedResponse<MysqlDeviceChange>;
+};
+
 export const getPcSummary = async (): Promise<PcSummary> => {
   const response = await restInstance.get("/admin/pc-summary");
   return response.data as PcSummary;

@@ -17,6 +17,7 @@ export {
   deltSQLData,
   getDeviceCategory,
   getPcList,
+  getPcListFull,
   getPcSummary,
   getPcDetail,
 } from "@/services/pc";
