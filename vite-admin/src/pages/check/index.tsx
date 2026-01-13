@@ -14,6 +14,7 @@ import Cpu from "@/pages/check/tab/cpu";
 import Disk from "@/pages/check/tab/disk";
 import Memory from "@/pages/check/tab/memory";
 import Header from "@/components/tabHeader";
+import Analyze from "@/pages/check/analyze";
 
 const sumTableData = (data: TableData[]) =>
   data.reduce((accumulator, item) => accumulator + item.sum, 0);
@@ -154,6 +155,7 @@ const App: React.FC = () => {
           <li>残值率 = 总残值 / 采购价</li>
         </ul>
       </div>
+      <Analyze />
     </>
   );
 };
