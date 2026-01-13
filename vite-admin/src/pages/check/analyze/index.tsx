@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
+import { Tabs } from "antd";
+import type { TabsProps } from "antd";
 import { getPercentage, formatNumber } from "@/utils/tool";
 import { MysqlDeviceChange } from "@/type/index";
 import { getPcListFull } from "@/services/index";
@@ -8,6 +10,7 @@ const STATUS_ORDER = ["在用", "闲置", "待维修", "报废"];
 const FETCH_PAGE_SIZE = 100;
 
 type LossGroupBy = "device" | "model" | "department";
+type ViewMode = "table" | "chart";
 
 const normalizeStatus = (state?: string) => {
   const value = typeof state === "string" ? state.trim() : "";
@@ -69,10 +72,22 @@ const formatRate = (value: number) => {
   return `${(value * 100).toFixed(2)}%`;
 };
 
+const statusColorMap: Record<string, string> = {
+  在用: "bg-emerald-500",
+  闲置: "bg-amber-500",
+  待维修: "bg-rose-500",
+  报废: "bg-zinc-400",
+  其他: "bg-slate-400",
+};
+
+const getStatusColor = (status: string) =>
+  statusColorMap[status] || "bg-slate-400";
+
 const Analyze: React.FC = () => {
   const [devices, setDevices] = useState<MysqlDeviceChange[]>([]);
   const [devicesLoading, setDevicesLoading] = useState(false);
   const [lossGroupBy, setLossGroupBy] = useState<LossGroupBy>("model");
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
 
   useEffect(() => {
     let mounted = true;
@@ -313,68 +328,164 @@ const Analyze: React.FC = () => {
     { key: "department", label: "按部门" },
   ];
 
-  return (
-    <>
-      <div className="mt-8 pb-6 px-5 max-w-3xl">
-        <div className="text-sm font-semibold text-zinc-900">
-          IT 管理价值（基础但必做）
-        </div>
+  const viewModeOptions: Array<{ key: ViewMode; label: string }> = [
+    { key: "table", label: "表格" },
+    { key: "chart", label: "可视化" },
+  ];
 
-        <div className="mt-4 rounded border border-gray-200 bg-white">
-          <div className="px-4 py-2 text-sm font-medium text-zinc-800 border-b border-gray-200">
+  const statusMaxCount = Math.max(
+    1,
+    ...statusItems.map((item) => item.count)
+  );
+  const departmentMaxTotal = Math.max(
+    1,
+    ...departmentStatus.rows.map((row) => row.total)
+  );
+  const lossChartRows = lossAnalysis.rows.slice(0, 8);
+  const assetChartRows = departmentAssets.rows.slice(0, 8);
+  const assetMaxPurchase = Math.max(
+    1,
+    ...assetChartRows.map((row) => row.purchase)
+  );
+
+  const loadingState = (
+    <div className="py-6 text-center text-xs text-zinc-500">
+      数据加载中...
+    </div>
+  );
+  const emptyState = (
+    <div className="py-6 text-center text-xs text-zinc-500">暂无设备数据</div>
+  );
+
+  const tabBarExtra = (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-zinc-500">展示形态</span>
+      <div className="inline-flex rounded border border-gray-200 overflow-hidden">
+        {viewModeOptions.map((option) => (
+          <button
+            key={option.key}
+            type="button"
+            onClick={() => setViewMode(option.key)}
+            className={`px-3 py-1 text-xs ${
+              viewMode === option.key
+                ? "bg-zinc-900 text-white"
+                : "bg-white text-zinc-600"
+            }`}
+            aria-pressed={viewMode === option.key}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const tabs: TabsProps["items"] = [
+    {
+      key: "status",
+      label: "设备状态",
+      children: (
+        <div className="p-4">
+          <div className="text-sm font-medium text-zinc-800">
             设备状态 × 数量（健康度基础）
           </div>
-          <div className="p-4">
-            <table className="w-full text-xs">
-              <thead className="bg-zinc-50">
-                <tr>
-                  <th className="px-3 py-2 text-left font-medium text-zinc-600">
-                    状态
-                  </th>
-                  <th className="px-3 py-2 text-right font-medium text-zinc-600">
-                    数量
-                  </th>
-                  <th className="px-3 py-2 text-right font-medium text-zinc-600">
-                    占比
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {devicesLoading ? (
-                  <tr>
-                    <td
-                      className="px-3 py-4 text-center text-zinc-500"
-                      colSpan={3}
-                    >
-                      数据加载中...
-                    </td>
-                  </tr>
-                ) : statusItems.length ? (
-                  statusItems.map((item) => (
-                    <tr key={item.status} className="border-t border-gray-100">
-                      <td className="px-3 py-2 text-left text-zinc-800">
-                        {item.status}
-                      </td>
-                      <td className="px-3 py-2 text-right text-zinc-800">
-                        {formatNumber(item.count)}
-                      </td>
-                      <td className="px-3 py-2 text-right text-zinc-800">
-                        {item.percentage}
-                      </td>
+          <div className="mt-4">
+            {viewMode === "table" ? (
+              <div className="overflow-auto">
+                <table className="w-full text-xs">
+                  <thead className="bg-zinc-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium text-zinc-600">
+                        状态
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-zinc-600">
+                        数量
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-zinc-600">
+                        占比
+                      </th>
                     </tr>
-                  ))
+                  </thead>
+                  <tbody>
+                    {devicesLoading ? (
+                      <tr>
+                        <td
+                          className="px-3 py-4 text-center text-zinc-500"
+                          colSpan={3}
+                        >
+                          数据加载中...
+                        </td>
+                      </tr>
+                    ) : statusItems.length ? (
+                      statusItems.map((item) => (
+                        <tr
+                          key={item.status}
+                          className="border-t border-gray-100"
+                        >
+                          <td className="px-3 py-2 text-left text-zinc-800">
+                            {item.status}
+                          </td>
+                          <td className="px-3 py-2 text-right text-zinc-800">
+                            {formatNumber(item.count)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-zinc-800">
+                            {item.percentage}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          className="px-3 py-4 text-center text-zinc-500"
+                          colSpan={3}
+                        >
+                          暂无设备数据
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div>
+                {devicesLoading ? (
+                  loadingState
+                ) : totalDevices > 0 ? (
+                  <div className="space-y-3">
+                    {statusItems.map((item) => (
+                      <div
+                        key={item.status}
+                        className="flex items-center gap-3"
+                      >
+                        <div className="w-16 text-xs text-zinc-600">
+                          {item.status}
+                        </div>
+                        <div className="flex-1">
+                          <div className="h-2 rounded bg-zinc-100">
+                            <div
+                              className={`h-2 rounded ${getStatusColor(
+                                item.status
+                              )}`}
+                              style={{
+                                width: `${(item.count / statusMaxCount) * 100}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div className="w-12 text-right text-xs text-zinc-600">
+                          {formatNumber(item.count)}
+                        </div>
+                        <div className="w-14 text-right text-xs text-zinc-400">
+                          {item.percentage}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
-                  <tr>
-                    <td
-                      className="px-3 py-4 text-center text-zinc-500"
-                      colSpan={3}
-                    >
-                      暂无设备数据
-                    </td>
-                  </tr>
+                  emptyState
                 )}
-              </tbody>
-            </table>
+              </div>
+            )}
             <div className="mt-3 flex flex-wrap gap-3 text-xs text-zinc-500">
               <div>在用设备占比：{getPercentage(inUseCount, totalDevices)}</div>
               <div>闲置设备占比：{getPercentage(idleCount, totalDevices)}</div>
@@ -385,107 +496,182 @@ const Analyze: React.FC = () => {
             </div>
           </div>
         </div>
-
-        <div className="mt-6 rounded border border-gray-200 bg-white">
-          <div className="px-4 py-2 text-sm font-medium text-zinc-800 border-b border-gray-200">
+      ),
+    },
+    {
+      key: "department",
+      label: "部门状态",
+      children: (
+        <div className="p-4">
+          <div className="text-sm font-medium text-zinc-800">
             部门 × 设备数量 / 状态（资源调拨依据）
           </div>
-          <div className="p-4 overflow-auto">
-            <table className="w-full min-w-[640px] text-xs">
-              <thead className="bg-zinc-50">
-                <tr>
-                  <th className="px-3 py-2 text-left font-medium text-zinc-600">
-                    部门
-                  </th>
-                  {statusKeys.map((status) => (
-                    <th
-                      key={status}
-                      className="px-3 py-2 text-right font-medium text-zinc-600"
-                    >
-                      {status}
-                    </th>
-                  ))}
-                  <th className="px-3 py-2 text-right font-medium text-zinc-600">
-                    合计
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {devicesLoading ? (
-                  <tr>
-                    <td
-                      className="px-3 py-4 text-center text-zinc-500"
-                      colSpan={statusKeys.length + 2}
-                    >
-                      数据加载中...
-                    </td>
-                  </tr>
-                ) : departmentStatus.rows.length ? (
-                  <>
-                    {departmentStatus.rows.map((row) => (
-                      <tr
-                        key={row.department}
-                        className="border-t border-gray-100"
-                      >
-                        <td className="px-3 py-2 text-left text-zinc-800">
-                          {row.department}
-                        </td>
-                        {statusKeys.map((status) => (
-                          <td
-                            key={status}
-                            className="px-3 py-2 text-right text-zinc-800"
-                          >
-                            {formatNumber(row.counts[status] || 0)}
-                          </td>
-                        ))}
-                        <td className="px-3 py-2 text-right text-zinc-800">
-                          {formatNumber(row.total)}
+          <div className="mt-4">
+            {viewMode === "table" ? (
+              <div className="overflow-auto">
+                <table className="w-full min-w-[640px] text-xs">
+                  <thead className="bg-zinc-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium text-zinc-600">
+                        部门
+                      </th>
+                      {statusKeys.map((status) => (
+                        <th
+                          key={status}
+                          className="px-3 py-2 text-right font-medium text-zinc-600"
+                        >
+                          {status}
+                        </th>
+                      ))}
+                      <th className="px-3 py-2 text-right font-medium text-zinc-600">
+                        合计
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {devicesLoading ? (
+                      <tr>
+                        <td
+                          className="px-3 py-4 text-center text-zinc-500"
+                          colSpan={statusKeys.length + 2}
+                        >
+                          数据加载中...
                         </td>
                       </tr>
-                    ))}
-                    <tr className="border-t border-gray-200 bg-zinc-50">
-                      <td className="px-3 py-2 text-left text-zinc-700 font-medium">
-                        合计
-                      </td>
-                      {statusKeys.map((status) => (
+                    ) : departmentStatus.rows.length ? (
+                      <>
+                        {departmentStatus.rows.map((row) => (
+                          <tr
+                            key={row.department}
+                            className="border-t border-gray-100"
+                          >
+                            <td className="px-3 py-2 text-left text-zinc-800">
+                              {row.department}
+                            </td>
+                            {statusKeys.map((status) => (
+                              <td
+                                key={status}
+                                className="px-3 py-2 text-right text-zinc-800"
+                              >
+                                {formatNumber(row.counts[status] || 0)}
+                              </td>
+                            ))}
+                            <td className="px-3 py-2 text-right text-zinc-800">
+                              {formatNumber(row.total)}
+                            </td>
+                          </tr>
+                        ))}
+                        <tr className="border-t border-gray-200 bg-zinc-50">
+                          <td className="px-3 py-2 text-left text-zinc-700 font-medium">
+                            合计
+                          </td>
+                          {statusKeys.map((status) => (
+                            <td
+                              key={status}
+                              className="px-3 py-2 text-right text-zinc-700 font-medium"
+                            >
+                              {formatNumber(departmentStatus.totals[status] || 0)}
+                            </td>
+                          ))}
+                          <td className="px-3 py-2 text-right text-zinc-700 font-medium">
+                            {formatNumber(departmentStatus.totalCount)}
+                          </td>
+                        </tr>
+                      </>
+                    ) : (
+                      <tr>
                         <td
-                          key={status}
-                          className="px-3 py-2 text-right text-zinc-700 font-medium"
+                          className="px-3 py-4 text-center text-zinc-500"
+                          colSpan={statusKeys.length + 2}
                         >
-                          {formatNumber(departmentStatus.totals[status] || 0)}
+                          暂无设备数据
                         </td>
-                      ))}
-                      <td className="px-3 py-2 text-right text-zinc-700 font-medium">
-                        {formatNumber(departmentStatus.totalCount)}
-                      </td>
-                    </tr>
-                  </>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div>
+                {statusKeys.length ? (
+                  <div className="mb-3 flex flex-wrap gap-3 text-xs text-zinc-500">
+                    {statusKeys.map((status) => (
+                      <div key={status} className="flex items-center gap-1">
+                        <span
+                          className={`h-2 w-2 rounded-sm ${getStatusColor(
+                            status
+                          )}`}
+                        />
+                        <span>{status}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {devicesLoading ? (
+                  loadingState
+                ) : departmentStatus.rows.length ? (
+                  <div className="space-y-3">
+                    {departmentStatus.rows.map((row) => {
+                      const width =
+                        departmentMaxTotal > 0
+                          ? (row.total / departmentMaxTotal) * 100
+                          : 0;
+                      return (
+                        <div
+                          key={row.department}
+                          className="flex items-center gap-3"
+                        >
+                          <div className="w-28 text-xs text-zinc-600 truncate">
+                            {row.department}
+                          </div>
+                          <div className="flex-1">
+                            <div className="h-3 rounded bg-zinc-100">
+                              <div
+                                className="flex h-3 rounded overflow-hidden"
+                                style={{ width: `${width}%` }}
+                              >
+                                {statusKeys.map((status) => {
+                                  const segmentWidth =
+                                    row.total > 0
+                                      ? ((row.counts[status] || 0) / row.total) *
+                                        100
+                                      : 0;
+                                  return (
+                                    <div
+                                      key={status}
+                                      className={`h-3 ${getStatusColor(status)}`}
+                                      style={{ width: `${segmentWidth}%` }}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="w-12 text-right text-xs text-zinc-500">
+                            {formatNumber(row.total)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 ) : (
-                  <tr>
-                    <td
-                      className="px-3 py-4 text-center text-zinc-500"
-                      colSpan={statusKeys.length + 2}
-                    >
-                      暂无设备数据
-                    </td>
-                  </tr>
+                  emptyState
                 )}
-              </tbody>
-            </table>
+              </div>
+            )}
           </div>
         </div>
-      </div>
-
-      <div className="mt-8 pb-6 px-5 max-w-3xl">
-        <div className="text-sm font-semibold text-zinc-900">
-          财务价值（开始“值钱”）
-        </div>
-
-        <div className="mt-4 rounded border border-gray-200 bg-white">
-          <div className="px-4 py-2 text-sm font-medium text-zinc-800 border-b border-gray-200">
-            采购价 × 二手价 → 资产损耗分析
-          </div>
-          <div className="p-4">
+      ),
+    },
+    {
+      key: "loss",
+      label: "资产损耗",
+      children: (
+        <div className="p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-sm font-medium text-zinc-800">
+              采购价 × 二手价 → 资产损耗分析
+            </div>
             <div className="flex flex-wrap gap-2">
               {lossGroupOptions.map((option) => (
                 <button
@@ -502,188 +688,327 @@ const Analyze: React.FC = () => {
                 </button>
               ))}
             </div>
-            <div className="mt-4 overflow-auto">
-              <table className="w-full min-w-[720px] text-xs">
-                <thead className="bg-zinc-50">
-                  <tr>
-                    <th className="px-3 py-2 text-left font-medium text-zinc-600">
-                      {lossGroupBy === "department"
-                        ? "部门"
-                        : lossGroupBy === "device"
-                        ? "设备"
-                        : "型号"}
-                    </th>
-                    <th className="px-3 py-2 text-right font-medium text-zinc-600">
-                      采购价
-                    </th>
-                    <th className="px-3 py-2 text-right font-medium text-zinc-600">
-                      当前二手价
-                    </th>
-                    <th className="px-3 py-2 text-right font-medium text-zinc-600">
-                      折旧金额
-                    </th>
-                    <th className="px-3 py-2 text-right font-medium text-zinc-600">
-                      折旧率
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {devicesLoading ? (
+          </div>
+          <div className="mt-4">
+            {viewMode === "table" ? (
+              <div className="overflow-auto">
+                <table className="w-full min-w-[720px] text-xs">
+                  <thead className="bg-zinc-50">
                     <tr>
-                      <td
-                        className="px-3 py-4 text-center text-zinc-500"
-                        colSpan={5}
-                      >
-                        数据加载中...
-                      </td>
+                      <th className="px-3 py-2 text-left font-medium text-zinc-600">
+                        {lossGroupBy === "department"
+                          ? "部门"
+                          : lossGroupBy === "device"
+                          ? "设备"
+                          : "型号"}
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-zinc-600">
+                        采购价
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-zinc-600">
+                        当前二手价
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-zinc-600">
+                        折旧金额
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-zinc-600">
+                        折旧率
+                      </th>
                     </tr>
-                  ) : lossAnalysis.rows.length ? (
-                    lossAnalysis.rows.map((row) => (
-                      <tr key={row.label} className="border-t border-gray-100">
-                        <td className="px-3 py-2 text-left text-zinc-800">
-                          {row.label}
-                        </td>
-                        <td className="px-3 py-2 text-right text-zinc-800">
-                          {formatNumber(row.purchase)}
-                        </td>
-                        <td className="px-3 py-2 text-right text-zinc-800">
-                          {formatNumber(row.depreciation)}
-                        </td>
-                        <td className="px-3 py-2 text-right text-zinc-800">
-                          {formatNumber(row.loss)}
-                        </td>
-                        <td className="px-3 py-2 text-right text-zinc-800">
-                          {getPercentage(row.loss, row.purchase)}
+                  </thead>
+                  <tbody>
+                    {devicesLoading ? (
+                      <tr>
+                        <td
+                          className="px-3 py-4 text-center text-zinc-500"
+                          colSpan={5}
+                        >
+                          数据加载中...
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        className="px-3 py-4 text-center text-zinc-500"
-                        colSpan={5}
-                      >
-                        暂无设备数据
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    ) : lossAnalysis.rows.length ? (
+                      lossAnalysis.rows.map((row) => (
+                        <tr key={row.label} className="border-t border-gray-100">
+                          <td className="px-3 py-2 text-left text-zinc-800">
+                            {row.label}
+                          </td>
+                          <td className="px-3 py-2 text-right text-zinc-800">
+                            {formatNumber(row.purchase)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-zinc-800">
+                            {formatNumber(row.depreciation)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-zinc-800">
+                            {formatNumber(row.loss)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-zinc-800">
+                            {getPercentage(row.loss, row.purchase)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          className="px-3 py-4 text-center text-zinc-500"
+                          colSpan={5}
+                        >
+                          暂无设备数据
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div>
+                {devicesLoading ? (
+                  loadingState
+                ) : lossChartRows.length ? (
+                  <div className="space-y-3">
+                    {lossChartRows.map((row) => {
+                      const rate = Math.min(
+                        100,
+                        Math.max(0, row.lossRate * 100)
+                      );
+                      return (
+                        <div key={row.label} className="flex items-center gap-3">
+                          <div className="w-36 text-xs text-zinc-600 truncate">
+                            {row.label}
+                          </div>
+                          <div className="flex-1">
+                            <div className="h-2 rounded bg-zinc-100">
+                              <div
+                                className="h-2 rounded bg-rose-500"
+                                style={{ width: `${rate}%` }}
+                              />
+                            </div>
+                          </div>
+                          <div className="w-14 text-right text-xs text-zinc-600">
+                            {formatRate(row.lossRate)}
+                          </div>
+                          <div className="w-24 text-right text-[11px] text-zinc-400">
+                            采 {formatNumber(row.purchase)} / 二{" "}
+                            {formatNumber(row.depreciation)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  emptyState
+                )}
+                <div className="mt-2 text-xs text-zinc-500">
+                  折旧率 = 折旧金额 / 采购价
+                  {lossAnalysis.rows.length > lossChartRows.length
+                    ? `，仅展示前 ${lossChartRows.length} 条`
+                    : ""}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="mt-3 text-xs text-zinc-500">
+            <div>
+              贬值最快：
+              {lossAnalysis.worst
+                ? `${lossAnalysis.worst.label}（折旧率 ${getPercentage(
+                    lossAnalysis.worst.loss,
+                    lossAnalysis.worst.purchase
+                  )}）`
+                : "暂无数据"}
             </div>
-            <div className="mt-3 text-xs text-zinc-500">
-              <div>
-                贬值最快：
-                {lossAnalysis.worst
-                  ? `${lossAnalysis.worst.label}（折旧率 ${getPercentage(
-                      lossAnalysis.worst.loss,
-                      lossAnalysis.worst.purchase
-                    )}）`
-                  : "暂无数据"}
-              </div>
-              <div>
-                保值最好：
-                {lossAnalysis.best
-                  ? `${lossAnalysis.best.label}（折旧率 ${getPercentage(
-                      lossAnalysis.best.loss,
-                      lossAnalysis.best.purchase
-                    )}）`
-                  : "暂无数据"}
-              </div>
+            <div>
+              保值最好：
+              {lossAnalysis.best
+                ? `${lossAnalysis.best.label}（折旧率 ${getPercentage(
+                    lossAnalysis.best.loss,
+                    lossAnalysis.best.purchase
+                  )}）`
+                : "暂无数据"}
             </div>
           </div>
         </div>
-
-        <div className="mt-6 rounded border border-gray-200 bg-white">
-          <div className="px-4 py-2 text-sm font-medium text-zinc-800 border-b border-gray-200">
+      ),
+    },
+    {
+      key: "assets",
+      label: "部门成本",
+      children: (
+        <div className="p-4">
+          <div className="text-sm font-medium text-zinc-800">
             部门 × 资产原值 / 残值（部门成本视角）
           </div>
-          <div className="p-4 overflow-auto">
-            <table className="w-full min-w-[720px] text-xs">
-              <thead className="bg-zinc-50">
-                <tr>
-                  <th className="px-3 py-2 text-left font-medium text-zinc-600">
-                    排名
-                  </th>
-                  <th className="px-3 py-2 text-left font-medium text-zinc-600">
-                    部门
-                  </th>
-                  <th className="px-3 py-2 text-right font-medium text-zinc-600">
-                    采购总额
-                  </th>
-                  <th className="px-3 py-2 text-right font-medium text-zinc-600">
-                    当前二手总值
-                  </th>
-                  <th className="px-3 py-2 text-right font-medium text-zinc-600">
-                    资产损耗额
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {devicesLoading ? (
-                  <tr>
-                    <td
-                      className="px-3 py-4 text-center text-zinc-500"
-                      colSpan={5}
-                    >
-                      数据加载中...
-                    </td>
-                  </tr>
-                ) : departmentAssets.rows.length ? (
-                  departmentAssets.rows.map((row) => (
-                    <tr
-                      key={row.department}
-                      className="border-t border-gray-100"
-                    >
-                      <td className="px-3 py-2 text-left text-zinc-800">
-                        {row.rank}
-                      </td>
-                      <td className="px-3 py-2 text-left text-zinc-800">
-                        {row.department}
-                      </td>
-                      <td className="px-3 py-2 text-right text-zinc-800">
-                        {formatNumber(row.purchase)}
-                      </td>
-                      <td className="px-3 py-2 text-right text-zinc-800">
-                        {formatNumber(row.depreciation)}
-                      </td>
-                      <td className="px-3 py-2 text-right text-zinc-800">
-                        {formatNumber(row.loss)}
-                      </td>
+          <div className="mt-4">
+            {viewMode === "table" ? (
+              <div className="overflow-auto">
+                <table className="w-full min-w-[720px] text-xs">
+                  <thead className="bg-zinc-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium text-zinc-600">
+                        排名
+                      </th>
+                      <th className="px-3 py-2 text-left font-medium text-zinc-600">
+                        部门
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-zinc-600">
+                        采购总额
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-zinc-600">
+                        当前二手总值
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium text-zinc-600">
+                        资产损耗额
+                      </th>
                     </tr>
-                  ))
+                  </thead>
+                  <tbody>
+                    {devicesLoading ? (
+                      <tr>
+                        <td
+                          className="px-3 py-4 text-center text-zinc-500"
+                          colSpan={5}
+                        >
+                          数据加载中...
+                        </td>
+                      </tr>
+                    ) : departmentAssets.rows.length ? (
+                      departmentAssets.rows.map((row) => (
+                        <tr
+                          key={row.department}
+                          className="border-t border-gray-100"
+                        >
+                          <td className="px-3 py-2 text-left text-zinc-800">
+                            {row.rank}
+                          </td>
+                          <td className="px-3 py-2 text-left text-zinc-800">
+                            {row.department}
+                          </td>
+                          <td className="px-3 py-2 text-right text-zinc-800">
+                            {formatNumber(row.purchase)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-zinc-800">
+                            {formatNumber(row.depreciation)}
+                          </td>
+                          <td className="px-3 py-2 text-right text-zinc-800">
+                            {formatNumber(row.loss)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          className="px-3 py-4 text-center text-zinc-500"
+                          colSpan={5}
+                        >
+                          暂无设备数据
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div>
+                <div className="mb-3 flex flex-wrap gap-3 text-xs text-zinc-500">
+                  <div className="flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-sm bg-emerald-500" />
+                    <span>当前二手总值</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-sm bg-amber-400" />
+                    <span>资产损耗</span>
+                  </div>
+                </div>
+                {devicesLoading ? (
+                  loadingState
+                ) : assetChartRows.length ? (
+                  <div className="space-y-3">
+                    {assetChartRows.map((row) => {
+                      const total = row.purchase;
+                      const depreciationRate =
+                        total > 0
+                          ? Math.min(1, Math.max(0, row.depreciation / total))
+                          : 0;
+                      const lossRate =
+                        total > 0
+                          ? Math.min(1, Math.max(0, row.loss / total))
+                          : 0;
+                      const width =
+                        assetMaxPurchase > 0
+                          ? (total / assetMaxPurchase) * 100
+                          : 0;
+                      return (
+                        <div key={row.department} className="flex items-center gap-3">
+                          <div className="w-28 text-xs text-zinc-600 truncate">
+                            {row.department}
+                          </div>
+                          <div className="flex-1">
+                            <div className="h-3 rounded bg-zinc-100 overflow-hidden">
+                              <div
+                                className="flex h-3"
+                                style={{ width: `${width}%` }}
+                              >
+                                <div
+                                  className="h-3 bg-emerald-500"
+                                  style={{ width: `${depreciationRate * 100}%` }}
+                                />
+                                <div
+                                  className="h-3 bg-amber-400"
+                                  style={{ width: `${lossRate * 100}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="w-20 text-right text-xs text-zinc-500">
+                            {formatNumber(row.purchase)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 ) : (
-                  <tr>
-                    <td
-                      className="px-3 py-4 text-center text-zinc-500"
-                      colSpan={5}
-                    >
-                      暂无设备数据
-                    </td>
-                  </tr>
+                  emptyState
                 )}
-              </tbody>
-            </table>
-            <div className="mt-3 text-xs text-zinc-500">
-              <div>
-                闲置资产价值（按二手价汇总）：
-                {formatNumber(departmentAssets.idleValueTotal)}元
+                {departmentAssets.rows.length > assetChartRows.length ? (
+                  <div className="mt-2 text-xs text-zinc-500">
+                    仅展示前 {assetChartRows.length} 条
+                  </div>
+                ) : null}
               </div>
-              <div>
-                资产年均折旧率：{formatRate(departmentAssets.annualDepRate)}
-              </div>
-              <div>
-                部门资产占用排名：
-                {departmentAssets.topDepartments.length
-                  ? departmentAssets.topDepartments
-                      .map((row) => `${row.rank}.${row.department}`)
-                      .join(" / ")
-                  : "暂无数据"}
-              </div>
+            )}
+          </div>
+          <div className="mt-3 text-xs text-zinc-500">
+            <div>
+              闲置资产价值（按二手价汇总）：
+              {formatNumber(departmentAssets.idleValueTotal)}元
+            </div>
+            <div>
+              资产年均折旧率：{formatRate(departmentAssets.annualDepRate)}
+            </div>
+            <div>
+              部门资产占用排名：
+              {departmentAssets.topDepartments.length
+                ? departmentAssets.topDepartments
+                    .map((row) => `${row.rank}.${row.department}`)
+                    .join(" / ")
+                : "暂无数据"}
             </div>
           </div>
         </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="mt-8 pb-6 px-5 max-w-3xl">
+      <div className="text-sm font-semibold text-zinc-900">数据透视</div>
+      <div className="mt-4 rounded border border-gray-200 bg-white">
+        <Tabs
+          defaultActiveKey="status"
+          items={tabs}
+          tabBarExtraContent={tabBarExtra}
+        />
       </div>
-    </>
+    </div>
   );
 };
 
