@@ -98,7 +98,11 @@ const statusColorMap: Record<string, string> = {
 const getStatusColor = (status: string) =>
   statusColorMap[status] || "bg-slate-400";
 
-const Analyze: React.FC = () => {
+type AnalyzeProps = {
+  compact?: boolean;
+};
+
+const Analyze: React.FC<AnalyzeProps> = ({ compact = false }) => {
   const [devices, setDevices] = useState<MysqlDeviceChange[]>([]);
   const [devicesLoading, setDevicesLoading] = useState(false);
   const [lossGroupBy, setLossGroupBy] = useState<LossGroupBy>("model");
@@ -992,10 +996,19 @@ const Analyze: React.FC = () => {
     },
   ];
 
+  const containerClassName = compact
+    ? "max-w-3xl"
+    : "mt-8 pb-6 px-5 max-w-3xl";
+  const tabsClassName = compact
+    ? "rounded border border-gray-200 bg-white"
+    : "mt-4 rounded border border-gray-200 bg-white";
+
   return (
-    <div className="mt-8 pb-6 px-5 max-w-3xl">
-      <div className="text-sm font-semibold text-zinc-900">数据透视</div>
-      <div className="mt-4 rounded border border-gray-200 bg-white">
+    <div className={containerClassName}>
+      {!compact ? (
+        <div className="text-sm font-semibold text-zinc-900">数据透视</div>
+      ) : null}
+      <div className={tabsClassName}>
         <Tabs
           defaultActiveKey="status"
           items={tabs}

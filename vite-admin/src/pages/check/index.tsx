@@ -2,6 +2,8 @@
  * 电脑硬件资产盘点
  */
 import { useState, useEffect } from "react";
+import { Tabs } from "antd";
+import type { TabsProps } from "antd";
 import { getPercentage, formatNumber } from "@/utils/tool";
 import { TableData, PcSummary } from "@/type/index";
 import { getPcSummary } from "@/services/index";
@@ -43,7 +45,7 @@ const App: React.FC = () => {
   const totals = summary?.totals || { purchase: 0, depreciation: 0, residual: 0 };
 
   //表头内容
-  const items = [
+  const hardwareItems = [
     {
       key: "1",
       label: `CPU（个）`,
@@ -90,73 +92,99 @@ const App: React.FC = () => {
     setActiveTab(index);
   };
 
-  return (
-    <>
-      <div className="h-[625px] relative bg-white pb-6 px-5 rounded-r border-rose-600 max-w-3xl">
-        {/**标题 */}
-        <Header title="资产盘点" />
-        {/**表头 */}
-        <TabHeader
-          items={items}
-          handleTabClick={handleTabClick}
-          activeTab={activeTab}
-        />
-        <div className="relative mt-4 h-80">
-          {/**
-             *  <div className="relative">
-            <div className="flex flex-col h-full">
-             */}
+  const dataTabs: TabsProps["items"] = [
+    {
+      key: "hardware",
+      label: "硬件盘点",
+      children: (
+        <div className="py-4">
+          <div className="h-[625px] relative bg-white pb-6 px-5 rounded-r border-rose-600 max-w-3xl">
+            {/**标题 */}
+            <Header title="资产盘点" />
+            {/**表头 */}
+            <TabHeader
+              items={hardwareItems}
+              handleTabClick={handleTabClick}
+              activeTab={activeTab}
+            />
+            <div className="relative mt-4 h-80">
+              {/**
+                 *  <div className="relative">
+                <div className="flex flex-col h-full">
+                 */}
 
-          <div className="relative rounded-none box-border w-full min-h-0">
-            {/**表体内容 */}
-            <div className="content">{items[activeTab].children}</div>
+              <div className="relative rounded-none box-border w-full min-h-0">
+                {/**表体内容 */}
+                <div className="content">{hardwareItems[activeTab].children}</div>
+              </div>
+            </div>
+
+            {/**广告内容 */}
+            <Ad />
           </div>
         </div>
+      ),
+    },
+    {
+      key: "summary",
+      label: "资产汇总",
+      children: (
+        <div className="py-4 max-w-3xl">
+          <table>
+            <tr>
+              <th className="w-28 text-center">总采购价</th>
+              <th className="w-28 text-center">总二手价</th>
+              <th className="w-28 text-center">二手折价率</th>
+              <th className="w-28 text-center">总残值</th>
+              <th className="w-28 text-center">残值率</th>
+            </tr>
 
-        {/**广告内容 */}
-        <Ad />
-      </div>
-      <div className="mt-6 pb-6 px-5">
-        <table>
-          <tr>
-            <th className="w-28 text-center">总采购价</th>
-            <th className="w-28 text-center">总二手价</th>
-            <th className="w-28 text-center">二手折价率</th>
-            <th className="w-28 text-center">总残值</th>
-            <th className="w-28 text-center">残值率</th>
-          </tr>
+            <tr>
+              <td className="w-28 text-center">
+                {formatNumber(totalPurchase) || 0}元
+              </td>
+              <td className="w-28 text-center">
+                {formatNumber(totalDepreciation) || 0}元
+              </td>
+              <td className="w-28 text-center">
+                {getPercentage(totalDepreciation, totalPurchase)}
+              </td>
+              <td className="w-28 text-center">
+                {formatNumber(totalResidual)}元
+              </td>
+              <td className="w-28 text-center">
+                {getPercentage(totalResidual, totalPurchase)}
+              </td>
+            </tr>
+          </table>
 
-          <tr>
-            <td className="w-28 text-center">
-              {formatNumber(totalPurchase) || 0}元
-            </td>
-            <td className="w-28 text-center">
-              {formatNumber(totalDepreciation) || 0}元
-            </td>
-            <td className="w-28 text-center">
-              {getPercentage(totalDepreciation, totalPurchase)}
-            </td>
-            <td className="w-28 text-center">
-              {formatNumber(totalResidual)}元
-            </td>
-            <td className="w-28 text-center">
-              {getPercentage(totalResidual, totalPurchase)}
-            </td>
-          </tr>
-        </table>
+          <ul className="mt-4 text-xs">
+            <li> 计算方式：</li>
+            <li>残值 = 采购价 - 已折旧值</li>
+            <li>已折旧值 = 已使用月数 * 每月折旧值</li>
+            <li>每月折旧值 = 总折旧值 / 总折旧月数</li>
+            <li>总折旧值 = 采购价 * (1 - 残值率)</li>
+            <li>二手折价率 = 总二手价 / 采购价</li>
+            <li>残值率 = 总残值 / 采购价</li>
+          </ul>
+        </div>
+      ),
+    },
+    {
+      key: "analysis",
+      label: "数据透视",
+      children: (
+        <div className="py-4">
+          <Analyze compact />
+        </div>
+      ),
+    },
+  ];
 
-        <ul className="mt-4 text-xs">
-          <li> 计算方式：</li>
-          <li>残值 = 采购价 - 已折旧值</li>
-          <li>已折旧值 = 已使用月数 * 每月折旧值</li>
-          <li>每月折旧值 = 总折旧值 / 总折旧月数</li>
-          <li>总折旧值 = 采购价 * (1 - 残值率)</li>
-          <li>二手折价率 = 总二手价 / 采购价</li>
-          <li>残值率 = 总残值 / 采购价</li>
-        </ul>
-      </div>
-      <Analyze />
-    </>
+  return (
+    <div className="px-5 pb-6">
+      <Tabs defaultActiveKey="hardware" items={dataTabs} />
+    </div>
   );
 };
 
