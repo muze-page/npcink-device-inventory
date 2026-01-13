@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { Tabs } from "antd";
+import { Tabs, Segmented } from "antd";
 import type { TabsProps } from "antd";
-import { getPercentage, formatNumber } from "@/utils/tool";
+import { formatNumber } from "@/utils/tool";
 import { MysqlDeviceChange } from "@/type/index";
 import { getPcListFull } from "@/services/index";
 
@@ -67,9 +67,24 @@ const buildModelLabel = (item: MysqlDeviceChange) => {
   return "未知型号";
 };
 
-const formatRate = (value: number) => {
-  if (!Number.isFinite(value)) return "0%";
+const formatPercentValue = (value: number) => {
+  if (!Number.isFinite(value)) return "0.00%";
   return `${(value * 100).toFixed(2)}%`;
+};
+
+const formatPercent = (num: number, den: number) => {
+  if (!Number.isFinite(num) || !Number.isFinite(den) || den <= 0) {
+    return "0.00%";
+  }
+  return formatPercentValue(num / den);
+};
+
+const formatAmount = (value: number) => {
+  const rounded = Math.round(toNumber(value) * 100) / 100;
+  return rounded.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 };
 
 const statusColorMap: Record<string, string> = {
@@ -144,7 +159,7 @@ const Analyze: React.FC = () => {
       return {
         status,
         count,
-        percentage: getPercentage(count, total),
+        percentage: formatPercent(count, total),
       };
     });
     return { counts, total, items, orderedStatuses };
@@ -322,15 +337,15 @@ const Analyze: React.FC = () => {
   const scrapCount = statusSummary.counts.get("报废") || 0;
   const repairCount = statusSummary.counts.get("待维修") || 0;
 
-  const lossGroupOptions: Array<{ key: LossGroupBy; label: string }> = [
-    { key: "device", label: "按设备" },
-    { key: "model", label: "按型号" },
-    { key: "department", label: "按部门" },
+  const lossGroupOptions: Array<{ label: string; value: LossGroupBy }> = [
+    { value: "device", label: "按设备" },
+    { value: "model", label: "按型号" },
+    { value: "department", label: "按部门" },
   ];
 
-  const viewModeOptions: Array<{ key: ViewMode; label: string }> = [
-    { key: "table", label: "表格" },
-    { key: "chart", label: "可视化" },
+  const viewModeOptions: Array<{ label: string; value: ViewMode }> = [
+    { value: "table", label: "表格" },
+    { value: "chart", label: "可视化" },
   ];
 
   const statusMaxCount = Math.max(
@@ -360,23 +375,12 @@ const Analyze: React.FC = () => {
   const tabBarExtra = (
     <div className="flex items-center gap-2">
       <span className="text-xs text-zinc-500">展示形态</span>
-      <div className="inline-flex rounded border border-gray-200 overflow-hidden">
-        {viewModeOptions.map((option) => (
-          <button
-            key={option.key}
-            type="button"
-            onClick={() => setViewMode(option.key)}
-            className={`px-3 py-1 text-xs ${
-              viewMode === option.key
-                ? "bg-zinc-900 text-white"
-                : "bg-white text-zinc-600"
-            }`}
-            aria-pressed={viewMode === option.key}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        size="small"
+        options={viewModeOptions}
+        value={viewMode}
+        onChange={(value) => setViewMode(value as ViewMode)}
+      />
     </div>
   );
 
@@ -487,11 +491,11 @@ const Analyze: React.FC = () => {
               </div>
             )}
             <div className="mt-3 flex flex-wrap gap-3 text-xs text-zinc-500">
-              <div>在用设备占比：{getPercentage(inUseCount, totalDevices)}</div>
-              <div>闲置设备占比：{getPercentage(idleCount, totalDevices)}</div>
-              <div>报废率：{getPercentage(scrapCount, totalDevices)}</div>
+              <div>在用设备占比：{formatPercent(inUseCount, totalDevices)}</div>
+              <div>闲置设备占比：{formatPercent(idleCount, totalDevices)}</div>
+              <div>报废率：{formatPercent(scrapCount, totalDevices)}</div>
               <div>
-                待维修占比：{getPercentage(repairCount, totalDevices)}
+                待维修占比：{formatPercent(repairCount, totalDevices)}
               </div>
             </div>
           </div>
@@ -672,22 +676,12 @@ const Analyze: React.FC = () => {
             <div className="text-sm font-medium text-zinc-800">
               采购价 × 二手价 → 资产损耗分析
             </div>
-            <div className="flex flex-wrap gap-2">
-              {lossGroupOptions.map((option) => (
-                <button
-                  key={option.key}
-                  type="button"
-                  onClick={() => setLossGroupBy(option.key)}
-                  className={`px-3 py-1 text-xs rounded border ${
-                    lossGroupBy === option.key
-                      ? "bg-zinc-900 text-white border-zinc-900"
-                      : "bg-white text-zinc-600 border-gray-200"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
+            <Segmented
+              size="small"
+              options={lossGroupOptions}
+              value={lossGroupBy}
+              onChange={(value) => setLossGroupBy(value as LossGroupBy)}
+            />
           </div>
           <div className="mt-4">
             {viewMode === "table" ? (
@@ -733,16 +727,16 @@ const Analyze: React.FC = () => {
                             {row.label}
                           </td>
                           <td className="px-3 py-2 text-right text-zinc-800">
-                            {formatNumber(row.purchase)}
+                            {formatAmount(row.purchase)}
                           </td>
                           <td className="px-3 py-2 text-right text-zinc-800">
-                            {formatNumber(row.depreciation)}
+                            {formatAmount(row.depreciation)}
                           </td>
                           <td className="px-3 py-2 text-right text-zinc-800">
-                            {formatNumber(row.loss)}
+                            {formatAmount(row.loss)}
                           </td>
                           <td className="px-3 py-2 text-right text-zinc-800">
-                            {getPercentage(row.loss, row.purchase)}
+                            {formatPercent(row.loss, row.purchase)}
                           </td>
                         </tr>
                       ))
@@ -784,11 +778,11 @@ const Analyze: React.FC = () => {
                             </div>
                           </div>
                           <div className="w-14 text-right text-xs text-zinc-600">
-                            {formatRate(row.lossRate)}
+                            {formatPercentValue(row.lossRate)}
                           </div>
                           <div className="w-24 text-right text-[11px] text-zinc-400">
-                            采 {formatNumber(row.purchase)} / 二{" "}
-                            {formatNumber(row.depreciation)}
+                            采 {formatAmount(row.purchase)} / 二{" "}
+                            {formatAmount(row.depreciation)}
                           </div>
                         </div>
                       );
@@ -810,7 +804,7 @@ const Analyze: React.FC = () => {
             <div>
               贬值最快：
               {lossAnalysis.worst
-                ? `${lossAnalysis.worst.label}（折旧率 ${getPercentage(
+                ? `${lossAnalysis.worst.label}（折旧率 ${formatPercent(
                     lossAnalysis.worst.loss,
                     lossAnalysis.worst.purchase
                   )}）`
@@ -819,7 +813,7 @@ const Analyze: React.FC = () => {
             <div>
               保值最好：
               {lossAnalysis.best
-                ? `${lossAnalysis.best.label}（折旧率 ${getPercentage(
+                ? `${lossAnalysis.best.label}（折旧率 ${formatPercent(
                     lossAnalysis.best.loss,
                     lossAnalysis.best.purchase
                   )}）`
@@ -883,13 +877,13 @@ const Analyze: React.FC = () => {
                             {row.department}
                           </td>
                           <td className="px-3 py-2 text-right text-zinc-800">
-                            {formatNumber(row.purchase)}
+                            {formatAmount(row.purchase)}
                           </td>
                           <td className="px-3 py-2 text-right text-zinc-800">
-                            {formatNumber(row.depreciation)}
+                            {formatAmount(row.depreciation)}
                           </td>
                           <td className="px-3 py-2 text-right text-zinc-800">
-                            {formatNumber(row.loss)}
+                            {formatAmount(row.loss)}
                           </td>
                         </tr>
                       ))
@@ -959,7 +953,7 @@ const Analyze: React.FC = () => {
                             </div>
                           </div>
                           <div className="w-20 text-right text-xs text-zinc-500">
-                            {formatNumber(row.purchase)}
+                            {formatAmount(row.purchase)}
                           </div>
                         </div>
                       );
@@ -979,10 +973,10 @@ const Analyze: React.FC = () => {
           <div className="mt-3 text-xs text-zinc-500">
             <div>
               闲置资产价值（按二手价汇总）：
-              {formatNumber(departmentAssets.idleValueTotal)}元
+              {formatAmount(departmentAssets.idleValueTotal)}元
             </div>
             <div>
-              资产年均折旧率：{formatRate(departmentAssets.annualDepRate)}
+              资产年均折旧率：{formatPercentValue(departmentAssets.annualDepRate)}
             </div>
             <div>
               部门资产占用排名：
