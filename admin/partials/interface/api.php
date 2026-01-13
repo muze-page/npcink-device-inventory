@@ -2046,7 +2046,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 return self::rest_response_with_cache($request, $cached);
             }
 
-            $rows = $wpdb->get_results("SELECT purchase, depreciation, created_at, data FROM $table_name", ARRAY_A);
+            $rows = $wpdb->get_results("SELECT purchase, depreciation, created_at, data, state FROM $table_name", ARRAY_A);
 
             $cpu_counts = array();
             $disk_counts = array();
@@ -2090,6 +2090,11 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $now = current_time('mysql');
 
             foreach ($rows as $row) {
+                $state = isset($row['state']) ? trim($row['state']) : '';
+                $is_scrapped = $state === '报废' || strtolower($state) === 'scrap';
+                if ($is_scrapped) {
+                    continue;
+                }
                 $purchase = floatval($row['purchase']);
                 $total_purchase += $purchase;
                 $total_depreciation += floatval($row['depreciation']);
