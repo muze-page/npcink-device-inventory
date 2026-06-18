@@ -109,4 +109,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG_NAME: ${{ github.ref_name }}
         run: |
-          gh release create "${TAG_NAME}" artifacts/**/* --generate-notes --title "${TAG_NAME}"
+          mapfile -t release_assets < <(find artifacts -type f | sort)
+          gh release create "${TAG_NAME}" "${release_assets[@]}" --repo "${GITHUB_REPOSITORY}" --generate-notes --title "${TAG_NAME}"
