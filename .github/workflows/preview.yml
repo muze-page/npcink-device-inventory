@@ -1,16 +1,27 @@
-name: Build release packages
+name: Build preview packages
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Choose what to build"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - plugin
+          - desktop
+          - macos
+          - windows
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   wordpress-plugin:
     name: WordPress plugin zip
+    if: ${{ inputs.package == 'all' || inputs.package == 'plugin' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -39,17 +50,15 @@ jobs:
       - name: Upload plugin artifact
         uses: actions/upload-artifact@v7
         with:
-          name: magick-device-manage-plugin
+          name: preview-magick-device-manage-plugin
           path: release/magick-device-manage-plugin.zip
           if-no-files-found: error
+          retention-days: 7
 
-  desktop-agent:
-    name: Desktop agent (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest]
+  desktop-macos:
+    name: Desktop agent (macOS)
+    if: ${{ inputs.package == 'all' || inputs.package == 'desktop' || inputs.package == 'macos' }}
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -75,36 +84,45 @@ jobs:
         run: npm run tauri:build
 
       - name: Upload macOS DMG
-        if: runner.os == 'macOS'
         uses: actions/upload-artifact@v7
         with:
-          name: magick-device-agent-macos
+          name: preview-magick-device-agent-macos
           path: ele-rs/src-tauri/target/release/bundle/dmg/*.dmg
           if-no-files-found: error
+          retention-days: 7
+
+  desktop-windows:
+    name: Desktop agent (Windows)
+    if: ${{ inputs.package == 'all' || inputs.package == 'desktop' || inputs.package == 'windows' }}
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: ele-rs/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ele-rs
+        run: npm ci
+
+      - name: Use stable Rust
+        run: |
+          rustup default stable
+          rustup show
+
+      - name: Build Tauri bundle
+        working-directory: ele-rs
+        run: npm run tauri:build
 
       - name: Upload Windows installer
-        if: runner.os == 'Windows'
         uses: actions/upload-artifact@v7
         with:
-          name: magick-device-agent-windows
+          name: preview-magick-device-agent-windows
           path: ele-rs/src-tauri/target/release/bundle/nsis/*.exe
           if-no-files-found: error
-
-  github-release:
-    name: GitHub Release
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: [wordpress-plugin, desktop-agent]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v8
-        with:
-          path: artifacts
-
-      - name: Create release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG_NAME: ${{ github.ref_name }}
-        run: |
-          mapfile -t release_assets < <(find artifacts -type f | sort)
-          gh release create "${TAG_NAME}" "${release_assets[@]}" --repo "${GITHUB_REPOSITORY}" --generate-notes --title "${TAG_NAME}"
+          retention-days: 7
