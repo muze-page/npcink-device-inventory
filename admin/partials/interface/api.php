@@ -179,6 +179,12 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 'callback' => array(__CLASS__, 'submit_data_callback'),
                 'permission_callback' => array(__CLASS__, 'public_permissions_check'),
             ));
+
+            register_rest_route('npcink/v1', '/device-post-data-v2', array(
+                'methods'  => WP_REST_Server::CREATABLE,
+                'callback' => array(__CLASS__, 'submit_device_data_v2'),
+                'permission_callback' => array(__CLASS__, 'public_permissions_check'),
+            ));
         }
 
         /**
@@ -288,6 +294,129 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             }
 
             wp_die();
+        }
+
+        /**
+         * v2 客户端上传数据
+         * 保持旧 uuid 列不变，优先用 legacy uuid 匹配历史设备，再用 v2 stable id 兜底匹配。
+         */
+        public static function submit_device_data_v2($request)
+        {
+            global $wpdb;
+            self::$table_name = $wpdb->prefix . self::$table_pc_name;
+            header('Access-Control-Allow-Origin: *');
+
+            $name = isset($request['name']) ? sanitize_text_field($request['name']) : '';
+            if ($name === '') {
+                return new WP_Error('missing_name', '姓名为空，请填写', array('status' => 400));
+            }
+
+            $data_obj = self::extract_device_data_from_request($request);
+            if (empty($data_obj)) {
+                return new WP_Error('missing_device_data', '硬件数据为空，请检查', array('status' => 400));
+            }
+
+            $legacy_uuid = self::derive_uuid_from_data($data_obj);
+            if ($legacy_uuid === '') {
+                return new WP_Error('missing_legacy_uuid', '硬件数据缺少 uuid.hardware 或 uuid.macs[0]', array('status' => 400));
+            }
+
+            $stable_id = self::derive_stable_device_id_v2($data_obj, $request);
+            $collector = self::extract_collector_metadata($data_obj, $request);
+            $data_obj = self::attach_device_migration_meta(
+                $data_obj,
+                $legacy_uuid,
+                $stable_id,
+                $collector,
+                'upload_v2'
+            );
+
+            $data_json = wp_json_encode($data_obj, JSON_UNESCAPED_UNICODE);
+            if ($data_json === false) {
+                return new WP_Error('json_encode_failed', '硬件数据编码失败', array('status' => 400));
+            }
+
+            $existing_data = self::check_data_repeat($legacy_uuid);
+            $match_strategy = 'legacy_uuid';
+            if (empty($existing_data) && $stable_id !== '') {
+                $existing_data = self::find_pc_by_stable_device_id($stable_id);
+                $match_strategy = $existing_data ? 'stable_device_id_v2' : 'none';
+            }
+
+            if ($existing_data) {
+                $result = $wpdb->update(
+                    self::$table_name,
+                    array(
+                        'data' => $data_json,
+                        'ip' => self::device_ip_or_default($data_obj),
+                    ),
+                    array('id' => $existing_data['id']),
+                    array('%s', '%s'),
+                    array('%d')
+                );
+
+                if ($result === false) {
+                    return new WP_Error('update_failed', '设备数据更新失败', array(
+                        'status' => 500,
+                        'detail' => $wpdb->last_error,
+                    ));
+                }
+
+                self::clear_pc_cache();
+                return rest_ensure_response(array(
+                    'success' => true,
+                    'message' => 'v2 设备数据已更新',
+                    'mode' => 'update',
+                    'match_strategy' => $match_strategy,
+                    'uuid' => $existing_data['uuid'],
+                    'legacy_uuid' => $legacy_uuid,
+                    'stable_device_id_v2' => $stable_id,
+                    'number' => $existing_data['number'],
+                    'name' => $existing_data['name'],
+                ));
+            }
+
+            $random_string = uniqid(mt_rand(), true);
+            $last_six_digits = substr($random_string, -6);
+            $device_ip = self::device_ip_or_default($data_obj);
+
+            $insert_data = array(
+                'name' => $name,
+                'state' => '使用',
+                'number' => $last_six_digits,
+                'department' => '默认',
+                'purchase' => 0,
+                'depreciation' => 0,
+                'ip' => $device_ip,
+                'uuid' => $legacy_uuid,
+                'data' => $data_json,
+            );
+
+            $res = $wpdb->insert(
+                self::$table_name,
+                $insert_data,
+                array('%s', '%s', '%s', '%s', '%f', '%f', '%s', '%s', '%s')
+            );
+
+            if (!$res) {
+                return new WP_Error('insert_failed', 'v2 设备数据提交失败', array(
+                    'status' => 500,
+                    'detail' => $wpdb->last_error,
+                ));
+            }
+
+            self::clear_pc_cache();
+            return rest_ensure_response(array(
+                'success' => true,
+                'message' => 'v2 设备数据已提交',
+                'mode' => 'insert',
+                'match_strategy' => 'none',
+                'uuid' => $legacy_uuid,
+                'legacy_uuid' => $legacy_uuid,
+                'stable_device_id_v2' => $stable_id,
+                'number' => $last_six_digits,
+                'name' => $name,
+            ));
         }
 
         /**
@@ -432,6 +561,236 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 return false;
             }
             return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
+        }
+
+        /**
+         * 提取 v2 上传里的设备数据。兼容 data 字符串、data 对象、device_data 对象。
+         */
+        private static function extract_device_data_from_request($request)
+        {
+            $data = null;
+            if ($request instanceof WP_REST_Request) {
+                $json_params = $request->get_json_params();
+                if (is_array($json_params)) {
+                    if (array_key_exists('data', $json_params)) {
+                        $data = $json_params['data'];
+                    } elseif (array_key_exists('device_data', $json_params)) {
+                        $data = $json_params['device_data'];
+                    } elseif (isset($json_params['uuid']) || isset($json_params['collector'])) {
+                        $data = $json_params;
+                    }
+                }
+
+                if ($data === null) {
+                    $data = $request->get_param('data');
+                }
+            } elseif (is_array($request)) {
+                $data = isset($request['data']) ? $request['data'] : null;
+            }
+
+            if (is_string($data)) {
+                $data = wp_unslash($data);
+                $decoded = json_decode($data, true);
+                return is_array($decoded) ? $decoded : array();
+            }
+
+            if (is_object($data)) {
+                $data = json_decode(wp_json_encode($data), true);
+            }
+
+            return is_array($data) ? $data : array();
+        }
+
+        /**
+         * 提取/生成 v2 稳定设备标识。第一阶段只作为辅助匹配，不替代 uuid 列。
+         */
+        private static function derive_stable_device_id_v2($data_obj, $request = null)
+        {
+            $candidates = array();
+            if ($request instanceof WP_REST_Request) {
+                $candidates[] = $request->get_param('stable_device_id_v2');
+                $candidates[] = $request->get_param('device_fingerprint');
+            }
+
+            if (is_object($data_obj)) {
+                $data_obj = (array) $data_obj;
+            }
+
+            if (is_array($data_obj)) {
+                $candidates[] = isset($data_obj['stable_device_id_v2']) ? $data_obj['stable_device_id_v2'] : '';
+                $candidates[] = isset($data_obj['device_fingerprint']) ? $data_obj['device_fingerprint'] : '';
+                if (isset($data_obj['_magick_device']) && is_array($data_obj['_magick_device'])) {
+                    $candidates[] = isset($data_obj['_magick_device']['stable_device_id_v2']) ? $data_obj['_magick_device']['stable_device_id_v2'] : '';
+                }
+            }
+
+            foreach ($candidates as $candidate) {
+                if (is_string($candidate) && trim($candidate) !== '') {
+                    return sanitize_text_field($candidate);
+                }
+            }
+
+            $source = self::build_device_fingerprint_source($data_obj);
+            if (!self::has_device_fingerprint_source($source)) {
+                return '';
+            }
+
+            return 'v2:' . hash('sha256', wp_json_encode($source));
+        }
+
+        /**
+         * 构建 v2 fingerprint 的输入，不参与旧 uuid 列。
+         */
+        private static function build_device_fingerprint_source($data_obj)
+        {
+            if (is_object($data_obj)) {
+                $data_obj = (array) $data_obj;
+            }
+            if (!is_array($data_obj)) {
+                return array();
+            }
+
+            $uuid_data = isset($data_obj['uuid']) && is_array($data_obj['uuid']) ? $data_obj['uuid'] : array();
+            $macs = isset($uuid_data['macs']) && is_array($uuid_data['macs']) ? $uuid_data['macs'] : array();
+            $normalized_macs = array();
+            foreach ($macs as $mac) {
+                if (!is_string($mac)) {
+                    continue;
+                }
+                $mac = strtolower(trim($mac));
+                if ($mac === '' || $mac === '00:00:00:00:00:00') {
+                    continue;
+                }
+                $normalized_macs[] = $mac;
+            }
+            sort($normalized_macs);
+
+            return array(
+                'hardware' => isset($uuid_data['hardware']) ? (string) $uuid_data['hardware'] : '',
+                'system_uuid' => isset($data_obj['system']['uuid']) ? (string) $data_obj['system']['uuid'] : '',
+                'system_serial' => isset($data_obj['system']['serial']) ? (string) $data_obj['system']['serial'] : '',
+                'baseboard_serial' => isset($data_obj['baseboard']['serial']) ? (string) $data_obj['baseboard']['serial'] : '',
+                'macs' => $normalized_macs,
+            );
+        }
+
+        /**
+         * 判断 fingerprint 输入是否至少包含一个有效硬件信号。
+         */
+        private static function has_device_fingerprint_source($source)
+        {
+            if (!is_array($source)) {
+                return false;
+            }
+            foreach ($source as $value) {
+                if (is_array($value) && !empty($value)) {
+                    return true;
+                }
+                if (is_string($value) && trim($value) !== '') {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * 提取采集器元数据。
+         */
+        private static function extract_collector_metadata($data_obj, $request = null)
+        {
+            $collector = array();
+            if (is_object($data_obj)) {
+                $data_obj = (array) $data_obj;
+            }
+            if (is_array($data_obj) && isset($data_obj['collector']) && is_array($data_obj['collector'])) {
+                $collector = $data_obj['collector'];
+            }
+            if ($request instanceof WP_REST_Request) {
+                $request_collector = $request->get_param('collector');
+                if (is_array($request_collector)) {
+                    $collector = array_merge($collector, $request_collector);
+                }
+            }
+
+            $sanitized = array();
+            foreach ($collector as $key => $value) {
+                if (is_scalar($value)) {
+                    $sanitized[sanitize_key($key)] = sanitize_text_field((string) $value);
+                }
+            }
+            return $sanitized;
+        }
+
+        /**
+         * 写入迁移元数据到 data JSON 内，避免第一阶段 ALTER 生产表。
+         */
+        private static function attach_device_migration_meta($data_obj, $legacy_uuid, $stable_id, $collector, $source)
+        {
+            if (is_object($data_obj)) {
+                $data_obj = json_decode(wp_json_encode($data_obj), true);
+            }
+            if (!is_array($data_obj)) {
+                $data_obj = array();
+            }
+
+            $existing = isset($data_obj['_magick_device']) && is_array($data_obj['_magick_device'])
+                ? $data_obj['_magick_device']
+                : array();
+
+            $data_obj['_magick_device'] = array_merge($existing, array(
+                'schema_version' => 2,
+                'legacy_uuid' => sanitize_text_field($legacy_uuid),
+                'stable_device_id_v2' => sanitize_text_field($stable_id),
+                'collector' => $collector,
+                'migration_source' => sanitize_text_field($source),
+                'migration_updated_at' => current_time('mysql'),
+            ));
+
+            return $data_obj;
+        }
+
+        /**
+         * 从设备数据中取 IP，失败时回退 127.0.0.1。
+         */
+        private static function device_ip_or_default($data_obj)
+        {
+            $device_ip = self::extract_valid_ip($data_obj);
+            return $device_ip !== '' ? $device_ip : '127.0.0.1';
+        }
+
+        /**
+         * 用 data JSON 内的 v2 stable id 查找设备。
+         */
+        private static function find_pc_by_stable_device_id($stable_id)
+        {
+            global $wpdb;
+            $stable_id = sanitize_text_field((string) $stable_id);
+            if ($stable_id === '') {
+                return null;
+            }
+
+            $table = self::$table_name;
+            $like = '%' . $wpdb->esc_like($stable_id) . '%';
+            $rows = $wpdb->get_results(
+                $wpdb->prepare("SELECT * FROM $table WHERE data LIKE %s LIMIT 20", $like),
+                ARRAY_A
+            );
+
+            if (empty($rows)) {
+                return null;
+            }
+
+            foreach ($rows as $row) {
+                $data = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
+                $row_stable = isset($data['_magick_device']['stable_device_id_v2'])
+                    ? (string) $data['_magick_device']['stable_device_id_v2']
+                    : '';
+                if ($row_stable === $stable_id) {
+                    return $row;
+                }
+            }
+
+            return null;
         }
 
 
@@ -880,6 +1239,19 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 'methods' => WP_REST_Server::READABLE,
                 'callback' => array(__CLASS__, 'admin_get_pc_summary'),
                 'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
+            ));
+
+            register_rest_route('npcink/v1', '/admin/pc-migration/phase1', array(
+                array(
+                    'methods' => WP_REST_Server::READABLE,
+                    'callback' => array(__CLASS__, 'admin_pc_migration_phase1_precheck'),
+                    'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
+                ),
+                array(
+                    'methods' => WP_REST_Server::CREATABLE,
+                    'callback' => array(__CLASS__, 'admin_pc_migration_phase1_apply'),
+                    'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
+                ),
             ));
 
             register_rest_route('npcink/v1', '/admin/settings', array(
@@ -1472,6 +1844,238 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                     'detail' => $e->getMessage(),
                 ));
             }
+        }
+
+        /**
+         * 管理端 - Rust/v2 迁移预检
+         */
+        public static function admin_pc_migration_phase1_precheck($request)
+        {
+            global $wpdb;
+            $table_name = $wpdb->prefix . self::$table_pc_name;
+            $limit = max(1, min(500, intval($request->get_param('limit') ?: 500)));
+            $offset = max(0, intval($request->get_param('offset') ?: 0));
+
+            $total = intval($wpdb->get_var("SELECT COUNT(*) FROM $table_name"));
+            $rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT id, name, number, uuid, ip, updated_at, data FROM $table_name ORDER BY id ASC LIMIT %d OFFSET %d",
+                    $limit,
+                    $offset
+                ),
+                ARRAY_A
+            );
+
+            $items = array();
+            $stable_counts = array();
+            foreach ($rows as $row) {
+                $item = self::build_pc_migration_phase1_item($row);
+                if (!empty($item['stable_device_id_v2'])) {
+                    if (!isset($stable_counts[$item['stable_device_id_v2']])) {
+                        $stable_counts[$item['stable_device_id_v2']] = 0;
+                    }
+                    $stable_counts[$item['stable_device_id_v2']]++;
+                }
+                $items[] = $item;
+            }
+
+            foreach ($items as &$item) {
+                if (!empty($item['stable_device_id_v2']) && $stable_counts[$item['stable_device_id_v2']] > 1) {
+                    $item['status'] = 'needs_review';
+                    $item['issues'][] = 'stable_device_id_v2 重复';
+                }
+            }
+            unset($item);
+
+            return rest_ensure_response(self::summarize_pc_migration_phase1($items, array(
+                'total' => $total,
+                'limit' => $limit,
+                'offset' => $offset,
+                'mode' => 'precheck',
+            )));
+        }
+
+        /**
+         * 管理端 - Rust/v2 迁移执行
+         */
+        public static function admin_pc_migration_phase1_apply($request)
+        {
+            global $wpdb;
+            $confirm = $request->get_param('confirm');
+            if (!in_array(strtolower((string) $confirm), array('1', 'true', 'yes'), true)) {
+                return new WP_Error('missing_confirm', '执行迁移需要 confirm=true', array('status' => 400));
+            }
+
+            $table_name = $wpdb->prefix . self::$table_pc_name;
+            $limit = max(1, min(500, intval($request->get_param('limit') ?: 500)));
+            $offset = max(0, intval($request->get_param('offset') ?: 0));
+            $rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT id, name, number, uuid, ip, updated_at, data FROM $table_name ORDER BY id ASC LIMIT %d OFFSET %d",
+                    $limit,
+                    $offset
+                ),
+                ARRAY_A
+            );
+
+            $items = array();
+            $updated = 0;
+            $skipped = 0;
+            $failed = 0;
+
+            $wpdb->query('START TRANSACTION');
+            try {
+                foreach ($rows as $row) {
+                    $item = self::build_pc_migration_phase1_item($row);
+                    $data = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
+
+                    if (empty($data) || empty($item['legacy_uuid'])) {
+                        $item['apply_status'] = 'skipped';
+                        $item['issues'][] = '缺少可迁移数据';
+                        $skipped++;
+                        $items[] = $item;
+                        continue;
+                    }
+
+                    $data = self::attach_device_migration_meta(
+                        $data,
+                        $item['legacy_uuid'],
+                        $item['stable_device_id_v2'],
+                        isset($data['collector']) && is_array($data['collector']) ? $data['collector'] : array(),
+                        'admin_phase1_migration'
+                    );
+                    $data_json = wp_json_encode($data, JSON_UNESCAPED_UNICODE);
+                    if ($data_json === false) {
+                        $item['apply_status'] = 'failed';
+                        $item['issues'][] = 'JSON 编码失败';
+                        $failed++;
+                        $items[] = $item;
+                        continue;
+                    }
+
+                    $result = $wpdb->update(
+                        $table_name,
+                        array('data' => $data_json),
+                        array('id' => intval($row['id'])),
+                        array('%s'),
+                        array('%d')
+                    );
+
+                    if ($result === false) {
+                        $item['apply_status'] = 'failed';
+                        $item['issues'][] = '数据库更新失败：' . $wpdb->last_error;
+                        $failed++;
+                    } else {
+                        $item['apply_status'] = $result === 0 ? 'unchanged' : 'updated';
+                        $updated += $result === 0 ? 0 : 1;
+                    }
+
+                    $items[] = $item;
+                }
+
+                if ($failed > 0) {
+                    throw new Exception('迁移中存在数据库或编码失败记录');
+                }
+
+                $wpdb->query('COMMIT');
+            } catch (Exception $e) {
+                $wpdb->query('ROLLBACK');
+                return new WP_Error('migration_failed', '迁移执行失败，已回滚', array(
+                    'status' => 500,
+                    'detail' => $e->getMessage(),
+                    'items' => $items,
+                ));
+            }
+
+            self::clear_pc_cache();
+            $payload = self::summarize_pc_migration_phase1($items, array(
+                'mode' => 'apply',
+                'limit' => $limit,
+                'offset' => $offset,
+                'updated' => $updated,
+                'skipped' => $skipped,
+                'failed' => $failed,
+            ));
+            $payload['message'] = 'v2 迁移元数据写入完成';
+            return rest_ensure_response($payload);
+        }
+
+        /**
+         * 构建单条电脑设备迁移报告。
+         */
+        private static function build_pc_migration_phase1_item($row)
+        {
+            $data = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
+            $legacy_uuid = self::derive_uuid_from_data($data);
+            $stable_id = self::derive_stable_device_id_v2($data);
+            $meta = isset($data['_magick_device']) && is_array($data['_magick_device'])
+                ? $data['_magick_device']
+                : array();
+            $issues = array();
+            $status = 'ready';
+
+            if (empty($data)) {
+                $issues[] = 'data 为空或不是合法 JSON';
+                $status = 'blocked';
+            }
+            if ($legacy_uuid === '') {
+                $issues[] = '无法从 data.uuid.hardware + data.uuid.macs[0] 计算 legacy uuid';
+                $status = 'blocked';
+            } elseif (!empty($row['uuid']) && $legacy_uuid !== $row['uuid']) {
+                $issues[] = 'data 计算出的 legacy uuid 与数据库 uuid 不一致';
+                $status = 'needs_review';
+            }
+            if ($stable_id === '') {
+                $issues[] = '无法生成 stable_device_id_v2';
+                if ($status === 'ready') {
+                    $status = 'needs_review';
+                }
+            }
+            if (!empty($meta['schema_version']) && intval($meta['schema_version']) >= 2) {
+                $status = empty($issues) ? 'already_migrated' : $status;
+            }
+
+            return array(
+                'id' => intval($row['id']),
+                'name' => isset($row['name']) ? $row['name'] : '',
+                'number' => isset($row['number']) ? $row['number'] : '',
+                'uuid' => isset($row['uuid']) ? $row['uuid'] : '',
+                'legacy_uuid' => $legacy_uuid,
+                'stable_device_id_v2' => $stable_id,
+                'migration_status' => $status,
+                'status' => $status,
+                'issues' => $issues,
+                'has_v2_meta' => !empty($meta),
+                'collector' => isset($data['collector']) && is_array($data['collector']) ? $data['collector'] : array(),
+            );
+        }
+
+        /**
+         * 汇总迁移报告。
+         */
+        private static function summarize_pc_migration_phase1($items, $extra = array())
+        {
+            $summary = array(
+                'scanned' => count($items),
+                'ready' => 0,
+                'already_migrated' => 0,
+                'needs_review' => 0,
+                'blocked' => 0,
+            );
+
+            foreach ($items as $item) {
+                $status = isset($item['status']) ? $item['status'] : 'needs_review';
+                if (!isset($summary[$status])) {
+                    $summary[$status] = 0;
+                }
+                $summary[$status]++;
+            }
+
+            return array_merge($extra, array(
+                'success' => true,
+                'summary' => $summary,
+                'items' => $items,
+            ));
         }
 
         /**

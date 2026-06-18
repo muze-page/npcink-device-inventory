@@ -10,7 +10,7 @@ import { MysqlDeviceData } from "@/type/index";
 import { totalResidualValue, validateIPv4 } from "@/utils/tool";
 import { queryKeys } from "@/services/queryKeys";
 //选择输入框
-import SelectInput from "@/components/selectInput";
+import SelectInput from "@/components/SelectInput";
 /**残值组件 */
 import Scrap from "@/pages/pcList/deviceDetails/block/scrap";
 interface Props {

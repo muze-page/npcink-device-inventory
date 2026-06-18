@@ -1,0 +1,16 @@
+[package]
+name = "magick-device-agent"
+version = "0.1.0"
+edition = "2021"
+description = "Rust hardware collector and uploader for Magick Device Manage"
+license = "GPL-3.0-or-later"
+
+[dependencies]
+anyhow = "1.0"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+local-ip-address = "0.6"
+md5 = "0.7"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sysinfo = "0.30"

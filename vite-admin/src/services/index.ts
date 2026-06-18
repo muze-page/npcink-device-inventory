@@ -3,6 +3,8 @@ export {
   exportSQLData,
   importSQLData,
   addPublicSearchPage,
+  precheckPcMigrationPhase1,
+  applyPcMigrationPhase1,
 } from "@/services/seting";
 export {
   addChangeData,

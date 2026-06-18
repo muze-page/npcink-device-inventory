@@ -10,7 +10,7 @@ import { deleteStyleDeviceData, updateStyleDeviceData } from "@/services/index";
 import { StyleDeviceSeting } from "@/type/index";
 import { queryKeys } from "@/services/queryKeys";
 //选择输入框
-import SelectInput from "@/components/selectInput";
+import SelectInput from "@/components/SelectInput";
 const { TextArea } = Input;
 interface Props {
   onActive: () => void; //修改弹窗状态

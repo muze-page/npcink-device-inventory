@@ -2,11 +2,16 @@
  * 设置
  */
 import { useEffect, useState } from "react";
-import { Button, Form, Input, Switch, InputNumber, message } from "antd";
+import { Button, Form, Input, Switch, InputNumber, message, Modal } from "antd";
 import { PlusCircleFilled } from "@ant-design/icons";
 
 import { defaultOption, Site, sqlTableName } from "@/utils/index";
-import { saveSQLData, addPublicSearchPage } from "@/services/index";
+import {
+  saveSQLData,
+  addPublicSearchPage,
+  precheckPcMigrationPhase1,
+  applyPcMigrationPhase1,
+} from "@/services/index";
 
 import ImportExport from "@/pages/config/importExport";
 import ExportPcExcel from "@/pages/config/exportPcExcel";
@@ -70,6 +75,7 @@ const App: React.FC = () => {
 
   //公共查询页面
   const [publicSearch, setPublicSearch] = useState(""); // 公共查询输入框的值
+  const [migrationLoading, setMigrationLoading] = useState(false);
 
   //添加页面
   const addPage = async () => {
@@ -106,6 +112,52 @@ const App: React.FC = () => {
       setPublicSearch("public_search_route");
     }
   }, [option]);
+
+  const migratePhase1 = async () => {
+    setMigrationLoading(true);
+    try {
+      const report = await precheckPcMigrationPhase1();
+      const summary = report.summary;
+      Modal.confirm({
+        title: "迁移到新版设备标识",
+        width: 640,
+        okText: "确认迁移",
+        cancelText: "取消",
+        okButtonProps: {
+          danger: summary.blocked > 0 || summary.needs_review > 0,
+        },
+        content: (
+          <div>
+            <p>本次只会写入 data 内的 _magick_device 元数据，不会修改原 UUID。</p>
+            <ul style={{ paddingLeft: 18, marginBottom: 0 }}>
+              <li>扫描设备：{summary.scanned}</li>
+              <li>可迁移：{summary.ready}</li>
+              <li>已迁移：{summary.already_migrated}</li>
+              <li>需复核：{summary.needs_review}</li>
+              <li>阻塞：{summary.blocked}</li>
+            </ul>
+            {summary.blocked > 0 || summary.needs_review > 0 ? (
+              <p style={{ color: "#a8071a", marginTop: 12 }}>
+                存在需要复核的记录。确认后仍会跳过缺少关键数据的记录。
+              </p>
+            ) : null}
+          </div>
+        ),
+        onOk: async () => {
+          const result = await applyPcMigrationPhase1();
+          message.success(
+            `迁移完成：更新 ${result.updated || 0} 条，跳过 ${
+              result.skipped || 0
+            } 条`
+          );
+        },
+      });
+    } catch {
+      // axios 拦截器会展示错误。
+    } finally {
+      setMigrationLoading(false);
+    }
+  };
 
   return (
     <>
@@ -221,6 +273,17 @@ const App: React.FC = () => {
 
           <Form.Item label="电脑设备数据">
             <ExportPcExcel />
+          </Form.Item>
+
+          <Header title="迁移" />
+
+          <Form.Item
+            label="新版设备标识"
+            extra={"为历史电脑设备补充 v2 迁移元数据；不修改原 UUID"}
+          >
+            <Button loading={migrationLoading} onClick={migratePhase1}>
+              迁移到新版设备标识
+            </Button>
           </Form.Item>
         </Form>
       </div>
