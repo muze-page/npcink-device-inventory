@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="168" y1="110" x2="856" y2="914" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1f6feb"/>
+      <stop offset="0.55" stop-color="#1452d9"/>
+      <stop offset="1" stop-color="#0f9f9a"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="260" y1="292" x2="682" y2="670" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8fbff"/>
+      <stop offset="1" stop-color="#dce9ff"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="574" y1="408" x2="810" y2="736" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#d8fff6"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="28" stdDeviation="28" flood-color="#09245f" flood-opacity="0.28"/>
+    </filter>
+    <filter id="soft" x="-12%" y="-12%" width="124%" height="124%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#06215e" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <rect x="72" y="72" width="880" height="880" rx="216" fill="url(#bg)"/>
+  <path d="M210 219C285 152 374 120 477 120c203 0 364 145 404 331-72-111-190-179-337-198-137-17-249-4-334 39z" fill="#ffffff" opacity="0.13"/>
+  <path d="M143 724c156 96 322 123 498 82 91-21 172-58 244-110-72 154-226 256-402 256-142 0-269-67-340-170z" fill="#071d55" opacity="0.12"/>
+
+  <g filter="url(#shadow)">
+    <path d="M248 302c0-42 34-76 76-76h376c42 0 76 34 76 76v278H248z" fill="#102f7a" opacity="0.72"/>
+    <rect x="296" y="276" width="432" height="268" rx="38" fill="url(#screen)"/>
+    <path d="M208 586h608l56 84c13 20-1 46-25 46H177c-24 0-38-26-25-46z" fill="#eaf2ff"/>
+    <path d="M358 630h308l22 34H336z" fill="#bfd3ef"/>
+  </g>
+
+  <g filter="url(#soft)">
+    <path d="M651 358l166 64v135c0 118-73 214-166 253-93-39-166-135-166-253V422z" fill="#0d3f90" opacity="0.9"/>
+    <path d="M651 396l126 49v108c0 91-54 167-126 203-72-36-126-112-126-203V445z" fill="url(#shield)"/>
+    <path d="M651 470l82 82h-50v104h-64V552h-50z" fill="#1452d9"/>
+    <path d="M586 680h130v42H586z" fill="#0f9f9a"/>
+  </g>
+
+  <path d="M356 398h194" stroke="#1f6feb" stroke-width="42" stroke-linecap="round" opacity="0.16"/>
+  <path d="M356 466h142" stroke="#0f9f9a" stroke-width="36" stroke-linecap="round" opacity="0.18"/>
+</svg>
