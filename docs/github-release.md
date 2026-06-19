@@ -21,6 +21,40 @@ Choose one package target:
 Preview artifacts are attached to the workflow run and expire after 7 days.
 Use this workflow while iterating on UI, icons, copy, and packaging checks.
 
+The preview workflow uses Node 24, runs PHP syntax checks for plugin PHP files,
+builds both Vite apps with `npm ci`, audits the WordPress plugin zip boundary,
+and runs `cargo check` before building the macOS/Windows Tauri installers.
+
+## Local end-to-end verification
+
+Before creating a tag, run the local end-to-end smoke test against the Local WP
+site:
+
+```bash
+bash .github/scripts/verify-local-e2e.sh
+```
+
+Defaults:
+
+```text
+WP_PATH=/Users/muze/Local Sites/magick-device-manage/app/public
+SITE_URL=http://magick-device-manage.local
+DEVICE_NAME=HMAC验收
+```
+
+Override them when testing another local site:
+
+```bash
+WP_PATH="/path/to/wordpress" \
+SITE_URL="https://example.local" \
+DEVICE_NAME="验收设备" \
+bash .github/scripts/verify-local-e2e.sh
+```
+
+The script generates a temporary upload authorization code in WordPress, submits
+a signed v2 upload through the Rust CLI, and verifies that the stored row has
+`_magick_device`, `asset`, and `raw`.
+
 ## Tagged release
 
 Create and push a version tag:

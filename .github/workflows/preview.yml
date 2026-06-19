@@ -31,6 +31,18 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            vite-admin/package-lock.json
+            vite-search/package-lock.json
+
+      - name: PHP syntax check
+        run: |
+          php -v
+          php -l magick-device-manage.php
+          php -l uninstall.php
+          php -l index.php
+          find admin includes -name "*.php" -print0 | xargs -0 -n1 php -l
 
       - name: Build admin app
         working-directory: vite-admin
@@ -41,7 +53,7 @@ jobs:
       - name: Build search app
         working-directory: vite-search
         run: |
-          npm install
+          npm ci
           npm run build
 
       - name: Package plugin
@@ -79,6 +91,14 @@ jobs:
           rustup default stable
           rustup show
 
+      - name: Check Rust collector
+        working-directory: ele-rs
+        run: cargo check
+
+      - name: Check Tauri shell
+        working-directory: ele-rs/src-tauri
+        run: cargo check
+
       - name: Build Tauri bundle
         working-directory: ele-rs
         run: npm run tauri:build
@@ -114,6 +134,14 @@ jobs:
         run: |
           rustup default stable
           rustup show
+
+      - name: Check Rust collector
+        working-directory: ele-rs
+        run: cargo check
+
+      - name: Check Tauri shell
+        working-directory: ele-rs/src-tauri
+        run: cargo check
 
       - name: Build Tauri bundle
         working-directory: ele-rs
