@@ -11,6 +11,20 @@ export const saveSQLData = async (
   return response.data as RestResponse;
 };
 
+export interface ClientTokenResponse {
+  success: boolean;
+  message: string;
+  token: string;
+  token_id: string;
+  preview: string;
+  created_at: string;
+}
+
+export const generateClientToken = async (): Promise<ClientTokenResponse> => {
+  const response = await restInstance.post("/admin/client-token", {});
+  return response.data as ClientTokenResponse;
+};
+
 /**
  * 导出数据
  * @param name 数据库名

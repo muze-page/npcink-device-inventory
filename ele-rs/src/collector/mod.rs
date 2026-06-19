@@ -2,6 +2,7 @@ use anyhow::Result;
 use chrono::Utc;
 use local_ip_address::list_afinet_netifas;
 use serde_json::{json, Map, Value};
+use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::net::IpAddr;
 use sysinfo::{Disks, Networks, System};
@@ -22,6 +23,7 @@ pub fn collect_static_data() -> Result<Value> {
     root.insert("os".to_string(), collect_os());
     root.insert("cpu".to_string(), collect_cpu(&system));
     root.insert("mem".to_string(), collect_memory(&system));
+    root.insert("memLayout".to_string(), collect_mem_layout(&system));
     root.insert("system".to_string(), collect_system(&hardware_uuid));
     root.insert("diskLayout".to_string(), collect_disks(&disks));
     root.insert("fsSize".to_string(), collect_fs_size(&disks));
@@ -56,6 +58,61 @@ pub fn legacy_device_id(data: &Value) -> Option<String> {
         return None;
     }
     Some(format!("{:x}", md5::compute(format!("{hardware}{mac}"))))
+}
+
+pub fn stable_device_id_v2(data: &Value) -> Option<String> {
+    let hardware = data
+        .pointer("/uuid/hardware")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let system_uuid = data
+        .pointer("/system/uuid")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let system_serial = data
+        .pointer("/system/serial")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let baseboard_serial = data
+        .pointer("/baseboard/serial")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let mut macs = data
+        .pointer("/uuid/macs")
+        .and_then(Value::as_array)
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(Value::as_str)
+                .map(|value| value.trim().to_lowercase())
+                .filter(|value| !value.is_empty() && value != "00:00:00:00:00:00")
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    macs.sort();
+    macs.dedup();
+
+    if hardware.trim().is_empty()
+        && system_uuid.trim().is_empty()
+        && system_serial.trim().is_empty()
+        && baseboard_serial.trim().is_empty()
+        && macs.is_empty()
+    {
+        return None;
+    }
+
+    let mac_json = serde_json::to_string(&macs).ok()?;
+    let source = format!(
+        "{{\"hardware\":{},\"system_uuid\":{},\"system_serial\":{},\"baseboard_serial\":{},\"macs\":{}}}",
+        serde_json::to_string(hardware).ok()?,
+        serde_json::to_string(system_uuid).ok()?,
+        serde_json::to_string(system_serial).ok()?,
+        serde_json::to_string(baseboard_serial).ok()?,
+        mac_json
+    );
+    let digest = Sha256::digest(source.as_bytes());
+    let full = format!("{:x}", digest);
+    Some(format!("v2-{}", &full[..29]))
 }
 
 fn collect_os() -> Value {
@@ -96,6 +153,24 @@ fn collect_memory(system: &System) -> Value {
     })
 }
 
+fn collect_mem_layout(system: &System) -> Value {
+    let total = system.total_memory();
+    if total == 0 {
+        return Value::Array(Vec::new());
+    }
+
+    Value::Array(vec![json!({
+        "bank": if cfg!(target_os = "macos") { "Unified Memory" } else { "" },
+        "size": total,
+        "type": if cfg!(target_os = "macos") { "Unified" } else { "" },
+        "clockSpeed": 0,
+        "formFactor": "",
+        "manufacturer": if cfg!(target_os = "macos") { "Apple" } else { "" },
+        "serialNum": "",
+        "partNum": "",
+    })])
+}
+
 fn collect_system(hardware_uuid: &str) -> Value {
     json!({
         "manufacturer": "",
@@ -112,6 +187,7 @@ fn collect_disks(disks: &Disks) -> Value {
         disks
             .list()
             .iter()
+            .filter(|disk| is_asset_disk_mount(&disk.mount_point().to_string_lossy()))
             .map(|disk| {
                 json!({
                     "name": disk.name().to_string_lossy(),
@@ -145,15 +221,22 @@ fn collect_fs_size(disks: &Disks) -> Value {
     )
 }
 
+fn is_asset_disk_mount(mount: &str) -> bool {
+    if cfg!(target_os = "macos") {
+        return mount == "/";
+    }
+    !mount.is_empty()
+}
+
 fn collect_networks(networks: &Networks, ips: &BTreeMap<String, Vec<IpAddr>>) -> Value {
     let mut default_assigned = false;
     let mut rows = Vec::new();
 
     for (iface, data) in networks.iter() {
         let (ip4, ip6) = iface_ips(iface, ips);
-        let internal = ip4.starts_with("127.") || ip6 == "::1";
+        let internal = is_internal_iface(iface, &ip4, &ip6);
         let virtual_iface = is_virtual_iface(iface);
-        let has_ip = !ip4.is_empty() || !ip6.is_empty();
+        let has_ip = has_routable_ip(&ip4, &ip6);
         let default = !default_assigned && has_ip && !internal && !virtual_iface;
         if default {
             default_assigned = true;
@@ -183,9 +266,8 @@ fn collect_macs(networks: &Networks, ips: &BTreeMap<String, Vec<IpAddr>>) -> Vec
         let mac = data.mac_address().to_string().to_lowercase();
         if mac != "00:00:00:00:00:00" && mac != "ff:ff:ff:ff:ff:ff" {
             let (ip4, ip6) = iface_ips(iface, ips);
-            let active = (!ip4.is_empty() || !ip6.is_empty())
-                && !ip4.starts_with("127.")
-                && ip6 != "::1"
+            let active = has_routable_ip(&ip4, &ip6)
+                && !is_internal_iface(iface, &ip4, &ip6)
                 && !is_virtual_iface(iface);
             if active {
                 primary.push(mac);
@@ -196,9 +278,14 @@ fn collect_macs(networks: &Networks, ips: &BTreeMap<String, Vec<IpAddr>>) -> Vec
     }
 
     let mut seen = BTreeSet::new();
-    primary
+    let selected = if primary.is_empty() {
+        secondary
+    } else {
+        primary
+    };
+
+    selected
         .into_iter()
-        .chain(secondary)
         .filter(|mac| seen.insert(mac.clone()))
         .collect()
 }
@@ -238,9 +325,29 @@ fn fallback_hardware_uuid(macs: &[String]) -> String {
     format!("{:x}", md5::compute(format!("{host}|{first_mac}")))
 }
 
+fn is_internal_iface(iface: &str, ip4: &str, ip6: &str) -> bool {
+    let lower = iface.to_ascii_lowercase();
+    lower == "lo"
+        || lower == "lo0"
+        || ip4.starts_with("127.")
+        || ip6 == "::1"
+}
+
+fn has_routable_ip(ip4: &str, ip6: &str) -> bool {
+    (!ip4.is_empty() && !ip4.starts_with("127."))
+        || (!ip6.is_empty() && ip6 != "::1" && !ip6.to_ascii_lowercase().starts_with("fe80:"))
+}
+
 fn is_virtual_iface(iface: &str) -> bool {
     let lower = iface.to_ascii_lowercase();
-    ["virtual", "vmware", "vbox", "docker", "bridge", "utun", "awdl", "llw"]
+    if ["anpi", "ap", "awdl", "bridge", "gif", "llw", "p2p", "stf", "utun"]
+        .iter()
+        .any(|prefix| lower.starts_with(prefix))
+    {
+        return true;
+    }
+
+    ["virtual", "vmware", "vbox", "docker"]
         .iter()
         .any(|needle| lower.contains(needle))
 }

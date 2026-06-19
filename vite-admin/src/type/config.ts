@@ -38,6 +38,10 @@ export interface ImportReport {
 export interface OptionType {
   route?: string; //路由
   password?: string; //密码
+  has_client_token?: boolean; //是否已生成客户端上传授权码
+  client_token_id?: string; //客户端上传授权码 ID
+  client_token_preview?: string; //脱敏后的客户端上传授权码
+  client_token_created_at?: string; //客户端上传授权码生成时间
   delete_mysql?: boolean; //是否删除数据库
   depreciation_year: number; //折旧月限
   residual_value_rate: number; //残值率

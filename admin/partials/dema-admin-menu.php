@@ -79,8 +79,12 @@ if (!class_exists('DEMA_Admin_Menu')) {
             $option = get_option(self::$option);
             if (is_object($option)) {
                 $option->password = '已设定';
+                $option->has_client_token = !empty($option->client_token_id) && !empty($option->client_token_key_hash);
+                unset($option->client_token_key_hash);
             } elseif (is_array($option)) {
                 $option['password'] = '已设定';
+                $option['has_client_token'] = !empty($option['client_token_id']) && !empty($option['client_token_key_hash']);
+                unset($option['client_token_key_hash']);
             }
 
             $pf_api_translation_array = array(

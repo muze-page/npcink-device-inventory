@@ -1,16 +1,14 @@
 # Magick Device Agent
 
-第一阶段 Rust 迁移客户端，目标是替代 Electron 主进程里的 `systeminformation.getStaticData()`，但暂时保持 WordPress 上传接口兼容。
+第一阶段 Rust 迁移客户端，目标是替代 Electron 主进程里的 `systeminformation.getStaticData()`，并上传到 WordPress v2 接口。
+
+现代化后的 v2 数据契约见 `../docs/device-data-v2-contract.md`。服务端会把采集
+输入规范化为 `_magick_device`、`asset`、`raw`，后台列表、统计和导出读取
+`asset` 数据。
 
 ## 为什么先做这个
 
-当前线上已有 100 多台电脑数据，服务端使用以下规则计算电脑设备 UUID：
-
-```text
-md5(data.uuid.hardware + data.uuid.macs[0])
-```
-
-所以第一阶段不能随意更换数据结构或主键规则。这个 Agent 会继续输出：
+新客户端会输出用于生成 `stable_device_id_v2` 的硬件身份信号：
 
 ```json
 {
@@ -22,7 +20,7 @@ md5(data.uuid.hardware + data.uuid.macs[0])
 }
 ```
 
-并额外附加 `collector` 元数据，便于后台识别新客户端来源。
+并附加 `collector` 元数据，便于后台识别新客户端来源。旧数据后续导出后一次性迁移，不在新客户端里兼容。
 
 ## 命令
 
@@ -39,9 +37,9 @@ npm run tauri:build
 
 ```bash
 cargo run -- inspect --pretty
-cargo run -- legacy-id
-cargo run -- submit --site "https://example.com/wp-json/npcink/v1/device-post-data-v2" --name "张三" --password "9527"
-cargo run -- submit-legacy --site "https://example.com/wp-json/npcink/v1/device-post-data" --name "张三" --password "9527"
+cargo run -- stable-id
+cargo run -- submit --site "https://example.com/wp-json/npcink/v1/device-post-data-v2" --name "张三" --token "后台生成的上传授权码"
+cargo run -- submit-legacy --site "https://example.com/wp-json/npcink/v1/device-post-data" --name "张三" --password "上传密码"
 ```
 
 `submit` 使用 v2 接口 body：
@@ -49,10 +47,11 @@ cargo run -- submit-legacy --site "https://example.com/wp-json/npcink/v1/device-
 ```json
 {
   "name": "...",
-  "password": "...",
   "data": {}
 }
 ```
+
+v2 上传会自动附加 HMAC 请求头，用户只需要在桌面端填写后台生成的上传授权码。
 
 `submit-legacy` 保留旧接口 body：
 
@@ -67,10 +66,9 @@ cargo run -- submit-legacy --site "https://example.com/wp-json/npcink/v1/device-
 
 ## 阶段边界
 
-- 不修改 WordPress 插件数据库主键。
 - 不替换已有 Electron 包。
-- v2 先沿用现有上传密码鉴权，HMAC/设备令牌留到下一阶段。
-- 先验证 Windows/macOS 采集字段是否足以更新现有设备。
+- v2 使用后台生成的上传授权码和 HMAC 签名；旧密码仅作为兼容回退。
+- 先验证 Windows/macOS 采集字段是否足以支撑新 `asset` 结构。
 
 ## 桌面客户端结构
 
@@ -86,7 +84,7 @@ ele-rs/
 
 - v2 接口地址、使用人、上传密码配置
 - 本机硬件采集预览
-- legacy ID 展示
+- stable device id 展示
 - 提交到 `/device-post-data-v2`
 
 ## 本地环境

@@ -30,7 +30,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
             /**
              * 添加查询设备数据api接口
-             * http://localhost:10048/wp-json/npcink/v1/query?number=1&password=9527
+             * http://localhost:10048/wp-json/npcink/v1/query?number=1
              */
             add_action('rest_api_init', array(__CLASS__, 'create_query_endpoint'));
 
@@ -83,8 +83,6 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         {
             global $wpdb;
             self::$table_name = $wpdb->prefix . self::$table_pc_name;
-            header('Access-Control-Allow-Origin: *');
-
             // 获取传递过来的字符串参数并进行安全过滤
             $query_data = isset($request['data']) ? sanitize_text_field($request['data']) : null;
             $detail_param = $request instanceof WP_REST_Request ? $request->get_param('detail') : (isset($request['detail']) ? $request['detail'] : null);
@@ -195,8 +193,6 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         {
             global $wpdb;
             self::$table_name = $wpdb->prefix . self::$table_pc_name;
-            header('Access-Control-Allow-Origin: *');
-
             //拿到传来的姓名，检查字符串
             $name = isset($request['name']) ? sanitize_text_field($request['name']) : null;
 
@@ -298,14 +294,12 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
         /**
          * v2 客户端上传数据
-         * 保持旧 uuid 列不变，优先用 legacy uuid 匹配历史设备，再用 v2 stable id 兜底匹配。
+         * 新上传只使用 v2 stable id 作为 uuid 列，data JSON 只存规范化结构。
          */
         public static function submit_device_data_v2($request)
         {
             global $wpdb;
             self::$table_name = $wpdb->prefix . self::$table_pc_name;
-            header('Access-Control-Allow-Origin: *');
-
             $name = isset($request['name']) ? sanitize_text_field($request['name']) : '';
             if ($name === '') {
                 return new WP_Error('missing_name', '姓名为空，请填写', array('status' => 400));
@@ -316,12 +310,13 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 return new WP_Error('missing_device_data', '硬件数据为空，请检查', array('status' => 400));
             }
 
-            $legacy_uuid = self::derive_uuid_from_data($data_obj);
-            if ($legacy_uuid === '') {
-                return new WP_Error('missing_legacy_uuid', '硬件数据缺少 uuid.hardware 或 uuid.macs[0]', array('status' => 400));
+            $stable_id = self::derive_stable_device_id_v2($data_obj, $request);
+            if ($stable_id === '') {
+                return new WP_Error('missing_device_identity', '无法生成设备唯一标识，请检查硬件 UUID、序列号或主网卡信息', array('status' => 400));
             }
 
-            $stable_id = self::derive_stable_device_id_v2($data_obj, $request);
+            $legacy_uuid = self::derive_uuid_from_data($data_obj);
+            $record_uuid = $stable_id;
             $collector = self::extract_collector_metadata($data_obj, $request);
             $data_obj = self::attach_device_migration_meta(
                 $data_obj,
@@ -330,18 +325,15 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 $collector,
                 'upload_v2'
             );
+            $data_obj = self::normalize_device_data_v2($data_obj, $legacy_uuid, $stable_id, $collector);
 
             $data_json = wp_json_encode($data_obj, JSON_UNESCAPED_UNICODE);
             if ($data_json === false) {
                 return new WP_Error('json_encode_failed', '硬件数据编码失败', array('status' => 400));
             }
 
-            $existing_data = self::check_data_repeat($legacy_uuid);
-            $match_strategy = 'legacy_uuid';
-            if (empty($existing_data) && $stable_id !== '') {
-                $existing_data = self::find_pc_by_stable_device_id($stable_id);
-                $match_strategy = $existing_data ? 'stable_device_id_v2' : 'none';
-            }
+            $existing_data = self::check_data_repeat($record_uuid);
+            $match_strategy = $existing_data ? 'stable_device_id_v2' : 'none';
 
             if ($existing_data) {
                 $result = $wpdb->update(
@@ -368,7 +360,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                     'message' => 'v2 设备数据已更新',
                     'mode' => 'update',
                     'match_strategy' => $match_strategy,
-                    'uuid' => $existing_data['uuid'],
+                    'uuid' => $record_uuid,
                     'legacy_uuid' => $legacy_uuid,
                     'stable_device_id_v2' => $stable_id,
                     'number' => $existing_data['number'],
@@ -388,7 +380,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 'purchase' => 0,
                 'depreciation' => 0,
                 'ip' => $device_ip,
-                'uuid' => $legacy_uuid,
+                'uuid' => $record_uuid,
                 'data' => $data_json,
             );
 
@@ -411,7 +403,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 'message' => 'v2 设备数据已提交',
                 'mode' => 'insert',
                 'match_strategy' => 'none',
-                'uuid' => $legacy_uuid,
+                'uuid' => $record_uuid,
                 'legacy_uuid' => $legacy_uuid,
                 'stable_device_id_v2' => $stable_id,
                 'number' => $last_six_digits,
@@ -427,11 +419,131 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         private static function password_verification($input_Password)
         {
             $setting_Password = self::get_seting('password'); // 获取设置的密码
+            if (!is_string($setting_Password) || $setting_Password === '') {
+                return false;
+            }
 
             // 使用 wp_check_password 直接验证密码
             $valid_password = wp_check_password($input_Password, $setting_Password);
 
             return $valid_password; // 返回验证结果
+        }
+
+        private static function random_hex($bytes)
+        {
+            if (function_exists('random_bytes')) {
+                try {
+                    return bin2hex(random_bytes($bytes));
+                } catch (Exception $e) {
+                    // Fall through to wp_generate_password below.
+                }
+            }
+
+            return strtolower(substr(preg_replace('/[^a-zA-Z0-9]/', '', wp_generate_password($bytes * 2, false, false)), 0, $bytes * 2));
+        }
+
+        private static function get_client_token_config()
+        {
+            $config = get_option(self::$option);
+            $get_value = function ($key) use ($config) {
+                if (is_array($config) && array_key_exists($key, $config)) {
+                    return $config[$key];
+                }
+                if (is_object($config) && property_exists($config, $key)) {
+                    return $config->$key;
+                }
+                return '';
+            };
+
+            $id = sanitize_key((string) $get_value('client_token_id'));
+            $key_hash = sanitize_text_field((string) $get_value('client_token_key_hash'));
+            $preview = sanitize_text_field((string) $get_value('client_token_preview'));
+            $created_at = sanitize_text_field((string) $get_value('client_token_created_at'));
+
+            return array(
+                'id' => $id,
+                'key_hash' => preg_match('/^[a-f0-9]{64}$/', $key_hash) ? $key_hash : '',
+                'preview' => $preview,
+                'created_at' => $created_at,
+            );
+        }
+
+        private static function set_config_value(&$config, $key, $value)
+        {
+            if (is_array($config)) {
+                $config[$key] = $value;
+                return;
+            }
+            if (is_object($config)) {
+                $config->$key = $value;
+            }
+        }
+
+        private static function get_request_header($request, $name)
+        {
+            if ($request instanceof WP_REST_Request) {
+                $value = $request->get_header($name);
+                return is_string($value) ? trim($value) : '';
+            }
+
+            $server_key = 'HTTP_' . strtoupper(str_replace('-', '_', $name));
+            if (!empty($_SERVER[$server_key]) && is_string($_SERVER[$server_key])) {
+                return trim(wp_unslash($_SERVER[$server_key]));
+            }
+
+            return '';
+        }
+
+        private static function verify_hmac_signature($request)
+        {
+            $token_id = sanitize_key(self::get_request_header($request, 'x-magick-device-token-id'));
+            $timestamp = self::get_request_header($request, 'x-magick-device-timestamp');
+            $nonce = sanitize_text_field(self::get_request_header($request, 'x-magick-device-nonce'));
+            $signature = sanitize_text_field(self::get_request_header($request, 'x-magick-device-signature'));
+
+            if ($token_id === '' && $timestamp === '' && $nonce === '' && $signature === '') {
+                return null;
+            }
+
+            if ($token_id === '' || $timestamp === '' || $nonce === '' || $signature === '') {
+                return new WP_Error('missing_hmac_header', '上传授权签名不完整，请重新复制后台生成的上传授权码', array('status' => 403));
+            }
+
+            $token = self::get_client_token_config();
+            if ($token['id'] === '' || $token['key_hash'] === '' || !hash_equals($token['id'], $token_id)) {
+                return new WP_Error('invalid_client_token', '上传授权码无效，请在后台重新生成', array('status' => 403));
+            }
+
+            if (!preg_match('/^\d{10}$/', $timestamp)) {
+                return new WP_Error('invalid_hmac_timestamp', '上传签名时间戳无效', array('status' => 403));
+            }
+
+            $timestamp_int = intval($timestamp);
+            $now = time();
+            if (abs($now - $timestamp_int) > 5 * MINUTE_IN_SECONDS) {
+                return new WP_Error('expired_hmac_signature', '上传签名已过期，请检查电脑时间后重试', array('status' => 403));
+            }
+
+            if (!preg_match('/^[a-zA-Z0-9_-]{12,80}$/', $nonce)) {
+                return new WP_Error('invalid_hmac_nonce', '上传签名随机串无效', array('status' => 403));
+            }
+
+            $nonce_key = self::get_cache_key('hmac_nonce_' . md5($token_id . '|' . $nonce));
+            if (get_transient($nonce_key)) {
+                return new WP_Error('replayed_hmac_signature', '上传请求已使用，请重新提交', array('status' => 403));
+            }
+
+            $raw_body = $request instanceof WP_REST_Request ? $request->get_body() : '';
+            $body_hash = hash('sha256', (string) $raw_body);
+            $payload = $timestamp . "\n" . $nonce . "\n" . $body_hash;
+            $expected = 'sha256=' . hash_hmac('sha256', $payload, $token['key_hash']);
+
+            if (!hash_equals($expected, $signature)) {
+                return new WP_Error('invalid_hmac_signature', '上传签名验证失败，请检查上传授权码', array('status' => 403));
+            }
+
+            set_transient($nonce_key, 1, 5 * MINUTE_IN_SECONDS);
+            return true;
         }
 
         /**
@@ -440,6 +552,24 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
          */
         private static function extract_valid_ip($data_obj)
         {
+            if (is_object($data_obj)) {
+                $data_obj = json_decode(wp_json_encode($data_obj), true);
+            }
+
+            if (is_array($data_obj) && isset($data_obj['asset']) && is_array($data_obj['asset'])) {
+                $summary_ip = isset($data_obj['asset']['summary']['primary_ip'])
+                    ? trim((string) $data_obj['asset']['summary']['primary_ip'])
+                    : '';
+                if (self::is_valid_ipv4($summary_ip) || self::is_valid_ipv6($summary_ip)) {
+                    return $summary_ip;
+                }
+                if (isset($data_obj['asset']['hardware']['network']['interfaces'])) {
+                    $data_obj['net'] = $data_obj['asset']['hardware']['network']['interfaces'];
+                } elseif (isset($data_obj['asset']['hardware']['network']['primary'])) {
+                    $data_obj['net'] = array($data_obj['asset']['hardware']['network']['primary']);
+                }
+            }
+
             $net = null;
             if (is_object($data_obj) && isset($data_obj->net)) {
                 $net = $data_obj->net;
@@ -602,7 +732,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         }
 
         /**
-         * 提取/生成 v2 稳定设备标识。第一阶段只作为辅助匹配，不替代 uuid 列。
+         * 提取/生成 v2 稳定设备标识，作为新上传的 uuid 列。
          */
         private static function derive_stable_device_id_v2($data_obj, $request = null)
         {
@@ -626,7 +756,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
             foreach ($candidates as $candidate) {
                 if (is_string($candidate) && trim($candidate) !== '') {
-                    return sanitize_text_field($candidate);
+                    return self::normalize_stable_device_id_value($candidate);
                 }
             }
 
@@ -635,11 +765,26 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 return '';
             }
 
-            return 'v2:' . hash('sha256', wp_json_encode($source));
+            return self::normalize_stable_device_id_value('v2-' . hash('sha256', wp_json_encode($source)));
+        }
+
+        private static function normalize_stable_device_id_value($value)
+        {
+            $value = trim((string) $value);
+            if ($value === '') {
+                return '';
+            }
+            if (strpos($value, 'v2:') === 0) {
+                $value = 'v2-' . substr($value, 3);
+            }
+            if (strpos($value, 'v2-') === 0) {
+                return sanitize_text_field(substr($value, 0, 32));
+            }
+            return 'v2-' . substr(hash('sha256', $value), 0, 29);
         }
 
         /**
-         * 构建 v2 fingerprint 的输入，不参与旧 uuid 列。
+         * 构建 v2 fingerprint 的输入。
          */
         private static function build_device_fingerprint_source($data_obj)
         {
@@ -747,6 +892,293 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             ));
 
             return $data_obj;
+        }
+
+        /**
+         * 生成 v2 规范化资产数据。新上传只存 _magick_device、asset、raw。
+         */
+        private static function normalize_device_data_v2($data_obj, $legacy_uuid, $stable_id, $collector)
+        {
+            if (is_object($data_obj)) {
+                $data_obj = json_decode(wp_json_encode($data_obj), true);
+            }
+            if (!is_array($data_obj)) {
+                $data_obj = array();
+            }
+
+            $primary_network = self::pick_primary_network(isset($data_obj['net']) ? $data_obj['net'] : array());
+            $primary_mac = isset($primary_network['mac']) ? strtolower(trim((string) $primary_network['mac'])) : '';
+            $macs = self::normalize_mac_list(isset($data_obj['uuid']['macs']) ? $data_obj['uuid']['macs'] : array(), $primary_mac);
+
+            if (!isset($data_obj['uuid']) || !is_array($data_obj['uuid'])) {
+                $data_obj['uuid'] = array();
+            }
+            $data_obj['uuid']['macs'] = $macs;
+
+            $memory = self::normalize_asset_memory(
+                isset($data_obj['mem']) ? $data_obj['mem'] : array(),
+                isset($data_obj['memLayout']) ? $data_obj['memLayout'] : array()
+            );
+            $disks = self::normalize_asset_disks(isset($data_obj['diskLayout']) ? $data_obj['diskLayout'] : array());
+            $disk_bytes = self::sum_asset_sizes($disks, 'size_bytes');
+            $memory_bytes = isset($memory['total_bytes']) ? intval($memory['total_bytes']) : 0;
+
+            $cpu = isset($data_obj['cpu']) && is_array($data_obj['cpu']) ? $data_obj['cpu'] : array();
+            $system = isset($data_obj['system']) && is_array($data_obj['system']) ? $data_obj['system'] : array();
+            $baseboard = isset($data_obj['baseboard']) && is_array($data_obj['baseboard']) ? $data_obj['baseboard'] : array();
+            $bios = isset($data_obj['bios']) && is_array($data_obj['bios']) ? $data_obj['bios'] : array();
+            $graphics = isset($data_obj['graphics']) && is_array($data_obj['graphics']) ? $data_obj['graphics'] : array();
+            $controllers = isset($graphics['controllers']) && is_array($graphics['controllers']) ? $graphics['controllers'] : array();
+            $displays = isset($graphics['displays']) && is_array($graphics['displays']) ? $graphics['displays'] : array();
+            $os = isset($data_obj['os']) && is_array($data_obj['os']) ? $data_obj['os'] : array();
+
+            $device_model = self::join_non_empty(array(
+                isset($system['manufacturer']) ? $system['manufacturer'] : '',
+                isset($system['model']) ? $system['model'] : '',
+            ));
+            $cpu_label = self::join_non_empty(array(
+                isset($cpu['manufacturer']) ? $cpu['manufacturer'] : '',
+                isset($cpu['brand']) ? $cpu['brand'] : '',
+            ));
+            if ($cpu_label === '') {
+                $cpu_label = isset($cpu['brand']) ? (string) $cpu['brand'] : '';
+            }
+            $graphics_label = self::first_graphics_label($controllers);
+            $os_label = self::join_os_label(
+                isset($os['distro']) ? $os['distro'] : '',
+                isset($os['release']) ? $os['release'] : ''
+            );
+
+            $asset = array(
+                'identity' => array(
+                    'hardware_uuid' => isset($data_obj['uuid']['hardware']) ? (string) $data_obj['uuid']['hardware'] : '',
+                    'legacy_uuid' => sanitize_text_field($legacy_uuid),
+                    'stable_device_id_v2' => sanitize_text_field($stable_id),
+                    'primary_mac' => $primary_mac,
+                    'macs' => $macs,
+                ),
+                'summary' => array(
+                    'device_model' => $device_model,
+                    'os' => $os_label,
+                    'platform' => isset($os['platform']) ? (string) $os['platform'] : '',
+                    'cpu' => $cpu_label,
+                    'memory_bytes' => $memory_bytes,
+                    'disk_bytes' => $disk_bytes,
+                    'graphics' => $graphics_label,
+                    'primary_ip' => self::device_ip_or_default($data_obj),
+                ),
+                'hardware' => array(
+                    'cpu' => $cpu,
+                    'memory' => $memory,
+                    'disks' => $disks,
+                    'network' => array(
+                        'primary' => $primary_network,
+                        'interfaces' => isset($data_obj['net']) && is_array($data_obj['net']) ? $data_obj['net'] : array(),
+                    ),
+                    'graphics' => array('controllers' => $controllers),
+                    'displays' => $displays,
+                    'baseboard' => $baseboard,
+                    'bios' => $bios,
+                    'system' => $system,
+                ),
+            );
+
+            $raw = array(
+                'filesystems' => isset($data_obj['fsSize']) && is_array($data_obj['fsSize']) ? $data_obj['fsSize'] : array(),
+                'platform' => isset($data_obj['platformData']) && is_array($data_obj['platformData']) ? $data_obj['platformData'] : array(),
+            );
+
+            if (!isset($data_obj['_magick_device']) || !is_array($data_obj['_magick_device'])) {
+                $data_obj['_magick_device'] = array();
+            }
+            $data_obj['_magick_device']['collector'] = $collector;
+
+            return array(
+                '_magick_device' => $data_obj['_magick_device'],
+                'asset' => $asset,
+                'raw' => $raw,
+            );
+        }
+
+        private static function normalize_asset_memory($mem, $mem_layout)
+        {
+            $modules = array();
+            if (is_array($mem_layout)) {
+                foreach ($mem_layout as $item) {
+                    if (!is_array($item)) {
+                        continue;
+                    }
+                    $size = isset($item['size']) ? intval($item['size']) : 0;
+                    if ($size <= 0) {
+                        continue;
+                    }
+                    $modules[] = array(
+                        'size_bytes' => $size,
+                        'type' => isset($item['type']) ? (string) $item['type'] : '',
+                        'bank' => isset($item['bank']) ? (string) $item['bank'] : '',
+                        'manufacturer' => isset($item['manufacturer']) ? (string) $item['manufacturer'] : '',
+                        'part_number' => isset($item['partNum']) ? (string) $item['partNum'] : '',
+                        'serial_number' => isset($item['serialNum']) ? (string) $item['serialNum'] : '',
+                    );
+                }
+            }
+
+            $total = self::sum_asset_sizes($modules, 'size_bytes');
+            if ($total <= 0 && is_array($mem) && isset($mem['total'])) {
+                $total = intval($mem['total']);
+            }
+
+            return array(
+                'total_bytes' => $total,
+                'type' => isset($modules[0]['type']) ? $modules[0]['type'] : '',
+                'modules' => $modules,
+            );
+        }
+
+        private static function normalize_asset_disks($disk_layout)
+        {
+            $disks = array();
+            if (!is_array($disk_layout)) {
+                return $disks;
+            }
+            foreach ($disk_layout as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $size = isset($item['size']) ? intval($item['size']) : 0;
+                if ($size <= 0) {
+                    continue;
+                }
+                $disks[] = array(
+                    'name' => isset($item['name']) ? (string) $item['name'] : (isset($item['device']) ? (string) $item['device'] : ''),
+                    'type' => isset($item['type']) ? (string) $item['type'] : '',
+                    'interface_type' => isset($item['interfaceType']) ? (string) $item['interfaceType'] : '',
+                    'size_bytes' => $size,
+                    'serial_number' => isset($item['serialNum']) ? (string) $item['serialNum'] : '',
+                    'mount' => isset($item['mount']) ? (string) $item['mount'] : '',
+                    'file_system' => isset($item['fsType']) ? (string) $item['fsType'] : '',
+                );
+            }
+            return $disks;
+        }
+
+        private static function pick_primary_network($net)
+        {
+            if (!is_array($net)) {
+                return array();
+            }
+            $fallback = array();
+            foreach ($net as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $mac = isset($item['mac']) ? strtolower(trim((string) $item['mac'])) : '';
+                $usable_mac = $mac !== '' && $mac !== '00:00:00:00:00:00' && $mac !== 'ff:ff:ff:ff:ff:ff';
+                $virtual = !empty($item['virtual']);
+                $internal = !empty($item['internal']);
+                if ($usable_mac && empty($fallback) && !$virtual && !$internal) {
+                    $fallback = $item;
+                }
+                if (!empty($item['default']) && $usable_mac && !$virtual && !$internal) {
+                    return $item;
+                }
+            }
+            return $fallback;
+        }
+
+        private static function normalize_mac_list($macs, $primary_mac = '')
+        {
+            if ($primary_mac !== '' && $primary_mac !== '00:00:00:00:00:00' && $primary_mac !== 'ff:ff:ff:ff:ff:ff') {
+                return array(strtolower($primary_mac));
+            }
+
+            $result = array();
+            $seen = array();
+            $candidates = array();
+            if (is_array($macs)) {
+                foreach ($macs as $mac) {
+                    $candidates[] = $mac;
+                }
+            }
+            foreach ($candidates as $mac) {
+                if (!is_scalar($mac)) {
+                    continue;
+                }
+                $mac = strtolower(trim((string) $mac));
+                if ($mac === '' || $mac === '00:00:00:00:00:00' || $mac === 'ff:ff:ff:ff:ff:ff') {
+                    continue;
+                }
+                if (isset($seen[$mac])) {
+                    continue;
+                }
+                $seen[$mac] = true;
+                $result[] = $mac;
+            }
+            return $result;
+        }
+
+        private static function sum_asset_sizes($items, $key)
+        {
+            if (!is_array($items)) {
+                return 0;
+            }
+            $total = 0;
+            foreach ($items as $item) {
+                if (is_array($item) && isset($item[$key])) {
+                    $total += intval($item[$key]);
+                }
+            }
+            return $total;
+        }
+
+        private static function join_non_empty($values, $separator = ' ')
+        {
+            $clean = array();
+            foreach ($values as $value) {
+                if (!is_scalar($value)) {
+                    continue;
+                }
+                $value = trim((string) $value);
+                if ($value !== '') {
+                    $clean[] = $value;
+                }
+            }
+            return implode($separator, $clean);
+        }
+
+        private static function join_os_label($distro, $release)
+        {
+            $distro = is_scalar($distro) ? trim((string) $distro) : '';
+            $release = is_scalar($release) ? trim((string) $release) : '';
+            if ($distro === '') {
+                return $release;
+            }
+            if ($release === '' || strpos($distro, $release) !== false) {
+                return $distro;
+            }
+            return trim($distro . ' ' . $release);
+        }
+
+        private static function first_graphics_label($controllers)
+        {
+            if (!is_array($controllers)) {
+                return '';
+            }
+            foreach ($controllers as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $vendor = isset($item['vendor']) ? trim((string) $item['vendor']) : '';
+                $model = isset($item['model']) ? trim((string) $item['model']) : '';
+                $label = $model;
+                if ($vendor !== '' && ($model === '' || stripos($model, $vendor) === false)) {
+                    $label = self::join_non_empty(array($vendor, $model));
+                }
+                if ($label !== '') {
+                    return $label;
+                }
+            }
+            return '';
         }
 
         /**
@@ -1147,6 +1579,19 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 ));
             }
 
+            $route = $request instanceof WP_REST_Request ? $request->get_route() : '';
+            if (strpos($route, '/device-post-data-v2') !== false) {
+                $hmac_result = self::verify_hmac_signature($request);
+                if ($hmac_result instanceof WP_Error) {
+                    self::register_rate_limit_failure($request);
+                    return $hmac_result;
+                }
+                if ($hmac_result === true) {
+                    self::clear_rate_limit($request);
+                    return true;
+                }
+            }
+
             $password = self::get_public_password($request);
             if ($password === '') {
                 self::register_rate_limit_failure($request);
@@ -1258,6 +1703,14 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 array(
                     'methods' => WP_REST_Server::EDITABLE,
                     'callback' => array(__CLASS__, 'admin_update_settings'),
+                    'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
+                ),
+            ));
+
+            register_rest_route('npcink/v1', '/admin/client-token', array(
+                array(
+                    'methods' => WP_REST_Server::CREATABLE,
+                    'callback' => array(__CLASS__, 'admin_generate_client_token'),
                     'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
                 ),
             ));
@@ -1399,13 +1852,24 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             if (!is_array($items)) {
                 return self::format_bytes(0);
             }
+            return self::format_bytes(self::sum_raw_sizes($items));
+        }
+
+        /**
+         * 求数组 size 字段总字节数。
+         */
+        private static function sum_raw_sizes($items)
+        {
+            if (!is_array($items)) {
+                return 0;
+            }
             $total = 0;
             foreach ($items as $item) {
                 if (is_array($item) && isset($item['size'])) {
                     $total += floatval($item['size']);
                 }
             }
-            return self::format_bytes($total);
+            return $total;
         }
 
         /**
@@ -1494,71 +1958,51 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
          */
         private static function build_pc_summary($data)
         {
-            $os_replace = array(
-                array('value' => 'Windows', 'label' => 'Windows'),
-                array('value' => 'darwin', 'label' => 'Mac'),
-                array('value' => 'linux', 'label' => 'linux'),
-            );
-            $os_type_replace = array(
-                array('value' => 'Windows 11', 'label' => 'Windows 11'),
-                array('value' => 'Windows 10', 'label' => 'Windows 10'),
-                array('value' => 'macOS', 'label' => 'Apple'),
-                array('value' => 'linux', 'label' => 'Linux'),
-            );
-            $exclude_graphics = array(
-                'Parsec Virtual Display Adapter',
-                'OrayIddDriver Device',
-                'System Product Name',
-                'OrayIddDriver Device',
-                'Virtual Display Device',
-            );
-            $graphics_replace = array(
-                'NVIDIA GeForce',
-                'Intel\\(R\\)',
-                '\\(MS-7D48\\)',
-                '\\(MS-7D46\\)',
-                'with Radeon Graphics',
-            );
+            if (isset($data['asset']) && is_array($data['asset'])) {
+                $asset = $data['asset'];
+                $summary = isset($asset['summary']) && is_array($asset['summary']) ? $asset['summary'] : array();
+                $hardware = isset($asset['hardware']) && is_array($asset['hardware']) ? $asset['hardware'] : array();
+                $identity = isset($asset['identity']) && is_array($asset['identity']) ? $asset['identity'] : array();
+                $cpu = isset($hardware['cpu']) && is_array($hardware['cpu']) ? $hardware['cpu'] : array();
+                $baseboard = isset($hardware['baseboard']) && is_array($hardware['baseboard']) ? $hardware['baseboard'] : array();
 
-            $memory = self::sum_sizes(isset($data['memLayout']) ? $data['memLayout'] : array());
-            $disk = self::sum_sizes(isset($data['diskLayout']) ? $data['diskLayout'] : array());
+                $platform = isset($summary['platform']) ? (string) $summary['platform'] : '';
+                $platform_labels = array(
+                    array('value' => 'windows', 'label' => 'Windows'),
+                    array('value' => 'darwin', 'label' => 'Mac'),
+                    array('value' => 'macos', 'label' => 'Mac'),
+                    array('value' => 'linux', 'label' => 'linux'),
+                );
 
-            $motherboard = isset($data['baseboard']['model']) && $data['baseboard']['model'] !== ''
-                ? self::remove_substring($data['baseboard']['model'], $graphics_replace)
-                : '暂无主板型号';
-
-            $cpu_model = isset($data['cpu']['brand']) && $data['cpu']['brand'] !== ''
-                ? self::remove_substring($data['cpu']['brand'], $graphics_replace)
-                : '暂无 CPU 型号';
-
-            $graphics_list = self::handle_graphics(
-                isset($data['graphics']['controllers']) ? $data['graphics']['controllers'] : array(),
-                $exclude_graphics
-            );
-            $graphics_value = !empty($graphics_list) ? $graphics_list[0] : '';
-            $graphics = $graphics_value !== ''
-                ? self::remove_substring($graphics_value, $graphics_replace)
-                : '暂无显卡型号';
-
-            $meat = array(
-                'os' => self::replace_string(isset($data['os']['distro']) ? $data['os']['distro'] : '', $os_type_replace),
-                'ostype' => self::replace_string(isset($data['os']['platform']) ? $data['os']['platform'] : '', $os_replace),
-                'cpu' => isset($data['cpu']['manufacturer']) && $data['cpu']['manufacturer'] !== '' ? $data['cpu']['manufacturer'] : '暂无 CPU 品牌',
-                'cpuModel' => $cpu_model,
-                'motherboard' => $motherboard,
-                'graphics' => $graphics,
-                'memory' => $memory,
-                'disk' => $disk,
-            );
-
-            $macs = array();
-            if (isset($data['uuid']['macs']) && is_array($data['uuid']['macs'])) {
-                $macs = $data['uuid']['macs'];
+                return array(
+                    'meat' => array(
+                        'os' => isset($summary['os']) && $summary['os'] !== '' ? $summary['os'] : '未收录',
+                        'ostype' => self::replace_string(strtolower($platform), $platform_labels),
+                        'cpu' => isset($cpu['manufacturer']) && $cpu['manufacturer'] !== ''
+                            ? $cpu['manufacturer']
+                            : (isset($cpu['vendor']) && $cpu['vendor'] !== '' ? $cpu['vendor'] : '暂无 CPU 品牌'),
+                        'cpuModel' => isset($summary['cpu']) && $summary['cpu'] !== '' ? $summary['cpu'] : '暂无 CPU 型号',
+                        'motherboard' => isset($baseboard['model']) && $baseboard['model'] !== '' ? $baseboard['model'] : '暂无主板型号',
+                        'graphics' => isset($summary['graphics']) && $summary['graphics'] !== '' ? $summary['graphics'] : '暂无显卡型号',
+                        'memory' => self::format_bytes(isset($summary['memory_bytes']) ? $summary['memory_bytes'] : 0),
+                        'disk' => self::format_bytes(isset($summary['disk_bytes']) ? $summary['disk_bytes'] : 0),
+                    ),
+                    'mac' => isset($identity['macs']) && is_array($identity['macs']) ? $identity['macs'] : array(),
+                );
             }
 
             return array(
-                'meat' => $meat,
-                'mac' => $macs,
+                'meat' => array(
+                    'os' => '未迁移',
+                    'ostype' => '',
+                    'cpu' => '未迁移',
+                    'cpuModel' => '未迁移',
+                    'motherboard' => '未迁移',
+                    'graphics' => '未迁移',
+                    'memory' => '未迁移',
+                    'disk' => '未迁移',
+                ),
+                'mac' => array(),
             );
         }
 
@@ -1851,6 +2295,12 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
          */
         public static function admin_pc_migration_phase1_precheck($request)
         {
+            return new WP_Error(
+                'pc_migration_disabled',
+                '旧数据迁移暂未启用。请先使用 v2 新结构完成采集验收，后续通过导出文件离线迁移。',
+                array('status' => 410)
+            );
+
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_pc_name;
             $limit = max(1, min(500, intval($request->get_param('limit') ?: 500)));
@@ -1900,6 +2350,12 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
          */
         public static function admin_pc_migration_phase1_apply($request)
         {
+            return new WP_Error(
+                'pc_migration_disabled',
+                '旧数据迁移暂未启用。请先使用 v2 新结构完成采集验收，后续通过导出文件离线迁移。',
+                array('status' => 410)
+            );
+
             global $wpdb;
             $confirm = $request->get_param('confirm');
             if (!in_array(strtolower((string) $confirm), array('1', 'true', 'yes'), true)) {
@@ -2711,33 +3167,37 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                     continue;
                 }
 
-                $cpu_manufacturer = isset($data_obj['cpu']['manufacturer']) ? $data_obj['cpu']['manufacturer'] : null;
-                if (!empty($cpu_manufacturer)) {
-                    $cpu_counts[$cpu_manufacturer] = isset($cpu_counts[$cpu_manufacturer]) ? $cpu_counts[$cpu_manufacturer] + 1 : 1;
-                }
+                if (isset($data_obj['asset']) && is_array($data_obj['asset'])) {
+                    $asset = $data_obj['asset'];
+                    $asset_summary = isset($asset['summary']) && is_array($asset['summary']) ? $asset['summary'] : array();
+                    $asset_hardware = isset($asset['hardware']) && is_array($asset['hardware']) ? $asset['hardware'] : array();
+                    $asset_cpu = isset($asset_hardware['cpu']) && is_array($asset_hardware['cpu']) ? $asset_hardware['cpu'] : array();
+                    $asset_baseboard = isset($asset_hardware['baseboard']) && is_array($asset_hardware['baseboard']) ? $asset_hardware['baseboard'] : array();
 
-                if (!empty($data_obj['diskLayout']) && is_array($data_obj['diskLayout'])) {
-                    foreach ($data_obj['diskLayout'] as $disk) {
-                        $bucket = self::bucket_size($disk, $disk_thresholds);
-                        if ($bucket) {
-                            $disk_counts[$bucket] = isset($disk_counts[$bucket]) ? $disk_counts[$bucket] + 1 : 1;
-                        }
+                    $cpu_manufacturer = isset($asset_cpu['manufacturer']) && $asset_cpu['manufacturer'] !== ''
+                        ? $asset_cpu['manufacturer']
+                        : (isset($asset_cpu['vendor']) ? $asset_cpu['vendor'] : '');
+                    if (!empty($cpu_manufacturer)) {
+                        $cpu_counts[$cpu_manufacturer] = isset($cpu_counts[$cpu_manufacturer]) ? $cpu_counts[$cpu_manufacturer] + 1 : 1;
                     }
-                }
 
-                if (!empty($data_obj['memLayout']) && is_array($data_obj['memLayout'])) {
-                    foreach ($data_obj['memLayout'] as $mem) {
-                        $bucket = self::bucket_size($mem, $memory_thresholds);
-                        if ($bucket) {
-                            $memory_counts[$bucket] = isset($memory_counts[$bucket]) ? $memory_counts[$bucket] + 1 : 1;
-                        }
+                    $disk_bucket = self::bucket_bytes(isset($asset_summary['disk_bytes']) ? $asset_summary['disk_bytes'] : 0, $disk_thresholds);
+                    if ($disk_bucket) {
+                        $disk_counts[$disk_bucket] = isset($disk_counts[$disk_bucket]) ? $disk_counts[$disk_bucket] + 1 : 1;
                     }
+
+                    $memory_bucket = self::bucket_bytes(isset($asset_summary['memory_bytes']) ? $asset_summary['memory_bytes'] : 0, $memory_thresholds);
+                    if ($memory_bucket) {
+                        $memory_counts[$memory_bucket] = isset($memory_counts[$memory_bucket]) ? $memory_counts[$memory_bucket] + 1 : 1;
+                    }
+
+                    $baseboard = isset($asset_baseboard['manufacturer']) ? $asset_baseboard['manufacturer'] : null;
+                    if (!empty($baseboard)) {
+                        $baseboard_counts[$baseboard] = isset($baseboard_counts[$baseboard]) ? $baseboard_counts[$baseboard] + 1 : 1;
+                    }
+                    continue;
                 }
 
-                $baseboard = isset($data_obj['baseboard']['manufacturer']) ? $data_obj['baseboard']['manufacturer'] : null;
-                if (!empty($baseboard)) {
-                    $baseboard_counts[$baseboard] = isset($baseboard_counts[$baseboard]) ? $baseboard_counts[$baseboard] + 1 : 1;
-                }
             }
 
             $response = array(
@@ -2787,6 +3247,14 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 $object->password = self::get_seting('password') ? self::get_seting('password') : wp_hash_password($random_string);
             }
 
+            $token = self::get_client_token_config();
+            if ($token['id'] !== '' && $token['key_hash'] !== '') {
+                $object->client_token_id = $token['id'];
+                $object->client_token_key_hash = $token['key_hash'];
+                $object->client_token_preview = $token['preview'];
+                $object->client_token_created_at = $token['created_at'];
+            }
+
             $result = update_option(self::$option, $object);
             if ($result === false) {
                 if (empty($wpdb->last_error)) {
@@ -2806,6 +3274,48 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             return rest_ensure_response(array(
                 'success' => true,
                 'message' => '设置已保存',
+            ));
+        }
+
+        /**
+         * 管理端 - 生成/重置客户端上传授权码。
+         */
+        public static function admin_generate_client_token($request)
+        {
+            global $wpdb;
+
+            $config = get_option(self::$option);
+            if (!is_array($config) && !is_object($config)) {
+                $config = array();
+            }
+
+            $token_id = self::random_hex(6);
+            $secret = self::random_hex(24);
+            $token = 'mda_' . $token_id . '_' . $secret;
+            $key_hash = hash('sha256', $secret);
+            $created_at = current_time('mysql');
+            $preview = substr($token, 0, 10) . '...' . substr($token, -6);
+
+            self::set_config_value($config, 'client_token_id', $token_id);
+            self::set_config_value($config, 'client_token_key_hash', $key_hash);
+            self::set_config_value($config, 'client_token_preview', $preview);
+            self::set_config_value($config, 'client_token_created_at', $created_at);
+
+            $result = update_option(self::$option, $config);
+            if ($result === false && !empty($wpdb->last_error)) {
+                return new WP_Error('update_failed', '生成上传授权码失败：数据库错误', array(
+                    'status' => 500,
+                    'detail' => $wpdb->last_error,
+                ));
+            }
+
+            return rest_ensure_response(array(
+                'success' => true,
+                'message' => '上传授权码已生成，请复制到上传软件中',
+                'token' => $token,
+                'token_id' => $token_id,
+                'preview' => $preview,
+                'created_at' => $created_at,
             ));
         }
 
@@ -3535,11 +4045,18 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             if (!is_array($item) || !isset($item['size'])) {
                 return null;
             }
-            $size = floatval($item['size']);
-            if ($size <= 0) {
+            return self::bucket_bytes($item['size'], $thresholds);
+        }
+
+        /**
+         * 根据字节容量划分区间。
+         */
+        private static function bucket_bytes($bytes, $thresholds)
+        {
+            $size = floatval($bytes);
+            if ($size <= 0 || !is_array($thresholds)) {
                 return null;
             }
-
             $size_gb = $size / pow(1024, 3);
             foreach ($thresholds as $label => $limit) {
                 if ($size_gb <= $limit) {

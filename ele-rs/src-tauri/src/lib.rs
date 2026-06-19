@@ -15,7 +15,7 @@ struct AgentConfig {
 #[derive(Debug, Serialize)]
 struct DeviceSnapshot {
     data: Value,
-    legacy_id: String,
+    stable_device_id_v2: String,
 }
 
 #[tauri::command]
@@ -31,8 +31,11 @@ fn save_config(config: AgentConfig) -> Result<(), String> {
 #[tauri::command]
 fn collect_device_snapshot() -> Result<DeviceSnapshot, String> {
     let data = collector::collect_static_data().map_err(|error| error.to_string())?;
-    let legacy_id = collector::legacy_device_id(&data).unwrap_or_default();
-    Ok(DeviceSnapshot { data, legacy_id })
+    let stable_device_id_v2 = collector::stable_device_id_v2(&data).unwrap_or_default();
+    Ok(DeviceSnapshot {
+        data,
+        stable_device_id_v2,
+    })
 }
 
 #[tauri::command]
@@ -64,7 +67,7 @@ fn validate_config(config: &AgentConfig) -> Result<(), String> {
         return Err("请填写使用人".to_string());
     }
     if config.password.is_empty() {
-        return Err("请填写上传密码".to_string());
+        return Err("请填写上传授权码".to_string());
     }
     Ok(())
 }

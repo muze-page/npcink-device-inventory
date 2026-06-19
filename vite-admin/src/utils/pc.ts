@@ -13,6 +13,7 @@ import {
 } from "@/type/index";
 //替换用数组
 import { osReplace, osTypeReplace, excludeGraphics } from "@/utils/replace";
+import { normalizeComputerData } from "@/utils/assetAdapter";
 
 import { formatBytes, formatMB } from "@/utils/format";
 import Unknown from "@/assets/type/unknown.png";
@@ -139,7 +140,7 @@ export const updateOSType = (
 ): MysqlDeviceChangeMeat[] => {
   //添加meat值，方便使用
   const updatedData = dataArrays.map((obj: MysqlDeviceChange) => {
-    const value = obj.data; //拿到对象
+    const value = normalizeComputerData(obj.data); //拿到对象
     const memory =
       value?.memLayout && value.memLayout.length > 0
         ? calculateTotalSize(value.memLayout)

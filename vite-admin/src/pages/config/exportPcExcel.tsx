@@ -7,6 +7,7 @@ import {
   formatDate,
   handleGraphics,
 } from "@/utils/tool";
+import { normalizeComputerData } from "@/utils/assetAdapter";
 import { getDeviceCategory, getPcListFull } from "@/services/index";
 import {
   ComputerDevice,
@@ -111,7 +112,7 @@ const buildRow = (item: MysqlDeviceChange, fields: ExportFieldKey[]) => {
     编号: cleanText(item.number),
   };
 
-  const data = item.data;
+  const data = normalizeComputerData(item.data);
   const baseboard = data
     ? joinText([data.baseboard?.manufacturer, data.baseboard?.model])
     : "";

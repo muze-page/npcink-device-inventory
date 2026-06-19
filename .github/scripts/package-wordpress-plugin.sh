@@ -44,6 +44,35 @@ require_path "vite-search/dist"
 find "${PACKAGE_DIR}" -name ".DS_Store" -delete
 find "${PACKAGE_DIR}" -type d -name "node_modules" -prune -exec rm -rf {} +
 
+for forbidden_path in \
+  ".git" \
+  ".github" \
+  "ele" \
+  "ele-rs" \
+  "InsPackage" \
+  "release" \
+  "vite-admin/src" \
+  "vite-admin/node_modules" \
+  "vite-search/src" \
+  "vite-search/node_modules"
+do
+  if [ -e "${PACKAGE_DIR}/${forbidden_path}" ]; then
+    echo "Forbidden package path found: ${forbidden_path}" >&2
+    exit 1
+  fi
+done
+
+if find "${PACKAGE_DIR}" -name ".DS_Store" -o -name ".env" -o -name "*.map" | grep -q .; then
+  echo "Forbidden generated artifact found in package." >&2
+  exit 1
+fi
+
+if LC_ALL=C grep -RInE "Access-Control-Allow-Origin:[[:space:]]*\\*|password=9527|password:[[:space:]]*[\"']9527[\"']|x-npcink-password.*9527" "${PACKAGE_DIR}" >/dev/null; then
+  echo "Forbidden demo secret or wildcard CORS found in package." >&2
+  LC_ALL=C grep -RInE "Access-Control-Allow-Origin:[[:space:]]*\\*|password=9527|password:[[:space:]]*[\"']9527[\"']|x-npcink-password.*9527" "${PACKAGE_DIR}" >&2
+  exit 1
+fi
+
 mkdir -p "${RELEASE_DIR}"
 (
   cd "${RELEASE_DIR}"

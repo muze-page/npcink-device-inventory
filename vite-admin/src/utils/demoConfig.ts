@@ -4,7 +4,7 @@ import StyleData from "./demoStyleData";
 //示例设置信息
 export const option = {
   route: "device-post-data", //路由
-  password: "9527", //密码
+  password: "", //密码
   delete_mysql: false, //是否删除数据库
   depreciation_year: 36, //折旧月限
   residual_value_rate: 5, //残值率 %

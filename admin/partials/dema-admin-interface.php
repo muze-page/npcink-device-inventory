@@ -267,11 +267,10 @@ if (!class_exists('DEMA_Admin_Interface')) {
          */
         public static function get_config($config, $property, $defaultValue = false)
         {
-            /**
-             * 是否是对象
-             * 对象中是否有此键名
-             * 在对象中的此值是否为空
-             */
+            if (is_array($config) && array_key_exists($property, $config) && !empty($config[$property])) {
+                return $config[$property];
+            }
+
             if (is_object($config) && property_exists($config, $property) && !empty($config->$property)) {
                 return $config->$property;
             } else {

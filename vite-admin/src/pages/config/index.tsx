@@ -2,16 +2,11 @@
  * 设置
  */
 import { useEffect, useState } from "react";
-import { Button, Form, Input, Switch, InputNumber, message, Modal } from "antd";
+import { Button, Form, Input, Switch, InputNumber, message, Alert, Space } from "antd";
 import { PlusCircleFilled } from "@ant-design/icons";
 
 import { defaultOption, Site, sqlTableName } from "@/utils/index";
-import {
-  saveSQLData,
-  addPublicSearchPage,
-  precheckPcMigrationPhase1,
-  applyPcMigrationPhase1,
-} from "@/services/index";
+import { saveSQLData, addPublicSearchPage, generateClientToken } from "@/services/index";
 
 import ImportExport from "@/pages/config/importExport";
 import ExportPcExcel from "@/pages/config/exportPcExcel";
@@ -21,6 +16,8 @@ import Header from "@/components/tabHeader";
 const App: React.FC = () => {
   //传来的默认选项
   const [option, setOption] = useState<OptionType>(defaultOption);
+  const [generatedToken, setGeneratedToken] = useState("");
+  const [generatingToken, setGeneratingToken] = useState(false);
 
   //若密码有值，则设为已设定，后端不会更新密码
   useEffect(() => {
@@ -75,7 +72,6 @@ const App: React.FC = () => {
 
   //公共查询页面
   const [publicSearch, setPublicSearch] = useState(""); // 公共查询输入框的值
-  const [migrationLoading, setMigrationLoading] = useState(false);
 
   //添加页面
   const addPage = async () => {
@@ -96,6 +92,36 @@ const App: React.FC = () => {
     } catch {}
   };
 
+  const generateUploadToken = async () => {
+    setGeneratingToken(true);
+    try {
+      const res = await generateClientToken();
+      setGeneratedToken(res.token);
+      setOption((prev) => ({
+        ...prev,
+        has_client_token: true,
+        client_token_id: res.token_id,
+        client_token_preview: res.preview,
+        client_token_created_at: res.created_at,
+      }));
+      message.success("上传授权码已生成");
+    } catch {
+      // axios interceptor will show a friendly error.
+    } finally {
+      setGeneratingToken(false);
+    }
+  };
+
+  const copyGeneratedToken = async () => {
+    if (!generatedToken) return;
+    try {
+      await navigator.clipboard.writeText(generatedToken);
+      message.success("已复制上传授权码");
+    } catch {
+      message.error("复制失败，请手动选择授权码复制");
+    }
+  };
+
   //拼接公共搜索路由
   const routerSearch = () => {
     return Site + "/" + publicSearch;
@@ -112,52 +138,6 @@ const App: React.FC = () => {
       setPublicSearch("public_search_route");
     }
   }, [option]);
-
-  const migratePhase1 = async () => {
-    setMigrationLoading(true);
-    try {
-      const report = await precheckPcMigrationPhase1();
-      const summary = report.summary;
-      Modal.confirm({
-        title: "迁移到新版设备标识",
-        width: 640,
-        okText: "确认迁移",
-        cancelText: "取消",
-        okButtonProps: {
-          danger: summary.blocked > 0 || summary.needs_review > 0,
-        },
-        content: (
-          <div>
-            <p>本次只会写入 data 内的 _magick_device 元数据，不会修改原 UUID。</p>
-            <ul style={{ paddingLeft: 18, marginBottom: 0 }}>
-              <li>扫描设备：{summary.scanned}</li>
-              <li>可迁移：{summary.ready}</li>
-              <li>已迁移：{summary.already_migrated}</li>
-              <li>需复核：{summary.needs_review}</li>
-              <li>阻塞：{summary.blocked}</li>
-            </ul>
-            {summary.blocked > 0 || summary.needs_review > 0 ? (
-              <p style={{ color: "#a8071a", marginTop: 12 }}>
-                存在需要复核的记录。确认后仍会跳过缺少关键数据的记录。
-              </p>
-            ) : null}
-          </div>
-        ),
-        onOk: async () => {
-          const result = await applyPcMigrationPhase1();
-          message.success(
-            `迁移完成：更新 ${result.updated || 0} 条，跳过 ${
-              result.skipped || 0
-            } 条`
-          );
-        },
-      });
-    } catch {
-      // axios 拦截器会展示错误。
-    } finally {
-      setMigrationLoading(false);
-    }
-  };
 
   return (
     <>
@@ -188,12 +168,52 @@ const App: React.FC = () => {
           </Form.Item>
 
           <Form.Item
-            label="密码"
+            label="兼容密码"
             name="password"
             rules={[{ required: true, message: "客户端传输数据时的密码" }]}
-            extra={"客户端传输数据时的验证码，重新设定即可重置"}
+            extra={"仅用于旧上传端和公共查询兼容。新版上传软件请使用下方上传授权码。"}
           >
             <Input style={{ width: "300px" }} />
+          </Form.Item>
+
+          <Form.Item
+            label="上传授权码"
+            extra={
+              option.has_client_token
+                ? `当前授权码：${option.client_token_preview || option.client_token_id || "已生成"}${
+                    option.client_token_created_at ? `，生成时间：${option.client_token_created_at}` : ""
+                  }`
+                : "尚未生成。生成后复制到新版上传软件，软件会自动完成 HMAC 签名。"
+            }
+          >
+            <Space direction="vertical" style={{ width: "100%", maxWidth: 460 }}>
+              <Space>
+                <Button onClick={generateUploadToken} loading={generatingToken}>
+                  {option.has_client_token ? "重置授权码" : "生成授权码"}
+                </Button>
+                {generatedToken && (
+                  <Button onClick={copyGeneratedToken}>
+                    复制授权码
+                  </Button>
+                )}
+              </Space>
+              {generatedToken && (
+                <Input.TextArea
+                  value={generatedToken}
+                  readOnly
+                  autoSize
+                  style={{ fontFamily: "monospace" }}
+                />
+              )}
+              {generatedToken && (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message="请现在复制"
+                  description="上传授权码只在生成后显示一次。重置后，旧上传授权码会失效。"
+                />
+              )}
+            </Space>
           </Form.Item>
           <Form.Item
             label="删除插件数据"
@@ -278,12 +298,15 @@ const App: React.FC = () => {
           <Header title="迁移" />
 
           <Form.Item
-            label="新版设备标识"
-            extra={"为历史电脑设备补充 v2 迁移元数据；不修改原 UUID"}
+            label="旧数据迁移"
+            extra={"等新版数据结构稳定后，通过导出文件一次性离线迁移旧数据。"}
           >
-            <Button loading={migrationLoading} onClick={migratePhase1}>
-              迁移到新版设备标识
-            </Button>
+            <Alert
+              type="info"
+              showIcon
+              message="迁移暂未启用"
+              description="当前只接收和展示 v2 新数据。旧数据迁移不会在后台直接执行，后续确认数据结构后再导出、转换、验证并导入。"
+            />
           </Form.Item>
         </Form>
       </div>
