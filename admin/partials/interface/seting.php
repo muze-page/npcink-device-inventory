@@ -36,11 +36,10 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
             }
 
             // 需要验证的属性列表
-            $required_properties = ['route', 'password', 'delete_mysql',   'public_search_route'];
+            $required_properties = ['password', 'delete_mysql', 'public_search_route'];
 
             //提示
             $prompt = array(
-                'route' => '请输入路由',
                 'password' => '请输入密码',
                 'public_search_route' => '请输入路由',
                 'delete_mysql' => '请选择删除数据库的状态',
@@ -59,11 +58,6 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
 
                 // 根据属性类型进行验证
                 switch ($property) {
-                    case 'route':
-                        if (!is_string($object->route)) {
-                            return 'route 属性必须是字符串类型';
-                        }
-                        break;
                     case 'password':
                         if (!is_string($object->password)) {
                             return 'password 属性必须是非空字符串类型';

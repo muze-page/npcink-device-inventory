@@ -10,21 +10,6 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 type HmacSha256 = Hmac<Sha256>;
 
-#[derive(Serialize)]
-struct LegacySubmitBody<'a> {
-    name: &'a str,
-    password: &'a str,
-    site: &'a str,
-    data: String,
-}
-
-#[derive(Serialize)]
-struct V2SubmitBody<'a> {
-    name: &'a str,
-    password: &'a str,
-    data: &'a Value,
-}
-
 pub fn submit_v2(site: &str, name: &str, password: &str, data: &Value) -> Result<Value> {
     if let Some(token) = parse_client_token(password)? {
         let body = serde_json::json!({
@@ -34,27 +19,7 @@ pub fn submit_v2(site: &str, name: &str, password: &str, data: &Value) -> Result
         return submit_json_hmac(site, &body, &token);
     }
 
-    let body = V2SubmitBody {
-        name,
-        password,
-        data,
-    };
-    submit_json(site, &body)
-}
-
-pub fn submit_legacy(site: &str, name: &str, password: &str, data: &Value) -> Result<Value> {
-    let body = LegacySubmitBody {
-        name,
-        password,
-        site,
-        data: serde_json::to_string(data).context("failed to encode device data")?,
-    };
-    submit_json(site, &body)
-}
-
-fn submit_json<T: Serialize>(site: &str, body: &T) -> Result<Value> {
-    let body_json = serde_json::to_string(body).context("failed to encode submit body")?;
-    send_json(site, body_json, Vec::new())
+    bail!("新版上传接口必须使用后台生成的上传授权码");
 }
 
 fn submit_json_hmac<T: Serialize>(site: &str, body: &T, token: &ClientToken) -> Result<Value> {

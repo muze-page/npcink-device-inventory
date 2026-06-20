@@ -3,7 +3,9 @@ export {
   exportSQLData,
   importSQLData,
   addPublicSearchPage,
+  getClientTokens,
   generateClientToken,
+  revokeClientToken,
   precheckPcMigrationPhase1,
   applyPcMigrationPhase1,
 } from "@/services/seting";

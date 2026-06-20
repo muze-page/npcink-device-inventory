@@ -20,7 +20,7 @@
 }
 ```
 
-并附加 `collector` 元数据，便于后台识别新客户端来源。旧数据后续导出后一次性迁移，不在新客户端里兼容。
+并附加 `collector` 元数据，便于后台识别新客户端来源。旧数据由后台一次性迁移工具转换，新客户端不兼容旧结构。
 
 ## 命令
 
@@ -38,36 +38,25 @@ npm run tauri:build
 ```bash
 cargo run -- inspect --pretty
 cargo run -- stable-id
-cargo run -- submit --site "https://example.com/wp-json/npcink/v1/device-post-data-v2" --name "张三" --token "后台生成的上传授权码"
-cargo run -- submit-legacy --site "https://example.com/wp-json/npcink/v1/device-post-data" --name "张三" --password "上传密码"
+cargo run -- submit --site "https://example.com/wp-json/npcink/v1/device-post-data-v2" --token "后台生成的上传授权码" --note "张三"
 ```
 
 `submit` 使用 v2 接口 body：
 
 ```json
 {
-  "name": "...",
+  "name": "上传备注，可选",
   "data": {}
 }
 ```
 
-v2 上传会自动附加 HMAC 请求头，用户只需要在桌面端填写后台生成的上传授权码。
-
-`submit-legacy` 保留旧接口 body：
-
-```json
-{
-  "name": "...",
-  "password": "...",
-  "site": "...",
-  "data": "{...兼容旧客户端的 JSON 字符串...}"
-}
-```
+v2 上传会自动附加 HMAC 请求头，用户只需要在桌面端填写后台生成的上传授权码。`name` 只作为后台备注，方便识别当前电脑可能是谁在用，不参与设备合并判断。
 
 ## 阶段边界
 
 - 不替换已有 Electron 包。
-- v2 使用后台生成的上传授权码和 HMAC 签名；旧密码仅作为兼容回退。
+- v2 使用后台生成的上传授权码和 HMAC 签名；旧密码不再作为上传回退。
+- 同一台设备再次上传时按 `stable_device_id_v2` 更新原记录，不新增重复设备。
 - 先验证 Windows/macOS 采集字段是否足以支撑新 `asset` 结构。
 
 ## 桌面客户端结构
@@ -82,7 +71,7 @@ ele-rs/
 
 桌面 UI 当前提供：
 
-- v2 接口地址、使用人、上传密码配置
+- v2 接口地址、上传备注、上传授权码配置
 - 本机硬件采集预览
 - stable device id 展示
 - 提交到 `/device-post-data-v2`

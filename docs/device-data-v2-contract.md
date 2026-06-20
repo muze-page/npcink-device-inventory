@@ -4,9 +4,9 @@
 
 Accepted baseline for the modernization work.
 
-This document defines the target data contract for the Rust/Tauri uploader and
-the WordPress plugin. Existing legacy data will be migrated once, after the new
-contract has been verified with fresh uploads.
+This document defines the current data contract for the Rust/Tauri uploader and
+the WordPress plugin. Legacy rows are converted once by the admin migration
+tool; new uploads and admin surfaces use this v2 shape only.
 
 ## Goals
 
@@ -19,7 +19,7 @@ contract has been verified with fresh uploads.
 
 ## Non-Goals
 
-- Do not migrate old rows during this stage.
+- Do not preserve a parallel legacy display or matching path after migration.
 - Do not make every collected OS field visible in the UI.
 
 ## Upload Endpoint
@@ -34,7 +34,7 @@ Request body:
 
 ```json
 {
-  "name": "使用人",
+  "name": "上传备注，可选",
   "data": {}
 }
 ```
@@ -49,6 +49,9 @@ Authentication:
   `X-Magick-Device-Nonce`, and `X-Magick-Device-Signature`.
 - The signature covers `timestamp + nonce + sha256(raw JSON body)`.
 - The server rejects expired timestamps and repeated nonces.
+- `name` is an optional upload note. It can contain the current user, desk,
+  department, or other operator hint, but it is not used as the stable asset
+  owner and does not participate in device identity matching.
 
 The client sends the collector payload. The server is responsible for
 normalizing the payload before storing it.
@@ -89,6 +92,11 @@ Server-owned metadata. It is used for migration, audit, and future matching.
 Rules:
 
 - `stable_device_id_v2` is the database `uuid` matching value for new uploads.
+- The server derives `stable_device_id_v2` from stable hardware identity first:
+  hardware UUID, system UUID, system serial, baseboard serial, BIOS serial, then
+  primary MAC as fallback.
+- Known placeholder identities such as `Default string`, all-zero UUIDs, and
+  repeated SMBIOS pseudo UUIDs are ignored.
 - `legacy_uuid` is stored only as diagnostic metadata when it can be derived.
 - `collector` is copied from the upload payload when available.
 - The current database `uuid` column is 32 characters, so the stored v2 id uses
@@ -106,6 +114,11 @@ Canonical data for the admin UI, statistics, and export.
     "stable_device_id_v2": "v2-...",
     "primary_mac": "fe:82:ac:cb:6a:a8",
     "macs": ["fe:82:ac:cb:6a:a8"]
+  },
+  "upload": {
+    "note": "张三",
+    "reported_user": "张三",
+    "uploaded_at": "2026-06-20 10:30:00"
   },
   "summary": {
     "device_model": "Apple MacBook Air",
@@ -235,7 +248,7 @@ Examples:
 The v2 receiver should reject uploads when:
 
 - `name` is empty.
-- `password` is missing or invalid.
+- HMAC authorization headers are missing or invalid.
 - no stable device identity can be derived from hardware UUID, serial number, or
   primary network information.
 

@@ -29,3 +29,6 @@ release/
 *.dmg
 *.exe
 *.msi
+
+# Local migration backups
+.local-backups/

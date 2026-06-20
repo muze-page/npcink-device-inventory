@@ -13,8 +13,9 @@ import {
   Suspense,
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pagination, Flex, message, Modal } from "antd";
+import { Button, Flex, message, Modal, Pagination, Segmented, Table, Tag } from "antd";
 import type { PaginationProps } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { FixedSizeGrid as Grid, type GridChildComponentProps } from "react-window";
 import {
   MysqlDeviceChangeMeat,
@@ -69,6 +70,7 @@ const App: React.FC = () => {
   const [batchMode, setBatchMode] = useState(false);
   const [selectedUuids, setSelectedUuids] = useState<Set<string>>(new Set());
   const [batchDeleting, setBatchDeleting] = useState(false);
+  const [viewMode, setViewMode] = useState<"table" | "card">("table");
 
   //每页展示数量
   const [PAGE_SIZE, setPAGE_SIZE] = useState(10); //每页展示数量
@@ -409,6 +411,77 @@ const App: React.FC = () => {
     setIsOpening(false);
   };
 
+  const columns: ColumnsType<MysqlDeviceChangeMeat> = [
+    {
+      title: "使用人",
+      dataIndex: "name",
+      width: 130,
+      render: (value: string) => (isName ? value || "-" : "已隐藏"),
+    },
+    {
+      title: "编号",
+      dataIndex: "number",
+      width: 120,
+      render: (value: string) => value || "-",
+    },
+    {
+      title: "状态",
+      dataIndex: "state",
+      width: 110,
+      render: (value: string) => <Tag color="blue">{value || "未设置"}</Tag>,
+    },
+    {
+      title: "部门",
+      dataIndex: "department",
+      width: 120,
+      render: (value: string) => value || "-",
+    },
+    {
+      title: "系统 / CPU",
+      dataIndex: "meat",
+      render: (_, item) => (
+        <div>
+          <div>{item.meat?.os || item.meat?.ostype || "-"}</div>
+          <div className="text-xs text-zinc-500">
+            {item.meat?.cpuModel || item.meat?.cpu || "-"}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "内存 / 硬盘",
+      dataIndex: "meat",
+      width: 160,
+      render: (_, item) => (
+        <div>
+          <div>{item.meat?.memory || "-"}</div>
+          <div className="text-xs text-zinc-500">{item.meat?.disk || "-"}</div>
+        </div>
+      ),
+    },
+    {
+      title: "IP",
+      dataIndex: "ip",
+      width: 140,
+      render: (value: string) => value || "-",
+    },
+    {
+      title: "更新时间",
+      dataIndex: "updated_at",
+      width: 180,
+      render: (value: string) => String(value || "-"),
+    },
+    {
+      title: "操作",
+      width: 90,
+      render: (_, item) => (
+        <Button size="small" onClick={() => openDrawer(item)}>
+          详情
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <DevieContext.Provider
       value={{
@@ -437,39 +510,70 @@ const App: React.FC = () => {
           onSelectAll={toggleSelectAll}
           onBatchDelete={handleBatchDelete}
         />
-        <div
-          className="flex content-start items-center flex-wrap w-full"
-          ref={listContainerRef}
-        >
-          {/**开始循环 */}
-          {shouldVirtualize && listWidth > 0 ? (
-            <Grid
-              height={gridHeight}
-              width={Math.max(listWidth, ITEM_WIDTH)}
-              columnWidth={ITEM_WIDTH}
-              rowHeight={ITEM_HEIGHT}
-              columnCount={columnCount}
-              rowCount={rowCount}
-            >
-              {renderGridCell}
-            </Grid>
-          ) : (
-            <Flex wrap gap="large">
-              {listData.map((tab: MysqlDeviceChangeMeat) => (
-                <DetailsList
-                  key={tab.id}
-                  data={tab}
-                  onOpen={() => openDrawer(tab)}
-                  selectable={batchMode}
-                  selected={selectedUuids.has(tab.uuid)}
-                  onSelect={() => toggleSelect(tab.uuid)}
-                />
-              ))}
-            </Flex>
-          )}
+        <div className="mb-3 flex justify-end">
+          <Segmented
+            value={viewMode}
+            onChange={(value) => setViewMode(value as "table" | "card")}
+            options={[
+              { label: "列表", value: "table" },
+              { label: "卡片", value: "card" },
+            ]}
+          />
         </div>
+        {viewMode === "table" ? (
+          <Table
+            rowKey="uuid"
+            columns={columns}
+            dataSource={listData}
+            loading={listQuery.isFetching}
+            pagination={false}
+            scroll={{ x: 1120 }}
+            rowSelection={
+              batchMode
+                ? {
+                    selectedRowKeys: Array.from(selectedUuids),
+                    onChange: (keys) =>
+                      setSelectedUuids(new Set(keys.map((key) => String(key)))),
+                  }
+                : undefined
+            }
+            locale={{ emptyText: <SearchNoData /> }}
+          />
+        ) : (
+          <div
+            className="flex content-start items-center flex-wrap w-full"
+            ref={listContainerRef}
+          >
+            {/**开始循环 */}
+            {shouldVirtualize && listWidth > 0 ? (
+              <Grid
+                height={gridHeight}
+                width={Math.max(listWidth, ITEM_WIDTH)}
+                columnWidth={ITEM_WIDTH}
+                rowHeight={ITEM_HEIGHT}
+                columnCount={columnCount}
+                rowCount={rowCount}
+              >
+                {renderGridCell}
+              </Grid>
+            ) : (
+              <Flex wrap gap="large">
+                {listData.map((tab: MysqlDeviceChangeMeat) => (
+                  <DetailsList
+                    key={tab.id}
+                    data={tab}
+                    onOpen={() => openDrawer(tab)}
+                    selectable={batchMode}
+                    selected={selectedUuids.has(tab.uuid)}
+                    onSelect={() => toggleSelect(tab.uuid)}
+                  />
+                ))}
+              </Flex>
+            )}
+          </div>
+        )}
         {/**没有数据 */}
-        {listData.length === 0 && <SearchNoData />}
+        {viewMode === "card" && listData.length === 0 && <SearchNoData />}
 
         {/**分页 */}
         {total > PAGE_SIZE && (

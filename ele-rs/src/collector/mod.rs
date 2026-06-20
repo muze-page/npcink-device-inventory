@@ -61,58 +61,88 @@ pub fn legacy_device_id(data: &Value) -> Option<String> {
 }
 
 pub fn stable_device_id_v2(data: &Value) -> Option<String> {
-    let hardware = data
-        .pointer("/uuid/hardware")
-        .and_then(Value::as_str)
-        .unwrap_or_default();
-    let system_uuid = data
-        .pointer("/system/uuid")
-        .and_then(Value::as_str)
-        .unwrap_or_default();
-    let system_serial = data
-        .pointer("/system/serial")
-        .and_then(Value::as_str)
-        .unwrap_or_default();
-    let baseboard_serial = data
-        .pointer("/baseboard/serial")
-        .and_then(Value::as_str)
-        .unwrap_or_default();
-    let mut macs = data
+    let candidates = [
+        (
+            "hardware_uuid",
+            data.pointer("/uuid/hardware").and_then(Value::as_str),
+        ),
+        (
+            "system_uuid",
+            data.pointer("/system/uuid").and_then(Value::as_str),
+        ),
+        (
+            "system_serial",
+            data.pointer("/system/serial").and_then(Value::as_str),
+        ),
+        (
+            "baseboard_serial",
+            data.pointer("/baseboard/serial").and_then(Value::as_str),
+        ),
+        ("bios_serial", data.pointer("/bios/serial").and_then(Value::as_str)),
+    ];
+
+    for (kind, value) in candidates {
+        if let Some(value) = value.and_then(normalize_identity_value) {
+            return Some(stable_id_from_source(kind, &value));
+        }
+    }
+
+    let mac = data
         .pointer("/uuid/macs")
         .and_then(Value::as_array)
-        .map(|items| {
+        .and_then(|items| {
             items
                 .iter()
                 .filter_map(Value::as_str)
-                .map(|value| value.trim().to_lowercase())
-                .filter(|value| !value.is_empty() && value != "00:00:00:00:00:00")
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_default();
-    macs.sort();
-    macs.dedup();
-
-    if hardware.trim().is_empty()
-        && system_uuid.trim().is_empty()
-        && system_serial.trim().is_empty()
-        && baseboard_serial.trim().is_empty()
-        && macs.is_empty()
-    {
-        return None;
+                .find_map(normalize_identity_mac)
+        });
+    if let Some(mac) = mac {
+        return Some(stable_id_from_source("primary_mac", &mac));
     }
 
-    let mac_json = serde_json::to_string(&macs).ok()?;
-    let source = format!(
-        "{{\"hardware\":{},\"system_uuid\":{},\"system_serial\":{},\"baseboard_serial\":{},\"macs\":{}}}",
-        serde_json::to_string(hardware).ok()?,
-        serde_json::to_string(system_uuid).ok()?,
-        serde_json::to_string(system_serial).ok()?,
-        serde_json::to_string(baseboard_serial).ok()?,
-        mac_json
-    );
+    None
+}
+
+fn stable_id_from_source(kind: &str, value: &str) -> String {
+    let source = format!("{kind}:{value}");
     let digest = Sha256::digest(source.as_bytes());
     let full = format!("{:x}", digest);
-    Some(format!("v2-{}", &full[..29]))
+    format!("v2-{}", &full[..29])
+}
+
+fn normalize_identity_value(value: &str) -> Option<String> {
+    let value = value.trim().to_lowercase();
+    if value.is_empty() {
+        return None;
+    }
+    let invalid = [
+        "0",
+        "00000000",
+        "00000000-0000-0000-0000-000000000000",
+        "03000200-0400-0500-0006-000700080009",
+        "default string",
+        "none",
+        "null",
+        "not specified",
+        "not available",
+        "not present",
+        "unknown",
+        "to be filled by o.e.m.",
+        "not filled by o.e.m.",
+        "system serial number",
+    ];
+    if invalid.contains(&value.as_str()) {
+        return None;
+    }
+    Some(value)
+}
+
+fn normalize_identity_mac(value: &str) -> Option<String> {
+    let value = value.trim().to_lowercase();
+    if value.is_empty() || value == "00:00:00:00:00:00" || value == "ff:ff:ff:ff:ff:ff" {
+        return None;
+    }
+    Some(value)
 }
 
 fn collect_os() -> Value {

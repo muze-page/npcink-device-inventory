@@ -39,8 +39,8 @@ app.innerHTML = `
       <section class="tab-page active" id="settingsPage">
         <form class="upload-form" id="configForm">
           <label class="field">
-            <span>姓名</span>
-            <input id="name" name="name" placeholder="请输入当前电脑使用人" />
+            <span>上传备注</span>
+            <input id="name" name="name" placeholder="可选，例如：张三、财务电脑、前台备用机" />
           </label>
 
           <details class="more-config">
@@ -432,7 +432,7 @@ const overviewRows = () => {
   const memorySize = formatBytes(sumSizes(data.memory) || sumSizes(data.memLayout) || asRecord(data.mem).total);
 
   return [
-    { label: "姓名", value: nameInput.value.trim() || "未设定" },
+    { label: "备注", value: nameInput.value.trim() || "未填写" },
     { label: "设备编号", value: snapshot?.stable_device_id_v2 || firstText(data, ["uuid.hardware"]) },
     {
       label: "处理器",
@@ -530,8 +530,8 @@ const loadConfig = async () => {
 
 const saveConfig = async () => {
   const config = getConfig();
-  if (!config.site || !config.name || !config.password) {
-    setToast("请填写姓名、上传授权码和接口地址。", "error");
+  if (!config.site || !config.password) {
+    setToast("请填写上传授权码和接口地址。", "error");
     return false;
   }
 

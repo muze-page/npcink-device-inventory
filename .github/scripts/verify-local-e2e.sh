@@ -4,7 +4,19 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WP_PATH="${WP_PATH:-/Users/muze/Local Sites/magick-device-manage/app/public}"
 SITE_URL="${SITE_URL:-http://magick-device-manage.local}"
-DEVICE_NAME="${DEVICE_NAME:-HMAC验收}"
+DEVICE_NOTE="${DEVICE_NOTE:-HMAC验收}"
+TOKEN_ID=""
+
+cleanup() {
+  if [ -n "${TOKEN_ID}" ]; then
+    WP_E2E_TOKEN_ID="${TOKEN_ID}" wp --path="${WP_PATH}" eval '
+      $request = new WP_REST_Request("DELETE", "/npcink/v1/admin/client-token/" . getenv("WP_E2E_TOKEN_ID"));
+      $request->set_param("id", getenv("WP_E2E_TOKEN_ID"));
+      DEMA_Admin_Interface_API::admin_revoke_client_token($request);
+    ' >/dev/null 2>&1 || true
+  fi
+}
+trap cleanup EXIT
 
 if ! command -v wp >/dev/null 2>&1; then
   echo "WP-CLI is required for local e2e verification." >&2
@@ -39,6 +51,7 @@ if [[ ! "${TOKEN}" =~ ^mda_[a-f0-9]{12}_[a-f0-9]{48}$ ]]; then
   echo "Generated authorization code has an unexpected format." >&2
   exit 1
 fi
+TOKEN_ID="$(echo "${TOKEN}" | cut -d _ -f 2)"
 
 echo "Submitting a signed v2 device upload..."
 pushd "${ROOT_DIR}/ele-rs" >/dev/null
@@ -47,7 +60,7 @@ STABLE_ID="$(cargo run --quiet -- stable-id)"
 SUBMIT_RESPONSE="$(
   cargo run --quiet -- submit \
     --site "${SITE_URL%/}/wp-json/npcink/v1/device-post-data-v2" \
-    --name "${DEVICE_NAME}" \
+    --note "${DEVICE_NOTE}" \
     --token "${TOKEN}"
 )"
 popd >/dev/null

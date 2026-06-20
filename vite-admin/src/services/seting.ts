@@ -1,7 +1,12 @@
 /**
  * 设置
  */
-import type { RestResponse, ExportPageData, ImportReport } from "@/type/index";
+import type {
+  RestResponse,
+  ExportPageData,
+  ImportReport,
+  ClientTokenSummary,
+} from "@/type/index";
 import { restInstance, type RequestConfig } from "@/services/axiosConfig";
 
 export const saveSQLData = async (
@@ -15,14 +20,36 @@ export interface ClientTokenResponse {
   success: boolean;
   message: string;
   token: string;
-  token_id: string;
-  preview: string;
-  created_at: string;
+  item: ClientTokenSummary;
+  items: ClientTokenSummary[];
 }
 
-export const generateClientToken = async (): Promise<ClientTokenResponse> => {
-  const response = await restInstance.post("/admin/client-token", {});
+export interface ClientTokenListResponse {
+  success: boolean;
+  items: ClientTokenSummary[];
+}
+
+export const getClientTokens = async (): Promise<ClientTokenListResponse> => {
+  const response = await restInstance.get("/admin/client-token", {
+    showSuccessMessage: false,
+  } as RequestConfig);
+  return response.data as ClientTokenListResponse;
+};
+
+export const generateClientToken = async (
+  name?: string
+): Promise<ClientTokenResponse> => {
+  const response = await restInstance.post("/admin/client-token", {
+    name,
+  });
   return response.data as ClientTokenResponse;
+};
+
+export const revokeClientToken = async (
+  id: string
+): Promise<ClientTokenListResponse> => {
+  const response = await restInstance.delete(`/admin/client-token/${id}`);
+  return response.data as ClientTokenListResponse;
 };
 
 /**

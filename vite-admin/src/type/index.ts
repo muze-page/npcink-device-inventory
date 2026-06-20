@@ -36,10 +36,17 @@ export type {
 import {
   ImportListData,
   OptionType,
+  ClientTokenSummary,
   ExportPageData,
   ImportReport,
 } from "@/type/config";
-export type { ImportListData, OptionType, ExportPageData, ImportReport };
+export type {
+  ImportListData,
+  OptionType,
+  ClientTokenSummary,
+  ExportPageData,
+  ImportReport,
+};
 
 import {
   Computer,

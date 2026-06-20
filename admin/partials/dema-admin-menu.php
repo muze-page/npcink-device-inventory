@@ -27,7 +27,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
                 'plugins.php',
                 '设备资产管理',
                 '设备资产管理',
-                'administrator',
+                'manage_options',
                 'dema_seting',
                 array(__CLASS__, 'menu_displays'),
                 '200.1'
@@ -79,12 +79,20 @@ if (!class_exists('DEMA_Admin_Menu')) {
             $option = get_option(self::$option);
             if (is_object($option)) {
                 $option->password = '已设定';
-                $option->has_client_token = !empty($option->client_token_id) && !empty($option->client_token_key_hash);
+                $option->client_tokens = DEMA_Admin_Interface_API::public_client_tokens();
+                $option->has_client_token = !empty(array_filter($option->client_tokens, function ($token) {
+                    return !empty($token['enabled']);
+                }));
                 unset($option->client_token_key_hash);
+                unset($option->client_token_id, $option->client_token_preview, $option->client_token_created_at);
             } elseif (is_array($option)) {
                 $option['password'] = '已设定';
-                $option['has_client_token'] = !empty($option['client_token_id']) && !empty($option['client_token_key_hash']);
+                $option['client_tokens'] = DEMA_Admin_Interface_API::public_client_tokens();
+                $option['has_client_token'] = !empty(array_filter($option['client_tokens'], function ($token) {
+                    return !empty($token['enabled']);
+                }));
                 unset($option['client_token_key_hash']);
+                unset($option['client_token_id'], $option['client_token_preview'], $option['client_token_created_at']);
             }
 
             $pf_api_translation_array = array(
@@ -100,8 +108,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
         //对js文件进行module接入
         public static function refund_type_script($tag, $handle)
         {
-            // 在这里判断需要添加 type 属性的 JS 文件，比如文件名包含 xxx.js
-            if (strpos($tag, 'index.js') !== false) {
+            if ($handle === self::$plugin_name && strpos($tag, 'index.js') !== false) {
                 // 在 script 标签中添加 type 属性
                 $tag = str_replace('<script', '<script type="module"', $tag);
             }

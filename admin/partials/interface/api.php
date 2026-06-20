@@ -169,15 +169,6 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         //接收数据
         public static function create_custom_endpoint()
         {
-            //获取路由地址
-            $styleRoute =  self::get_seting('route');
-
-            register_rest_route('npcink/v1', $styleRoute, array(
-                'methods'  => 'POST',
-                'callback' => array(__CLASS__, 'submit_data_callback'),
-                'permission_callback' => array(__CLASS__, 'public_permissions_check'),
-            ));
-
             register_rest_route('npcink/v1', '/device-post-data-v2', array(
                 'methods'  => WP_REST_Server::CREATABLE,
                 'callback' => array(__CLASS__, 'submit_device_data_v2'),
@@ -300,10 +291,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         {
             global $wpdb;
             self::$table_name = $wpdb->prefix . self::$table_pc_name;
-            $name = isset($request['name']) ? sanitize_text_field($request['name']) : '';
-            if ($name === '') {
-                return new WP_Error('missing_name', '姓名为空，请填写', array('status' => 400));
-            }
+            $upload_note = isset($request['name']) ? sanitize_text_field($request['name']) : '';
 
             $data_obj = self::extract_device_data_from_request($request);
             if (empty($data_obj)) {
@@ -325,7 +313,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 $collector,
                 'upload_v2'
             );
-            $data_obj = self::normalize_device_data_v2($data_obj, $legacy_uuid, $stable_id, $collector);
+            $data_obj = self::normalize_device_data_v2($data_obj, $legacy_uuid, $stable_id, $collector, $upload_note);
 
             $data_json = wp_json_encode($data_obj, JSON_UNESCAPED_UNICODE);
             if ($data_json === false) {
@@ -365,6 +353,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                     'stable_device_id_v2' => $stable_id,
                     'number' => $existing_data['number'],
                     'name' => $existing_data['name'],
+                    'upload_note' => $upload_note,
                 ));
             }
 
@@ -373,7 +362,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $device_ip = self::device_ip_or_default($data_obj);
 
             $insert_data = array(
-                'name' => $name,
+                'name' => $upload_note !== '' ? $upload_note : '未命名设备',
                 'state' => '使用',
                 'number' => $last_six_digits,
                 'department' => '默认',
@@ -407,7 +396,8 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 'legacy_uuid' => $legacy_uuid,
                 'stable_device_id_v2' => $stable_id,
                 'number' => $last_six_digits,
-                'name' => $name,
+                'name' => $insert_data['name'],
+                'upload_note' => $upload_note,
             ));
         }
 
@@ -442,30 +432,131 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             return strtolower(substr(preg_replace('/[^a-zA-Z0-9]/', '', wp_generate_password($bytes * 2, false, false)), 0, $bytes * 2));
         }
 
-        private static function get_client_token_config()
+        private static function normalize_client_token($token)
         {
-            $config = get_option(self::$option);
-            $get_value = function ($key) use ($config) {
-                if (is_array($config) && array_key_exists($key, $config)) {
-                    return $config[$key];
+            if (!is_array($token) && !is_object($token)) {
+                return null;
+            }
+
+            $get_value = function ($key, $default = '') use ($token) {
+                if (is_array($token) && array_key_exists($key, $token)) {
+                    return $token[$key];
                 }
-                if (is_object($config) && property_exists($config, $key)) {
-                    return $config->$key;
+                if (is_object($token) && property_exists($token, $key)) {
+                    return $token->$key;
                 }
-                return '';
+                return $default;
             };
 
-            $id = sanitize_key((string) $get_value('client_token_id'));
-            $key_hash = sanitize_text_field((string) $get_value('client_token_key_hash'));
-            $preview = sanitize_text_field((string) $get_value('client_token_preview'));
-            $created_at = sanitize_text_field((string) $get_value('client_token_created_at'));
+            $id = sanitize_key((string) $get_value('id'));
+            $key_hash = sanitize_text_field((string) $get_value('key_hash'));
+            if (!preg_match('/^[a-f0-9]{12}$/', $id) || !preg_match('/^[a-f0-9]{64}$/', $key_hash)) {
+                return null;
+            }
+
+            $name = sanitize_text_field((string) $get_value('name', '上传授权码'));
+            $preview = sanitize_text_field((string) $get_value('preview'));
+            $created_at = sanitize_text_field((string) $get_value('created_at'));
+            $last_used_at = sanitize_text_field((string) $get_value('last_used_at'));
+            $enabled = $get_value('enabled', true);
 
             return array(
                 'id' => $id,
-                'key_hash' => preg_match('/^[a-f0-9]{64}$/', $key_hash) ? $key_hash : '',
+                'name' => $name !== '' ? $name : '上传授权码',
+                'key_hash' => $key_hash,
                 'preview' => $preview,
                 'created_at' => $created_at,
+                'last_used_at' => $last_used_at,
+                'enabled' => $enabled !== false,
             );
+        }
+
+        private static function get_client_tokens($include_disabled = false)
+        {
+            $config = get_option(self::$option);
+            $raw_tokens = array();
+
+            if (is_array($config) && isset($config['client_tokens']) && is_array($config['client_tokens'])) {
+                $raw_tokens = $config['client_tokens'];
+            } elseif (is_object($config) && isset($config->client_tokens) && is_array($config->client_tokens)) {
+                $raw_tokens = $config->client_tokens;
+            }
+
+            $tokens = array();
+            foreach ($raw_tokens as $raw_token) {
+                $token = self::normalize_client_token($raw_token);
+                if ($token === null) {
+                    continue;
+                }
+                if (!$include_disabled && empty($token['enabled'])) {
+                    continue;
+                }
+                $tokens[] = $token;
+            }
+
+            return $tokens;
+        }
+
+        public static function public_client_tokens($tokens = null)
+        {
+            if ($tokens === null) {
+                $tokens = self::get_client_tokens(true);
+            }
+
+            $items = array();
+            foreach ($tokens as $token) {
+                $items[] = array(
+                    'id' => $token['id'],
+                    'name' => $token['name'],
+                    'preview' => $token['preview'],
+                    'created_at' => $token['created_at'],
+                    'last_used_at' => $token['last_used_at'],
+                    'enabled' => !empty($token['enabled']),
+                );
+            }
+            return $items;
+        }
+
+        private static function save_client_tokens($tokens)
+        {
+            $config = get_option(self::$option);
+            if (!is_array($config) && !is_object($config)) {
+                $config = array();
+            }
+
+            $normalized = array();
+            foreach ($tokens as $token) {
+                $clean = self::normalize_client_token($token);
+                if ($clean !== null) {
+                    $normalized[] = $clean;
+                }
+            }
+
+            self::set_config_value($config, 'client_tokens', $normalized);
+            update_option(self::$option, $config);
+        }
+
+        private static function find_enabled_client_token($token_id)
+        {
+            $tokens = self::get_client_tokens(false);
+            foreach ($tokens as $token) {
+                if (hash_equals($token['id'], $token_id)) {
+                    return $token;
+                }
+            }
+            return null;
+        }
+
+        private static function touch_client_token($token_id)
+        {
+            $tokens = self::get_client_tokens(true);
+            foreach ($tokens as $index => $token) {
+                if (hash_equals($token['id'], $token_id)) {
+                    $tokens[$index]['last_used_at'] = current_time('mysql');
+                    self::save_client_tokens($tokens);
+                    return;
+                }
+            }
         }
 
         private static function set_config_value(&$config, $key, $value)
@@ -501,16 +592,12 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $nonce = sanitize_text_field(self::get_request_header($request, 'x-magick-device-nonce'));
             $signature = sanitize_text_field(self::get_request_header($request, 'x-magick-device-signature'));
 
-            if ($token_id === '' && $timestamp === '' && $nonce === '' && $signature === '') {
-                return null;
-            }
-
             if ($token_id === '' || $timestamp === '' || $nonce === '' || $signature === '') {
                 return new WP_Error('missing_hmac_header', '上传授权签名不完整，请重新复制后台生成的上传授权码', array('status' => 403));
             }
 
-            $token = self::get_client_token_config();
-            if ($token['id'] === '' || $token['key_hash'] === '' || !hash_equals($token['id'], $token_id)) {
+            $token = self::find_enabled_client_token($token_id);
+            if ($token === null) {
                 return new WP_Error('invalid_client_token', '上传授权码无效，请在后台重新生成', array('status' => 403));
             }
 
@@ -543,6 +630,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             }
 
             set_transient($nonce_key, 1, 5 * MINUTE_IN_SECONDS);
+            self::touch_client_token($token_id);
             return true;
         }
 
@@ -736,6 +824,11 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
          */
         private static function derive_stable_device_id_v2($data_obj, $request = null)
         {
+            $hardware_id = self::derive_hardware_stable_device_id_v2($data_obj);
+            if ($hardware_id !== '') {
+                return $hardware_id;
+            }
+
             $candidates = array();
             if ($request instanceof WP_REST_Request) {
                 $candidates[] = $request->get_param('stable_device_id_v2');
@@ -760,12 +853,17 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 }
             }
 
+            return '';
+        }
+
+        private static function derive_hardware_stable_device_id_v2($data_obj)
+        {
             $source = self::build_device_fingerprint_source($data_obj);
-            if (!self::has_device_fingerprint_source($source)) {
+            if (empty($source)) {
                 return '';
             }
 
-            return self::normalize_stable_device_id_value('v2-' . hash('sha256', wp_json_encode($source)));
+            return self::normalize_stable_device_id_value($source['type'] . ':' . $source['value']);
         }
 
         private static function normalize_stable_device_id_value($value)
@@ -784,7 +882,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         }
 
         /**
-         * 构建 v2 fingerprint 的输入。
+         * 构建设备身份输入。优先使用稳定硬件身份，最后才退回主 MAC。
          */
         private static function build_device_fingerprint_source($data_obj)
         {
@@ -795,47 +893,105 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 return array();
             }
 
-            $uuid_data = isset($data_obj['uuid']) && is_array($data_obj['uuid']) ? $data_obj['uuid'] : array();
-            $macs = isset($uuid_data['macs']) && is_array($uuid_data['macs']) ? $uuid_data['macs'] : array();
-            $normalized_macs = array();
-            foreach ($macs as $mac) {
-                if (!is_string($mac)) {
-                    continue;
+            if (isset($data_obj['asset']) && is_array($data_obj['asset'])) {
+                $asset = $data_obj['asset'];
+                $identity = isset($asset['identity']) && is_array($asset['identity']) ? $asset['identity'] : array();
+                $hardware = isset($asset['hardware']) && is_array($asset['hardware']) ? $asset['hardware'] : array();
+                $system = isset($hardware['system']) && is_array($hardware['system']) ? $hardware['system'] : array();
+                $baseboard = isset($hardware['baseboard']) && is_array($hardware['baseboard']) ? $hardware['baseboard'] : array();
+                $bios = isset($hardware['bios']) && is_array($hardware['bios']) ? $hardware['bios'] : array();
+                $candidates = array(
+                    'hardware_uuid' => isset($identity['hardware_uuid']) ? (string) $identity['hardware_uuid'] : '',
+                    'system_uuid' => isset($system['uuid']) ? (string) $system['uuid'] : '',
+                    'system_serial' => isset($system['serial']) ? (string) $system['serial'] : '',
+                    'baseboard_serial' => isset($baseboard['serial']) ? (string) $baseboard['serial'] : '',
+                    'bios_serial' => isset($bios['serial']) ? (string) $bios['serial'] : '',
+                );
+                foreach ($candidates as $type => $value) {
+                    $value = self::normalize_identity_value($value);
+                    if ($value !== '') {
+                        return array('type' => $type, 'value' => $value);
+                    }
                 }
-                $mac = strtolower(trim($mac));
-                if ($mac === '' || $mac === '00:00:00:00:00:00') {
-                    continue;
+                $macs = isset($identity['macs']) && is_array($identity['macs']) ? $identity['macs'] : array();
+                foreach ($macs as $mac) {
+                    $mac = self::normalize_identity_mac($mac);
+                    if ($mac !== '') {
+                        return array('type' => 'primary_mac', 'value' => $mac);
+                    }
                 }
-                $normalized_macs[] = $mac;
+                return array();
             }
-            sort($normalized_macs);
 
-            return array(
-                'hardware' => isset($uuid_data['hardware']) ? (string) $uuid_data['hardware'] : '',
+            $uuid_data = isset($data_obj['uuid']) && is_array($data_obj['uuid']) ? $data_obj['uuid'] : array();
+            $candidates = array(
+                'hardware_uuid' => isset($uuid_data['hardware']) ? (string) $uuid_data['hardware'] : '',
                 'system_uuid' => isset($data_obj['system']['uuid']) ? (string) $data_obj['system']['uuid'] : '',
                 'system_serial' => isset($data_obj['system']['serial']) ? (string) $data_obj['system']['serial'] : '',
                 'baseboard_serial' => isset($data_obj['baseboard']['serial']) ? (string) $data_obj['baseboard']['serial'] : '',
-                'macs' => $normalized_macs,
+                'bios_serial' => isset($data_obj['bios']['serial']) ? (string) $data_obj['bios']['serial'] : '',
             );
+
+            foreach ($candidates as $type => $value) {
+                $value = self::normalize_identity_value($value);
+                if ($value !== '') {
+                    return array('type' => $type, 'value' => $value);
+                }
+            }
+
+            $macs = isset($uuid_data['macs']) && is_array($uuid_data['macs']) ? $uuid_data['macs'] : array();
+            foreach ($macs as $mac) {
+                $mac = self::normalize_identity_mac($mac);
+                if ($mac !== '') {
+                    return array('type' => 'primary_mac', 'value' => $mac);
+                }
+            }
+
+            return array();
         }
 
-        /**
-         * 判断 fingerprint 输入是否至少包含一个有效硬件信号。
-         */
-        private static function has_device_fingerprint_source($source)
+        private static function normalize_identity_value($value)
         {
-            if (!is_array($source)) {
-                return false;
+            if (!is_scalar($value)) {
+                return '';
             }
-            foreach ($source as $value) {
-                if (is_array($value) && !empty($value)) {
-                    return true;
-                }
-                if (is_string($value) && trim($value) !== '') {
-                    return true;
-                }
+            $value = trim((string) $value);
+            if ($value === '') {
+                return '';
             }
-            return false;
+            $lower = strtolower($value);
+            $invalid = array(
+                '0',
+                '00000000',
+                '00000000-0000-0000-0000-000000000000',
+                '03000200-0400-0500-0006-000700080009',
+                'default string',
+                'none',
+                'null',
+                'not specified',
+                'not available',
+                'not present',
+                'unknown',
+                'to be filled by o.e.m.',
+                'not filled by o.e.m.',
+                'system serial number',
+            );
+            if (in_array($lower, $invalid, true)) {
+                return '';
+            }
+            return $lower;
+        }
+
+        private static function normalize_identity_mac($mac)
+        {
+            if (!is_scalar($mac)) {
+                return '';
+            }
+            $mac = strtolower(trim((string) $mac));
+            if ($mac === '' || $mac === '00:00:00:00:00:00' || $mac === 'ff:ff:ff:ff:ff:ff') {
+                return '';
+            }
+            return $mac;
         }
 
         /**
@@ -897,13 +1053,43 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         /**
          * 生成 v2 规范化资产数据。新上传只存 _magick_device、asset、raw。
          */
-        private static function normalize_device_data_v2($data_obj, $legacy_uuid, $stable_id, $collector)
+        private static function normalize_device_data_v2($data_obj, $legacy_uuid, $stable_id, $collector, $upload_note = '')
         {
             if (is_object($data_obj)) {
                 $data_obj = json_decode(wp_json_encode($data_obj), true);
             }
             if (!is_array($data_obj)) {
                 $data_obj = array();
+            }
+
+            if (isset($data_obj['asset']) && is_array($data_obj['asset'])) {
+                $asset = $data_obj['asset'];
+                if (!isset($asset['identity']) || !is_array($asset['identity'])) {
+                    $asset['identity'] = array();
+                }
+                $asset['identity']['legacy_uuid'] = sanitize_text_field($legacy_uuid);
+                $asset['identity']['stable_device_id_v2'] = sanitize_text_field($stable_id);
+                if (!isset($asset['upload']) || !is_array($asset['upload'])) {
+                    $asset['upload'] = array();
+                }
+                if ((string) $upload_note !== '') {
+                    $asset['upload']['note'] = sanitize_text_field((string) $upload_note);
+                    $asset['upload']['reported_user'] = sanitize_text_field((string) $upload_note);
+                }
+                $asset['upload']['uploaded_at'] = current_time('mysql');
+
+                $meta = isset($data_obj['_magick_device']) && is_array($data_obj['_magick_device'])
+                    ? $data_obj['_magick_device']
+                    : array();
+                $meta['collector'] = $collector;
+                $meta['stable_device_id_v2'] = sanitize_text_field($stable_id);
+                $meta['legacy_uuid'] = sanitize_text_field($legacy_uuid);
+
+                return array(
+                    '_magick_device' => $meta,
+                    'asset' => $asset,
+                    'raw' => isset($data_obj['raw']) && is_array($data_obj['raw']) ? $data_obj['raw'] : array(),
+                );
             }
 
             $primary_network = self::pick_primary_network(isset($data_obj['net']) ? $data_obj['net'] : array());
@@ -956,6 +1142,11 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                     'stable_device_id_v2' => sanitize_text_field($stable_id),
                     'primary_mac' => $primary_mac,
                     'macs' => $macs,
+                ),
+                'upload' => array(
+                    'note' => sanitize_text_field((string) $upload_note),
+                    'reported_user' => sanitize_text_field((string) $upload_note),
+                    'uploaded_at' => current_time('mysql'),
                 ),
                 'summary' => array(
                     'device_model' => $device_model,
@@ -1590,6 +1781,8 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                     self::clear_rate_limit($request);
                     return true;
                 }
+                self::register_rate_limit_failure($request);
+                return new WP_Error('invalid_hmac_signature', '新版上传接口必须使用上传授权码签名', array('status' => 403));
             }
 
             $password = self::get_public_password($request);
@@ -1709,8 +1902,21 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
             register_rest_route('npcink/v1', '/admin/client-token', array(
                 array(
+                    'methods' => WP_REST_Server::READABLE,
+                    'callback' => array(__CLASS__, 'admin_get_client_tokens'),
+                    'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
+                ),
+                array(
                     'methods' => WP_REST_Server::CREATABLE,
                     'callback' => array(__CLASS__, 'admin_generate_client_token'),
+                    'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
+                ),
+            ));
+
+            register_rest_route('npcink/v1', '/admin/client-token/(?P<id>[a-f0-9]{12})', array(
+                array(
+                    'methods' => WP_REST_Server::DELETABLE,
+                    'callback' => array(__CLASS__, 'admin_revoke_client_token'),
                     'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
                 ),
             ));
@@ -1993,14 +2199,14 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
             return array(
                 'meat' => array(
-                    'os' => '未迁移',
+                    'os' => '待迁移',
                     'ostype' => '',
-                    'cpu' => '未迁移',
-                    'cpuModel' => '未迁移',
-                    'motherboard' => '未迁移',
-                    'graphics' => '未迁移',
-                    'memory' => '未迁移',
-                    'disk' => '未迁移',
+                    'cpu' => '待迁移',
+                    'cpuModel' => '待迁移',
+                    'motherboard' => '待迁移',
+                    'graphics' => '待迁移',
+                    'memory' => '待迁移',
+                    'disk' => '待迁移',
                 ),
                 'mac' => array(),
             );
@@ -2295,12 +2501,6 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
          */
         public static function admin_pc_migration_phase1_precheck($request)
         {
-            return new WP_Error(
-                'pc_migration_disabled',
-                '旧数据迁移暂未启用。请先使用 v2 新结构完成采集验收，后续通过导出文件离线迁移。',
-                array('status' => 410)
-            );
-
             global $wpdb;
             $table_name = $wpdb->prefix . self::$table_pc_name;
             $limit = max(1, min(500, intval($request->get_param('limit') ?: 500)));
@@ -2332,6 +2532,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             foreach ($items as &$item) {
                 if (!empty($item['stable_device_id_v2']) && $stable_counts[$item['stable_device_id_v2']] > 1) {
                     $item['status'] = 'needs_review';
+                    $item['migration_status'] = 'needs_review';
                     $item['issues'][] = 'stable_device_id_v2 重复';
                 }
             }
@@ -2350,12 +2551,6 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
          */
         public static function admin_pc_migration_phase1_apply($request)
         {
-            return new WP_Error(
-                'pc_migration_disabled',
-                '旧数据迁移暂未启用。请先使用 v2 新结构完成采集验收，后续通过导出文件离线迁移。',
-                array('status' => 410)
-            );
-
             global $wpdb;
             $confirm = $request->get_param('confirm');
             if (!in_array(strtolower((string) $confirm), array('1', 'true', 'yes'), true)) {
@@ -2363,6 +2558,8 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             }
 
             $table_name = $wpdb->prefix . self::$table_pc_name;
+            $manual_table_name = $wpdb->prefix . self::$table_manual_name;
+            $auto_table_name = $wpdb->prefix . self::$table_auto_name;
             $limit = max(1, min(500, intval($request->get_param('limit') ?: 500)));
             $offset = max(0, intval($request->get_param('offset') ?: 0));
             $rows = $wpdb->get_results(
@@ -2378,6 +2575,27 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $updated = 0;
             $skipped = 0;
             $failed = 0;
+            $merged = 0;
+            $stable_counts = array();
+            $stable_groups = array();
+            foreach ($rows as $row) {
+                $item = self::build_pc_migration_phase1_item($row);
+                if (!empty($item['stable_device_id_v2'])) {
+                    if (!isset($stable_counts[$item['stable_device_id_v2']])) {
+                        $stable_counts[$item['stable_device_id_v2']] = 0;
+                        $stable_groups[$item['stable_device_id_v2']] = array();
+                    }
+                    $stable_counts[$item['stable_device_id_v2']]++;
+                    $stable_groups[$item['stable_device_id_v2']][] = intval($row['id']);
+                }
+            }
+            $stable_primary_ids = array();
+            foreach ($stable_groups as $stable_id => $ids) {
+                if (count($ids) > 1) {
+                    sort($ids, SORT_NUMERIC);
+                    $stable_primary_ids[$stable_id] = $ids[0];
+                }
+            }
 
             $wpdb->query('START TRANSACTION');
             try {
@@ -2385,7 +2603,14 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                     $item = self::build_pc_migration_phase1_item($row);
                     $data = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
 
-                    if (empty($data) || empty($item['legacy_uuid'])) {
+                    if ($item['status'] === 'already_migrated') {
+                        $item['apply_status'] = 'unchanged';
+                        $skipped++;
+                        $items[] = $item;
+                        continue;
+                    }
+
+                    if (empty($data) || empty($item['stable_device_id_v2'])) {
                         $item['apply_status'] = 'skipped';
                         $item['issues'][] = '缺少可迁移数据';
                         $skipped++;
@@ -2393,13 +2618,81 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                         continue;
                     }
 
+                    $primary_id = isset($stable_primary_ids[$item['stable_device_id_v2']])
+                        ? intval($stable_primary_ids[$item['stable_device_id_v2']])
+                        : 0;
+                    if ($primary_id > 0 && intval($row['id']) !== $primary_id) {
+                        $old_uuid = isset($row['uuid']) ? (string) $row['uuid'] : '';
+                        if ($old_uuid !== '') {
+                            $manual_update = $wpdb->update(
+                                $manual_table_name,
+                                array('record_uuid' => $item['stable_device_id_v2']),
+                                array('record_uuid' => $old_uuid),
+                                array('%s'),
+                                array('%s')
+                            );
+                            $auto_update = $wpdb->update(
+                                $auto_table_name,
+                                array('record_uuid' => $item['stable_device_id_v2']),
+                                array('record_uuid' => $old_uuid),
+                                array('%s'),
+                                array('%s')
+                            );
+                            if ($manual_update === false || $auto_update === false) {
+                                $item['apply_status'] = 'failed';
+                                $item['issues'][] = '重复设备关联记录合并失败：' . $wpdb->last_error;
+                                $failed++;
+                                $items[] = $item;
+                                continue;
+                            }
+                        }
+
+                        $delete_result = $wpdb->delete(
+                            $table_name,
+                            array('id' => intval($row['id'])),
+                            array('%d')
+                        );
+                        if ($delete_result === false) {
+                            $item['apply_status'] = 'failed';
+                            $item['issues'][] = '重复设备删除失败：' . $wpdb->last_error;
+                            $failed++;
+                            $items[] = $item;
+                            continue;
+                        }
+
+                        $item['apply_status'] = 'merged_duplicate';
+                        $item['status'] = 'merged_duplicate';
+                        $item['migration_status'] = 'merged_duplicate';
+                        $item['merged_into_id'] = $primary_id;
+                        $item['issues'][] = '已合并到重复组主记录';
+                        $merged++;
+                        $items[] = $item;
+                        continue;
+                    }
+
+                    $conflict_id = $wpdb->get_var($wpdb->prepare(
+                        "SELECT id FROM $table_name WHERE uuid = %s AND id != %d LIMIT 1",
+                        $item['stable_device_id_v2'],
+                        intval($row['id'])
+                    ));
+                    if (!empty($conflict_id)) {
+                        $item['apply_status'] = 'skipped';
+                        $item['issues'][] = 'stable_device_id_v2 已被其他设备使用';
+                        $skipped++;
+                        $items[] = $item;
+                        continue;
+                    }
+
+                    $collector = self::extract_collector_metadata($data);
+                    $legacy_uuid = $item['legacy_uuid'] !== '' ? $item['legacy_uuid'] : (isset($row['uuid']) ? $row['uuid'] : '');
                     $data = self::attach_device_migration_meta(
                         $data,
-                        $item['legacy_uuid'],
+                        $legacy_uuid,
                         $item['stable_device_id_v2'],
-                        isset($data['collector']) && is_array($data['collector']) ? $data['collector'] : array(),
-                        'admin_phase1_migration'
+                        $collector,
+                        'admin_full_v2_migration'
                     );
+                    $data = self::normalize_device_data_v2($data, $legacy_uuid, $item['stable_device_id_v2'], $collector);
                     $data_json = wp_json_encode($data, JSON_UNESCAPED_UNICODE);
                     if ($data_json === false) {
                         $item['apply_status'] = 'failed';
@@ -2409,11 +2702,20 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                         continue;
                     }
 
+                    $new_ip = self::extract_valid_ip($data);
+                    if ($new_ip === '') {
+                        $new_ip = isset($row['ip']) && $row['ip'] !== '' ? $row['ip'] : '127.0.0.1';
+                    }
+
                     $result = $wpdb->update(
                         $table_name,
-                        array('data' => $data_json),
+                        array(
+                            'uuid' => $item['stable_device_id_v2'],
+                            'ip' => $new_ip,
+                            'data' => $data_json,
+                        ),
                         array('id' => intval($row['id'])),
-                        array('%s'),
+                        array('%s', '%s', '%s'),
                         array('%d')
                     );
 
@@ -2422,6 +2724,30 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                         $item['issues'][] = '数据库更新失败：' . $wpdb->last_error;
                         $failed++;
                     } else {
+                        $old_uuid = isset($row['uuid']) ? (string) $row['uuid'] : '';
+                        if ($old_uuid !== '' && $old_uuid !== $item['stable_device_id_v2']) {
+                            $manual_update = $wpdb->update(
+                                $manual_table_name,
+                                array('record_uuid' => $item['stable_device_id_v2']),
+                                array('record_uuid' => $old_uuid),
+                                array('%s'),
+                                array('%s')
+                            );
+                            $auto_update = $wpdb->update(
+                                $auto_table_name,
+                                array('record_uuid' => $item['stable_device_id_v2']),
+                                array('record_uuid' => $old_uuid),
+                                array('%s'),
+                                array('%s')
+                            );
+                            if ($manual_update === false || $auto_update === false) {
+                                $item['apply_status'] = 'failed';
+                                $item['issues'][] = '关联变更记录迁移失败：' . $wpdb->last_error;
+                                $failed++;
+                                $items[] = $item;
+                                continue;
+                            }
+                        }
                         $item['apply_status'] = $result === 0 ? 'unchanged' : 'updated';
                         $updated += $result === 0 ? 0 : 1;
                     }
@@ -2449,10 +2775,11 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 'limit' => $limit,
                 'offset' => $offset,
                 'updated' => $updated,
+                'merged' => $merged,
                 'skipped' => $skipped,
                 'failed' => $failed,
             ));
-            $payload['message'] = 'v2 迁移元数据写入完成';
+            $payload['message'] = '旧设备数据已转换为 v2 新结构';
             return rest_ensure_response($payload);
         }
 
@@ -2462,8 +2789,19 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         private static function build_pc_migration_phase1_item($row)
         {
             $data = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
-            $legacy_uuid = self::derive_uuid_from_data($data);
-            $stable_id = self::derive_stable_device_id_v2($data);
+            $asset = isset($data['asset']) && is_array($data['asset']) ? $data['asset'] : array();
+            $has_asset = !empty($asset);
+            $identity = isset($asset['identity']) && is_array($asset['identity']) ? $asset['identity'] : array();
+            $legacy_uuid = isset($identity['legacy_uuid']) && $identity['legacy_uuid'] !== ''
+                ? sanitize_text_field((string) $identity['legacy_uuid'])
+                : self::derive_uuid_from_data($data);
+            if ($legacy_uuid === '' && !empty($row['uuid'])) {
+                $legacy_uuid = sanitize_text_field((string) $row['uuid']);
+            }
+            $stable_id = self::derive_hardware_stable_device_id_v2($data);
+            if ($stable_id === '' && isset($identity['stable_device_id_v2']) && $identity['stable_device_id_v2'] !== '') {
+                $stable_id = self::normalize_stable_device_id_value((string) $identity['stable_device_id_v2']);
+            }
             $meta = isset($data['_magick_device']) && is_array($data['_magick_device'])
                 ? $data['_magick_device']
                 : array();
@@ -2474,10 +2812,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 $issues[] = 'data 为空或不是合法 JSON';
                 $status = 'blocked';
             }
-            if ($legacy_uuid === '') {
-                $issues[] = '无法从 data.uuid.hardware + data.uuid.macs[0] 计算 legacy uuid';
-                $status = 'blocked';
-            } elseif (!empty($row['uuid']) && $legacy_uuid !== $row['uuid']) {
+            if (!$has_asset && !empty($row['uuid']) && $legacy_uuid !== $row['uuid']) {
                 $issues[] = 'data 计算出的 legacy uuid 与数据库 uuid 不一致';
                 $status = 'needs_review';
             }
@@ -2487,7 +2822,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                     $status = 'needs_review';
                 }
             }
-            if (!empty($meta['schema_version']) && intval($meta['schema_version']) >= 2) {
+            if ($has_asset && !empty($meta['schema_version']) && intval($meta['schema_version']) >= 2 && !empty($row['uuid']) && $row['uuid'] === $stable_id) {
                 $status = empty($issues) ? 'already_migrated' : $status;
             }
 
@@ -3247,13 +3582,8 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 $object->password = self::get_seting('password') ? self::get_seting('password') : wp_hash_password($random_string);
             }
 
-            $token = self::get_client_token_config();
-            if ($token['id'] !== '' && $token['key_hash'] !== '') {
-                $object->client_token_id = $token['id'];
-                $object->client_token_key_hash = $token['key_hash'];
-                $object->client_token_preview = $token['preview'];
-                $object->client_token_created_at = $token['created_at'];
-            }
+            $object->client_tokens = self::get_client_tokens(true);
+            unset($object->route, $object->client_token_id, $object->client_token_key_hash, $object->client_token_preview, $object->client_token_created_at, $object->has_client_token);
 
             $result = update_option(self::$option, $object);
             if ($result === false) {
@@ -3284,23 +3614,33 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         {
             global $wpdb;
 
-            $config = get_option(self::$option);
-            if (!is_array($config) && !is_object($config)) {
-                $config = array();
-            }
-
             $token_id = self::random_hex(6);
             $secret = self::random_hex(24);
             $token = 'mda_' . $token_id . '_' . $secret;
             $key_hash = hash('sha256', $secret);
             $created_at = current_time('mysql');
             $preview = substr($token, 0, 10) . '...' . substr($token, -6);
+            $name = sanitize_text_field((string) $request->get_param('name'));
+            if ($name === '') {
+                $name = '上传授权码 ' . $created_at;
+            }
 
-            self::set_config_value($config, 'client_token_id', $token_id);
-            self::set_config_value($config, 'client_token_key_hash', $key_hash);
-            self::set_config_value($config, 'client_token_preview', $preview);
-            self::set_config_value($config, 'client_token_created_at', $created_at);
+            $tokens = self::get_client_tokens(true);
+            $tokens[] = array(
+                'id' => $token_id,
+                'name' => $name,
+                'key_hash' => $key_hash,
+                'preview' => $preview,
+                'created_at' => $created_at,
+                'last_used_at' => '',
+                'enabled' => true,
+            );
 
+            $config = get_option(self::$option);
+            if (!is_array($config) && !is_object($config)) {
+                $config = array();
+            }
+            self::set_config_value($config, 'client_tokens', $tokens);
             $result = update_option(self::$option, $config);
             if ($result === false && !empty($wpdb->last_error)) {
                 return new WP_Error('update_failed', '生成上传授权码失败：数据库错误', array(
@@ -3313,9 +3653,68 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 'success' => true,
                 'message' => '上传授权码已生成，请复制到上传软件中',
                 'token' => $token,
-                'token_id' => $token_id,
-                'preview' => $preview,
-                'created_at' => $created_at,
+                'item' => array(
+                    'id' => $token_id,
+                    'name' => $name,
+                    'preview' => $preview,
+                    'created_at' => $created_at,
+                    'last_used_at' => '',
+                    'enabled' => true,
+                ),
+                'items' => self::public_client_tokens($tokens),
+            ));
+        }
+
+        /**
+         * 管理端 - 获取客户端上传授权码列表。
+         */
+        public static function admin_get_client_tokens($request)
+        {
+            return rest_ensure_response(array(
+                'success' => true,
+                'items' => self::public_client_tokens(),
+            ));
+        }
+
+        /**
+         * 管理端 - 停用客户端上传授权码。
+         */
+        public static function admin_revoke_client_token($request)
+        {
+            global $wpdb;
+
+            $token_id = sanitize_key((string) $request->get_param('id'));
+            $tokens = self::get_client_tokens(true);
+            $found = false;
+            foreach ($tokens as $index => $token) {
+                if (hash_equals($token['id'], $token_id)) {
+                    $tokens[$index]['enabled'] = false;
+                    $found = true;
+                    break;
+                }
+            }
+
+            if (!$found) {
+                return new WP_Error('client_token_not_found', '上传授权码不存在或已删除', array('status' => 404));
+            }
+
+            $config = get_option(self::$option);
+            if (!is_array($config) && !is_object($config)) {
+                $config = array();
+            }
+            self::set_config_value($config, 'client_tokens', $tokens);
+            $result = update_option(self::$option, $config);
+            if ($result === false && !empty($wpdb->last_error)) {
+                return new WP_Error('update_failed', '停用上传授权码失败：数据库错误', array(
+                    'status' => 500,
+                    'detail' => $wpdb->last_error,
+                ));
+            }
+
+            return rest_ensure_response(array(
+                'success' => true,
+                'message' => '上传授权码已停用',
+                'items' => self::public_client_tokens($tokens),
             ));
         }
 

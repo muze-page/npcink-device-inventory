@@ -63,9 +63,6 @@ fn validate_config(config: &AgentConfig) -> Result<(), String> {
     if config.site.trim().is_empty() {
         return Err("请填写 v2 接口地址".to_string());
     }
-    if config.name.trim().is_empty() {
-        return Err("请填写使用人".to_string());
-    }
     if config.password.is_empty() {
         return Err("请填写上传授权码".to_string());
     }

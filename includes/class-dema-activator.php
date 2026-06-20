@@ -151,18 +151,16 @@ class Dema_Activator extends DEMA_Admin_Interface
 		ip VARCHAR(45) NOT NULL COMMENT 'IP地址', 
 		uuid CHAR(36) NOT NULL COMMENT '设备唯一标识符',
         data JSON COMMENT '设备信息',
-        PRIMARY KEY (id),
-        UNIQUE (number),
-        UNIQUE (uuid),
+        PRIMARY KEY  (id),
+        UNIQUE KEY number (number),
+        UNIQUE KEY uuid (uuid),
 		KEY idx_name (name),
-		-- 添加复合索引
         KEY idx_dept_state (department, state),
         KEY idx_department (department),
         KEY idx_created_at (created_at),
         KEY idx_dept_created (department, created_at),
 		KEY idx_state (state),
 		KEY idx_updated_at (updated_at)
-        -- 对于查询频繁的字段组合
 	  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='电脑设备信息表';";
 
 		// 执行 SQL 语句
@@ -255,8 +253,8 @@ class Dema_Activator extends DEMA_Admin_Interface
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
         uuid VARCHAR(36) NOT NULL COMMENT '设备唯一标识符',
         data JSON COMMENT '自定义设备数据',
-        PRIMARY KEY (id),
-        UNIQUE (uuid),
+        PRIMARY KEY  (id),
+        UNIQUE KEY uuid (uuid),
         KEY idx_name (name),
         KEY idx_purpose (purpose),
 		KEY idx_category (category),
@@ -363,7 +361,7 @@ class Dema_Activator extends DEMA_Admin_Interface
         data TEXT NOT NULL COMMENT '变更说明',
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间',
         record_uuid VARCHAR(36) NOT NULL COMMENT '变更记录唯一标识',
-        PRIMARY KEY (id),
+        PRIMARY KEY  (id),
         KEY idx_user (user),
         KEY idx_type (type),
         KEY idx_record_uuid (record_uuid),
@@ -389,13 +387,14 @@ class Dema_Activator extends DEMA_Admin_Interface
 
 		// 创建/更新表结构
 		$sql = "CREATE TABLE `$table_name` (
-       id INT AUTO_INCREMENT PRIMARY KEY,
+       id INT NOT NULL AUTO_INCREMENT,
 	   table_name VARCHAR(64) COMMENT '变更的表名',
        column_name VARCHAR(64) COMMENT '变更的字段名',
        old_value VARCHAR(128) COMMENT '变更前的值',
        new_value VARCHAR(128) COMMENT '变更后的值',
 	   changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间',
        record_uuid VARCHAR(36) COMMENT '记录的uuid',
+       PRIMARY KEY  (id),
        KEY idx_record_uuid (record_uuid),
        KEY idx_table_name (table_name),
        KEY idx_column_name (column_name),
@@ -488,13 +487,13 @@ class Dema_Activator extends DEMA_Admin_Interface
 		$pss =  wp_hash_password($random_string);
 
 		$option = array(
-			"route" => "device-post-data", //默认路由
 			"password" => $pss, //默认密码
 			"delete_mysql" => false, //默认是否删除数据库
 			"depreciation_year" => 36, //折旧月限
 			"residual_value_rate" => 5, //残值率（百分比）
 			"department" => array("开发部", "推广部", "运营部", "默认"), //默认部门
 			"public_search_route" => "public-search-page", //默认公开搜索路由
+			"client_tokens" => array(), //新版上传授权码列表
 		);
 		//保存
 		update_option(self::$option, $option);
