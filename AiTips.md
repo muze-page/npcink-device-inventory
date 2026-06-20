@@ -17,7 +17,7 @@ XSS 修复：移除/净化 dangerouslySetInnerHTML，改用白名单净化（如
 
 JSON 输入统一处理：wp_unslash + json_decode + wp_json_encode + 长度/结构校验，避免 sanitize_text_field 破坏 JSON；涉及 api.php、table-\*.php
 加基础限流：对 /query 和 /submit-data 做 IP/设备维度的失败锁定（Transient），降低爆破风险；涉及 api.php
-停止下发 option：dataLocal 中移除 option，仅下发必要 REST 地址与 nonce；涉及 dema-admin-menu.php、index.tsx
+停止下发 option：dataLocal 中移除 option，仅下发必要 REST 地址与 nonce；涉及 npcink-device-manage-admin-menu.php、index.tsx
 优先级 P2（稳态与规范）
 
 补充审计日志：记录操作人、IP、字段变更，失败日志脱敏；涉及 table-pc.php、table-style.php
@@ -32,7 +32,7 @@ JSON 输入统一处理：wp_unslash + json_decode + wp_json_encode + 长度/结
 
 ### 1) 范围与入口
 
-- 管理端入口：`admin/partials/dema-admin-menu.php` 注入 React 管理端
+- 管理端入口：`admin/partials/npcink-device-manage-admin-menu.php` 注入 React 管理端
 - 默认首屏 Tab：电脑设备（`vite-admin/src/pages/index.tsx`）
 
 ### 2) 构建快照
@@ -64,7 +64,7 @@ JSON 输入统一处理：wp_unslash + json_decode + wp_json_encode + 长度/结
   - GET `/admin/pc?fields=summary`
   - GET `/admin/pc-categories`
 - 开发：+1 次
-  - POST `/wp-admin/admin-ajax.php?action=dema_get_rest_nonce`
+  - POST `/wp-admin/admin-ajax.php?action=npcink_device_manage_get_rest_nonce`
 
 ### 6) 各页面初始 API 请求
 
@@ -108,7 +108,7 @@ CORS 从 * 改为白名单（站点域名/设置项），并显式允许 x-npcin
 生产环境关闭 WP_DEBUG 并限制 debug.log 访问（否则凭据/路径会暴露）。
 性能整改（高优先）
 
-给 npcink_device_pc 增加索引（至少 uuid 唯一索引 + number + name + state + department），查询和统计会快很多。可在 class-dema-activator.php 里用 index_exists 动态补。
+给 npcink_device_pc 增加索引（至少 uuid 唯一索引 + number + name + state + department），查询和统计会快很多。可在 class-npcink-device-manage-activator.php 里用 index_exists 动态补。
 公共查询接口不要 SELECT *，建议做“基础信息 + 详情分开”或加 detail=1 才返回完整 data。改动点 api.php 的 query_data。
 为公共查询加短时缓存（按查询 key + 最后更新时间生成 ETag / transient），减轻数据库压力。你已经在管理端用 rest_response_with_cache 了，可以复用逻辑。
 减少上传数据体积：InsPackage 只上传必要字段或压缩（若服务器支持）。当前 body 约 10KB 起步，规模化会有压力。

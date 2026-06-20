@@ -3,8 +3,8 @@
 /**
  * 设置校验（legacy admin-ajax 已移除，REST 在 api.php 中处理）
  */
-if (!class_exists('DEMA_Admin_Interface_Seting')) {
-    class DEMA_Admin_Interface_Seting extends DEMA_Admin_Interface
+if (!class_exists('Npcink_Device_Manage_Admin_Interface_Seting')) {
+    class Npcink_Device_Manage_Admin_Interface_Seting extends Npcink_Device_Manage_Admin_Interface
     {
         public static function run()
         {

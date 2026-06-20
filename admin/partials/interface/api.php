@@ -5,8 +5,8 @@
  * 使用特定算法算出的UUID，用于校验机器唯一性，
  * 第一张网卡的mac地址加设备UUID，再进行md5处理，得到UUID
  */
-if (!class_exists('DEMA_Admin_Interface_API')) {
-    class DEMA_Admin_Interface_API extends DEMA_Admin_Interface
+if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
+    class Npcink_Device_Manage_Admin_Interface_API extends Npcink_Device_Manage_Admin_Interface
     {
         //表名
         public static $table_name;
@@ -19,7 +19,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             $is_dev = (defined('WP_DEBUG') && WP_DEBUG)
                 || (function_exists('wp_get_environment_type') && wp_get_environment_type() === 'development');
             if ($is_dev) {
-                add_action('wp_ajax_dema_get_rest_nonce', array(__CLASS__, 'get_rest_nonce_callback'));
+                add_action('wp_ajax_npcink_device_manage_get_rest_nonce', array(__CLASS__, 'get_rest_nonce_callback'));
             }
 
             /**
@@ -3562,7 +3562,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 return new WP_Error('invalid_data', '保存设置失败：数据格式错误', array('status' => 400));
             }
 
-            $validation_result = DEMA_Admin_Interface_Seting::validate_object($object);
+            $validation_result = Npcink_Device_Manage_Admin_Interface_Seting::validate_object($object);
             if ($validation_result !== true) {
                 return new WP_Error('invalid_data', '保存设置失败：' . $validation_result, array('status' => 400));
             }
@@ -4098,7 +4098,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 ));
             }
 
-            $insert_result = DEMA_Admin_Interface_Search_Page::add_page($route);
+            $insert_result = Npcink_Device_Manage_Admin_Interface_Search_Page::add_page($route);
             if (!is_wp_error($insert_result) && $insert_result != 0) {
                 return rest_ensure_response(array(
                     'success' => true,

@@ -3,8 +3,8 @@
 /**
  * 添加前端搜索页接口
  */
-if (!class_exists('DEMA_Admin_Interface_Search_Page')) {
-    class DEMA_Admin_Interface_Search_Page extends DEMA_Admin_Interface
+if (!class_exists('Npcink_Device_Manage_Admin_Interface_Search_Page')) {
+    class Npcink_Device_Manage_Admin_Interface_Search_Page extends Npcink_Device_Manage_Admin_Interface
     {
         public static function run()
         {
@@ -36,8 +36,8 @@ if (!class_exists('DEMA_Admin_Interface_Search_Page')) {
 
         public static function load_js()
         {
-            $ver = DEMA_Admin_Menu::$plugin_version;
-            $name = DEMA_Admin_Menu::$plugin_name . '-search';
+            $ver = Npcink_Device_Manage_Admin_Menu::$plugin_version;
+            $name = Npcink_Device_Manage_Admin_Menu::$plugin_name . '-search';
             //准备地址
              $index_css = plugin_dir_url(dirname(dirname(__DIR__))) . 'vite-search/dist/index.css';
              wp_enqueue_style($name, $index_css, array(), $ver, false);

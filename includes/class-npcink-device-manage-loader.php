@@ -6,8 +6,8 @@
  * @link       https://www.npc.ink
  * @since      1.0.0
  *
- * @package    Dema
- * @subpackage Dema/includes
+ * @package    Npcink_Device_Manage
+ * @subpackage Npcink_Device_Manage/includes
  */
 
 /**
@@ -17,11 +17,11 @@
  * the plugin, and register them with the WordPress API. Call the
  * run function to execute the list of actions and filters.
  *
- * @package    Dema
- * @subpackage Dema/includes
+ * @package    Npcink_Device_Manage
+ * @subpackage Npcink_Device_Manage/includes
  * @author     Npcink <1355471563@qq.com>
  */
-class Dema_Loader
+class Npcink_Device_Manage_Loader
 {
 
 	/**

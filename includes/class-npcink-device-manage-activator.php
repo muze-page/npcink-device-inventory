@@ -6,8 +6,8 @@
  * @link       https://www.npc.ink
  * @since      1.0.0
  *
- * @package    Dema
- * @subpackage Dema/includes
+ * @package    Npcink_Device_Manage
+ * @subpackage Npcink_Device_Manage/includes
  */
 
 /**
@@ -16,11 +16,11 @@
  * This class defines all code necessary to run during the plugin's activation.
  *
  * @since      1.0.0
- * @package    Dema
- * @subpackage Dema/includes
+ * @package    Npcink_Device_Manage
+ * @subpackage Npcink_Device_Manage/includes
  * @author     Npcink <1355471563@qq.com>
  */
-class Dema_Activator extends DEMA_Admin_Interface
+class Npcink_Device_Manage_Activator extends Npcink_Device_Manage_Admin_Interface
 {
 
 	/**
@@ -30,7 +30,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 	 */
 	public static function run()
 	{
-		$current_version = defined('DEMA_VERSION') ? DEMA_VERSION : '1.0.0';
+		$current_version = defined('NPCINK_DEVICE_MANAGE_VERSION') ? NPCINK_DEVICE_MANAGE_VERSION : '1.0.0';
 		self::upgrade_schema(null, $current_version);
 	}
 
@@ -63,7 +63,7 @@ class Dema_Activator extends DEMA_Admin_Interface
 		}
 
 		if (!empty($current_version)) {
-			update_option('dema_plugin_version', $current_version);
+			update_option('npcink_device_manage_plugin_version', $current_version);
 		}
 	}
 

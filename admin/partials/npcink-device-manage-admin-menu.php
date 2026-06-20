@@ -1,7 +1,7 @@
 <?php
 //添加菜单，传递数据
-if (!class_exists('DEMA_Admin_Menu')) {
-    class DEMA_Admin_Menu extends DEMA_Admin_Interface
+if (!class_exists('Npcink_Device_Manage_Admin_Menu')) {
+    class Npcink_Device_Manage_Admin_Menu extends Npcink_Device_Manage_Admin_Interface
     {
         public static $plugin_name; //插件名
         public static $plugin_version; //插件版本
@@ -11,7 +11,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
             self::$plugin_name = $name;
             self::$plugin_version = $version;
             //添加菜单
-            add_action('admin_menu', array(__CLASS__, 'dema_menu'));
+            add_action('admin_menu', array(__CLASS__, 'register_admin_menu'));
 
             //加载 CSS 和 JS 资源
             add_action('admin_enqueue_scripts', array(__CLASS__, 'load_admin_script'));
@@ -20,7 +20,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
             add_filter('script_loader_tag', array(__CLASS__, 'refund_type_script'), 10, 2);
         }
         //创建菜单
-        public static function dema_menu()
+        public static function register_admin_menu()
         {
             // 添加一个菜单到 WordPress 后台的“设置”菜单下
             add_submenu_page(
@@ -28,7 +28,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
                 '设备资产管理',
                 '设备资产管理',
                 'manage_options',
-                'dema_seting',
+                'npcink_device_manage_settings',
                 array(__CLASS__, 'menu_displays'),
                 '200.1'
             );
@@ -56,7 +56,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
             $ver = self::$plugin_version;
             $name = self::$plugin_name;
             //是否是指定页面
-            if ('plugins_page_dema_seting' != $hook) {
+            if ('plugins_page_npcink_device_manage_settings' != $hook) {
                 return;
             }
 
@@ -79,7 +79,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
             $option = get_option(self::$option);
             if (is_object($option)) {
                 $option->password = '已设定';
-                $option->client_tokens = DEMA_Admin_Interface_API::public_client_tokens();
+                $option->client_tokens = Npcink_Device_Manage_Admin_Interface_API::public_client_tokens();
                 $option->has_client_token = !empty(array_filter($option->client_tokens, function ($token) {
                     return !empty($token['enabled']);
                 }));
@@ -87,7 +87,7 @@ if (!class_exists('DEMA_Admin_Menu')) {
                 unset($option->client_token_id, $option->client_token_preview, $option->client_token_created_at);
             } elseif (is_array($option)) {
                 $option['password'] = '已设定';
-                $option['client_tokens'] = DEMA_Admin_Interface_API::public_client_tokens();
+                $option['client_tokens'] = Npcink_Device_Manage_Admin_Interface_API::public_client_tokens();
                 $option['has_client_token'] = !empty(array_filter($option['client_tokens'], function ($token) {
                     return !empty($token['enabled']);
                 }));

@@ -9,8 +9,8 @@
  * @link       https://www.npc.ink
  * @since      1.0.0
  *
- * @package    Dema
- * @subpackage Dema/includes
+ * @package    Npcink_Device_Manage
+ * @subpackage Npcink_Device_Manage/includes
  */
 
 /**
@@ -23,11 +23,11 @@
  * version of the plugin.
  *
  * @since      1.0.0
- * @package    Dema
- * @subpackage Dema/includes
+ * @package    Npcink_Device_Manage
+ * @subpackage Npcink_Device_Manage/includes
  * @author     Npcink <1355471563@qq.com>
  */
-class Dema
+class Npcink_Device_Manage
 {
 
 	/**
@@ -36,7 +36,7 @@ class Dema
 	 *
 	 * @since    1.0.0
 	 * @access   protected
-	 * @var      Dema_Loader    $loader    Maintains and registers all hooks for the plugin.
+	 * @var      Npcink_Device_Manage_Loader    $loader    Maintains and registers all hooks for the plugin.
 	 */
 	protected $loader;
 
@@ -69,12 +69,12 @@ class Dema
 	 */
 	public function __construct()
 	{
-		if (defined('DEMA_VERSION')) {
-			$this->version = DEMA_VERSION;
+		if (defined('NPCINK_DEVICE_MANAGE_VERSION')) {
+			$this->version = NPCINK_DEVICE_MANAGE_VERSION;
 		} else {
 			$this->version = '1.0.0';
 		}
-		$this->plugin_name = 'dema';
+		$this->plugin_name = 'npcink-device-manage';
 
 		$this->load_dependencies();
 		$this->set_locale();
@@ -86,10 +86,10 @@ class Dema
 	 *
 	 * Include the following files that make up the plugin:
 	 *
-	 * - Dema_Loader. Orchestrates the hooks of the plugin.
-	 * - Dema_i18n. Defines internationalization functionality.
-	 * - Dema_Admin. Defines all hooks for the admin area.
-	 * - Dema_Public. Defines all hooks for the public side of the site.
+	 * - Npcink_Device_Manage_Loader. Orchestrates the hooks of the plugin.
+	 * - Npcink_Device_Manage_I18n. Defines internationalization functionality.
+	 * - Npcink_Device_Manage_Admin. Defines all hooks for the admin area.
+	 * - Npcink_Device_Manage_Public. Defines all hooks for the public side of the site.
 	 *
 	 * Create an instance of the loader which will be used to register the hooks
 	 * with WordPress.
@@ -104,28 +104,28 @@ class Dema
 		 * The class responsible for orchestrating the actions and filters of the
 		 * core plugin.
 		 */
-		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-dema-loader.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-npcink-device-manage-loader.php';
 
 		/**
 		 * The class responsible for defining internationalization functionality
 		 * of the plugin.
 		 */
-		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-dema-i18n.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-npcink-device-manage-i18n.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
-		require_once plugin_dir_path(dirname(__FILE__)) . 'admin/class-dema-admin.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'admin/class-npcink-device-manage-admin.php';
 
 
 
-		$this->loader = new Dema_Loader();
+		$this->loader = new Npcink_Device_Manage_Loader();
 	}
 
 	/**
 	 * Define the locale for this plugin for internationalization.
 	 *
-	 * Uses the Dema_i18n class in order to set the domain and to register the hook
+	 * Uses the Npcink_Device_Manage_I18n class in order to set the domain and to register the hook
 	 * with WordPress.
 	 *
 	 * @since    1.0.0
@@ -134,7 +134,7 @@ class Dema
 	private function set_locale()
 	{
 
-		$plugin_i18n = new Dema_i18n();
+		$plugin_i18n = new Npcink_Device_Manage_I18n();
 
 		$this->loader->add_action('plugins_loaded', $plugin_i18n, 'load_plugin_textdomain');
 	}
@@ -149,7 +149,7 @@ class Dema
 	private function define_admin_hooks()
 	{
 
-		$plugin_admin = new Dema_Admin($this->get_plugin_name(), $this->get_version());
+		$plugin_admin = new Npcink_Device_Manage_Admin($this->get_plugin_name(), $this->get_version());
 
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
@@ -177,13 +177,13 @@ class Dema
 			return;
 		}
 
-		$installed_version = get_option('dema_plugin_version');
+		$installed_version = get_option('npcink_device_manage_plugin_version');
 		if ($installed_version === $this->version) {
 			return;
 		}
 
-		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-dema-activator.php';
-		Dema_Activator::upgrade_schema($installed_version, $this->version);
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-npcink-device-manage-activator.php';
+		Npcink_Device_Manage_Activator::upgrade_schema($installed_version, $this->version);
 	}
 
 	/**
@@ -202,7 +202,7 @@ class Dema
 	 * The reference to the class that orchestrates the hooks with the plugin.
 	 *
 	 * @since     1.0.0
-	 * @return    Dema_Loader    Orchestrates the hooks of the plugin.
+	 * @return    Npcink_Device_Manage_Loader    Orchestrates the hooks of the plugin.
 	 */
 	public function get_loader()
 	{

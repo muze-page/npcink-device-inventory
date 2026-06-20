@@ -10,7 +10,7 @@
  *
  * @link              https://www.npc.ink
  * @since             2.0.0
- * @package           Dema
+ * @package    Npcink_Device_Manage
  *
  * @wordpress-plugin
  * Plugin Name:       Npcink Device Manage
@@ -21,7 +21,7 @@
  * Author URI:        https://www.npc.ink
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
- * Text Domain:       dema
+ * Text Domain:       npcink-device-manage
  * Domain Path:       /languages
  */
 
@@ -35,36 +35,36 @@ if (!defined('WPINC')) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define('DEMA_VERSION', '2601083');
+define('NPCINK_DEVICE_MANAGE_VERSION', '2601083');
 
 /**
  * The code that runs during plugin activation.
- * This action is documented in includes/class-dema-activator.php
+ * This action is documented in includes/class-npcink-device-manage-activator.php
  */
-function activate_dema()
+function activate_npcink_device_manage()
 {
-	require_once plugin_dir_path(__FILE__) . 'includes/class-dema-activator.php';
-	Dema_Activator::run();
+	require_once plugin_dir_path(__FILE__) . 'includes/class-npcink-device-manage-activator.php';
+	Npcink_Device_Manage_Activator::run();
 }
 
 /**
  * The code that runs during plugin deactivation.
- * This action is documented in includes/class-dema-deactivator.php
+ * This action is documented in includes/class-npcink-device-manage-deactivator.php
  */
-function deactivate_dema()
+function deactivate_npcink_device_manage()
 {
-	require_once plugin_dir_path(__FILE__) . 'includes/class-dema-deactivator.php';
-	Dema_Deactivator::deactivate();
+	require_once plugin_dir_path(__FILE__) . 'includes/class-npcink-device-manage-deactivator.php';
+	Npcink_Device_Manage_Deactivator::deactivate();
 }
 
-register_activation_hook(__FILE__, 'activate_dema');
-register_deactivation_hook(__FILE__, 'deactivate_dema');
+register_activation_hook(__FILE__, 'activate_npcink_device_manage');
+register_deactivation_hook(__FILE__, 'deactivate_npcink_device_manage');
 
 /**
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
-require plugin_dir_path(__FILE__) . 'includes/class-dema.php';
+require plugin_dir_path(__FILE__) . 'includes/class-npcink-device-manage.php';
 
 /**
  * Begins execution of the plugin.
@@ -75,18 +75,18 @@ require plugin_dir_path(__FILE__) . 'includes/class-dema.php';
  *
  * @since    1.0.0
  */
-function run_dema()
+function run_npcink_device_manage()
 {
 
-	$plugin = new Dema();
+	$plugin = new Npcink_Device_Manage();
 	$plugin->run();
 }
-run_dema();
+run_npcink_device_manage();
 
 
 //设置按钮
 add_filter('plugin_action_links_' . plugin_basename(__FILE__), function ($links) {
-	$links[] = '<a href="' . get_admin_url(null, 'plugins.php?page=dema_seting') . '">' . __('设置', 'n') . '</a>';
+	$links[] = '<a href="' . get_admin_url(null, 'plugins.php?page=npcink_device_manage_settings') . '">' . __('设置', 'npcink-device-manage') . '</a>';
 	return $links;
 });
 

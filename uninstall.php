@@ -22,7 +22,7 @@
  * @link       https://www.npc.ink
  * @since      1.0.0
  *
- * @package    Dema
+ * @package    Npcink_Device_Manage
  */
 
 // If uninstall not called from WordPress, then exit.
@@ -32,10 +32,10 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 
 
 //执行卸载插件时的动作
-require plugin_dir_path(__FILE__) . 'admin/partials/dema-admin-uninstall.php';
-function run_mare_uninstall()
+require plugin_dir_path(__FILE__) . 'admin/partials/npcink-device-manage-admin-uninstall.php';
+function run_npcink_device_manage_uninstall()
 {
-	$plugin = new Mare_Admin_Uninstall();
+	$plugin = new Npcink_Device_Manage_Admin_Uninstall();
 	$plugin->run();
 }
-run_mare_uninstall();
+run_npcink_device_manage_uninstall();

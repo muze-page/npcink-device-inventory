@@ -1,7 +1,7 @@
 <?php
 //删除插件时执行
-if (!class_exists('Mare_Admin_Uninstall')) {
-    class Mare_Admin_Uninstall
+if (!class_exists('Npcink_Device_Manage_Admin_Uninstall')) {
+    class Npcink_Device_Manage_Admin_Uninstall
     {
         //执行
         public static function run()
@@ -9,18 +9,18 @@ if (!class_exists('Mare_Admin_Uninstall')) {
             /**
              * 引入获取选项的方法
              */
-            require plugin_dir_path(__FILE__) . 'dema-admin-interface.php';
+            require plugin_dir_path(__FILE__) . 'npcink-device-manage-admin-interface.php';
 
             //获取选项值
-            $config = DEMA_Admin_Interface::get_seting('delete_mysql');
+            $config = Npcink_Device_Manage_Admin_Interface::get_seting('delete_mysql');
 
             //进行判断
             if ($config) {
                 $result = [
-                    DEMA_Admin_Interface::$table_pc_name,
-                    DEMA_Admin_Interface::$table_style_name,
-                    DEMA_Admin_Interface::$table_manual_name,
-                    DEMA_Admin_Interface::$table_auto_name
+                    Npcink_Device_Manage_Admin_Interface::$table_pc_name,
+                    Npcink_Device_Manage_Admin_Interface::$table_style_name,
+                    Npcink_Device_Manage_Admin_Interface::$table_manual_name,
+                    Npcink_Device_Manage_Admin_Interface::$table_auto_name
                 ];
                 self::delete_sql($result); //移除数据库
                 self::delete_option(); //移除选项值
@@ -61,7 +61,7 @@ if (!class_exists('Mare_Admin_Uninstall')) {
         public static function delete_option()
         {
             // 删除插件设置
-            delete_option(DEMA_Admin_Interface::$option);
+            delete_option(Npcink_Device_Manage_Admin_Interface::$option);
         }
     }
 }
