@@ -1,218 +1,101 @@
 # Npcink Device Manage
 
-## 开发介绍
+Npcink Device Manage 是一个 WordPress 设备资产管理插件，用于小型团队维护电脑与自定义设备资产、变更记录、部门状态、公开查询页和后台数据面板。
 
-- 删除所有数据库内容，重建
+## 组成
 
-注意：admin-ajax 现在必须带 nonce。请刷新后台页面获取新 nonce；如果用开发模式 VITE_STATE，需要从 WP 注入或临时在 demoConfig.ts 填入有效 nonce，否则会 403。
+- `npcink-device-manage.php`：WordPress 插件入口。
+- `admin/`：后台菜单、REST API、数据表读写、导入导出和设置。
+- `includes/`：插件加载器、激活/停用、数据库建表和增量迁移。
+- `vite-admin/`：后台 React 管理端，构建产物由插件后台加载。
+- `vite-search/`：公开查询页前端，构建产物由插件页面加载。
+- `ele-rs/`：Rust/Tauri 设备采集与上传客户端。
 
-# 使用介绍
+旧 Electron/Vue 上传器已移除，后续设备上传客户端以 `ele-rs/` 为准。
 
-文件名用中折号 sql-tabel-name.tsx
-变量名用驼峰 ，首字母小写 sqlTabelName
-类型名用驼峰，首字母大写 SqlTabelName
+## 数据表
 
-接口返回值 参考 B2
+插件使用 WordPress 数据库前缀加以下表名：
 
+- `npcink_device_pc`：电脑设备资产记录。
+- `npcink_device_style`：自定义设备资产记录。
+- `npcink_device_manual`：手动变更记录。
+- `npcink_device_auto`：自动变更记录。
+
+插件设置保存在 `device_manaje_option`。卸载时仅当设置中允许删除数据时，才会删除上述插件表和设置项。
+
+## 认证与接口
+
+REST namespace 为 `npcink/v1`。
+
+- 管理端接口位于 `/wp-json/npcink/v1/admin/*`，需要当前用户具备 `manage_options` 权限，并通过 WordPress REST nonce。
+- 设备上传使用 `/wp-json/npcink/v1/device-post-data-v2`，必须使用后台生成的上传授权码。客户端会用 timestamp、nonce、body hash 和 HMAC 签名提交。
+- 公开查询使用 `/wp-json/npcink/v1/query`，口令通过 `x-npcink-password` 请求头传递，不应放在 URL query 参数中。
+- 开发模式下，后台可通过 `wp_ajax_npcink_device_manage_get_rest_nonce` 为 Vite dev proxy 获取 REST nonce。
+
+## 本地验证
+
+PHP 与 WordPress 插件检查：
+
+```bash
+composer install
+composer run phpstan
+composer run phpcs
 ```
-code:"",
-message:"",
-data:{
-  status:403,
-}
+
+后台管理端：
+
+```bash
+cd vite-admin
+npm ci
+npm run build
 ```
 
-- 对数据类型进行拆分
-- 检查请求数据时，接口和使用是否规范
-- 修改接口用的函数名，末尾加 axios
-- 统一文件名命名规范为折线
-- 将自定义设备与电脑设备相结合，例如买的内存条分配到电脑设备中
-- 优化接口逻辑，将保存和更新接口合
-- 优化列表样例，先模糊搜索，再分类
-- 获取数据时，转义放 PHP 上处理
-- form 表单优化，使用嵌套收集
-- 添加电源功率显示
-- exe 软件修复显存显示问题
-- 数据库中限定状态
-- 添加显卡资产盘点
-- 要不要给自定义设备添加手动记录表功能
-- 要不要将 PC 设备的 md5 值改为标准的 UUID 格式
+公开查询页：
 
-250801 版本进行了数据库变更，
+```bash
+cd vite-search
+npm ci
+npm run build
+```
 
-# 开发思路
+Rust/Tauri 上传器：
 
-## UUID 的生成
+```bash
+cd ele-rs
+npm ci
+cargo test
+npm run build
+```
 
-- 使用设备 UUID 中的 hardware 的值和设备 UUID 中第一个 macs 的值进行拼接，计算 MD5，作为设备唯一标识符
+本地端到端 HMAC 验收需要已安装并启用插件的 WordPress 站点：
 
-## 设备的分类
+```bash
+WP_PATH="/path/to/wordpress" \
+SITE_URL="https://example.local" \
+DEVICE_NOTE="验收设备" \
+bash .github/scripts/verify-local-e2e.sh
+```
 
-提供接口，扫描对应分类字段，去重后提供给前端选择
-前端可以自己输入分类，也可聪提供的分类字段中选择
+## 发布打包
 
-## 数据库介绍
+生成 WordPress 插件 zip：
 
-- npcink_device_auto 自动记录表，有修改内容的，自动记录
-- npcink_device_change 变更记录表，手动记录变更
-- npcink_device_data 电脑设备记录表
-- npcink_device_style 自定义设备记录表
+```bash
+cd /path/to/npcink-device-manage
+npm ci --prefix vite-admin
+npm run build --prefix vite-admin
+npm ci --prefix vite-search
+npm run build --prefix vite-search
+bash .github/scripts/package-wordpress-plugin.sh
+```
 
-## 请求返回值
+输出文件：
 
-返回值中有 message 的，会被拦截并进行展示
+```text
+release/npcink-device-manage-plugin.zip
+```
 
-#### 介绍
+插件包只包含 WordPress 运行文件、语言文件、许可证/README 和 `vite-admin/dist`、`vite-search/dist` 构建产物；不会包含 `ele-rs/`、源码目录、`node_modules`、Rust `target` 或本地发布缓存。
 
-硬件统计前端模块 WordPress 插件
-
-- 使用 json 存储设备信息，需要 MySQL 大于 5.7.8 版本
-- 导入电脑设备数据时，时间做了兼容考虑，后续会移除多余方法
-
-#### 参考
-
-- https://admin.saas.360.cn/assets/detect
-
-#### 没必要
-
-- 搜索：下拉联想搜索
-- 变更表添加状态字段，方便多种信息记录
-- 数据表添加 meta 字段，存储筛选用数据
-- 前端支持 mac 地址查询
-- 添加选项导入导出功能
-- 将已用编号用表格列出，从 a-z,A-Z,从小到大，再反序（）
-- 添加姓名、编号、部门对照表
-
-#### 待完善
-
-- 接口传递时，将当前的 IP 地址存入
-- 远程筛选
-- 检查 win 和 mac 电脑给出的数据，是否都在接口规则中
-- 规范接口和 Axios
-- 完善数据类型
-- 即使缺失部分参数，也能正常展示
-- 前端搜索 Npc，会提示其他内容，搜索不准确
-- 使用 UUID 生成编码和二维码，用于搭配第三方机器黏贴
-- PC 设备的信息变更表的时间格式要不要改成年月日时分秒
-- 添加多选删除功能
-- 考虑添加手动输入电脑设备功能？只输入关键信息，例如 CPU、硬盘等信息
-- 完善成功和错误提示信息
-- 完善请求的数据类型
-- 前端支持自定义设备搜索
-- 操作成功的提示信息，给拦截器统一提示，成功展示 message 信息，失败展示 error 的信息
-- 导出包含 mac 地址，IP 地址、姓名和编号和部门的表格
-- 列表中的部门和状态于打开后的顺序保持一致
-- 所有可选性都可以手动添加新选项
-
-还是自己在组件中实现提示？
-成功提示应该在组件中实现，因为：
-上下文相关：成功提示通常需要结合具体操作和界面状态
-多样化需求：不同操作的成功提示可能不同（有的需要刷新，有的需要跳转）
-用户体验：组件可以提供更丰富的反馈（如按钮状态变化、列表更新等）
-错误提示可以由拦截器统一处理，但要：
-提供例外机制：允许特定请求跳过统一错误处理
-保持一致性：统一的错误提示风格和格式
-记录日志：统一记录错误日志便于调试
-
-#### 已制作
-
-#### 更新 20260113
-
-- 报废状态不计入数据大盘
-- 添加数据透视区域
-
-#### 更新
-
-##### 2025-08-01
-
-- 新增自定义设备支持，可添加自定义设备进行管理
-- 电脑信息修改时，一次性修改全部信息，提升修改速度
-- 电脑信息修改时，同步更新本地信息
-- 电脑设备，IP 的默认值改为 127.0.0.1
-- 优化了部分展示信息
-- 优化了部分代码结构，性能提升
-
-##### 2024-09-03 v2.1.1
-
-- 添加 采购价、二手价、IP 设置选项，并展示折旧百分比
-- 筛选时可根据设置的 IP 进行筛选了
-- 硬件盘点中，显示总采购价、总二手价和总折旧价，并显示二手价和折旧价百分比
-
-##### 2024-05-22 v2.1.0
-
-- 添加变更记录数据展示 tab
-- 添加变更记录数据导出功能
-- 设备详情页按钮改为刷新页面
-- 添加一键隐藏列表姓名功能，方便截图宣传
-
-##### 2024-05-29 v2.0.0
-
-- 重构完成，全新发布
-- 修改编号失败，也会改变现有前台表格数据
-- 实战中，相同编号会提供错误信息，而不是报错
-- 设备详情中，没有值的信息不显示
-- 不显示显卡内存
-- 设备编号重复可报错
-- 同时修改设备编号和部门，若编号出错，没有发出部门变更
-- 筛选添加重置按钮
-- 列表按编号排序
-- 导出的数据中添加导出时间和网址信息
-- 设备数据导出为表格
-- 变更数据导出为表格
-- 设备的编号不能重复
-- 删除设备的同时删除变更信息
-- 后端支持 mac 地址查询
-- 优化，变更数据即时展示
-- 添加按编号搜索或按名字搜索的功能
-- 添加状态：使用、维修、故障、报废、闲置
-- 添加操作记录
-- 删除指定设备功能
-- 设备当前状态功能
-- 设备数据导出功能
-- 优化筛选功能
-- 变更记录的变更人与变更原因
-- 删除设备的同时，删除变更信息
-- 设备变更记录导出功能
-- 添加 删除插件同时删除数据库两张表功能
-- 添加一键清理所有数据功能
-- 设置添加初始值
-- 完善设置字段报错信息
-
-##### 2023-12-04
-
-- 更新 设备唯一 UUID 改为设备 uuid+第一个网口 mac 地址的 md5 值
-
-#### 使用说明
-
-vite 下是后端管理界面
-search 下是前端公共搜索页面
-请分别在对应的目录下，使用 vite 进行打包
-
-- 安装组件
-- npm install
-- 预览效果
-- npm run dev
-- 打包
-- npm run build
-  打包后，保留对应目录下的 dist 目录即可。
-  若需更改插件名，还请修改 vite.config.ts 文件中的 site 字段，并重新打包，避免图片不显示问题
-
-- 通过搜索「interstllr」，看结果是否有「Interstellar」来验证模糊搜索功能
-
-#### 文件介绍
-
-#### 参与贡献
-
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
-
-#### 特技
-
-1.  使用 Readme_XXX.md 来支持不同的语言，例如 Readme_en.md, Readme_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+GitHub Actions 的 `Build preview packages` 可生成预览包；推送 `v*` tag 会触发正式 release workflow。

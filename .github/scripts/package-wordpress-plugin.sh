@@ -49,7 +49,6 @@ for forbidden_path in \
   ".github" \
   "ele" \
   "ele-rs" \
-  "InsPackage" \
   "release" \
   "vite-admin/src" \
   "vite-admin/node_modules" \

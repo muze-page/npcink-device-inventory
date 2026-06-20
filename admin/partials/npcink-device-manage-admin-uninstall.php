@@ -41,13 +41,25 @@ if (!class_exists('Npcink_Device_Manage_Admin_Uninstall')) {
                 return '数据表名不能为空';
             }
 
-            foreach ($table_names as $name) {
-                $table_name = $wpdb->prefix . $name;
+            $allowed_table_names = array(
+                Npcink_Device_Manage_Admin_Interface::$table_pc_name,
+                Npcink_Device_Manage_Admin_Interface::$table_style_name,
+                Npcink_Device_Manage_Admin_Interface::$table_manual_name,
+                Npcink_Device_Manage_Admin_Interface::$table_auto_name,
+            );
 
-                if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+            foreach ($table_names as $name) {
+                if (!in_array($name, $allowed_table_names, true) || !preg_match('/^[A-Za-z0-9_]+$/', $name)) {
+                    return "数据表 $name 不允许删除";
+                }
+
+                $table_name = $wpdb->prefix . $name;
+                $escaped_table_name = '`' . str_replace('`', '``', $table_name) . '`';
+
+                if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) != $table_name) {
                     return "数据表 $table_name 不存在！";
                 } else {
-                    $wpdb->query("DROP TABLE IF EXISTS $table_name");
+                    $wpdb->query("DROP TABLE IF EXISTS $escaped_table_name");
                 }
             }
 

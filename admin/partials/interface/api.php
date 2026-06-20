@@ -1520,12 +1520,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                 $content_length = $request->get_header('content-length');
                 $route = $request->get_route();
                 $password = $request->get_header('x-npcink-password');
-                if ($password === '' || $password === null) {
-                    $password = $request->get_param('password');
-                    if ($password !== '' && $password !== null) {
-                        $source = 'param';
-                    }
-                } else {
+                if ($password !== '' && $password !== null) {
                     $source = 'header';
                 }
                 if ($password === '' || $password === null) {

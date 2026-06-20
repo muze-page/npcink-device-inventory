@@ -111,4 +111,4 @@ CORS 从 * 改为白名单（站点域名/设置项），并显式允许 x-npcin
 给 npcink_device_pc 增加索引（至少 uuid 唯一索引 + number + name + state + department），查询和统计会快很多。可在 class-npcink-device-manage-activator.php 里用 index_exists 动态补。
 公共查询接口不要 SELECT *，建议做“基础信息 + 详情分开”或加 detail=1 才返回完整 data。改动点 api.php 的 query_data。
 为公共查询加短时缓存（按查询 key + 最后更新时间生成 ETag / transient），减轻数据库压力。你已经在管理端用 rest_response_with_cache 了，可以复用逻辑。
-减少上传数据体积：InsPackage 只上传必要字段或压缩（若服务器支持）。当前 body 约 10KB 起步，规模化会有压力。
+减少上传数据体积：`ele-rs` 只上传必要字段或压缩（若服务器支持）。当前 body 约 10KB 起步，规模化会有压力。

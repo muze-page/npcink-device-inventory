@@ -1,36 +1,101 @@
 # Npcink Device Manage
 
-#### Description
-硬件统计前端模块 WordPress 插件
+Npcink Device Manage is a WordPress plugin for small-team device asset management. It tracks PC assets, custom devices, manual and automatic change records, departments, statuses, public lookup pages, and an admin dashboard.
 
-#### Software Architecture
-Software architecture description
+## Project Layout
 
-#### Installation
+- `npcink-device-manage.php`: WordPress plugin bootstrap.
+- `admin/`: admin menu, REST API, table access, import/export, and settings.
+- `includes/`: plugin loader, activation/deactivation, schema creation, and migrations.
+- `vite-admin/`: React admin app loaded by the WordPress admin page.
+- `vite-search/`: public lookup page app.
+- `ele-rs/`: Rust/Tauri hardware collector and uploader.
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+The legacy Electron/Vue uploader has been removed. New uploader work should use `ele-rs/`.
 
-#### Instructions
+## Data Tables
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+The plugin creates these tables with the active WordPress database prefix:
 
-#### Contribution
+- `npcink_device_pc`: PC asset records.
+- `npcink_device_style`: custom device asset records.
+- `npcink_device_manual`: manual change records.
+- `npcink_device_auto`: automatic change records.
 
-1.  Fork the repository
-2.  Create Feat_xxx branch
-3.  Commit your code
-4.  Create Pull Request
+Plugin settings are stored in `device_manaje_option`. During uninstall, the plugin deletes its tables and option only when the stored setting allows database deletion.
 
+## API And Auth
 
-#### Gitee Feature
+The REST namespace is `npcink/v1`.
 
-1.  You can use Readme\_XXX.md to support different languages, such as Readme\_en.md, Readme\_zh.md
-2.  Gitee blog [blog.gitee.com](https://blog.gitee.com)
-3.  Explore open source project [https://gitee.com/explore](https://gitee.com/explore)
-4.  The most valuable open source project [GVP](https://gitee.com/gvp)
-5.  The manual of Gitee [https://gitee.com/help](https://gitee.com/help)
-6.  The most popular members  [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+- Admin endpoints live under `/wp-json/npcink/v1/admin/*` and require `manage_options` plus a valid WordPress REST nonce.
+- Device upload uses `/wp-json/npcink/v1/device-post-data-v2` and requires an upload authorization code generated in the admin UI. The client signs requests with timestamp, nonce, body hash, and HMAC.
+- Public lookup uses `/wp-json/npcink/v1/query`. The lookup password is sent with the `x-npcink-password` header and must not be sent in URL query parameters.
+- In development, `wp_ajax_npcink_device_manage_get_rest_nonce` can provide a REST nonce for Vite dev proxy usage.
+
+## Local Verification
+
+PHP and plugin checks:
+
+```bash
+composer install
+composer run phpstan
+composer run phpcs
+```
+
+Admin app:
+
+```bash
+cd vite-admin
+npm ci
+npm run build
+```
+
+Public search app:
+
+```bash
+cd vite-search
+npm ci
+npm run build
+```
+
+Rust/Tauri uploader:
+
+```bash
+cd ele-rs
+npm ci
+cargo test
+npm run build
+```
+
+Local HMAC end-to-end verification requires a WordPress site with this plugin installed and active:
+
+```bash
+WP_PATH="/path/to/wordpress" \
+SITE_URL="https://example.local" \
+DEVICE_NOTE="verification-device" \
+bash .github/scripts/verify-local-e2e.sh
+```
+
+## Release Packaging
+
+Build the WordPress plugin zip:
+
+```bash
+cd /path/to/npcink-device-manage
+npm ci --prefix vite-admin
+npm run build --prefix vite-admin
+npm ci --prefix vite-search
+npm run build --prefix vite-search
+bash .github/scripts/package-wordpress-plugin.sh
+```
+
+Output:
+
+```text
+release/npcink-device-manage-plugin.zip
+```
+
+The plugin zip contains only WordPress runtime files, language files, licenses/readmes, and built `vite-admin/dist` plus `vite-search/dist` assets. It excludes `ele-rs/`, source-only app directories, `node_modules`, Rust `target`, and local release caches.
+
+Use the `Build preview packages` GitHub Actions workflow for preview artifacts. Pushing a `v*` tag triggers the release workflow.
