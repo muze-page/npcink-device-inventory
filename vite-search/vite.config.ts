@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 //配置路径
 import path from "path";
-const site = "wp-content/plugins/magick-device-manage/";
+const site = "/wp-content/plugins/npcink-device-manage/";
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
@@ -16,6 +16,19 @@ export default defineConfig({
         entryFileNames: "index.js",
         assetFileNames: "[name][extname]",
         chunkFileNames: "[name].js",
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          const reactChunkRE =
+            /[\\/]node_modules[\\/](react|react-dom|react-is|scheduler)[\\/]/;
+          if (reactChunkRE.test(id)) return "react";
+          if (id.includes("antd") || id.includes("@ant-design")) {
+            return "antd";
+          }
+          if (id.includes("@rc-component") || /[\\/]rc-/.test(id)) {
+            return "rc";
+          }
+          return "vendor";
+        },
       },
     },
   },

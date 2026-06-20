@@ -5,7 +5,7 @@
 先做 Rust 采集与上传底座。旧数据不在新客户端里兼容，后台只保留一次性迁移工具。第一阶段只证明三件事：
 
 1. Rust 能稳定采集 Windows/macOS 硬件信息。
-2. 输出 JSON 能被 WordPress v2 接口规范化为 `_magick_device`、`asset`、`raw`。
+2. 输出 JSON 能被 WordPress v2 接口规范化为 `_npcink_device`、`asset`、`raw`。
 3. `stable_device_id_v2` 能稳定标识同一台设备。
 
 ## 新版上传契约
@@ -81,7 +81,7 @@ cargo run -- submit \
 
 ## 旧数据迁移
 
-旧数据通过后台 phase1 迁移工具一次性转换为 `_magick_device`、`asset`、`raw`
+旧数据通过后台 phase1 迁移工具一次性转换为 `_npcink_device`、`asset`、`raw`
 三层结构。迁移时会忽略常见硬件占位符，并把 stable ID 完全一致的历史重复行
 归并到同一台设备。
 

@@ -14,34 +14,12 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
         //选项类型验证
         public static function validate_object($object)
         {
-            //验证是否为字符串数组
-            function is_string_array($array)
-            {
-                return array_reduce($array, function ($carry, $item) {
-                    return $carry && is_string($item);
-                }, true);
-            }
-
-            //提示
-            function findValueByKey($key, $array)
-            {
-                // 检查变量 $key 是否存在于数组的键中
-                if (array_key_exists($key, $array)) {
-                    // 返回与 $key 相匹配的键名的值
-                    return $array[$key];
-                } else {
-                    // 如果没有找到匹配项，则返回 null 或者其他自定义的值
-                    return "未找到匹配项";
-                }
-            }
-
             // 需要验证的属性列表
             $required_properties = ['password', 'delete_mysql', 'public_search_route'];
 
             //提示
             $prompt = array(
                 'password' => '请输入密码',
-                'public_search_route' => '请输入路由',
                 'delete_mysql' => '请选择删除数据库的状态',
                 'public_search_route' => '请输入公共查询页面路由',
             );
@@ -51,7 +29,7 @@ if (!class_exists('DEMA_Admin_Interface_Seting')) {
                 // 检查属性是否存在
                 if (!property_exists($object, $property)) {
                     // 调用函数并输出提示
-                    $result = findValueByKey($property, $prompt);
+                    $result = array_key_exists($property, $prompt) ? $prompt[$property] : '未找到匹配项';
 
                     return "缺少属性：$property" . ' - ' . $result;
                 }

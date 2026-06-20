@@ -1,8 +1,8 @@
 [package]
-name = "magick-device-agent"
+name = "npcink-device-agent"
 version = "0.1.0"
 edition = "2021"
-description = "Rust hardware collector and uploader for Magick Device Manage"
+description = "Rust hardware collector and uploader for Npcink Device Manage"
 license = "GPL-3.0-or-later"
 
 [dependencies]

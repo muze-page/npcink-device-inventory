@@ -1,4 +1,4 @@
-# device-manage
+# Npcink Device Manage
 
 #### Description
 硬件统计前端模块 WordPress 插件

@@ -2,9 +2,9 @@
 
 This repository builds three release artifacts through GitHub Actions:
 
-- `magick-device-manage-plugin.zip`: installable WordPress plugin package.
-- `Magick Device Agent_*.dmg`: macOS hardware information uploader.
-- `Magick Device Agent_*_x64-setup.exe`: Windows hardware information uploader.
+- `npcink-device-manage-plugin.zip`: installable Npcink Device Manage WordPress plugin package.
+- `Npcink Device Agent_*.dmg`: macOS hardware information uploader.
+- `Npcink Device Agent_*_x64-setup.exe`: Windows hardware information uploader.
 
 ## Preview build
 
@@ -27,33 +27,21 @@ and runs `cargo check` before building the macOS/Windows Tauri installers.
 
 ## Local end-to-end verification
 
-Before creating a tag, run the local end-to-end smoke test against the Local WP
-site:
-
-```bash
-bash .github/scripts/verify-local-e2e.sh
-```
-
-Defaults:
-
-```text
-WP_PATH=/Users/muze/Local Sites/magick-device-manage/app/public
-SITE_URL=http://magick-device-manage.local
-DEVICE_NAME=HMAC验收
-```
-
-Override them when testing another local site:
+Before creating a tag, run the local end-to-end smoke test against a Local WP
+site. `WP_PATH` and `SITE_URL` are required so the script does not assume a
+machine-specific local site name.
 
 ```bash
 WP_PATH="/path/to/wordpress" \
 SITE_URL="https://example.local" \
-DEVICE_NAME="验收设备" \
+DEVICE_NOTE="验收设备" \
 bash .github/scripts/verify-local-e2e.sh
 ```
 
 The script generates a temporary upload authorization code in WordPress, submits
-a signed v2 upload through the Rust CLI, and verifies that the stored row has
-`_magick_device`, `asset`, and `raw`.
+a signed v2 upload through the Rust CLI, verifies that the stored row has
+`_npcink_device`, `asset`, and `raw`, then disables the temporary authorization
+code.
 
 ## Tagged release
 

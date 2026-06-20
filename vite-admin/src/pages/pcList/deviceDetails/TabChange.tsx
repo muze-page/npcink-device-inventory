@@ -15,12 +15,12 @@ import TabChangeAdd from "@/pages/pcList/deviceDetails/block/TabChangeAdd";
 //在嵌套的组件之间传递Form实例，使得表单可以进行联动
 const EditableContext = React.createContext<FormInstance<any> | null>(null);
 
-interface EditableRowProps {
-  index: number;
+interface EditableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
+  index?: number;
 }
 
 //可编辑表格的行和单元格组件
-const EditableRow: React.FC<EditableRowProps> = ({ index, ...props }) => {
+const EditableRow: React.FC<EditableRowProps> = (props) => {
   const [form] = Form.useForm();
   return (
     <Form form={form} component={false}>
@@ -224,7 +224,7 @@ const App: React.FC<Props> = ({ uuid }) => {
 
     //哪个发生变化就更新那个
     let hasChanges = false;
-    for (let key in oldData) {
+    for (const key in oldData) {
       if (oldData[key] !== row[key]) {
         hasChanges = true;
         try {

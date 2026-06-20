@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use magick_device_agent::{collector, upload};
+use npcink_device_agent::{collector, upload};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs;
@@ -56,7 +56,7 @@ pub fn run() {
             submit_device_data
         ])
         .run(tauri::generate_context!())
-        .expect("failed to run Magick Device Agent");
+        .expect("failed to run Npcink Device Agent");
 }
 
 fn validate_config(config: &AgentConfig) -> Result<(), String> {
@@ -91,5 +91,5 @@ fn write_config(config: &AgentConfig) -> Result<()> {
 
 fn config_path() -> Result<PathBuf> {
     let base = dirs::config_dir().context("failed to resolve config dir")?;
-    Ok(base.join("magick-device-agent").join("config.json"))
+    Ok(base.join("npcink-device-agent").join("config.json"))
 }

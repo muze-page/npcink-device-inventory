@@ -1,12 +1,12 @@
 [package]
-name = "magick-device-agent-desktop"
+name = "npcink-device-agent-desktop"
 version = "0.1.0"
-description = "Magick Device Agent desktop shell"
+description = "Npcink Device Agent desktop shell"
 authors = ["Npcink"]
 edition = "2021"
 
 [lib]
-name = "magick_device_agent_desktop_lib"
+name = "npcink_device_agent_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -15,7 +15,7 @@ tauri-build = { version = "2.6.2", features = [] }
 [dependencies]
 anyhow = "1.0"
 dirs = "5.0"
-magick-device-agent = { path = ".." }
+npcink-device-agent = { path = ".." }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tauri = { version = "2.11.2", features = [] }

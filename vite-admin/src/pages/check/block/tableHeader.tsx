@@ -11,7 +11,7 @@ interface Props {
     activeColor: string;//激活的tab颜色
     children: React.ReactElement;//子组件
   }[];
-  handleTabClick: Function;//点击tab的回调
+  handleTabClick: (index: number) => void;//点击tab的回调
   activeTab: number;//激活的tab索引
 }
 

@@ -1,5 +1,5 @@
 {
-  "appId": "com.magick.desktop", # appid
+  "appId": "ink.npc.npcink-device-agent", # appid
   "productName": "filename", # 为可执行文件指定名称，默认为 package.json 的 name
   "copyright": "Copyright © year sywdebug", # 版权信息
   "directories": {

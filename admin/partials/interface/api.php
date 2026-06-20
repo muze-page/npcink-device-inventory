@@ -579,7 +579,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
             $server_key = 'HTTP_' . strtoupper(str_replace('-', '_', $name));
             if (!empty($_SERVER[$server_key]) && is_string($_SERVER[$server_key])) {
-                return trim(wp_unslash($_SERVER[$server_key]));
+                return sanitize_text_field(wp_unslash($_SERVER[$server_key]));
             }
 
             return '';
@@ -587,10 +587,10 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
         private static function verify_hmac_signature($request)
         {
-            $token_id = sanitize_key(self::get_request_header($request, 'x-magick-device-token-id'));
-            $timestamp = self::get_request_header($request, 'x-magick-device-timestamp');
-            $nonce = sanitize_text_field(self::get_request_header($request, 'x-magick-device-nonce'));
-            $signature = sanitize_text_field(self::get_request_header($request, 'x-magick-device-signature'));
+            $token_id = sanitize_key(self::get_request_header($request, 'x-npcink-device-token-id'));
+            $timestamp = self::get_request_header($request, 'x-npcink-device-timestamp');
+            $nonce = sanitize_text_field(self::get_request_header($request, 'x-npcink-device-nonce'));
+            $signature = sanitize_text_field(self::get_request_header($request, 'x-npcink-device-signature'));
 
             if ($token_id === '' || $timestamp === '' || $nonce === '' || $signature === '') {
                 return new WP_Error('missing_hmac_header', '上传授权签名不完整，请重新复制后台生成的上传授权码', array('status' => 403));
@@ -842,8 +842,8 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             if (is_array($data_obj)) {
                 $candidates[] = isset($data_obj['stable_device_id_v2']) ? $data_obj['stable_device_id_v2'] : '';
                 $candidates[] = isset($data_obj['device_fingerprint']) ? $data_obj['device_fingerprint'] : '';
-                if (isset($data_obj['_magick_device']) && is_array($data_obj['_magick_device'])) {
-                    $candidates[] = isset($data_obj['_magick_device']['stable_device_id_v2']) ? $data_obj['_magick_device']['stable_device_id_v2'] : '';
+                if (isset($data_obj['_npcink_device']) && is_array($data_obj['_npcink_device'])) {
+                    $candidates[] = isset($data_obj['_npcink_device']['stable_device_id_v2']) ? $data_obj['_npcink_device']['stable_device_id_v2'] : '';
                 }
             }
 
@@ -1034,11 +1034,11 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 $data_obj = array();
             }
 
-            $existing = isset($data_obj['_magick_device']) && is_array($data_obj['_magick_device'])
-                ? $data_obj['_magick_device']
+            $existing = isset($data_obj['_npcink_device']) && is_array($data_obj['_npcink_device'])
+                ? $data_obj['_npcink_device']
                 : array();
 
-            $data_obj['_magick_device'] = array_merge($existing, array(
+            $data_obj['_npcink_device'] = array_merge($existing, array(
                 'schema_version' => 2,
                 'legacy_uuid' => sanitize_text_field($legacy_uuid),
                 'stable_device_id_v2' => sanitize_text_field($stable_id),
@@ -1051,7 +1051,7 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         }
 
         /**
-         * 生成 v2 规范化资产数据。新上传只存 _magick_device、asset、raw。
+         * 生成 v2 规范化资产数据。新上传只存 _npcink_device、asset、raw。
          */
         private static function normalize_device_data_v2($data_obj, $legacy_uuid, $stable_id, $collector, $upload_note = '')
         {
@@ -1078,15 +1078,15 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 }
                 $asset['upload']['uploaded_at'] = current_time('mysql');
 
-                $meta = isset($data_obj['_magick_device']) && is_array($data_obj['_magick_device'])
-                    ? $data_obj['_magick_device']
+                $meta = isset($data_obj['_npcink_device']) && is_array($data_obj['_npcink_device'])
+                    ? $data_obj['_npcink_device']
                     : array();
                 $meta['collector'] = $collector;
                 $meta['stable_device_id_v2'] = sanitize_text_field($stable_id);
                 $meta['legacy_uuid'] = sanitize_text_field($legacy_uuid);
 
                 return array(
-                    '_magick_device' => $meta,
+                    '_npcink_device' => $meta,
                     'asset' => $asset,
                     'raw' => isset($data_obj['raw']) && is_array($data_obj['raw']) ? $data_obj['raw'] : array(),
                 );
@@ -1179,13 +1179,13 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 'platform' => isset($data_obj['platformData']) && is_array($data_obj['platformData']) ? $data_obj['platformData'] : array(),
             );
 
-            if (!isset($data_obj['_magick_device']) || !is_array($data_obj['_magick_device'])) {
-                $data_obj['_magick_device'] = array();
+            if (!isset($data_obj['_npcink_device']) || !is_array($data_obj['_npcink_device'])) {
+                $data_obj['_npcink_device'] = array();
             }
-            $data_obj['_magick_device']['collector'] = $collector;
+            $data_obj['_npcink_device']['collector'] = $collector;
 
             return array(
-                '_magick_device' => $data_obj['_magick_device'],
+                '_npcink_device' => $data_obj['_npcink_device'],
                 'asset' => $asset,
                 'raw' => $raw,
             );
@@ -1405,8 +1405,8 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
 
             foreach ($rows as $row) {
                 $data = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
-                $row_stable = isset($data['_magick_device']['stable_device_id_v2'])
-                    ? (string) $data['_magick_device']['stable_device_id_v2']
+                $row_stable = isset($data['_npcink_device']['stable_device_id_v2'])
+                    ? (string) $data['_npcink_device']['stable_device_id_v2']
                     : '';
                 if ($row_stable === $stable_id) {
                     return $row;
@@ -1567,13 +1567,6 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
                 }
             }
 
-            if (($password === '' || $password === null) && isset($_REQUEST['password'])) {
-                $password = $_REQUEST['password'];
-                if ($password !== '') {
-                    $source = 'request';
-                }
-            }
-
             if (is_array($password) || is_object($password)) {
                 $password = '';
             } elseif (!is_string($password)) {
@@ -1597,12 +1590,12 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
         {
             $ip = '';
             if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-                $parts = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+                $parts = explode(',', sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR'])));
                 $ip = trim($parts[0]);
             } elseif (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-                $ip = trim($_SERVER['HTTP_CLIENT_IP']);
+                $ip = trim(sanitize_text_field(wp_unslash($_SERVER['HTTP_CLIENT_IP'])));
             } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
-                $ip = trim($_SERVER['REMOTE_ADDR']);
+                $ip = trim(sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])));
             }
 
             if (!filter_var($ip, FILTER_VALIDATE_IP)) {
@@ -2802,8 +2795,8 @@ if (!class_exists('DEMA_Admin_Interface_API')) {
             if ($stable_id === '' && isset($identity['stable_device_id_v2']) && $identity['stable_device_id_v2'] !== '') {
                 $stable_id = self::normalize_stable_device_id_value((string) $identity['stable_device_id_v2']);
             }
-            $meta = isset($data['_magick_device']) && is_array($data['_magick_device'])
-                ? $data['_magick_device']
+            $meta = isset($data['_npcink_device']) && is_array($data['_npcink_device'])
+                ? $data['_npcink_device']
                 : array();
             $issues = array();
             $status = 'ready';

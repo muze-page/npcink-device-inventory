@@ -1,6 +1,6 @@
 //搜索时没有数据时的提示内容
 import { Empty } from "antd";
-const App: React.FC = ({}) => {
+const App: React.FC = () => {
   return (
     <Empty
       className="mt-10"

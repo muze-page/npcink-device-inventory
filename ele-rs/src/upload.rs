@@ -49,10 +49,10 @@ fn submit_json_hmac<T: Serialize>(site: &str, body: &T, token: &ClientToken) -> 
         site,
         body_json,
         vec![
-            ("x-magick-device-token-id", token.id.clone()),
-            ("x-magick-device-timestamp", timestamp),
-            ("x-magick-device-nonce", nonce),
-            ("x-magick-device-signature", signature),
+            ("x-npcink-device-token-id", token.id.clone()),
+            ("x-npcink-device-timestamp", timestamp),
+            ("x-npcink-device-nonce", nonce),
+            ("x-npcink-device-signature", signature),
         ],
     )
 }
@@ -61,7 +61,7 @@ fn send_json(site: &str, body_json: String, headers: Vec<(&'static str, String)>
     let client = Client::builder()
         .timeout(Duration::from_secs(30))
         .user_agent(format!(
-            "magick-device-agent/{}",
+            "npcink-device-agent/{}",
             env!("CARGO_PKG_VERSION")
         ))
         .build()
@@ -82,7 +82,7 @@ fn send_json(site: &str, body_json: String, headers: Vec<(&'static str, String)>
 
     let status = response.status();
     let text = response.text().context("failed to read submit response")?;
-    let parsed = serde_json::from_str::<Value>(&text).unwrap_or_else(|_| Value::String(text));
+    let parsed = serde_json::from_str::<Value>(&text).unwrap_or(Value::String(text));
 
     if !status.is_success() {
         bail!("submit failed with status {status}: {parsed}");

@@ -1,9 +1,9 @@
-# Magick Device Agent
+# Npcink Device Agent
 
 第一阶段 Rust 迁移客户端，目标是替代 Electron 主进程里的 `systeminformation.getStaticData()`，并上传到 WordPress v2 接口。
 
 现代化后的 v2 数据契约见 `../docs/device-data-v2-contract.md`。服务端会把采集
-输入规范化为 `_magick_device`、`asset`、`raw`，后台列表、统计和导出读取
+输入规范化为 `_npcink_device`、`asset`、`raw`，后台列表、统计和导出读取
 `asset` 数据。
 
 ## 为什么先做这个

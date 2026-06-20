@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 // https://vitejs.dev/config/
 
-const site = "wp-content/plugins/magick-device-manage/";
+const site = "/wp-content/plugins/npcink-device-manage/";
 
 export default defineConfig(({ mode }) => {
   const isProd = mode === "production";
@@ -23,17 +23,33 @@ export default defineConfig(({ mode }) => {
           chunkFileNames: "[name].js",
           manualChunks(id) {
             if (!id.includes("node_modules")) return;
-            if (
-              id.includes("antd") ||
-              id.includes("@ant-design") ||
-              id.includes("@rc-component") ||
-              /[\\/]rc-/.test(id)
-            ) {
-              return "vendor";
-            }
             const reactChunkRE =
               /[\\/]node_modules[\\/](react|react-dom|react-is|scheduler)[\\/]/;
             if (reactChunkRE.test(id)) return "react";
+            if (id.includes("@ant-design/icons")) {
+              return "antd-icons";
+            }
+            if (id.includes("@ant-design/cssinjs")) {
+              return "antd-style";
+            }
+            if (/[\\/]antd[\\/]es[\\/](table|pagination|checkbox|dropdown)[\\/]/.test(id)) {
+              return "antd-table";
+            }
+            if (/[\\/]antd[\\/]es[\\/](form|input|input-number|select|radio|switch|date-picker)[\\/]/.test(id)) {
+              return "antd-form";
+            }
+            if (/[\\/]antd[\\/]es[\\/](modal|message|notification|popconfirm|result|empty|spin|skeleton)[\\/]/.test(id)) {
+              return "antd-feedback";
+            }
+            if (id.includes("antd") || id.includes("@ant-design")) {
+              return "antd";
+            }
+            if (id.includes("@rc-component") || /[\\/]rc-/.test(id)) {
+              return "rc";
+            }
+            if (id.includes("@tanstack")) {
+              return "query";
+            }
             return "vendor";
           },
         },

@@ -89,9 +89,9 @@ const App: React.FC<Props> = ({
     setInputValue(keyword);
   }, [keyword]);
   //搜索动作
-  const onSearch: SearchProps["onSearch"] = (value, _e, _info) => {
+  const onSearch: SearchProps["onSearch"] = (value) => {
     //正则处理，处理 mac 地址格式，方便搜索
-    let data = normalize(value);
+    const data = normalize(value);
     setKeyword(data); //搜索
     //console.log("搜索的值：" + data);
   };

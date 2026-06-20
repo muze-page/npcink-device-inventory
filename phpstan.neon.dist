@@ -1,0 +1,15 @@
+includes:
+  - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+  level: 0
+  paths:
+    - admin
+    - includes
+    - npcink-device-manage.php
+    - uninstall.php
+  excludePaths:
+    analyse:
+      - release
+      - vendor
+  reportUnmatchedIgnoredErrors: false

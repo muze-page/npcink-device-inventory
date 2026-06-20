@@ -7,7 +7,7 @@ import { DevieContext } from "@/context/DeviceContext";
 import MacOs from "@/assets/pc/macOS.png";
 import Win from "@/assets/pc/windowsOS.png";
 
-const App: React.FC = ({}) => {
+const App: React.FC = () => {
   //获取数据，拿到隐藏姓名状态
   const { drawerData, isName } = useContext(DevieContext);
 

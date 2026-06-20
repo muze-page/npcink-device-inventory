@@ -45,8 +45,8 @@ Authentication:
   admin settings page.
 - The authorization code is only entered once in the desktop uploader.
 - The client derives an HMAC key from the authorization code and sends:
-  `X-Magick-Device-Token-Id`, `X-Magick-Device-Timestamp`,
-  `X-Magick-Device-Nonce`, and `X-Magick-Device-Signature`.
+  `X-Npcink-Device-Token-Id`, `X-Npcink-Device-Timestamp`,
+  `X-Npcink-Device-Nonce`, and `X-Npcink-Device-Signature`.
 - The signature covers `timestamp + nonce + sha256(raw JSON body)`.
 - The server rejects expired timestamps and repeated nonces.
 - `name` is an optional upload note. It can contain the current user, desk,
@@ -62,13 +62,13 @@ The stored `data` JSON contains three layers:
 
 ```json
 {
-  "_magick_device": {},
+  "_npcink_device": {},
   "asset": {},
   "raw": {}
 }
 ```
 
-### `_magick_device`
+### `_npcink_device`
 
 Server-owned metadata. It is used for migration, audit, and future matching.
 
@@ -80,7 +80,7 @@ Server-owned metadata. It is used for migration, audit, and future matching.
   "stable_device_id_v2": "v2-<29 hex chars>",
   "migration_updated_at": "2026-06-19 16:24:23",
   "collector": {
-    "name": "magick-device-agent",
+    "name": "npcink-device-agent",
     "runtime": "rust",
     "version": "0.1.0",
     "schema": "systeminformation-staticdata-compatible-v1",
@@ -144,8 +144,8 @@ Canonical data for the admin UI, statistics, and export.
 }
 ```
 
-Admin surfaces read `asset`. Legacy rows without `asset` are handled by the
-one-time migration later.
+Admin surfaces read `asset`. Legacy rows without `asset` are converted by the
+one-time migration tool.
 
 ### `asset.hardware.memory`
 
@@ -193,7 +193,7 @@ Rules:
 
 - This list means asset disks, not mounted filesystems.
 - macOS APFS system/data volumes count as one disk.
-- App DMG volumes such as `/Volumes/Magick Device Agent` are excluded.
+- App DMG volumes such as `/Volumes/Npcink Device Agent` are excluded.
 - `raw.filesystems` may keep all mounts for troubleshooting.
 - Admin statistics count total asset disk capacity per device.
 
@@ -247,7 +247,6 @@ Examples:
 
 The v2 receiver should reject uploads when:
 
-- `name` is empty.
 - HMAC authorization headers are missing or invalid.
 - no stable device identity can be derived from hardware UUID, serial number, or
   primary network information.
@@ -304,7 +303,7 @@ with new uploads.
 
 ## Implementation Order
 
-1. Add a WordPress normalizer that stores only `_magick_device`, `asset`, and
+1. Add a WordPress normalizer that stores only `_npcink_device`, `asset`, and
    `raw`.
 2. Update admin list, summary, detail, and export to read `asset`.
 3. Keep Rust uploader focused on reliable collection and clean identity fields.

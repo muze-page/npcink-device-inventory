@@ -24,6 +24,7 @@ bin-release/
 **/node_modules/
 **/dist/
 **/target/
+vendor/
 release/
 *.zip
 *.dmg

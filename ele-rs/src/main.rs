@@ -1,5 +1,5 @@
 use anyhow::{bail, Context, Result};
-use magick_device_agent::{collector, upload};
+use npcink_device_agent::{collector, upload};
 use std::env;
 
 fn main() -> Result<()> {
@@ -65,7 +65,7 @@ fn optional_flag(args: &[String], name: &str) -> Option<String> {
 
 fn print_help() {
     println!(
-        "Magick Device Agent\n\n\
+        "Npcink Device Agent\n\n\
 Commands:\n\
   inspect [--pretty]    Print compatible hardware JSON\n\
   stable-id             Print v2 stable device id\n\

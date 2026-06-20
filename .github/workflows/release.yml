@@ -28,7 +28,7 @@ jobs:
       - name: PHP syntax check
         run: |
           php -v
-          php -l magick-device-manage.php
+          php -l npcink-device-manage.php
           php -l uninstall.php
           php -l index.php
           find admin includes -name "*.php" -print0 | xargs -0 -n1 php -l
@@ -51,8 +51,8 @@ jobs:
       - name: Upload plugin artifact
         uses: actions/upload-artifact@v7
         with:
-          name: magick-device-manage-plugin
-          path: release/magick-device-manage-plugin.zip
+          name: npcink-device-manage-plugin
+          path: release/npcink-device-manage-plugin.zip
           if-no-files-found: error
 
   desktop-agent:
@@ -98,7 +98,7 @@ jobs:
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v7
         with:
-          name: magick-device-agent-macos
+          name: npcink-device-agent-macos
           path: ele-rs/src-tauri/target/release/bundle/dmg/*.dmg
           if-no-files-found: error
 
@@ -106,7 +106,7 @@ jobs:
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v7
         with:
-          name: magick-device-agent-windows
+          name: npcink-device-agent-windows
           path: ele-rs/src-tauri/target/release/bundle/nsis/*.exe
           if-no-files-found: error
 

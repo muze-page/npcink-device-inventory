@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-WP_PATH="${WP_PATH:-/Users/muze/Local Sites/magick-device-manage/app/public}"
-SITE_URL="${SITE_URL:-http://magick-device-manage.local}"
+WP_PATH="${WP_PATH:-}"
+SITE_URL="${SITE_URL:-}"
 DEVICE_NOTE="${DEVICE_NOTE:-HMAC验收}"
 TOKEN_ID=""
 
@@ -20,6 +20,11 @@ trap cleanup EXIT
 
 if ! command -v wp >/dev/null 2>&1; then
   echo "WP-CLI is required for local e2e verification." >&2
+  exit 1
+fi
+
+if [ -z "${WP_PATH}" ] || [ -z "${SITE_URL}" ]; then
+  echo "Set WP_PATH and SITE_URL before running local e2e verification." >&2
   exit 1
 fi
 
@@ -78,7 +83,7 @@ WP_E2E_STABLE_ID="${STABLE_ID}" wp --path="${WP_PATH}" eval '
       exit(1);
   }
   $data = json_decode($row["data"], true);
-  if (!is_array($data) || empty($data["_magick_device"]) || empty($data["asset"]) || !array_key_exists("raw", $data)) {
+  if (!is_array($data) || empty($data["_npcink_device"]) || empty($data["asset"]) || !array_key_exists("raw", $data)) {
       fwrite(STDERR, "Stored row is not v2 normalized data\n");
       exit(1);
   }

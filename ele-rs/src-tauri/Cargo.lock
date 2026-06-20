@@ -1846,36 +1846,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "112b39cec0b298b6c1999fee3e31427f74f676e4cb9879ed1a121b43661a4154"
 
 [[package]]
-name = "magick-device-agent"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "hmac",
- "local-ip-address",
- "md5",
- "rand 0.8.6",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "sha2",
- "sysinfo",
-]
-
-[[package]]
-name = "magick-device-agent-desktop"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "dirs 5.0.1",
- "magick-device-agent",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
-]
-
-[[package]]
 name = "markup5ever"
 version = "0.38.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2013,6 +1983,36 @@ name = "new_debug_unreachable"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
+
+[[package]]
+name = "npcink-device-agent"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "hmac",
+ "local-ip-address",
+ "md5",
+ "rand 0.8.6",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2",
+ "sysinfo",
+]
+
+[[package]]
+name = "npcink-device-agent-desktop"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dirs 5.0.1",
+ "npcink-device-agent",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+]
 
 [[package]]
 name = "ntapi"
