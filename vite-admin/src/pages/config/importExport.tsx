@@ -196,12 +196,14 @@ const App: React.FC<Props> = ({ name }) => {
     let totalPages = 1;
     const items: Array<Record<string, unknown>> = [];
     const csvChunks: string[] = [];
+    const includeDetail = format === "json" ? 1 : 0;
 
     while (page <= totalPages) {
       const res = await exportSQLData(name, {
         page,
         per_page: EXPORT_PAGE_SIZE,
         format,
+        detail: includeDetail,
       });
       if (!res?.success || !res.data) {
         throw new Error(res?.message || "导出失败");

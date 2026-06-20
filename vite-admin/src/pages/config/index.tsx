@@ -101,7 +101,7 @@ const App: React.FC = () => {
       setGeneratedToken(res.token);
       setTokens(res.items || (res.item ? [res.item, ...tokens] : tokens));
       setTokenName("");
-      message.success("上传授权码已生成");
+      message.success("客户端授权码已生成");
     } finally {
       setGeneratingToken(false);
     }
@@ -111,7 +111,7 @@ const App: React.FC = () => {
     if (!generatedToken) return;
     try {
       await navigator.clipboard.writeText(generatedToken);
-      message.success("已复制上传授权码");
+      message.success("已复制客户端授权码");
     } catch {
       message.error("复制失败，请手动选择授权码复制");
     }
@@ -119,8 +119,8 @@ const App: React.FC = () => {
 
   const confirmRevokeToken = (item: ClientTokenSummary) => {
     Modal.confirm({
-      title: "停用上传授权码",
-      content: `确定停用“${item.name || item.preview}”吗？已安装的上传软件将无法继续使用这个授权码提交数据。`,
+      title: "停用客户端授权码",
+      content: `确定停用“${item.name || item.preview}”吗？已安装的上传软件和公开查询页将无法继续使用这个授权码。`,
       okText: "停用",
       cancelText: "取消",
       okButtonProps: { danger: true },
@@ -166,7 +166,7 @@ const App: React.FC = () => {
     {
       title: "名称",
       dataIndex: "name",
-      render: (value: string) => value || "上传授权码",
+      render: (value: string) => value || "客户端授权码",
     },
     {
       title: "授权码",
@@ -214,8 +214,8 @@ const App: React.FC = () => {
       <Alert
         type="info"
         showIcon
-        message="新版上传只使用上传授权码"
-        description="上传软件提交数据时会自动生成 HMAC 签名。后台不会保存完整授权码，生成后请立即复制到上传软件。"
+        message="新版上传和公开查询推荐使用客户端授权码"
+        description="客户端会自动生成 HMAC 签名。后台不会保存完整授权码，生成后请立即复制到上传软件或公开查询页。"
       />
       <Space.Compact style={{ width: "100%", maxWidth: 520 }}>
         <Input
@@ -256,7 +256,7 @@ const App: React.FC = () => {
         columns={tokenColumns}
         dataSource={tokens}
         pagination={false}
-        locale={{ emptyText: "还没有上传授权码" }}
+        locale={{ emptyText: "还没有客户端授权码" }}
       />
     </Space>
   );

@@ -62,6 +62,7 @@ export interface ExportParams {
   page?: number;
   per_page?: number;
   format?: "json" | "csv";
+  detail?: 0 | 1;
 }
 
 export const exportSQLData = async (

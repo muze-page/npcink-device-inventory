@@ -56,10 +56,10 @@ const App: React.FC = () => {
               <span className="hero-eyebrow">设备资产 / 公共查询</span>
               <h1>设备查询中心</h1>
               <p>
-                输入授权口令与设备号/姓名, 快速获取设备状态与硬件细节.
+                输入查询授权码或旧查询密码与设备号/姓名, 快速获取设备状态与硬件细节.
               </p>
               <div className="hero-meta">
-                <span>口令校验</span>
+                <span>签名 / 口令校验</span>
                 <span>编号 / 姓名</span>
                 <span>2 分钟缓存</span>
               </div>
@@ -68,15 +68,15 @@ const App: React.FC = () => {
               <div className="panel-head">
                 <div>
                   <h2>开始查询</h2>
-                  <p>密码仅用于本次请求验证</p>
+                  <p>授权信息仅用于本次请求验证</p>
                 </div>
                 <span className="panel-badge">实时</span>
               </div>
               <div className="panel-form">
                 <div className="field">
-                  <label>访问口令</label>
+                  <label>查询授权</label>
                   <Input.Password
-                    placeholder="后台设置的查询密码"
+                    placeholder="后台授权码 mda_... 或旧查询密码"
                     value={inputValue}
                     onChange={handleInputChange}
                     className="search-input"
@@ -108,7 +108,7 @@ const App: React.FC = () => {
                 <div className="panel-note">
                   <span className="note-label">提示</span>
                   <span>
-                    如提示缺少密码, 请确认请求未被安全插件拦截.
+                    推荐使用后台生成的授权码；旧查询密码仅用于兼容.
                   </span>
                 </div>
               </div>
@@ -125,7 +125,7 @@ const App: React.FC = () => {
                 <div className="empty-icon">i</div>
                 <div>
                   <h3>等待查询</h3>
-                  <p>输入密码与设备号/姓名后点击查询.</p>
+                  <p>输入授权信息与设备号/姓名后点击查询.</p>
                 </div>
               </div>
             )}

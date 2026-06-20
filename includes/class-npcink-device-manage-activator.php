@@ -68,6 +68,26 @@ class Npcink_Device_Manage_Activator extends Npcink_Device_Manage_Admin_Interfac
 	}
 
 	/**
+	 * 校验并转义插件内部表名。
+	 */
+	private static function quote_internal_table_name($table_name)
+	{
+		global $wpdb;
+		$allowed_tables = array(
+			$wpdb->prefix . self::$table_pc_name,
+			$wpdb->prefix . self::$table_style_name,
+			$wpdb->prefix . self::$table_manual_name,
+			$wpdb->prefix . self::$table_auto_name,
+		);
+
+		if (!is_string($table_name) || !in_array($table_name, $allowed_tables, true) || !preg_match('/^[A-Za-z0-9_]+$/', $table_name)) {
+			return null;
+		}
+
+		return '`' . str_replace('`', '``', $table_name) . '`';
+	}
+
+	/**
 	 * 确保索引存在（老库升级）
 	 */
 	private static function ensure_index($table_name, $index_name, $index_sql)
@@ -76,7 +96,11 @@ class Npcink_Device_Manage_Activator extends Npcink_Device_Manage_Admin_Interfac
 			return;
 		}
 		global $wpdb;
-		$wpdb->query("ALTER TABLE `$table_name` ADD $index_sql");
+		$quoted_table_name = self::quote_internal_table_name($table_name);
+		if ($quoted_table_name === null) {
+			return;
+		}
+		$wpdb->query("ALTER TABLE $quoted_table_name ADD $index_sql");
 	}
 
 	private static function ensure_pc_indexes()
@@ -419,10 +443,14 @@ class Npcink_Device_Manage_Activator extends Npcink_Device_Manage_Admin_Interfac
 		}
 
 		global $wpdb;
+		$quoted_table_name = self::quote_internal_table_name($table_name);
+		if ($quoted_table_name === null) {
+			return;
+		}
 
 		if (!self::column_exists($table_name, 'platform')) {
 			$wpdb->query(
-				"ALTER TABLE `$table_name`
+				"ALTER TABLE $quoted_table_name
 				 ADD COLUMN platform VARCHAR(64)
 				 GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(data, '$.platform'))) STORED"
 			);
@@ -430,18 +458,18 @@ class Npcink_Device_Manage_Activator extends Npcink_Device_Manage_Admin_Interfac
 
 		if (!self::column_exists($table_name, 'pay_method')) {
 			$wpdb->query(
-				"ALTER TABLE `$table_name`
+				"ALTER TABLE $quoted_table_name
 				 ADD COLUMN pay_method VARCHAR(64)
 				 GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(data, '$.pay_method'))) STORED"
 			);
 		}
 
 		if (!self::index_exists($table_name, 'idx_platform')) {
-			$wpdb->query("ALTER TABLE `$table_name` ADD KEY idx_platform (platform)");
+			$wpdb->query("ALTER TABLE $quoted_table_name ADD KEY idx_platform (platform)");
 		}
 
 		if (!self::index_exists($table_name, 'idx_pay_method')) {
-			$wpdb->query("ALTER TABLE `$table_name` ADD KEY idx_pay_method (pay_method)");
+			$wpdb->query("ALTER TABLE $quoted_table_name ADD KEY idx_pay_method (pay_method)");
 		}
 	}
 
@@ -493,7 +521,7 @@ class Npcink_Device_Manage_Activator extends Npcink_Device_Manage_Admin_Interfac
 			"residual_value_rate" => 5, //残值率（百分比）
 			"department" => array("开发部", "推广部", "运营部", "默认"), //默认部门
 			"public_search_route" => "public-search-page", //默认公开搜索路由
-			"client_tokens" => array(), //新版上传授权码列表
+			"client_tokens" => array(), //客户端授权码列表
 		);
 		//保存
 		update_option(self::$option, $option);

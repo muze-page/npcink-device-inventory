@@ -29,8 +29,8 @@ Npcink Device Manage 是一个 WordPress 设备资产管理插件，用于小型
 REST namespace 为 `npcink/v1`。
 
 - 管理端接口位于 `/wp-json/npcink/v1/admin/*`，需要当前用户具备 `manage_options` 权限，并通过 WordPress REST nonce。
-- 设备上传使用 `/wp-json/npcink/v1/device-post-data-v2`，必须使用后台生成的上传授权码。客户端会用 timestamp、nonce、body hash 和 HMAC 签名提交。
-- 公开查询使用 `/wp-json/npcink/v1/query`，口令通过 `x-npcink-password` 请求头传递，不应放在 URL query 参数中。
+- 设备上传使用 `/wp-json/npcink/v1/device-post-data-v2`，必须使用后台生成的授权码。客户端会用 timestamp、nonce、body hash 和 HMAC 签名提交。
+- 公开查询使用 `/wp-json/npcink/v1/query`，推荐使用后台授权码生成 HMAC 查询签名；旧查询密码仍可通过 `x-npcink-password` 请求头兼容，不应放在 URL query 参数中。
 - 开发模式下，后台可通过 `wp_ajax_npcink_device_manage_get_rest_nonce` 为 Vite dev proxy 获取 REST nonce。
 
 ## 本地验证

@@ -115,31 +115,5 @@ if (!class_exists('Npcink_Device_Manage_Admin_Menu')) {
             return $tag;
         }
 
-        /**
-         * 获取数据
-         */
-        // 自定义函数，用于从表中获取数据
-        public static function get_device_data()
-        {
-            global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_pc_name;
-
-            // 获取所有数据
-            $result = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);
-
-            return $result;
-        }
-
-        /**
-         * 获取自定义设备数据表内容
-         */
-        public static function get_style_device_data()
-        {
-            global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_style_name;
-            // 获取所有数据
-            $result = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);
-            return $result;
-        }
     }
 }

@@ -46,8 +46,8 @@ export interface ClientTokenSummary {
 //选项数据类型
 export interface OptionType {
   password?: string; //密码
-  has_client_token?: boolean; //是否已生成客户端上传授权码
-  client_tokens?: ClientTokenSummary[]; //客户端上传授权码列表
+  has_client_token?: boolean; //是否已生成客户端授权码
+  client_tokens?: ClientTokenSummary[]; //客户端授权码列表
   delete_mysql?: boolean; //是否删除数据库
   depreciation_year: number; //折旧月限
   residual_value_rate: number; //残值率

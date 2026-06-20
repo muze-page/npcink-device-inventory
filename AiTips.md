@@ -97,18 +97,19 @@ JSON 输入统一处理：wp_unslash + json_decode + wp_json_encode + 长度/结
 
 
 # 下一步整改意见
-结合当前模块（插件 api.php、前端 axios.tsx、客户端 seting.vue），给你一份安全 + 性能整改清单，按优先级排序：
+当前已完成的安全与性能收敛：
 
-安全整改（高优先）
+- 设备上传 `/device-post-data-v2` 已使用后台授权码、timestamp、nonce、body hash 与 HMAC 签名，并使用 transient 防重放。
+- 公开查询 `/query` 已支持后台授权码 HMAC 查询签名；旧查询密码仍作为兼容路径，只允许通过 header/body/raw body，不再从 URL query 参数读取。
+- 公共接口失败次数已按 IP + UUID/route 做 transient 限流，超过阈值返回 429。
+- 公共查询默认只返回基础列，只有 `detail=1` 时才返回完整 `data`。
+- 管理端导出默认使用表级列白名单，完整备份需要显式 `detail=1`。
+- `npcink_device_pc`、`npcink_device_style`、变更记录表已补齐常用索引。
 
-把“共享口令”升级为“设备级令牌 / HMAC 签名”：请求里带 timestamp + nonce + signature，服务端校验并防重放。现在的单一密码一旦泄露，所有设备全失守。改动点主要在 api.php + seting.vue。
-禁止 query 参数传密码，只允许 header/body；为兼容旧客户端可做“开关+告警”。现在 public_permissions_check 接受多来源，容易被日志泄露。
-增加失败次数限制（IP + UUID 维度），用 transient 做限流/锁定；失败太多直接 429。改动点 api.php。
-CORS 从 * 改为白名单（站点域名/设置项），并显式允许 x-npcink-password 与 content-type。当前 Access-Control-Allow-Origin: * 风险较高。
-生产环境关闭 WP_DEBUG 并限制 debug.log 访问（否则凭据/路径会暴露）。
-性能整改（高优先）
+后续仍建议处理：
 
-给 npcink_device_pc 增加索引（至少 uuid 唯一索引 + number + name + state + department），查询和统计会快很多。可在 class-npcink-device-manage-activator.php 里用 index_exists 动态补。
-公共查询接口不要 SELECT *，建议做“基础信息 + 详情分开”或加 detail=1 才返回完整 data。改动点 api.php 的 query_data。
-为公共查询加短时缓存（按查询 key + 最后更新时间生成 ETag / transient），减轻数据库压力。你已经在管理端用 rest_response_with_cache 了，可以复用逻辑。
-减少上传数据体积：`ele-rs` 只上传必要字段或压缩（若服务器支持）。当前 body 约 10KB 起步，规模化会有压力。
+- 将后台授权码拆分为上传 token 与只读查询 token，避免公开查询页复用上传授权范围。
+- 为公开查询增加可配置的强制 HMAC 开关，在确认旧查询页/旧流程迁移完成后禁用旧查询密码。
+- 增加 REST 参数 schema，明确 `data/detail/page/per_page/format` 等参数的校验与默认值。
+- 如站点层或服务器层存在自定义 CORS，请将 `Access-Control-Allow-Origin` 改为站点白名单，并显式允许 `x-npcink-password`、`x-npcink-device-*` 与 `content-type`。
+- 生产环境关闭 `WP_DEBUG` 并限制 `debug.log` 访问，避免凭据、路径和请求错误详情泄露。

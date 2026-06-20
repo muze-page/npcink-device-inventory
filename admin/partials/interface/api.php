@@ -86,7 +86,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             // 获取传递过来的字符串参数并进行安全过滤
             $query_data = isset($request['data']) ? sanitize_text_field($request['data']) : null;
             $detail_param = $request instanceof WP_REST_Request ? $request->get_param('detail') : (isset($request['detail']) ? $request['detail'] : null);
-            $include_detail = in_array(strtolower((string) $detail_param), array('1', 'true', 'yes'), true);
+            $include_detail = self::normalize_detail_flag($detail_param) === '1';
 
             /**
              * 安全检查 - 是否为空
@@ -454,7 +454,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                 return null;
             }
 
-            $name = sanitize_text_field((string) $get_value('name', '上传授权码'));
+            $name = sanitize_text_field((string) $get_value('name', '客户端授权码'));
             $preview = sanitize_text_field((string) $get_value('preview'));
             $created_at = sanitize_text_field((string) $get_value('created_at'));
             $last_used_at = sanitize_text_field((string) $get_value('last_used_at'));
@@ -462,7 +462,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
 
             return array(
                 'id' => $id,
-                'name' => $name !== '' ? $name : '上传授权码',
+                'name' => $name !== '' ? $name : '客户端授权码',
                 'key_hash' => $key_hash,
                 'preview' => $preview,
                 'created_at' => $created_at,
@@ -585,20 +585,51 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             return '';
         }
 
-        private static function verify_hmac_signature($request)
+        private static function has_hmac_headers($request)
         {
+            return self::get_request_header($request, 'x-npcink-device-token-id') !== ''
+                || self::get_request_header($request, 'x-npcink-device-timestamp') !== ''
+                || self::get_request_header($request, 'x-npcink-device-nonce') !== ''
+                || self::get_request_header($request, 'x-npcink-device-signature') !== '';
+        }
+
+        private static function normalize_detail_flag($value)
+        {
+            return in_array(strtolower((string) $value), array('1', 'true', 'yes'), true) ? '1' : '0';
+        }
+
+        private static function build_hmac_payload($request, $timestamp, $nonce, $scope = 'upload')
+        {
+            $raw_body = $request instanceof WP_REST_Request ? $request->get_body() : '';
+            $body_hash = hash('sha256', (string) $raw_body);
+            $payload_parts = array($timestamp, $nonce, $body_hash);
+
+            if ($scope === 'query') {
+                $query_data = $request instanceof WP_REST_Request ? $request->get_param('data') : '';
+                $detail = $request instanceof WP_REST_Request ? $request->get_param('detail') : '';
+                $query_hash = hash('sha256', sanitize_text_field((string) $query_data) . "\n" . self::normalize_detail_flag($detail));
+                $payload_parts[] = 'query';
+                $payload_parts[] = $query_hash;
+            }
+
+            return implode("\n", $payload_parts);
+        }
+
+        private static function verify_hmac_signature($request, $scope = 'upload')
+        {
+            $action_label = $scope === 'query' ? '查询' : '上传';
             $token_id = sanitize_key(self::get_request_header($request, 'x-npcink-device-token-id'));
             $timestamp = self::get_request_header($request, 'x-npcink-device-timestamp');
             $nonce = sanitize_text_field(self::get_request_header($request, 'x-npcink-device-nonce'));
             $signature = sanitize_text_field(self::get_request_header($request, 'x-npcink-device-signature'));
 
             if ($token_id === '' || $timestamp === '' || $nonce === '' || $signature === '') {
-                return new WP_Error('missing_hmac_header', '上传授权签名不完整，请重新复制后台生成的上传授权码', array('status' => 403));
+                return new WP_Error('missing_hmac_header', $action_label . '授权签名不完整，请重新复制后台生成的授权码', array('status' => 403));
             }
 
             $token = self::find_enabled_client_token($token_id);
             if ($token === null) {
-                return new WP_Error('invalid_client_token', '上传授权码无效，请在后台重新生成', array('status' => 403));
+                return new WP_Error('invalid_client_token', $action_label . '授权码无效，请在后台重新生成', array('status' => 403));
             }
 
             if (!preg_match('/^\d{10}$/', $timestamp)) {
@@ -608,25 +639,23 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             $timestamp_int = intval($timestamp);
             $now = time();
             if (abs($now - $timestamp_int) > 5 * MINUTE_IN_SECONDS) {
-                return new WP_Error('expired_hmac_signature', '上传签名已过期，请检查电脑时间后重试', array('status' => 403));
+                return new WP_Error('expired_hmac_signature', $action_label . '签名已过期，请检查电脑时间后重试', array('status' => 403));
             }
 
             if (!preg_match('/^[a-zA-Z0-9_-]{12,80}$/', $nonce)) {
-                return new WP_Error('invalid_hmac_nonce', '上传签名随机串无效', array('status' => 403));
+                return new WP_Error('invalid_hmac_nonce', $action_label . '签名随机串无效', array('status' => 403));
             }
 
-            $nonce_key = self::get_cache_key('hmac_nonce_' . md5($token_id . '|' . $nonce));
+            $nonce_key = self::get_cache_key('hmac_nonce_' . md5($scope . '|' . $token_id . '|' . $nonce));
             if (get_transient($nonce_key)) {
-                return new WP_Error('replayed_hmac_signature', '上传请求已使用，请重新提交', array('status' => 403));
+                return new WP_Error('replayed_hmac_signature', $action_label . '请求已使用，请重新提交', array('status' => 403));
             }
 
-            $raw_body = $request instanceof WP_REST_Request ? $request->get_body() : '';
-            $body_hash = hash('sha256', (string) $raw_body);
-            $payload = $timestamp . "\n" . $nonce . "\n" . $body_hash;
+            $payload = self::build_hmac_payload($request, $timestamp, $nonce, $scope);
             $expected = 'sha256=' . hash_hmac('sha256', $payload, $token['key_hash']);
 
             if (!hash_equals($expected, $signature)) {
-                return new WP_Error('invalid_hmac_signature', '上传签名验证失败，请检查上传授权码', array('status' => 403));
+                return new WP_Error('invalid_hmac_signature', $action_label . '签名验证失败，请检查授权码', array('status' => 403));
             }
 
             set_transient($nonce_key, 1, 5 * MINUTE_IN_SECONDS);
@@ -1381,6 +1410,16 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             return $device_ip !== '' ? $device_ip : '127.0.0.1';
         }
 
+        private static function pc_full_columns_sql()
+        {
+            return 'id, name, number, state, department, purchase, depreciation, ip, created_at, updated_at, uuid, data';
+        }
+
+        private static function style_full_columns_sql()
+        {
+            return 'id, name, number, state, category, purpose, created_at, uuid, data';
+        }
+
         /**
          * 用 data JSON 内的 v2 stable id 查找设备。
          */
@@ -1395,7 +1434,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             $table = self::$table_name;
             $like = '%' . $wpdb->esc_like($stable_id) . '%';
             $rows = $wpdb->get_results(
-                $wpdb->prepare("SELECT * FROM $table WHERE data LIKE %s LIMIT 20", $like),
+                $wpdb->prepare("SELECT " . self::pc_full_columns_sql() . " FROM $table WHERE data LIKE %s LIMIT 20", $like),
                 ARRAY_A
             );
 
@@ -1429,7 +1468,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             $table = self::$table_name;
 
             // 准备 SQL 查询语句
-            $sql = $wpdb->prepare("SELECT * FROM $table WHERE uuid = %s", $uuid);
+            $sql = $wpdb->prepare("SELECT " . self::pc_full_columns_sql() . " FROM $table WHERE uuid = %s", $uuid);
 
             // 执行查询
             $result = $wpdb->get_row($sql, ARRAY_A);
@@ -1771,6 +1810,18 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                 }
                 self::register_rate_limit_failure($request);
                 return new WP_Error('invalid_hmac_signature', '新版上传接口必须使用上传授权码签名', array('status' => 403));
+            }
+
+            if (strpos($route, '/query') !== false && self::has_hmac_headers($request)) {
+                $hmac_result = self::verify_hmac_signature($request, 'query');
+                if ($hmac_result instanceof WP_Error) {
+                    self::register_rate_limit_failure($request);
+                    return $hmac_result;
+                }
+                if ($hmac_result === true) {
+                    self::clear_rate_limit($request);
+                    return true;
+                }
             }
 
             $password = self::get_public_password($request);
@@ -2332,7 +2383,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                 );
             } else {
                 $row = $wpdb->get_row(
-                    $wpdb->prepare("SELECT * FROM $table_name WHERE uuid = %s", $uuid),
+                    $wpdb->prepare("SELECT " . self::pc_full_columns_sql() . " FROM $table_name WHERE uuid = %s", $uuid),
                     ARRAY_A
                 );
             }
@@ -3077,7 +3128,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                 );
             } else {
                 $row = $wpdb->get_row(
-                    $wpdb->prepare("SELECT * FROM $table_name WHERE uuid = %s", $uuid),
+                    $wpdb->prepare("SELECT " . self::style_full_columns_sql() . " FROM $table_name WHERE uuid = %s", $uuid),
                     ARRAY_A
                 );
             }
@@ -3596,7 +3647,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
         }
 
         /**
-         * 管理端 - 生成/重置客户端上传授权码。
+         * 管理端 - 生成/重置客户端授权码。
          */
         public static function admin_generate_client_token($request)
         {
@@ -3610,7 +3661,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             $preview = substr($token, 0, 10) . '...' . substr($token, -6);
             $name = sanitize_text_field((string) $request->get_param('name'));
             if ($name === '') {
-                $name = '上传授权码 ' . $created_at;
+                $name = '客户端授权码 ' . $created_at;
             }
 
             $tokens = self::get_client_tokens(true);
@@ -3631,7 +3682,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             self::set_config_value($config, 'client_tokens', $tokens);
             $result = update_option(self::$option, $config);
             if ($result === false && !empty($wpdb->last_error)) {
-                return new WP_Error('update_failed', '生成上传授权码失败：数据库错误', array(
+                return new WP_Error('update_failed', '生成客户端授权码失败：数据库错误', array(
                     'status' => 500,
                     'detail' => $wpdb->last_error,
                 ));
@@ -3639,7 +3690,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
 
             return rest_ensure_response(array(
                 'success' => true,
-                'message' => '上传授权码已生成，请复制到上传软件中',
+                'message' => '客户端授权码已生成，请复制到上传软件或公开查询页中',
                 'token' => $token,
                 'item' => array(
                     'id' => $token_id,
@@ -3654,7 +3705,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
         }
 
         /**
-         * 管理端 - 获取客户端上传授权码列表。
+         * 管理端 - 获取客户端授权码列表。
          */
         public static function admin_get_client_tokens($request)
         {
@@ -3665,7 +3716,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
         }
 
         /**
-         * 管理端 - 停用客户端上传授权码。
+         * 管理端 - 停用客户端授权码。
          */
         public static function admin_revoke_client_token($request)
         {
@@ -3683,7 +3734,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             }
 
             if (!$found) {
-                return new WP_Error('client_token_not_found', '上传授权码不存在或已删除', array('status' => 404));
+                return new WP_Error('client_token_not_found', '客户端授权码不存在或已删除', array('status' => 404));
             }
 
             $config = get_option(self::$option);
@@ -3693,7 +3744,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             self::set_config_value($config, 'client_tokens', $tokens);
             $result = update_option(self::$option, $config);
             if ($result === false && !empty($wpdb->last_error)) {
-                return new WP_Error('update_failed', '停用上传授权码失败：数据库错误', array(
+                return new WP_Error('update_failed', '停用客户端授权码失败：数据库错误', array(
                     'status' => 500,
                     'detail' => $wpdb->last_error,
                 ));
@@ -3701,9 +3752,44 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
 
             return rest_ensure_response(array(
                 'success' => true,
-                'message' => '上传授权码已停用',
+                'message' => '客户端授权码已停用',
                 'items' => self::public_client_tokens($tokens),
             ));
+        }
+
+        private static function get_export_columns($name, $include_detail)
+        {
+            $columns = array(
+                self::$table_pc_name => array(
+                    'base' => array('id', 'name', 'number', 'state', 'department', 'purchase', 'depreciation', 'ip', 'created_at', 'updated_at', 'uuid'),
+                    'detail' => array('data'),
+                ),
+                self::$table_style_name => array(
+                    'base' => array('id', 'name', 'number', 'state', 'category', 'purpose', 'created_at', 'uuid'),
+                    'detail' => array('data'),
+                ),
+                self::$table_manual_name => array(
+                    'base' => array('id', 'user', 'type', 'data', 'created_at', 'record_uuid'),
+                    'detail' => array(),
+                ),
+                self::$table_auto_name => array(
+                    'base' => array('id', 'table_name', 'column_name', 'old_value', 'new_value', 'changed_at', 'record_uuid'),
+                    'detail' => array(),
+                ),
+            );
+
+            if (!isset($columns[$name])) {
+                return array();
+            }
+
+            $selected = $columns[$name]['base'];
+            if ($include_detail) {
+                $selected = array_merge($selected, $columns[$name]['detail']);
+            }
+
+            return array_map(function ($column) {
+                return '`' . str_replace('`', '``', $column) . '`';
+            }, $selected);
         }
 
         /**
@@ -3735,6 +3821,12 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
 
             $format = sanitize_text_field((string) $request->get_param('format'));
             $format = $format === 'csv' ? 'csv' : 'json';
+            $include_detail = self::normalize_detail_flag($request->get_param('detail')) === '1';
+            $columns = self::get_export_columns($name, $include_detail);
+            if (empty($columns)) {
+                return new WP_Error('invalid_table', '导出失败：表名不合法', array('status' => 400));
+            }
+            $column_sql = implode(', ', $columns);
 
             $total = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
             if ($wpdb->last_error) {
@@ -3745,7 +3837,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             }
 
             $rows = $wpdb->get_results(
-                $wpdb->prepare("SELECT * FROM $table_name LIMIT %d OFFSET %d", $per_page, $offset),
+                $wpdb->prepare("SELECT $column_sql FROM $table_name LIMIT %d OFFSET %d", $per_page, $offset),
                 ARRAY_A
             );
 
