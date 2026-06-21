@@ -23,10 +23,8 @@ import { PlusCircleFilled } from "@ant-design/icons";
 import { defaultOption, Site, sqlTableName } from "@/utils/index";
 import {
   addPublicSearchPage,
-  applyPcMigrationPhase1,
   generateClientToken,
   getClientTokens,
-  precheckPcMigrationPhase1,
   revokeClientToken,
   saveSQLData,
 } from "@/services/index";
@@ -41,7 +39,6 @@ const { Text, Paragraph } = Typography;
 const App: React.FC = () => {
   const [option, setOption] = useState<OptionType>({
     ...defaultOption,
-    password: defaultOption.password ? "已设定" : defaultOption.password,
   });
   const [tokens, setTokens] = useState<ClientTokenSummary[]>(
     defaultOption.client_tokens || []
@@ -49,8 +46,6 @@ const App: React.FC = () => {
   const [tokenName, setTokenName] = useState("");
   const [generatedToken, setGeneratedToken] = useState("");
   const [generatingToken, setGeneratingToken] = useState(false);
-  const [migratingPc, setMigratingPc] = useState(false);
-  const [migrationReport, setMigrationReport] = useState<any>(null);
   const [publicSearch, setPublicSearch] = useState(
     defaultOption.public_search_route || "public-search-page"
   );
@@ -131,37 +126,6 @@ const App: React.FC = () => {
     });
   };
 
-  const precheckMigration = async () => {
-    setMigratingPc(true);
-    try {
-      const res = await precheckPcMigrationPhase1();
-      setMigrationReport(res);
-      message.success("迁移预检完成");
-    } finally {
-      setMigratingPc(false);
-    }
-  };
-
-  const applyMigration = () => {
-    Modal.confirm({
-      title: "转换旧电脑数据",
-      content:
-        "将旧 Electron 数据转换成 v2 新结构，并把设备 UUID 切换为 stable_device_id_v2。建议先导出备份。",
-      okText: "开始转换",
-      cancelText: "取消",
-      onOk: async () => {
-        setMigratingPc(true);
-        try {
-          const res = await applyPcMigrationPhase1();
-          setMigrationReport(res);
-          message.success("旧电脑数据已转换为 v2 新结构");
-        } finally {
-          setMigratingPc(false);
-        }
-      },
-    });
-  };
-
   const tokenColumns: ColumnsType<ClientTokenSummary> = [
     {
       title: "名称",
@@ -214,7 +178,7 @@ const App: React.FC = () => {
       <Alert
         type="info"
         showIcon
-        message="新版上传和公开查询推荐使用客户端授权码"
+        message="新版上传和公开查询使用客户端授权码"
         description="客户端会自动生成 HMAC 签名。后台不会保存完整授权码，生成后请立即复制到上传软件或公开查询页。"
       />
       <Space.Compact style={{ width: "100%", maxWidth: 520 }}>
@@ -283,14 +247,6 @@ const App: React.FC = () => {
   const publicQueryPanel = (
     <>
       <Form.Item
-        label="查询密码"
-        name="password"
-        rules={[{ required: true, message: "请输入公共查询密码" }]}
-        extra="仅用于公共查询页面，不再用于新版上传软件。"
-      >
-        <Input.Password style={{ maxWidth: 360 }} />
-      </Form.Item>
-      <Form.Item
         label="公共查询页面"
         extra={
           <>
@@ -349,38 +305,6 @@ const App: React.FC = () => {
         extra="删除插件的同时，删除数据库和设置信息。"
       >
         <Switch />
-      </Form.Item>
-      <Form.Item label="旧数据迁移">
-        <Space direction="vertical" style={{ width: "100%" }}>
-          <Alert
-            type="warning"
-            showIcon
-            message="一次性转换旧电脑数据"
-            description="导入旧数据后执行一次。转换后设备数据会写成 v2 新结构，列表和详情不再读取旧字段。"
-          />
-          <Space>
-            <Button htmlType="button" loading={migratingPc} onClick={precheckMigration}>
-              预检
-            </Button>
-            <Button
-              htmlType="button"
-              type="primary"
-              className="bg-[#1677ff]"
-              loading={migratingPc}
-              onClick={applyMigration}
-            >
-              转换为新结构
-            </Button>
-          </Space>
-          {migrationReport ? (
-            <Alert
-              type="info"
-              showIcon
-              message={`扫描 ${migrationReport.summary?.scanned || 0} 条，已转换 ${migrationReport.updated || 0} 条，跳过 ${migrationReport.skipped || 0} 条`}
-              description={`ready: ${migrationReport.summary?.ready || 0}，already_migrated: ${migrationReport.summary?.already_migrated || 0}，needs_review: ${migrationReport.summary?.needs_review || 0}，blocked: ${migrationReport.summary?.blocked || 0}`}
-            />
-          ) : null}
-        </Space>
       </Form.Item>
       <Form.Item name="public_search_route" hidden>
         <Input />

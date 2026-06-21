@@ -41,9 +41,9 @@ fn submit(args: &[String]) -> Result<()> {
     let note = optional_flag(args, "--note")
         .or_else(|| optional_flag(args, "--name"))
         .unwrap_or_default();
-    let password = required_flag(args, "--token")?;
+    let token = required_flag(args, "--token")?;
     let data = collector::collect_static_data()?;
-    let response = upload::submit_v2(&site, &note, &password, &data)?;
+    let response = upload::submit_v2(&site, &note, &token, &data)?;
     println!("{}", serde_json::to_string_pretty(&response)?);
     Ok(())
 }

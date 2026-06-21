@@ -11,7 +11,7 @@ Npcink Device Manage is a WordPress plugin for small-team device asset managemen
 - `vite-search/`: public lookup page app.
 - `ele-rs/`: Rust/Tauri hardware collector and uploader.
 
-The legacy Electron/Vue uploader has been removed. New uploader work should use `ele-rs/`.
+New uploader work should use `ele-rs/`.
 
 ## Data Tables
 
@@ -30,7 +30,7 @@ The REST namespace is `npcink/v1`.
 
 - Admin endpoints live under `/wp-json/npcink/v1/admin/*` and require `manage_options` plus a valid WordPress REST nonce.
 - Device upload uses `/wp-json/npcink/v1/device-post-data-v2` and requires an authorization code generated in the admin UI. The client signs requests with timestamp, nonce, body hash, and HMAC.
-- Public lookup uses `/wp-json/npcink/v1/query`. Prefer an admin-generated authorization code with HMAC lookup signatures; the legacy lookup password remains supported through the `x-npcink-password` header and must not be sent in URL query parameters.
+- Public lookup uses `/wp-json/npcink/v1/query` and requires an admin-generated authorization code with HMAC lookup signatures.
 - In development, `wp_ajax_npcink_device_manage_get_rest_nonce` can provide a REST nonce for Vite dev proxy usage.
 
 ## Local Verification

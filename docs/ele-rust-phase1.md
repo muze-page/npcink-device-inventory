@@ -2,7 +2,7 @@
 
 ## 目标
 
-先做 Rust 采集与上传底座。旧数据不在新客户端里兼容，后台只保留一次性迁移工具。第一阶段只证明三件事：
+先做 Rust 采集与上传底座。新客户端只面向 v2 上传契约，不承担旧数据兼容。第一阶段只证明三件事：
 
 1. Rust 能稳定采集 Windows/macOS 硬件信息。
 2. 输出 JSON 能被 WordPress v2 接口规范化为 `_npcink_device`、`asset`、`raw`。
@@ -49,7 +49,7 @@ cd ele-rs
 cargo run -- inspect --pretty > sample.json
 ```
 
-把 `sample.json` 与旧 Electron 客户端生成的数据对比，重点看：
+把 `sample.json` 与已知设备样本对比，重点看：
 
 - `uuid.hardware`
 - `stable_device_id_v2`
@@ -79,15 +79,9 @@ cargo run -- submit \
 
 每台都先跑 `inspect --pretty`，确认稳定设备标识、主网卡、内存、硬盘和显卡信息合理后再正式提交。
 
-## 旧数据迁移
-
-旧数据通过后台 phase1 迁移工具一次性转换为 `_npcink_device`、`asset`、`raw`
-三层结构。迁移时会忽略常见硬件占位符，并把 stable ID 完全一致的历史重复行
-归并到同一台设备。
-
 ## 后续阶段
 
 第二阶段继续完善 Tauri 图形界面，并按 `docs/device-data-v2-contract.md`
-收敛新数据结构。旧的 systeminformation 兼容字段只作为采集输入，不作为长期后台统计口径。
+收敛新数据结构。
 
-第三阶段已提前落地安全协议升级：新版上传走客户端授权码 + HMAC，不再回退到旧上传密码。
+第三阶段已提前落地安全协议升级：新版上传走客户端授权码 + HMAC。

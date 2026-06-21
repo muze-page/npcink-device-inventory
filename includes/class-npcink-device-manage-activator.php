@@ -509,13 +509,7 @@ class Npcink_Device_Manage_Activator extends Npcink_Device_Manage_Admin_Interfac
 	 */
 	public static function device_manage_create_option()
 	{
-		// 生成随机字符串
-		$random_string = uniqid(mt_rand(), true);
-		//再加密下
-		$pss =  wp_hash_password($random_string);
-
 		$option = array(
-			"password" => $pss, //默认密码
 			"delete_mysql" => false, //默认是否删除数据库
 			"depreciation_year" => 36, //折旧月限
 			"residual_value_rate" => 5, //残值率（百分比）

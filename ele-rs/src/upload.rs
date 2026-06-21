@@ -10,8 +10,8 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 type HmacSha256 = Hmac<Sha256>;
 
-pub fn submit_v2(site: &str, name: &str, password: &str, data: &Value) -> Result<Value> {
-    if let Some(token) = parse_client_token(password)? {
+pub fn submit_v2(site: &str, name: &str, token_value: &str, data: &Value) -> Result<Value> {
+    if let Some(token) = parse_client_token(token_value)? {
         let body = serde_json::json!({
             "name": name,
             "data": data,

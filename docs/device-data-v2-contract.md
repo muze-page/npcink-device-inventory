@@ -5,8 +5,7 @@
 Accepted baseline for the modernization work.
 
 This document defines the current data contract for the Rust/Tauri uploader and
-the WordPress plugin. Legacy rows are converted once by the admin migration
-tool; new uploads and admin surfaces use this v2 shape only.
+the WordPress plugin. New uploads and admin surfaces use this v2 shape only.
 
 ## Goals
 
@@ -19,7 +18,7 @@ tool; new uploads and admin surfaces use this v2 shape only.
 
 ## Non-Goals
 
-- Do not preserve a parallel legacy display or matching path after migration.
+- Do not preserve a parallel display or matching path outside the v2 contract.
 - Do not make every collected OS field visible in the UI.
 
 ## Upload Endpoint
@@ -70,15 +69,12 @@ The stored `data` JSON contains three layers:
 
 ### `_npcink_device`
 
-Server-owned metadata. It is used for migration, audit, and future matching.
+Server-owned metadata. It is used for audit and future matching.
 
 ```json
 {
   "schema_version": 2,
-  "migration_source": "upload_v2",
-  "legacy_uuid": "md5(uuid.hardware + uuid.macs[0])",
   "stable_device_id_v2": "v2-<29 hex chars>",
-  "migration_updated_at": "2026-06-19 16:24:23",
   "collector": {
     "name": "npcink-device-agent",
     "runtime": "rust",
@@ -97,7 +93,6 @@ Rules:
   primary MAC as fallback.
 - Known placeholder identities such as `Default string`, all-zero UUIDs, and
   repeated SMBIOS pseudo UUIDs are ignored.
-- `legacy_uuid` is stored only as diagnostic metadata when it can be derived.
 - `collector` is copied from the upload payload when available.
 - The current database `uuid` column is 32 characters, so the stored v2 id uses
   `v2-` plus the first 29 hex characters of the SHA-256 fingerprint.
@@ -110,7 +105,6 @@ Canonical data for the admin UI, statistics, and export.
 {
   "identity": {
     "hardware_uuid": "C92BFA63-2689-5952-9415-363F20805F8A",
-    "legacy_uuid": "c8490ec70529944c7e77a88411f781b0",
     "stable_device_id_v2": "v2-...",
     "primary_mac": "fe:82:ac:cb:6a:a8",
     "macs": ["fe:82:ac:cb:6a:a8"]
@@ -144,8 +138,7 @@ Canonical data for the admin UI, statistics, and export.
 }
 ```
 
-Admin surfaces read `asset`. Legacy rows without `asset` are converted by the
-one-time migration tool.
+Admin surfaces read `asset`.
 
 ### `asset.hardware.memory`
 
@@ -241,7 +234,7 @@ Examples:
 
 - `filesystems`: full mount list, including APFS data volumes and mounted DMGs.
 - `platform`: macOS `system_profiler` data or Windows CIM source data.
-- `source`: original upload payload if a future migration needs it.
+- `source`: original upload payload for troubleshooting.
 
 ## Validation Rules
 
@@ -284,23 +277,6 @@ Export:
 - use the same `asset.summary` and `asset.hardware` fields as the UI
 - do not recalculate from raw mount lists
 
-## Migration Plan
-
-Old data migration will be handled later as a one-time offline process:
-
-1. Export old rows.
-2. Build `asset` from existing legacy fields.
-3. Clean known issues:
-   - duplicate macOS APFS disks
-   - mounted app volumes counted as disks
-   - invalid or noisy MAC lists
-   - missing `memLayout` when `mem.total` exists
-4. Preserve original JSON in a backup field or sidecar file.
-5. Import verified rows back into WordPress.
-
-No migration button is required before this contract is implemented and tested
-with new uploads.
-
 ## Implementation Order
 
 1. Add a WordPress normalizer that stores only `_npcink_device`, `asset`, and
@@ -308,4 +284,3 @@ with new uploads.
 2. Update admin list, summary, detail, and export to read `asset`.
 3. Keep Rust uploader focused on reliable collection and clean identity fields.
 4. Re-run local v2 upload validation on macOS and Windows samples.
-5. Only after the new structure is stable, run the one-time old data migration.

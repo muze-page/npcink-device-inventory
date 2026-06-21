@@ -1,7 +1,7 @@
 <?php
 
 /**
- * 设置校验（legacy admin-ajax 已移除，REST 在 api.php 中处理）
+ * 设置校验（REST 在 api.php 中处理）
  */
 if (!class_exists('Npcink_Device_Manage_Admin_Interface_Seting')) {
     class Npcink_Device_Manage_Admin_Interface_Seting extends Npcink_Device_Manage_Admin_Interface
@@ -15,11 +15,10 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_Seting')) {
         public static function validate_object($object)
         {
             // 需要验证的属性列表
-            $required_properties = ['password', 'delete_mysql', 'public_search_route'];
+            $required_properties = ['delete_mysql', 'public_search_route'];
 
             //提示
             $prompt = array(
-                'password' => '请输入密码',
                 'delete_mysql' => '请选择删除数据库的状态',
                 'public_search_route' => '请输入公共查询页面路由',
             );
@@ -36,14 +35,6 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_Seting')) {
 
                 // 根据属性类型进行验证
                 switch ($property) {
-                    case 'password':
-                        if (!is_string($object->password)) {
-                            return 'password 属性必须是非空字符串类型';
-                        }
-                        if (empty($object->password)) {
-                            return '密码不能为0';
-                        }
-                        break;
                     case 'delete_mysql':
                         if (!is_bool($object->delete_mysql)) {
                             return 'delete_mysql 属性必须是布尔类型';

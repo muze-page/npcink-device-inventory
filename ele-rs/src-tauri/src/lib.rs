@@ -6,10 +6,11 @@ use std::fs;
 use std::path::PathBuf;
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[serde(default)]
 struct AgentConfig {
     site: String,
     name: String,
-    password: String,
+    token: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -42,7 +43,7 @@ fn collect_device_snapshot() -> Result<DeviceSnapshot, String> {
 fn submit_device_data(config: AgentConfig) -> Result<Value, String> {
     validate_config(&config)?;
     let data = collector::collect_static_data().map_err(|error| error.to_string())?;
-    upload::submit_v2(&config.site, &config.name, &config.password, &data)
+    upload::submit_v2(&config.site, &config.name, &config.token, &data)
         .map_err(|error| error.to_string())
 }
 
@@ -63,7 +64,7 @@ fn validate_config(config: &AgentConfig) -> Result<(), String> {
     if config.site.trim().is_empty() {
         return Err("请填写 v2 接口地址".to_string());
     }
-    if config.password.is_empty() {
+    if config.token.is_empty() {
         return Err("请填写上传授权码".to_string());
     }
     Ok(())

@@ -51,15 +51,6 @@ pub fn collect_static_data() -> Result<Value> {
     Ok(Value::Object(root))
 }
 
-pub fn legacy_device_id(data: &Value) -> Option<String> {
-    let hardware = data.pointer("/uuid/hardware")?.as_str()?;
-    let mac = data.pointer("/uuid/macs/0")?.as_str()?;
-    if hardware.is_empty() || mac.is_empty() {
-        return None;
-    }
-    Some(format!("{:x}", md5::compute(format!("{hardware}{mac}"))))
-}
-
 pub fn stable_device_id_v2(data: &Value) -> Option<String> {
     let candidates = [
         (
@@ -352,7 +343,8 @@ fn network_ip_map() -> BTreeMap<String, Vec<IpAddr>> {
 fn fallback_hardware_uuid(macs: &[String]) -> String {
     let host = System::host_name().unwrap_or_default();
     let first_mac = macs.first().cloned().unwrap_or_default();
-    format!("{:x}", md5::compute(format!("{host}|{first_mac}")))
+    let digest = Sha256::digest(format!("{host}|{first_mac}").as_bytes());
+    format!("{digest:x}")
 }
 
 fn is_internal_iface(iface: &str, ip4: &str, ip6: &str) -> bool {

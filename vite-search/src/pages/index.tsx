@@ -12,14 +12,14 @@ const App: React.FC = () => {
 
   //输入框中的值
   // 定义状态变量用于存储输入框的值
-  const [inputValue, setInputValue] = useState("");
+  const [credentialValue, setCredentialValue] = useState("");
   const [queryValue, setQueryValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const canSearch = inputValue.trim() !== "" && queryValue.trim() !== "";
+  const canSearch = credentialValue.trim() !== "" && queryValue.trim() !== "";
 
   // 处理输入框值的变化
   const handleInputChange = (e: any) => {
-    setInputValue(e.target.value); // 更新状态变量中的值
+    setCredentialValue(e.target.value); // 更新状态变量中的值
   };
 
   const handleQueryChange = (e: any) => {
@@ -29,7 +29,7 @@ const App: React.FC = () => {
   const handleSearch = async () => {
     setIsLoading(true);
     try {
-      const data = await fetchData(inputValue, queryValue); //获取数据
+      const data = await fetchData(credentialValue, queryValue); //获取数据
       //空对象
       if (!data) {
         return;
@@ -56,10 +56,10 @@ const App: React.FC = () => {
               <span className="hero-eyebrow">设备资产 / 公共查询</span>
               <h1>设备查询中心</h1>
               <p>
-                输入查询授权码或旧查询密码与设备号/姓名, 快速获取设备状态与硬件细节.
+                输入查询授权码与设备号/姓名, 快速获取设备状态与硬件细节.
               </p>
               <div className="hero-meta">
-                <span>签名 / 口令校验</span>
+                <span>HMAC 签名校验</span>
                 <span>编号 / 姓名</span>
                 <span>2 分钟缓存</span>
               </div>
@@ -76,11 +76,11 @@ const App: React.FC = () => {
                 <div className="field">
                   <label>查询授权</label>
                   <Input.Password
-                    placeholder="后台授权码 mda_... 或旧查询密码"
-                    value={inputValue}
+                    placeholder="后台授权码 mda_..."
+                    value={credentialValue}
                     onChange={handleInputChange}
                     className="search-input"
-                    autoComplete="current-password"
+                    autoComplete="one-time-code"
                     onPressEnter={handleSearch}
                     allowClear
                   />
@@ -107,9 +107,7 @@ const App: React.FC = () => {
                 </Button>
                 <div className="panel-note">
                   <span className="note-label">提示</span>
-                  <span>
-                    推荐使用后台生成的授权码；旧查询密码仅用于兼容.
-                  </span>
+                  <span>请使用后台生成的查询授权码。</span>
                 </div>
               </div>
             </div>

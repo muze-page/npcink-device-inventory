@@ -76,7 +76,6 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
         /**
          * 前端查询数据
          * data:编号或姓名
-         * password:密码
          * all inspect
          */
         public static function query_data($request)
@@ -177,113 +176,6 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
         }
 
         /**
-         * 上传数据
-         * all inspect
-         */
-        public static function submit_data_callback($request)
-        {
-            global $wpdb;
-            self::$table_name = $wpdb->prefix . self::$table_pc_name;
-            //拿到传来的姓名，检查字符串
-            $name = isset($request['name']) ? sanitize_text_field($request['name']) : null;
-
-            //拿到传来的JSON对象字符串，检查字符串
-            $data = isset($request['data']) ? sanitize_text_field($request['data']) : null;
-
-            //姓名是否为空
-            if (empty($name)) {
-                return wp_send_json_error([
-                    'error' => '姓名为空，请填写',
-                ], 400);
-            }
-
-            //文本转对象
-            $data_obj = json_decode($data);
-
-            //是否为空
-            if (empty($data_obj)) {
-                return wp_send_json_error([
-                    'error' => '硬件数据为空，请检查',
-                ], 400);
-            }
-
-            //为了防止硬件UUID重复，这里再加上第一张网卡的MAC地址以防万一
-            $uuid_hardware = $data_obj->uuid->hardware; //唯一UUID
-            $uuid_one_net = $data_obj->uuid->macs[0]; //第一个网口的MAC地址
-            $uuid = md5($uuid_hardware . $uuid_one_net); //拼接，进行md5处理，短点更好看
-
-            // 从网卡信息中提取有效 IP
-            $device_ip = self::extract_valid_ip($data_obj);
-            if ($device_ip === '') {
-                $device_ip = '127.0.0.1';
-            }
-
-            //检查是否存在重复数据
-            $repeatData = self::check_data_repeat($uuid);
-            if ($repeatData) {
-                //数据存在，更新现有数据
-                return self::check_Data_Change($repeatData, $data, $name);
-            }
-
-            //生成随机编号，充当设备默认编号
-            $random_string = uniqid(mt_rand(), true);
-
-            //只取随机编号的后6位，你不会真的要用这套系统管理数十万台设备吧？不会吧！不会吧！
-            $last_six_digits = substr($random_string, -6);
-
-            // 数据不存在，插入新数据
-            $insert_data = [
-                'name' => $name, // 姓名
-                'state' => '使用', // 默认状态为使用
-                'number' =>  $last_six_digits, // 编号
-                'department' => '默认', // 默认部门
-                'purchase' => 0, //采购价'
-                'depreciation' => 0, //二手价
-                'ip' => $device_ip, // 默认IP地址
-                'uuid' => $uuid, // 唯一标识符
-                'data' => $data, // 数据
-            ];
-
-            // 准备插入数据的格式
-            $data_formats = [
-                '%s', // 姓名是字符串
-                '%s', // 状态是字符串
-                '%s', // 编号是字符串
-                '%s', // 部门是字符串
-                '%f', // 采购价是数字
-                '%f', //二手价是数字
-                '%s', // ip是字符串
-                '%s', // 唯一标识符是字符串
-                '%s', // 数据是字符串
-            ];
-
-            // 执行插入操作
-            $res = $wpdb->insert(
-                self::$table_name,
-                $insert_data,
-                $data_formats
-            );
-
-
-            if ($res) {
-                self::clear_pc_cache();
-                $response = [
-                    'message' => '数据提交成功！',
-                ];
-                return wp_send_json_success($response);
-            } else {
-                $error_message = $wpdb->last_error;
-                $response = [
-                    'error' => '数据提交失败！',
-                    'message' => $error_message,
-                ];
-                return wp_send_json_error($response, 500);
-            }
-
-            wp_die();
-        }
-
-        /**
          * v2 客户端上传数据
          * 新上传只使用 v2 stable id 作为 uuid 列，data JSON 只存规范化结构。
          */
@@ -303,17 +195,9 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                 return new WP_Error('missing_device_identity', '无法生成设备唯一标识，请检查硬件 UUID、序列号或主网卡信息', array('status' => 400));
             }
 
-            $legacy_uuid = self::derive_uuid_from_data($data_obj);
             $record_uuid = $stable_id;
             $collector = self::extract_collector_metadata($data_obj, $request);
-            $data_obj = self::attach_device_migration_meta(
-                $data_obj,
-                $legacy_uuid,
-                $stable_id,
-                $collector,
-                'upload_v2'
-            );
-            $data_obj = self::normalize_device_data_v2($data_obj, $legacy_uuid, $stable_id, $collector, $upload_note);
+            $data_obj = self::normalize_device_data_v2($data_obj, $stable_id, $collector, $upload_note);
 
             $data_json = wp_json_encode($data_obj, JSON_UNESCAPED_UNICODE);
             if ($data_json === false) {
@@ -349,7 +233,6 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                     'mode' => 'update',
                     'match_strategy' => $match_strategy,
                     'uuid' => $record_uuid,
-                    'legacy_uuid' => $legacy_uuid,
                     'stable_device_id_v2' => $stable_id,
                     'number' => $existing_data['number'],
                     'name' => $existing_data['name'],
@@ -393,30 +276,11 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                 'mode' => 'insert',
                 'match_strategy' => 'none',
                 'uuid' => $record_uuid,
-                'legacy_uuid' => $legacy_uuid,
                 'stable_device_id_v2' => $stable_id,
                 'number' => $last_six_digits,
                 'name' => $insert_data['name'],
                 'upload_note' => $upload_note,
             ));
-        }
-
-        /**
-         * 验证密码是否正确 是否允许传输数据
-         * @param $input_Password
-         * @return boolean
-         */
-        private static function password_verification($input_Password)
-        {
-            $setting_Password = self::get_seting('password'); // 获取设置的密码
-            if (!is_string($setting_Password) || $setting_Password === '') {
-                return false;
-            }
-
-            // 使用 wp_check_password 直接验证密码
-            $valid_password = wp_check_password($input_Password, $setting_Password);
-
-            return $valid_password; // 返回验证结果
         }
 
         private static function random_hex($bytes)
@@ -811,7 +675,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
         }
 
         /**
-         * 提取 v2 上传里的设备数据。兼容 data 字符串、data 对象、device_data 对象。
+         * 提取 v2 上传里的设备数据，支持 data 字符串、data 对象、device_data 对象。
          */
         private static function extract_device_data_from_request($request)
         {
@@ -1052,37 +916,9 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
         }
 
         /**
-         * 写入迁移元数据到 data JSON 内，避免第一阶段 ALTER 生产表。
-         */
-        private static function attach_device_migration_meta($data_obj, $legacy_uuid, $stable_id, $collector, $source)
-        {
-            if (is_object($data_obj)) {
-                $data_obj = json_decode(wp_json_encode($data_obj), true);
-            }
-            if (!is_array($data_obj)) {
-                $data_obj = array();
-            }
-
-            $existing = isset($data_obj['_npcink_device']) && is_array($data_obj['_npcink_device'])
-                ? $data_obj['_npcink_device']
-                : array();
-
-            $data_obj['_npcink_device'] = array_merge($existing, array(
-                'schema_version' => 2,
-                'legacy_uuid' => sanitize_text_field($legacy_uuid),
-                'stable_device_id_v2' => sanitize_text_field($stable_id),
-                'collector' => $collector,
-                'migration_source' => sanitize_text_field($source),
-                'migration_updated_at' => current_time('mysql'),
-            ));
-
-            return $data_obj;
-        }
-
-        /**
          * 生成 v2 规范化资产数据。新上传只存 _npcink_device、asset、raw。
          */
-        private static function normalize_device_data_v2($data_obj, $legacy_uuid, $stable_id, $collector, $upload_note = '')
+        private static function normalize_device_data_v2($data_obj, $stable_id, $collector, $upload_note = '')
         {
             if (is_object($data_obj)) {
                 $data_obj = json_decode(wp_json_encode($data_obj), true);
@@ -1096,7 +932,6 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                 if (!isset($asset['identity']) || !is_array($asset['identity'])) {
                     $asset['identity'] = array();
                 }
-                $asset['identity']['legacy_uuid'] = sanitize_text_field($legacy_uuid);
                 $asset['identity']['stable_device_id_v2'] = sanitize_text_field($stable_id);
                 if (!isset($asset['upload']) || !is_array($asset['upload'])) {
                     $asset['upload'] = array();
@@ -1112,7 +947,6 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                     : array();
                 $meta['collector'] = $collector;
                 $meta['stable_device_id_v2'] = sanitize_text_field($stable_id);
-                $meta['legacy_uuid'] = sanitize_text_field($legacy_uuid);
 
                 return array(
                     '_npcink_device' => $meta,
@@ -1167,7 +1001,6 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             $asset = array(
                 'identity' => array(
                     'hardware_uuid' => isset($data_obj['uuid']['hardware']) ? (string) $data_obj['uuid']['hardware'] : '',
-                    'legacy_uuid' => sanitize_text_field($legacy_uuid),
                     'stable_device_id_v2' => sanitize_text_field($stable_id),
                     'primary_mac' => $primary_mac,
                     'macs' => $macs,
@@ -1212,6 +1045,8 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                 $data_obj['_npcink_device'] = array();
             }
             $data_obj['_npcink_device']['collector'] = $collector;
+            $data_obj['_npcink_device']['schema_version'] = 2;
+            $data_obj['_npcink_device']['stable_device_id_v2'] = sanitize_text_field($stable_id);
 
             return array(
                 '_npcink_device' => $data_obj['_npcink_device'],
@@ -1421,42 +1256,6 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
         }
 
         /**
-         * 用 data JSON 内的 v2 stable id 查找设备。
-         */
-        private static function find_pc_by_stable_device_id($stable_id)
-        {
-            global $wpdb;
-            $stable_id = sanitize_text_field((string) $stable_id);
-            if ($stable_id === '') {
-                return null;
-            }
-
-            $table = self::$table_name;
-            $like = '%' . $wpdb->esc_like($stable_id) . '%';
-            $rows = $wpdb->get_results(
-                $wpdb->prepare("SELECT " . self::pc_full_columns_sql() . " FROM $table WHERE data LIKE %s LIMIT 20", $like),
-                ARRAY_A
-            );
-
-            if (empty($rows)) {
-                return null;
-            }
-
-            foreach ($rows as $row) {
-                $data = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
-                $row_stable = isset($data['_npcink_device']['stable_device_id_v2'])
-                    ? (string) $data['_npcink_device']['stable_device_id_v2']
-                    : '';
-                if ($row_stable === $stable_id) {
-                    return $row;
-                }
-            }
-
-            return null;
-        }
-
-
-        /**
          * 检查数据库中是否存在指定 UUID 的数据
          * @param string $uuid 要检查的 UUID
          * @return array|null 返回关联数组表示数据库中找到的数据行，如果未找到则返回 null
@@ -1483,55 +1282,6 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             return $result;
         }
 
-
-
-        /**
-         * 更新现有数据
-         * @param $existingData 查出的数据
-         * @param $data 设备JSON字符串数据
-         * @param $name 用户名
-         * @return bool
-         */
-        public static function check_Data_Change($existingData, $data, $name)
-        {
-            global $wpdb;
-            //TODO: 如果名称或数据有变化，更新现有数据
-            try {
-                $result = $wpdb->update(
-                    self::$table_name,
-                    [
-                        //'name' => $name,//不更新名字
-                        'data' => $data,
-                    ],
-                    ['id' => $existingData['id']],
-                    ['%s'],
-                    ['%d']
-                );
-
-                if ($result !== false) {
-                    self::clear_pc_cache();
-                    //姓名
-                    $user = $existingData['name'];
-                    //编号
-                    $number = $existingData['number'];
-                    return wp_send_json_success(
-                        [
-                            'message' => "姓名：$user ，编号：$number ，更新成功",
-                            'data' => $result,
-
-                        ]
-                    );
-                } else {
-                    throw new Exception('更新失败');
-                }
-            } catch (Exception $e) {
-                return wp_send_json_error(['error' => $e->getMessage(), 'message' => $wpdb->last_error], 500);
-            }
-
-
-            wp_die();
-        }
-
         /**
          * 管理端 REST 权限校验
          */
@@ -1541,80 +1291,6 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                 return new WP_Error('forbidden', '权限不足：需要管理员权限', array('status' => 403));
             }
             return true;
-        }
-
-        /**
-         * 公共接口 - 读取密码（header 或参数）
-         */
-        private static function get_public_password($request)
-        {
-            $password = '';
-            $source = 'none';
-            $raw_body_len = 0;
-            $content_type = '';
-            $content_length = '';
-            $route = '';
-            if ($request instanceof WP_REST_Request) {
-                $content_type = $request->get_header('content-type');
-                $content_length = $request->get_header('content-length');
-                $route = $request->get_route();
-                $password = $request->get_header('x-npcink-password');
-                if ($password !== '' && $password !== null) {
-                    $source = 'header';
-                }
-                if ($password === '' || $password === null) {
-                    $json_params = $request->get_json_params();
-                    if (is_array($json_params) && array_key_exists('password', $json_params)) {
-                        $password = $json_params['password'];
-                        $source = 'json';
-                    }
-                }
-                if ($password === '' || $password === null) {
-                    $body_params = $request->get_body_params();
-                    if (is_array($body_params) && array_key_exists('password', $body_params)) {
-                        $password = $body_params['password'];
-                        $source = 'body';
-                    }
-                }
-                if ($password === '' || $password === null) {
-                    $raw_body = $request->get_body();
-                    $raw_body_len = !empty($raw_body) ? strlen($raw_body) : 0;
-                    if (!empty($raw_body)) {
-                        $decoded = json_decode($raw_body, true);
-                        if (is_array($decoded) && array_key_exists('password', $decoded)) {
-                            $password = $decoded['password'];
-                            $source = 'raw_json';
-                        } else {
-                            $parsed = array();
-                            parse_str($raw_body, $parsed);
-                            if (is_array($parsed) && array_key_exists('password', $parsed)) {
-                                $password = $parsed['password'];
-                                $source = 'raw_form';
-                            }
-                        }
-                    }
-                }
-            } elseif (is_array($request)) {
-                $password = isset($request['password']) ? $request['password'] : '';
-                if ($password !== '') {
-                    $source = 'array';
-                }
-            }
-
-            if (is_array($password) || is_object($password)) {
-                $password = '';
-            } elseif (!is_string($password)) {
-                $password = strval($password);
-            } else {
-                $password = (string) $password;
-            }
-
-            if (!is_string($password)) {
-                $password = '';
-            }
-
-            $password = wp_unslash($password);
-            return sanitize_text_field($password);
         }
 
         /**
@@ -1662,41 +1338,13 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             if (is_string($data)) {
                 $decoded = json_decode($data, true);
                 if (is_array($decoded)) {
-                    $uuid = self::derive_uuid_from_data($decoded);
+                    $uuid = self::derive_stable_device_id_v2($decoded);
                 }
             } elseif (is_array($data) || is_object($data)) {
-                $uuid = self::derive_uuid_from_data($data);
+                $uuid = self::derive_stable_device_id_v2($data);
             }
 
             return $uuid ? sanitize_text_field((string) $uuid) : '';
-        }
-
-        /**
-         * 从设备数据中计算 UUID
-         */
-        private static function derive_uuid_from_data($data_obj)
-        {
-            if (is_object($data_obj)) {
-                $data_obj = (array) $data_obj;
-            }
-            if (!is_array($data_obj)) {
-                return '';
-            }
-
-            if (!empty($data_obj['uuid']) && is_string($data_obj['uuid'])) {
-                return $data_obj['uuid'];
-            }
-
-            $uuid_data = isset($data_obj['uuid']) && is_array($data_obj['uuid']) ? $data_obj['uuid'] : array();
-            $hardware = isset($uuid_data['hardware']) ? (string) $uuid_data['hardware'] : '';
-            $macs = isset($uuid_data['macs']) && is_array($uuid_data['macs']) ? $uuid_data['macs'] : array();
-            $mac = !empty($macs[0]) ? (string) $macs[0] : '';
-
-            if ($hardware !== '' && $mac !== '') {
-                return md5($hardware . $mac);
-            }
-
-            return '';
         }
 
         /**
@@ -1812,7 +1460,11 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                 return new WP_Error('invalid_hmac_signature', '新版上传接口必须使用上传授权码签名', array('status' => 403));
             }
 
-            if (strpos($route, '/query') !== false && self::has_hmac_headers($request)) {
+            if (strpos($route, '/query') !== false) {
+                if (!self::has_hmac_headers($request)) {
+                    self::register_rate_limit_failure($request);
+                    return new WP_Error('missing_hmac_header', '查询接口必须使用客户端授权码签名', array('status' => 403));
+                }
                 $hmac_result = self::verify_hmac_signature($request, 'query');
                 if ($hmac_result instanceof WP_Error) {
                     self::register_rate_limit_failure($request);
@@ -1824,18 +1476,8 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                 }
             }
 
-            $password = self::get_public_password($request);
-            if ($password === '') {
-                self::register_rate_limit_failure($request);
-                return new WP_Error('missing_password', '请填写客户端传输数据用的验证密码', array('status' => 403));
-            }
-            if (!self::password_verification($password)) {
-                self::register_rate_limit_failure($request);
-                return new WP_Error('invalid_password', '密码验证失败，请检查！', array('status' => 403));
-            }
-
-            self::clear_rate_limit($request);
-            return true;
+            self::register_rate_limit_failure($request);
+            return new WP_Error('forbidden', '公共接口必须使用客户端授权码签名', array('status' => 403));
         }
 
         /**
@@ -1916,19 +1558,6 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                 'methods' => WP_REST_Server::READABLE,
                 'callback' => array(__CLASS__, 'admin_get_pc_summary'),
                 'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
-            ));
-
-            register_rest_route('npcink/v1', '/admin/pc-migration/phase1', array(
-                array(
-                    'methods' => WP_REST_Server::READABLE,
-                    'callback' => array(__CLASS__, 'admin_pc_migration_phase1_precheck'),
-                    'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
-                ),
-                array(
-                    'methods' => WP_REST_Server::CREATABLE,
-                    'callback' => array(__CLASS__, 'admin_pc_migration_phase1_apply'),
-                    'permission_callback' => array(__CLASS__, 'admin_permissions_check'),
-                ),
             ));
 
             register_rest_route('npcink/v1', '/admin/settings', array(
@@ -2533,379 +2162,6 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                     'detail' => $e->getMessage(),
                 ));
             }
-        }
-
-        /**
-         * 管理端 - Rust/v2 迁移预检
-         */
-        public static function admin_pc_migration_phase1_precheck($request)
-        {
-            global $wpdb;
-            $table_name = $wpdb->prefix . self::$table_pc_name;
-            $limit = max(1, min(500, intval($request->get_param('limit') ?: 500)));
-            $offset = max(0, intval($request->get_param('offset') ?: 0));
-
-            $total = intval($wpdb->get_var("SELECT COUNT(*) FROM $table_name"));
-            $rows = $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT id, name, number, uuid, ip, updated_at, data FROM $table_name ORDER BY id ASC LIMIT %d OFFSET %d",
-                    $limit,
-                    $offset
-                ),
-                ARRAY_A
-            );
-
-            $items = array();
-            $stable_counts = array();
-            foreach ($rows as $row) {
-                $item = self::build_pc_migration_phase1_item($row);
-                if (!empty($item['stable_device_id_v2'])) {
-                    if (!isset($stable_counts[$item['stable_device_id_v2']])) {
-                        $stable_counts[$item['stable_device_id_v2']] = 0;
-                    }
-                    $stable_counts[$item['stable_device_id_v2']]++;
-                }
-                $items[] = $item;
-            }
-
-            foreach ($items as &$item) {
-                if (!empty($item['stable_device_id_v2']) && $stable_counts[$item['stable_device_id_v2']] > 1) {
-                    $item['status'] = 'needs_review';
-                    $item['migration_status'] = 'needs_review';
-                    $item['issues'][] = 'stable_device_id_v2 重复';
-                }
-            }
-            unset($item);
-
-            return rest_ensure_response(self::summarize_pc_migration_phase1($items, array(
-                'total' => $total,
-                'limit' => $limit,
-                'offset' => $offset,
-                'mode' => 'precheck',
-            )));
-        }
-
-        /**
-         * 管理端 - Rust/v2 迁移执行
-         */
-        public static function admin_pc_migration_phase1_apply($request)
-        {
-            global $wpdb;
-            $confirm = $request->get_param('confirm');
-            if (!in_array(strtolower((string) $confirm), array('1', 'true', 'yes'), true)) {
-                return new WP_Error('missing_confirm', '执行迁移需要 confirm=true', array('status' => 400));
-            }
-
-            $table_name = $wpdb->prefix . self::$table_pc_name;
-            $manual_table_name = $wpdb->prefix . self::$table_manual_name;
-            $auto_table_name = $wpdb->prefix . self::$table_auto_name;
-            $limit = max(1, min(500, intval($request->get_param('limit') ?: 500)));
-            $offset = max(0, intval($request->get_param('offset') ?: 0));
-            $rows = $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT id, name, number, uuid, ip, updated_at, data FROM $table_name ORDER BY id ASC LIMIT %d OFFSET %d",
-                    $limit,
-                    $offset
-                ),
-                ARRAY_A
-            );
-
-            $items = array();
-            $updated = 0;
-            $skipped = 0;
-            $failed = 0;
-            $merged = 0;
-            $stable_counts = array();
-            $stable_groups = array();
-            foreach ($rows as $row) {
-                $item = self::build_pc_migration_phase1_item($row);
-                if (!empty($item['stable_device_id_v2'])) {
-                    if (!isset($stable_counts[$item['stable_device_id_v2']])) {
-                        $stable_counts[$item['stable_device_id_v2']] = 0;
-                        $stable_groups[$item['stable_device_id_v2']] = array();
-                    }
-                    $stable_counts[$item['stable_device_id_v2']]++;
-                    $stable_groups[$item['stable_device_id_v2']][] = intval($row['id']);
-                }
-            }
-            $stable_primary_ids = array();
-            foreach ($stable_groups as $stable_id => $ids) {
-                if (count($ids) > 1) {
-                    sort($ids, SORT_NUMERIC);
-                    $stable_primary_ids[$stable_id] = $ids[0];
-                }
-            }
-
-            $wpdb->query('START TRANSACTION');
-            try {
-                foreach ($rows as $row) {
-                    $item = self::build_pc_migration_phase1_item($row);
-                    $data = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
-
-                    if ($item['status'] === 'already_migrated') {
-                        $item['apply_status'] = 'unchanged';
-                        $skipped++;
-                        $items[] = $item;
-                        continue;
-                    }
-
-                    if (empty($data) || empty($item['stable_device_id_v2'])) {
-                        $item['apply_status'] = 'skipped';
-                        $item['issues'][] = '缺少可迁移数据';
-                        $skipped++;
-                        $items[] = $item;
-                        continue;
-                    }
-
-                    $primary_id = isset($stable_primary_ids[$item['stable_device_id_v2']])
-                        ? intval($stable_primary_ids[$item['stable_device_id_v2']])
-                        : 0;
-                    if ($primary_id > 0 && intval($row['id']) !== $primary_id) {
-                        $old_uuid = isset($row['uuid']) ? (string) $row['uuid'] : '';
-                        if ($old_uuid !== '') {
-                            $manual_update = $wpdb->update(
-                                $manual_table_name,
-                                array('record_uuid' => $item['stable_device_id_v2']),
-                                array('record_uuid' => $old_uuid),
-                                array('%s'),
-                                array('%s')
-                            );
-                            $auto_update = $wpdb->update(
-                                $auto_table_name,
-                                array('record_uuid' => $item['stable_device_id_v2']),
-                                array('record_uuid' => $old_uuid),
-                                array('%s'),
-                                array('%s')
-                            );
-                            if ($manual_update === false || $auto_update === false) {
-                                $item['apply_status'] = 'failed';
-                                $item['issues'][] = '重复设备关联记录合并失败：' . $wpdb->last_error;
-                                $failed++;
-                                $items[] = $item;
-                                continue;
-                            }
-                        }
-
-                        $delete_result = $wpdb->delete(
-                            $table_name,
-                            array('id' => intval($row['id'])),
-                            array('%d')
-                        );
-                        if ($delete_result === false) {
-                            $item['apply_status'] = 'failed';
-                            $item['issues'][] = '重复设备删除失败：' . $wpdb->last_error;
-                            $failed++;
-                            $items[] = $item;
-                            continue;
-                        }
-
-                        $item['apply_status'] = 'merged_duplicate';
-                        $item['status'] = 'merged_duplicate';
-                        $item['migration_status'] = 'merged_duplicate';
-                        $item['merged_into_id'] = $primary_id;
-                        $item['issues'][] = '已合并到重复组主记录';
-                        $merged++;
-                        $items[] = $item;
-                        continue;
-                    }
-
-                    $conflict_id = $wpdb->get_var($wpdb->prepare(
-                        "SELECT id FROM $table_name WHERE uuid = %s AND id != %d LIMIT 1",
-                        $item['stable_device_id_v2'],
-                        intval($row['id'])
-                    ));
-                    if (!empty($conflict_id)) {
-                        $item['apply_status'] = 'skipped';
-                        $item['issues'][] = 'stable_device_id_v2 已被其他设备使用';
-                        $skipped++;
-                        $items[] = $item;
-                        continue;
-                    }
-
-                    $collector = self::extract_collector_metadata($data);
-                    $legacy_uuid = $item['legacy_uuid'] !== '' ? $item['legacy_uuid'] : (isset($row['uuid']) ? $row['uuid'] : '');
-                    $data = self::attach_device_migration_meta(
-                        $data,
-                        $legacy_uuid,
-                        $item['stable_device_id_v2'],
-                        $collector,
-                        'admin_full_v2_migration'
-                    );
-                    $data = self::normalize_device_data_v2($data, $legacy_uuid, $item['stable_device_id_v2'], $collector);
-                    $data_json = wp_json_encode($data, JSON_UNESCAPED_UNICODE);
-                    if ($data_json === false) {
-                        $item['apply_status'] = 'failed';
-                        $item['issues'][] = 'JSON 编码失败';
-                        $failed++;
-                        $items[] = $item;
-                        continue;
-                    }
-
-                    $new_ip = self::extract_valid_ip($data);
-                    if ($new_ip === '') {
-                        $new_ip = isset($row['ip']) && $row['ip'] !== '' ? $row['ip'] : '127.0.0.1';
-                    }
-
-                    $result = $wpdb->update(
-                        $table_name,
-                        array(
-                            'uuid' => $item['stable_device_id_v2'],
-                            'ip' => $new_ip,
-                            'data' => $data_json,
-                        ),
-                        array('id' => intval($row['id'])),
-                        array('%s', '%s', '%s'),
-                        array('%d')
-                    );
-
-                    if ($result === false) {
-                        $item['apply_status'] = 'failed';
-                        $item['issues'][] = '数据库更新失败：' . $wpdb->last_error;
-                        $failed++;
-                    } else {
-                        $old_uuid = isset($row['uuid']) ? (string) $row['uuid'] : '';
-                        if ($old_uuid !== '' && $old_uuid !== $item['stable_device_id_v2']) {
-                            $manual_update = $wpdb->update(
-                                $manual_table_name,
-                                array('record_uuid' => $item['stable_device_id_v2']),
-                                array('record_uuid' => $old_uuid),
-                                array('%s'),
-                                array('%s')
-                            );
-                            $auto_update = $wpdb->update(
-                                $auto_table_name,
-                                array('record_uuid' => $item['stable_device_id_v2']),
-                                array('record_uuid' => $old_uuid),
-                                array('%s'),
-                                array('%s')
-                            );
-                            if ($manual_update === false || $auto_update === false) {
-                                $item['apply_status'] = 'failed';
-                                $item['issues'][] = '关联变更记录迁移失败：' . $wpdb->last_error;
-                                $failed++;
-                                $items[] = $item;
-                                continue;
-                            }
-                        }
-                        $item['apply_status'] = $result === 0 ? 'unchanged' : 'updated';
-                        $updated += $result === 0 ? 0 : 1;
-                    }
-
-                    $items[] = $item;
-                }
-
-                if ($failed > 0) {
-                    throw new Exception('迁移中存在数据库或编码失败记录');
-                }
-
-                $wpdb->query('COMMIT');
-            } catch (Exception $e) {
-                $wpdb->query('ROLLBACK');
-                return new WP_Error('migration_failed', '迁移执行失败，已回滚', array(
-                    'status' => 500,
-                    'detail' => $e->getMessage(),
-                    'items' => $items,
-                ));
-            }
-
-            self::clear_pc_cache();
-            $payload = self::summarize_pc_migration_phase1($items, array(
-                'mode' => 'apply',
-                'limit' => $limit,
-                'offset' => $offset,
-                'updated' => $updated,
-                'merged' => $merged,
-                'skipped' => $skipped,
-                'failed' => $failed,
-            ));
-            $payload['message'] = '旧设备数据已转换为 v2 新结构';
-            return rest_ensure_response($payload);
-        }
-
-        /**
-         * 构建单条电脑设备迁移报告。
-         */
-        private static function build_pc_migration_phase1_item($row)
-        {
-            $data = self::decode_json_field(isset($row['data']) ? $row['data'] : null);
-            $asset = isset($data['asset']) && is_array($data['asset']) ? $data['asset'] : array();
-            $has_asset = !empty($asset);
-            $identity = isset($asset['identity']) && is_array($asset['identity']) ? $asset['identity'] : array();
-            $legacy_uuid = isset($identity['legacy_uuid']) && $identity['legacy_uuid'] !== ''
-                ? sanitize_text_field((string) $identity['legacy_uuid'])
-                : self::derive_uuid_from_data($data);
-            if ($legacy_uuid === '' && !empty($row['uuid'])) {
-                $legacy_uuid = sanitize_text_field((string) $row['uuid']);
-            }
-            $stable_id = self::derive_hardware_stable_device_id_v2($data);
-            if ($stable_id === '' && isset($identity['stable_device_id_v2']) && $identity['stable_device_id_v2'] !== '') {
-                $stable_id = self::normalize_stable_device_id_value((string) $identity['stable_device_id_v2']);
-            }
-            $meta = isset($data['_npcink_device']) && is_array($data['_npcink_device'])
-                ? $data['_npcink_device']
-                : array();
-            $issues = array();
-            $status = 'ready';
-
-            if (empty($data)) {
-                $issues[] = 'data 为空或不是合法 JSON';
-                $status = 'blocked';
-            }
-            if (!$has_asset && !empty($row['uuid']) && $legacy_uuid !== $row['uuid']) {
-                $issues[] = 'data 计算出的 legacy uuid 与数据库 uuid 不一致';
-                $status = 'needs_review';
-            }
-            if ($stable_id === '') {
-                $issues[] = '无法生成 stable_device_id_v2';
-                if ($status === 'ready') {
-                    $status = 'needs_review';
-                }
-            }
-            if ($has_asset && !empty($meta['schema_version']) && intval($meta['schema_version']) >= 2 && !empty($row['uuid']) && $row['uuid'] === $stable_id) {
-                $status = empty($issues) ? 'already_migrated' : $status;
-            }
-
-            return array(
-                'id' => intval($row['id']),
-                'name' => isset($row['name']) ? $row['name'] : '',
-                'number' => isset($row['number']) ? $row['number'] : '',
-                'uuid' => isset($row['uuid']) ? $row['uuid'] : '',
-                'legacy_uuid' => $legacy_uuid,
-                'stable_device_id_v2' => $stable_id,
-                'migration_status' => $status,
-                'status' => $status,
-                'issues' => $issues,
-                'has_v2_meta' => !empty($meta),
-                'collector' => isset($data['collector']) && is_array($data['collector']) ? $data['collector'] : array(),
-            );
-        }
-
-        /**
-         * 汇总迁移报告。
-         */
-        private static function summarize_pc_migration_phase1($items, $extra = array())
-        {
-            $summary = array(
-                'scanned' => count($items),
-                'ready' => 0,
-                'already_migrated' => 0,
-                'needs_review' => 0,
-                'blocked' => 0,
-            );
-
-            foreach ($items as $item) {
-                $status = isset($item['status']) ? $item['status'] : 'needs_review';
-                if (!isset($summary[$status])) {
-                    $summary[$status] = 0;
-                }
-                $summary[$status]++;
-            }
-
-            return array_merge($extra, array(
-                'success' => true,
-                'summary' => $summary,
-                'items' => $items,
-            ));
         }
 
         /**
@@ -3613,16 +2869,8 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                 return new WP_Error('invalid_data', '保存设置失败：' . $validation_result, array('status' => 400));
             }
 
-            $raw_password = $object->password;
-            if ($raw_password !== '已设定') {
-                $object->password = wp_hash_password($raw_password);
-            } else {
-                $random_string = uniqid(mt_rand(), true);
-                $object->password = self::get_seting('password') ? self::get_seting('password') : wp_hash_password($random_string);
-            }
-
             $object->client_tokens = self::get_client_tokens(true);
-            unset($object->route, $object->client_token_id, $object->client_token_key_hash, $object->client_token_preview, $object->client_token_created_at, $object->has_client_token);
+            unset($object->route, $object->password, $object->client_token_id, $object->client_token_key_hash, $object->client_token_preview, $object->client_token_created_at, $object->has_client_token);
 
             $result = update_option(self::$option, $object);
             if ($result === false) {

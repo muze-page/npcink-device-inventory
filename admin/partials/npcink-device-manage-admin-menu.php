@@ -78,19 +78,19 @@ if (!class_exists('Npcink_Device_Manage_Admin_Menu')) {
 
             $option = get_option(self::$option);
             if (is_object($option)) {
-                $option->password = '已设定';
                 $option->client_tokens = Npcink_Device_Manage_Admin_Interface_API::public_client_tokens();
                 $option->has_client_token = !empty(array_filter($option->client_tokens, function ($token) {
                     return !empty($token['enabled']);
                 }));
+                unset($option->password);
                 unset($option->client_token_key_hash);
                 unset($option->client_token_id, $option->client_token_preview, $option->client_token_created_at);
             } elseif (is_array($option)) {
-                $option['password'] = '已设定';
                 $option['client_tokens'] = Npcink_Device_Manage_Admin_Interface_API::public_client_tokens();
                 $option['has_client_token'] = !empty(array_filter($option['client_tokens'], function ($token) {
                     return !empty($token['enabled']);
                 }));
+                unset($option['password']);
                 unset($option['client_token_key_hash']);
                 unset($option['client_token_id'], $option['client_token_preview'], $option['client_token_created_at']);
             }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * 电脑信息接口（legacy admin-ajax 已移除，REST 在 api.php 中处理）
+ * 电脑信息接口（REST 在 api.php 中处理）
  */
 if (!class_exists('Npcink_Device_Manage_Admin_Interface_Table_PC')) {
     class Npcink_Device_Manage_Admin_Interface_Table_PC extends Npcink_Device_Manage_Admin_Interface

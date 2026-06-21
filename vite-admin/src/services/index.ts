@@ -6,8 +6,6 @@ export {
   getClientTokens,
   generateClientToken,
   revokeClientToken,
-  precheckPcMigrationPhase1,
-  applyPcMigrationPhase1,
 } from "@/services/seting";
 export {
   addChangeData,

@@ -4,7 +4,7 @@ import "./style.css";
 type AgentConfig = {
   site: string;
   name: string;
-  password: string;
+  token: string;
 };
 
 type DeviceSnapshot = {
@@ -47,13 +47,13 @@ app.innerHTML = `
             <summary>更多配置</summary>
             <label class="field">
               <span>上传授权码</span>
-              <input id="password" name="password" type="password" placeholder="后台生成的上传授权码" />
+              <input id="token" name="token" type="password" placeholder="后台生成的上传授权码" />
             </label>
             <label class="field">
               <span>接口地址</span>
               <input id="site" name="site" placeholder="https://example.com/wp-json/npcink/v1/device-post-data-v2" />
             </label>
-            <p class="tip">默认提交新版 v2 接口；旧接口只保留作回退测试。</p>
+            <p class="tip">默认提交新版 v2 接口，并使用授权码 HMAC 签名。</p>
           </details>
 
           <div class="form-actions">
@@ -86,7 +86,7 @@ app.innerHTML = `
 
 const siteInput = document.querySelector<HTMLInputElement>("#site")!;
 const nameInput = document.querySelector<HTMLInputElement>("#name")!;
-const passwordInput = document.querySelector<HTMLInputElement>("#password")!;
+const tokenInput = document.querySelector<HTMLInputElement>("#token")!;
 const configForm = document.querySelector<HTMLFormElement>("#configForm")!;
 const collectButton = document.querySelector<HTMLButtonElement>("#collectButton")!;
 const submitButton = document.querySelector<HTMLButtonElement>("#submitButton")!;
@@ -403,7 +403,7 @@ const errorMessage = (error: unknown) => {
 const getConfig = (): AgentConfig => ({
   site: siteInput.value.trim(),
   name: nameInput.value.trim(),
-  password: passwordInput.value,
+  token: tokenInput.value,
 });
 
 const setBusy = (busy: boolean) => {
@@ -519,7 +519,7 @@ const renderAll = () => {
 const renderConfig = (config: AgentConfig) => {
   siteInput.value = config.site || "";
   nameInput.value = config.name || "";
-  passwordInput.value = config.password || "";
+  tokenInput.value = config.token || "";
   renderOverview();
 };
 
@@ -530,7 +530,7 @@ const loadConfig = async () => {
 
 const saveConfig = async () => {
   const config = getConfig();
-  if (!config.site || !config.password) {
+  if (!config.site || !config.token) {
     setToast("请填写上传授权码和接口地址。", "error");
     return false;
   }

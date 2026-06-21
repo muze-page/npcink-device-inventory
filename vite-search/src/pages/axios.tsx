@@ -34,13 +34,11 @@ const parseClientToken = (value: string) => {
 const buildQueryAuthHeaders = async (credential: string, query: string) => {
   const token = parseClientToken(credential);
   if (!token) {
-    return {
-      "x-npcink-password": credential,
-    };
+    throw new Error("请输入后台生成的 mda_... 客户端授权码");
   }
 
   if (typeof crypto === "undefined" || !crypto.subtle) {
-    throw new Error("当前浏览器不支持安全签名，请改用现代浏览器或旧查询密码");
+    throw new Error("当前浏览器不支持安全签名，请改用现代浏览器");
   }
 
   const timestamp = Math.floor(Date.now() / 1000).toString();
@@ -74,21 +72,21 @@ const buildQueryAuthHeaders = async (credential: string, query: string) => {
  */
 
 /**
- *@param password 密码
+ *@param credential 客户端授权码
  * @param id 姓名或编号
  *
  */
-export const fetchData = async (password: string, id: string) => {
-  const safePassword = password.trim();
+export const fetchData = async (credential: string, id: string) => {
+  const safeCredential = credential.trim();
   const safeId = id.trim();
 
-  if (!safePassword || !safeId) {
-    alert("请输入密码和设备号/姓名");
+  if (!safeCredential || !safeId) {
+    alert("请输入客户端授权码和设备号/姓名");
     return null;
   }
 
   try {
-    const headers = await buildQueryAuthHeaders(safePassword, safeId);
+    const headers = await buildQueryAuthHeaders(safeCredential, safeId);
     // 发送 GET 请求到指定的 URL
     const response = await axios.get(Site + "/wp-json/npcink/v1/query", {
       headers,

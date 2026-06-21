@@ -44,7 +44,6 @@ export type MysqlDeviceChangeMeat = MysqlDeviceChange & {
 //选项数据类型
 export interface OptionType {
   route?: string; //路由
-  password?: string; //密码
   delete_mysql?: boolean; //是否删除数据库
   department: string[]; //部门数组
   public_search_route: string; //前端公共搜索路由

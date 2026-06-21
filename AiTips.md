@@ -100,7 +100,7 @@ JSON 输入统一处理：wp_unslash + json_decode + wp_json_encode + 长度/结
 当前已完成的安全与性能收敛：
 
 - 设备上传 `/device-post-data-v2` 已使用后台授权码、timestamp、nonce、body hash 与 HMAC 签名，并使用 transient 防重放。
-- 公开查询 `/query` 已支持后台授权码 HMAC 查询签名；旧查询密码仍作为兼容路径，只允许通过 header/body/raw body，不再从 URL query 参数读取。
+- 公开查询 `/query` 已强制使用后台授权码 HMAC 查询签名。
 - 公共接口失败次数已按 IP + UUID/route 做 transient 限流，超过阈值返回 429。
 - 公共查询默认只返回基础列，只有 `detail=1` 时才返回完整 `data`。
 - 管理端导出默认使用表级列白名单，完整备份需要显式 `detail=1`。
@@ -109,7 +109,6 @@ JSON 输入统一处理：wp_unslash + json_decode + wp_json_encode + 长度/结
 后续仍建议处理：
 
 - 将后台授权码拆分为上传 token 与只读查询 token，避免公开查询页复用上传授权范围。
-- 为公开查询增加可配置的强制 HMAC 开关，在确认旧查询页/旧流程迁移完成后禁用旧查询密码。
 - 增加 REST 参数 schema，明确 `data/detail/page/per_page/format` 等参数的校验与默认值。
-- 如站点层或服务器层存在自定义 CORS，请将 `Access-Control-Allow-Origin` 改为站点白名单，并显式允许 `x-npcink-password`、`x-npcink-device-*` 与 `content-type`。
+- 如站点层或服务器层存在自定义 CORS，请将 `Access-Control-Allow-Origin` 改为站点白名单，并显式允许 `x-npcink-device-*` 与 `content-type`。
 - 生产环境关闭 `WP_DEBUG` 并限制 `debug.log` 访问，避免凭据、路径和请求错误详情泄露。
