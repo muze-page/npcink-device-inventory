@@ -6,11 +6,11 @@
 
 - 文件：`sj/npcink-device-inventory.zip`
 - 原始生成文件：`release/npcink-device-inventory.zip`
-- SHA-256：`59abf386cf9a531fd5347cca96833fea45e4035d299efa8c41a7aadee5029dc7`
+- SHA-256：`f94739d08938e1f1ee89dad0aaa36c25b652cc4a0b2493bdc8cfcae77bf527c8`
 - zip 根目录：`npcink-device-inventory/`
-- 文件数：218
-- 未压缩大小：3312522 bytes
-- 压缩大小：1015709 bytes
+- zip 条目数：212
+- 未压缩大小：3313053 bytes
+- 压缩大小：1015772 bytes
 
 ## 构建检查
 

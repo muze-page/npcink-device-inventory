@@ -19,6 +19,7 @@
 - `review-notes-for-plugin-team.md`：给 Plugin Review Team 的英文技术说明。
 - `review-response-templates.md`：若审核追问 JS 源码、自定义表、商标素材等问题时的回复模板。
 - `release-stage-summary-and-next-steps.md`：当前阶段总结、冻结建议和下一阶段提交流程。
+- `wordpress-org-submission-history.md`：提交审核前的历史决策、改名过程、验证结果和当前状态归档。
 - `technical-verification-record.md`：本地构建、PCP、包扫描、REST 冒烟验证记录。
 - `package-manifest.json`：包名、版本、hash、验证摘要的机器可读记录。
 - `new-user-quick-start.md`：新用户安装、设置、录入、上传、公共查询快速开始。

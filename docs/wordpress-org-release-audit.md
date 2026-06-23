@@ -174,9 +174,8 @@ php -l index.php
 find admin includes -name "*.php" -print0 | xargs -0 -n1 php -l
 ```
 
-The local environment used for this 2026-06-23 recheck did not have the
-`wp plugin check` subcommand installed, so Plugin Check revalidation is delegated
-to the GitHub workflow step above.
+After the final rename to `Npcink Device Inventory`, the local `wp plugin check`
+command was run again against `release/npcink-device-inventory`.
 
 Final PCP / Plugin Check result:
 

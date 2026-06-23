@@ -31,7 +31,7 @@ sj/npcink-device-inventory.zip
 - 插件 slug：`npcink-device-inventory`
 - 插件版本：`2.6.1083`
 - zip 根目录：`npcink-device-inventory/`
-- SHA-256：`59abf386cf9a531fd5347cca96833fea45e4035d299efa8c41a7aadee5029dc7`
+- SHA-256：`f94739d08938e1f1ee89dad0aaa36c25b652cc4a0b2493bdc8cfcae77bf527c8`
 
 主要处理：
 
