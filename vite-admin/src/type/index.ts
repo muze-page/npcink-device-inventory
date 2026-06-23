@@ -39,6 +39,7 @@ import {
   ClientTokenSummary,
   ExportPageData,
   ImportReport,
+  AdminLabels,
 } from "@/type/config";
 export type {
   ImportListData,
@@ -46,6 +47,7 @@ export type {
   ClientTokenSummary,
   ExportPageData,
   ImportReport,
+  AdminLabels,
 };
 
 import {
@@ -219,5 +221,5 @@ export interface ChangeAutoRecord {
  */
 export interface OsTypeArray {
   name: string;
-  image: string;
+  label: string;
 }

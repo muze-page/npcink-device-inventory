@@ -4,8 +4,6 @@ import { Skeleton, Space, Tooltip } from "antd";
 import { OsTypeArray } from "@/type/index";
 import { findOsTypeObj } from "@/utils/tool";
 import { DevieContext } from "@/context/DeviceContext";
-import MacOs from "@/assets/pc/macOS.png";
-import Win from "@/assets/pc/windowsOS.png";
 
 const App: React.FC = () => {
   //获取数据，拿到隐藏姓名状态
@@ -13,8 +11,8 @@ const App: React.FC = () => {
 
   //标识 - 不同的设备不同的图片
   const osTypeArray = [
-    { id: 1, name: "Mac", image: MacOs },
-    { id: 2, name: "Windows", image: Win },
+    { name: "Mac", label: "macOS" },
+    { name: "Windows", label: "Windows" },
   ];
 
   const meat = drawerData.meat || {
@@ -103,6 +101,8 @@ ${
 }
 `}
   >
-    <img src={osType.image} className="w-[110px] h-[110px]" />
+    <div className="flex h-[110px] w-[110px] items-center justify-center rounded-lg border border-white/25 bg-white/10 px-3 text-center text-lg font-semibold leading-tight text-white">
+      {osType.label}
+    </div>
   </div>
 );

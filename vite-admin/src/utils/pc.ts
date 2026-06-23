@@ -16,7 +16,6 @@ import { osReplace, osTypeReplace, excludeGraphics } from "@/utils/replace";
 import { normalizeComputerData } from "@/utils/assetAdapter";
 
 import { formatBytes, formatMB } from "@/utils/format";
-import Unknown from "@/assets/type/unknown.png";
 
 /**
  * 判断布尔值
@@ -63,11 +62,11 @@ export const normalize = (v: string) =>
  */
 export const findOsTypeObj = (array: OsTypeArray[], value: string) => {
   const result = array.find((item) => item.name === value);
-  // 返回默认对象，避免返回 undefined
+  // 返回默认对象，避免返回 undefined。
   return (
     result || {
       name: "unknown",
-      image: Unknown /* 其他默认属性 */,
+      label: "OS",
     }
   );
 };

@@ -133,10 +133,7 @@ class Npcink_Device_Manage
 	 */
 	private function set_locale()
 	{
-
-		$plugin_i18n = new Npcink_Device_Manage_I18n();
-
-		$this->loader->add_action('plugins_loaded', $plugin_i18n, 'load_plugin_textdomain');
+		// WordPress.org loads plugin translations automatically for this text domain.
 	}
 
 	/**

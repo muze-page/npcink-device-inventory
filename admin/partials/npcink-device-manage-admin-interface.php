@@ -1,5 +1,11 @@
 <?php
 
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema introspection uses INFORMATION_SCHEMA with in-request static caches for plugin-owned table checks.
+
 /**
  * 接口 设置各种接口
  */

@@ -74,45 +74,31 @@ export const columnsTable = [
 
 
 
-//准备图标
-import JD from "@/assets/platform/京东.png";
-import TaoBao from "@/assets/platform/淘宝.png";
-import PDD from "@/assets/platform/拼多多.png";
-import MeiTuan from "@/assets/platform/美团.png";
-import XianYu from "@/assets/platform/闲鱼.png";
-import DouYin from "@/assets/platform/抖音.png";
-import Offline from "@/assets/platform/线下购买.png";
-import About from "@/assets/platform/其他.png";
-//采购平台展示图片
+//采购平台展示标签。发布包不使用第三方平台图标，避免商标/素材授权风险。
 export const platformArray = [
-  { name: "JingDong", image: JD },
-  { name: "TaoBao", image: TaoBao },
-  { name: "PingDuoDuo", image: PDD },
-  { name: "MeiTuan", image: MeiTuan },
-  { name: "XianYu", image: XianYu },
-  { name: "DouYin", image: DouYin },
-  { name: "Offline", image: Offline },
-  { name: "About", image: About },
+  { name: "EcommerceA", label: "电商平台A" },
+  { name: "EcommerceB", label: "电商平台B" },
+  { name: "EcommerceC", label: "电商平台C" },
+  { name: "LocalService", label: "本地服务平台" },
+  { name: "SecondHand", label: "二手交易平台" },
+  { name: "ShortVideo", label: "短视频平台" },
+  { name: "Offline", label: "线下购买" },
+  { name: "About", label: "其他" },
 ];
 
 //自定义产品支付方式
 export const stylePayType = [
-  { value: "Wechat", label: "微信" },
-  { value: "Alipay", label: "支付宝" },
+  { value: "WalletA", label: "电子钱包A" },
+  { value: "WalletB", label: "电子钱包B" },
   { value: "BankCard", label: "银行卡" },
   { value: "Cash", label: "现金" },
   { value: "About", label: "其他" },
 ];
-//支付平台展示图片
-import Alipay from "@/assets/pay/支付宝支付.png";
-import Wechat from "@/assets/pay/微信支付.png";
-import Cash from "@/assets/pay/现金支付.png";
-import BankCard from "@/assets/pay/银行卡支付.png";
-import AboutPay from "@/assets/pay/其他支付.png";
+//支付方式展示标签。发布包不使用第三方支付图标，避免商标/素材授权风险。
 export const payArray = [
-  { name: "Alipay", image: Alipay },
-  { name: "Wechat", image: Wechat },
-  { name: "BankCard", image: BankCard },
-  { name: "Cash", image: Cash },
-  { name: "AboutPay", image: AboutPay },
+  { name: "WalletA", label: "电子钱包A" },
+  { name: "WalletB", label: "电子钱包B" },
+  { name: "BankCard", label: "银行卡" },
+  { name: "Cash", label: "现金" },
+  { name: "AboutPay", label: "其他" },
 ];

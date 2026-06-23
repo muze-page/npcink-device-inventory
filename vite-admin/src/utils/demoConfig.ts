@@ -22,7 +22,7 @@ const data = {
   data: DemoData, //演示用设备
   styleData: StyleData, //自定义设备数据类型
   option: option, //选项
-  site: "http://localhost:10048", //网址
+  site: "", //网址
   rest_url: "/wp-json/npcink/v1", //REST API 基础地址
   rest_nonce: "", //开发环境可为空
   sqlTableName: sqlTableNameData, //数据库表名

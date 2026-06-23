@@ -49,12 +49,12 @@ const defaultValue: FormType = {
   title: "",
   numbers: 1, // 设备数量
   total: 0,
-  platform: "TaoBao",
+  platform: "EcommerceA",
   shop_name: "",
   link: "",
   order_time: dayjs(), //当天日期
   order: "",
-  pay_method: "Alipay",
+  pay_method: "WalletA",
   purchaser: "",
 };
 
@@ -144,12 +144,12 @@ const App = ({ form, handleOk }: AddFormProps) => {
       title: "华为路由器",
       numbers: 2,
       total: 2300,
-      platform: "TaoBao",
-      shop_name: "华为路由器专卖店",
-      link: "https://www.taobao.com",
+      platform: "EcommerceA",
+      shop_name: "示例店铺",
+      link: "https://example.com/product",
       order_time: dayjs(),
-      order: "tbasdf65616",
-      pay_method: "Alipay",
+      order: "ORDER65616",
+      pay_method: "WalletA",
       purchaser: "王五",
     };
     form?.setFieldsValue(data);

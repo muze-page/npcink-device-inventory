@@ -1,0 +1,83 @@
+{
+  "plugin_slug": "npcink-device-manage",
+  "created_at": "2026-06-21",
+  "source_files": {
+    "icon": "sj/img/ChatGPT Image 2026年6月21日 11_11_25.png",
+    "banner": "sj/img/banner.png"
+  },
+  "assets": [
+    {
+      "file": "sj/assets/banner-772x250.png",
+      "purpose": "standard banner",
+      "width": 772,
+      "height": 250,
+      "bytes": 194258,
+      "sha256": "30cdaafbe9b61451f69bcc2806d2bc066cfd9ecf68d3499b4ee33d95b9f25565"
+    },
+    {
+      "file": "sj/assets/banner-1544x500.png",
+      "purpose": "retina banner",
+      "width": 1544,
+      "height": 500,
+      "bytes": 682291,
+      "sha256": "897c25f484d92872f1a1cc8246713d5033ba3f1c440f58cfb9ea04f7a2b3ef2d"
+    },
+    {
+      "file": "sj/assets/icon-128x128.png",
+      "purpose": "standard icon",
+      "width": 128,
+      "height": 128,
+      "bytes": 12140,
+      "sha256": "3bed2215b2dda4a25c634e034e2818915067042492edf677df2e30d76a40f838"
+    },
+    {
+      "file": "sj/assets/icon-256x256.png",
+      "purpose": "retina icon",
+      "width": 256,
+      "height": 256,
+      "bytes": 56238,
+      "sha256": "fb702f7137247d89bf0a6f2cc8df6d7422d6afd6fa723542fb73f2cc76600cb3"
+    },
+    {
+      "file": "sj/assets/screenshot-1.png",
+      "purpose": "admin computer device inventory screenshot",
+      "width": 1440,
+      "height": 940,
+      "bytes": 98366,
+      "sha256": "d68512ea030a7957cb2ccc87e2f5ed5415d5cd5070ef7484206136d6392cab4a"
+    },
+    {
+      "file": "sj/assets/screenshot-2.png",
+      "purpose": "admin custom asset inventory screenshot",
+      "width": 1440,
+      "height": 940,
+      "bytes": 91919,
+      "sha256": "2939c537e2d667a032d459cc058c7b23d471b1733526eb6821e97dfb577f85c4"
+    },
+    {
+      "file": "sj/assets/screenshot-3.png",
+      "purpose": "admin hardware audit screenshot",
+      "width": 1440,
+      "height": 971,
+      "bytes": 107043,
+      "sha256": "5e1af245bfeb4825e8140483afbbc0310956c1d10a6dcac5acd142fadf61b21e"
+    },
+    {
+      "file": "sj/assets/screenshot-4.png",
+      "purpose": "admin settings and client token screenshot",
+      "width": 1440,
+      "height": 940,
+      "bytes": 95345,
+      "sha256": "50aa1829846aec0ea8fad622f3f096f601885378da65af083db181ad0196ca7a"
+    },
+    {
+      "file": "sj/assets/screenshot-5.png",
+      "purpose": "public device search page screenshot",
+      "width": 1440,
+      "height": 1739,
+      "bytes": 117345,
+      "sha256": "f945f73772a04450a10ecca4962941fddec41b72f90f47c2eef2fed758a29cb3"
+    }
+  ],
+  "svn_assets_directory": "assets/"
+}

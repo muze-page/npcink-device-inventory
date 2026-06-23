@@ -8,6 +8,7 @@ const site = "/wp-content/plugins/npcink-device-manage/";
 
 export default defineConfig(({ mode }) => {
   const isProd = mode === "production";
+  const devProxyTarget = process.env.WP_DEV_PROXY_TARGET;
 
   return {
     plugins: [react()],
@@ -21,37 +22,6 @@ export default defineConfig(({ mode }) => {
           entryFileNames: "index.js",
           assetFileNames: "[name][extname]",
           chunkFileNames: "[name].js",
-          manualChunks(id) {
-            if (!id.includes("node_modules")) return;
-            const reactChunkRE =
-              /[\\/]node_modules[\\/](react|react-dom|react-is|scheduler)[\\/]/;
-            if (reactChunkRE.test(id)) return "react";
-            if (id.includes("@ant-design/icons")) {
-              return "antd-icons";
-            }
-            if (id.includes("@ant-design/cssinjs")) {
-              return "antd-style";
-            }
-            if (/[\\/]antd[\\/]es[\\/](table|pagination|checkbox|dropdown)[\\/]/.test(id)) {
-              return "antd-table";
-            }
-            if (/[\\/]antd[\\/]es[\\/](form|input|input-number|select|radio|switch|date-picker)[\\/]/.test(id)) {
-              return "antd-form";
-            }
-            if (/[\\/]antd[\\/]es[\\/](modal|message|notification|popconfirm|result|empty|spin|skeleton)[\\/]/.test(id)) {
-              return "antd-feedback";
-            }
-            if (id.includes("antd") || id.includes("@ant-design")) {
-              return "antd";
-            }
-            if (id.includes("@rc-component") || /[\\/]rc-/.test(id)) {
-              return "rc";
-            }
-            if (id.includes("@tanstack")) {
-              return "query";
-            }
-            return "vendor";
-          },
         },
       },
       //sourcemap: true,//保留映射关系，方便调试
@@ -85,17 +55,21 @@ export default defineConfig(({ mode }) => {
       //host: "0.0.0.0",
       //port: 3000,
       //open: true,
-      proxy: {
-        "/wp-json": {
-          target: "http://localhost:10048/",
-          changeOrigin: true,
-        },
-        "/api": {
-          target: "http://localhost:10048/",
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ""),
-        },
-      },
+      ...(devProxyTarget
+        ? {
+            proxy: {
+              "/wp-json": {
+                target: devProxyTarget,
+                changeOrigin: true,
+              },
+              "/api": {
+                target: devProxyTarget,
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api/, ""),
+              },
+            },
+          }
+        : {}),
     },
   };
 });

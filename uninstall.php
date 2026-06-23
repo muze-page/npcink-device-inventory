@@ -33,9 +33,9 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 
 //执行卸载插件时的动作
 require plugin_dir_path(__FILE__) . 'admin/partials/npcink-device-manage-admin-uninstall.php';
-function run_npcink_device_manage_uninstall()
+function npcink_device_manage_run_uninstall()
 {
 	$plugin = new Npcink_Device_Manage_Admin_Uninstall();
 	$plugin->run();
 }
-run_npcink_device_manage_uninstall();
+npcink_device_manage_run_uninstall();

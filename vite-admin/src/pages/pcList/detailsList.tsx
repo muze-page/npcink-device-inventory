@@ -5,8 +5,6 @@ import { useContext } from "react";
 import { DevieContext } from "@/context/DeviceContext";
 import { Checkbox, Tooltip, Skeleton, Space } from "antd";
 import { MysqlDeviceChangeMeat } from "@/type/index";
-import Mac from "@/assets/pc/mac.png";
-import Win from "@/assets/pc/windows.png";
 import { findOsTypeObj } from "@/utils/tool";
 
 interface Props {
@@ -36,8 +34,8 @@ const App: React.FC<Props> = ({
 
   //展示图片
   const osTypeArray = [
-    { id: 1, name: "Mac", image: Mac },
-    { id: 2, name: "Windows", image: Win },
+    { name: "Mac", label: "macOS" },
+    { name: "Windows", label: "Windows" },
   ];
 
   //找到需要的系统对象
@@ -62,7 +60,9 @@ const App: React.FC<Props> = ({
         ) : null}
         {/**顶部标志 */}
         <div>
-          <img key={osTypeObj.name} src={osTypeObj.image} className="h-10" />
+          <span className="inline-flex h-10 items-center rounded border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700">
+            {osTypeObj.label}
+          </span>
         </div>
 
         {/**底部数据 */}
