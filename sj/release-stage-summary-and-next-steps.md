@@ -2,7 +2,7 @@
 
 日期：2026-06-21
 
-本文档归纳 `Npcink Device Manage` 当前 WordPress.org 发布准备工作的完成状态，并明确下一阶段重点。结论是：发布前资料准备已经完成，下一阶段应进入正式提交与审核跟进，不建议继续大改功能代码。
+本文档归纳 `Npcink Device Inventory` 当前 WordPress.org 发布准备工作的完成状态，并明确下一阶段重点。结论是：发布前资料准备已经完成，下一阶段应进入正式提交与审核跟进，不建议继续大改功能代码。
 
 ## 当前结论
 
@@ -23,14 +23,14 @@
 已准备上传包：
 
 ```text
-sj/npcink-device-manage.zip
+sj/npcink-device-inventory.zip
 ```
 
 包信息：
 
-- 插件 slug：`npcink-device-manage`
+- 插件 slug：`npcink-device-inventory`
 - 插件版本：`2.6.1083`
-- zip 根目录：`npcink-device-manage/`
+- zip 根目录：`npcink-device-inventory/`
 - SHA-256：`59abf386cf9a531fd5347cca96833fea45e4035d299efa8c41a7aadee5029dc7`
 
 主要处理：
@@ -39,7 +39,7 @@ sj/npcink-device-manage.zip
 - 保持 Stable tag 与主插件版本一致。
 - 包内包含前端构建产物、React/TypeScript 源码和构建配置。
 - 包内排除 `node_modules`、`.env`、`.map`、`.DS_Store`、桌面端源码和提交资料目录。
-- 包名已统一为 `npcink-device-manage.zip`。
+- 包名已统一为 `npcink-device-inventory.zip`。
 
 ### 2. Plugin Check 与技术验证
 
@@ -51,7 +51,7 @@ npm run build --prefix vite-search
 composer phpcs
 composer phpstan
 bash .github/scripts/package-wordpress-plugin.sh
-wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin check /Users/muze/gitee/npcink-device-manage/release/npcink-device-manage
+wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin check /Users/muze/gitee/npcink-device-manage/release/npcink-device-inventory
 ```
 
 结果：
@@ -112,7 +112,7 @@ sj/assets/
 - 后台入口层 i18n 覆盖
 - React 后台顶层标签中英覆盖
 - 公共查询页创建标题和 fallback 文案 gettext 覆盖
-- `languages/npcink-device-manage.pot` 已重新生成
+- `languages/npcink-device-inventory.pot` 已重新生成
 
 当前不建议一次性做八国语言。首发阶段保持英文和中文更容易审核、维护和同步。
 
@@ -154,7 +154,7 @@ sj/new-user-quick-start.md
 
 核心文件：
 
-- `sj/npcink-device-manage.zip`：准备上传的插件包。
+- `sj/npcink-device-inventory.zip`：准备上传的插件包。
 - `sj/submission-form-copy.md`：WordPress.org 提交表单可复制文案。
 - `sj/review-notes-for-plugin-team.md`：给审核团队的英文说明。
 - `sj/review-response-templates.md`：审核追问时的回复模板。
@@ -179,7 +179,7 @@ https://wordpress.org/plugins/developers/add/
 3. 上传：
 
 ```text
-sj/npcink-device-manage.zip
+sj/npcink-device-inventory.zip
 ```
 
 4. 使用：
@@ -246,6 +246,6 @@ sj/review-notes-for-plugin-team.md
 
 ## 当前行动建议
 
-现在最合适的动作是提交 `sj/npcink-device-manage.zip`，进入 WordPress.org 审核流程。
+现在最合适的动作是提交 `sj/npcink-device-inventory.zip`，进入 WordPress.org 审核流程。
 
 在审核反馈回来之前，应把当前包和资料视为冻结版本。需要改动时，只围绕审核反馈做最小必要修正，并重新跑构建、PCP、包 hash 和资料同步。

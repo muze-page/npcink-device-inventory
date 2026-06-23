@@ -2,7 +2,7 @@
 
 This repository builds three release artifacts through GitHub Actions:
 
-- `npcink-device-manage-plugin.zip`: installable Npcink Device Manage WordPress plugin package.
+- `npcink-device-inventory-plugin.zip`: installable Npcink Device Inventory WordPress plugin package.
 - `Npcink Device Agent_*.dmg`: macOS hardware information uploader.
 - `Npcink Device Agent_*_x64-setup.exe`: Windows hardware information uploader.
 

@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 // https://vitejs.dev/config/
 
-const site = "/wp-content/plugins/npcink-device-manage/";
+const site = "/wp-content/plugins/npcink-device-inventory/";
 
 export default defineConfig(({ mode }) => {
   const isProd = mode === "production";

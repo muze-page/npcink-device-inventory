@@ -9,8 +9,8 @@ if (!defined('ABSPATH')) {
 /**
  * 接口 设置各种接口
  */
-if (!class_exists('Npcink_Device_Manage_Admin_Interface')) {
-    class Npcink_Device_Manage_Admin_Interface
+if (!class_exists('Npcink_Device_Inventory_Admin_Interface')) {
+    class Npcink_Device_Inventory_Admin_Interface
     {
 
         //选项
@@ -34,7 +34,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface')) {
         public static function get_cache_key($suffix)
         {
             $blog_id = function_exists('get_current_blog_id') ? get_current_blog_id() : 1;
-            return 'npcink_device_manage_' . $blog_id . '_' . $suffix;
+            return 'npcink_device_inventory_' . $blog_id . '_' . $suffix;
         }
 
         /**
@@ -225,31 +225,31 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface')) {
         {
             //设置
             require_once plugin_dir_path(__FILE__) . 'interface/seting.php';
-            Npcink_Device_Manage_Admin_Interface_Seting::run();
+            Npcink_Device_Inventory_Admin_Interface_Seting::run();
 
             //电脑设备数据的接收，前端数据查询
             require_once plugin_dir_path(__FILE__) . 'interface/api.php';
-            Npcink_Device_Manage_Admin_Interface_API::run();
+            Npcink_Device_Inventory_Admin_Interface_API::run();
 
             //电脑设备设置
             require_once plugin_dir_path(__FILE__) . 'interface/table-pc.php';
-            Npcink_Device_Manage_Admin_Interface_Table_PC::run();
+            Npcink_Device_Inventory_Admin_Interface_Table_PC::run();
 
             //自定义设备数据增删改查接口
             require_once plugin_dir_path(__FILE__) . 'interface/table-style.php';
-            Npcink_Device_Manage_Admin_Interface_Table_Style::run();
+            Npcink_Device_Inventory_Admin_Interface_Table_Style::run();
 
             //设备变更手动记录相关接口
             require_once plugin_dir_path(__FILE__) . 'interface/table-manual.php';
-            Npcink_Device_Manage_Admin_Interface_Table_Manual::run();
+            Npcink_Device_Inventory_Admin_Interface_Table_Manual::run();
 
             //设备变更自动记录相关接口
             require_once plugin_dir_path(__FILE__) . 'interface/table-auto.php';
-            Npcink_Device_Manage_Admin_Interface_Table_Auto::run();
+            Npcink_Device_Inventory_Admin_Interface_Table_Auto::run();
 
             //添加前端公共搜索页接口
             require_once plugin_dir_path(__FILE__) . 'interface/search-page.php';
-            Npcink_Device_Manage_Admin_Interface_Search_Page::run();
+            Npcink_Device_Inventory_Admin_Interface_Search_Page::run();
         }
 
 

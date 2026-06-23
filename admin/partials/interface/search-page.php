@@ -7,8 +7,8 @@ if (!defined('ABSPATH')) {
 /**
  * 添加前端搜索页接口
  */
-if (!class_exists('Npcink_Device_Manage_Admin_Interface_Search_Page')) {
-    class Npcink_Device_Manage_Admin_Interface_Search_Page extends Npcink_Device_Manage_Admin_Interface
+if (!class_exists('Npcink_Device_Inventory_Admin_Interface_Search_Page')) {
+    class Npcink_Device_Inventory_Admin_Interface_Search_Page extends Npcink_Device_Inventory_Admin_Interface
     {
         public static function run()
         {
@@ -23,8 +23,8 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_Search_Page')) {
         public static  function add_page($route)
         {
             // 创建新页面
-            $page_title = __('Device Public Search', 'npcink-device-manage');
-            $page_content = '<div id="npcinkSearch">' . esc_html__('Unable to load the device search app. Please contact the site administrator.', 'npcink-device-manage') . '</div>';
+            $page_title = __('Device Public Search', 'npcink-device-inventory');
+            $page_content = '<div id="npcinkSearch">' . esc_html__('Unable to load the device search app. Please contact the site administrator.', 'npcink-device-inventory') . '</div>';
 
             $page = array(
                 'post_title'   => $page_title,
@@ -40,8 +40,8 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_Search_Page')) {
 
         public static function load_js()
         {
-            $ver = Npcink_Device_Manage_Admin_Menu::$plugin_version;
-            $name = Npcink_Device_Manage_Admin_Menu::$plugin_name . '-search';
+            $ver = Npcink_Device_Inventory_Admin_Menu::$plugin_version;
+            $name = Npcink_Device_Inventory_Admin_Menu::$plugin_name . '-search';
             //准备地址
              $index_css = plugin_dir_url(dirname(dirname(__DIR__))) . 'vite-search/dist/index.css';
              wp_enqueue_style($name, $index_css, array(), $ver, false);

@@ -6,7 +6,7 @@
 
 ## 软件定位
 
-`Npcink Device Agent` 是配套桌面上传工具，用于在管理员授权后采集本机硬件信息，并提交到已安装 `Npcink Device Manage` 的 WordPress 网站。
+`Npcink Device Agent` 是配套桌面上传工具，用于在管理员授权后采集本机硬件信息，并提交到已安装 `Npcink Device Inventory` 的 WordPress 网站。
 
 桌面软件负责：
 
@@ -44,8 +44,8 @@
 
 ### 需要管理员准备
 
-1. 在 WordPress 后台安装并启用 `Npcink Device Manage`。
-2. 打开 `Plugins > Device Asset Management > Settings`。
+1. 在 WordPress 后台安装并启用 `Npcink Device Inventory`。
+2. 打开 `Plugins > Device Inventory > Settings`。
 3. 生成一个启用状态的客户端授权码。
 4. 将站点上传地址和授权码发给需要上传设备信息的用户。
 

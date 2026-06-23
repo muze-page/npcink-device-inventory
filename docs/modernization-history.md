@@ -1,4 +1,4 @@
-# Npcink Device Manage Modernization History
+# Npcink Device Inventory Modernization History
 
 ## Status
 
@@ -36,7 +36,7 @@ security, packaging, and admin experience.
    instead of creating a duplicate row.
 8. The old shared upload password path is replaced by client authorization code
    plus HMAC request signing.
-9. User-facing product names now use `Npcink Device Manage` for the WordPress
+9. User-facing product names now use `Npcink Device Inventory` for the WordPress
    plugin and `Npcink Device Agent` for the desktop uploader.
 
 ## Naming Migration
@@ -47,9 +47,9 @@ artifact names, and Rust/Tauri package names.
 The second naming pass removed the remaining project-owned historical technical
 identifiers:
 
-- WordPress plugin slug and package path: `npcink-device-manage`.
-- Plugin bootstrap file: `npcink-device-manage.php`.
-- Vite asset base path under `/wp-content/plugins/npcink-device-manage/`.
+- WordPress plugin slug and package path: `npcink-device-inventory`.
+- Plugin bootstrap file: `npcink-device-inventory.php`.
+- Vite asset base path under `/wp-content/plugins/npcink-device-inventory/`.
 - HMAC headers: `X-Npcink-Device-*`.
 - Stored metadata key: `_npcink_device`.
 
@@ -183,7 +183,7 @@ distribution should add code signing and macOS notarization.
 The plugin was symlinked into the Local WP plugin directory for preview:
 
 ```text
-/Users/muze/Local Sites/npcink-device-manage/app/public/wp-content/plugins
+/Users/muze/Local Sites/npcink-device-inventory/app/public/wp-content/plugins
 ```
 
 The upload software can be previewed locally through the Tauri dev command in

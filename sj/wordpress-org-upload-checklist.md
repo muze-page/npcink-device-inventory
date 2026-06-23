@@ -3,9 +3,9 @@
 ## 必须项
 
 - [x] 上传包是 zip 文件。
-- [x] 上传包文件名为 `npcink-device-manage.zip`。
-- [x] zip 根目录为 `npcink-device-manage/`。
-- [x] 主插件文件位于根目录：`npcink-device-manage/npcink-device-manage.php`。
+- [x] 上传包文件名为 `npcink-device-inventory.zip`。
+- [x] zip 根目录为 `npcink-device-inventory/`。
+- [x] 主插件文件位于根目录：`npcink-device-inventory/npcink-device-inventory.php`。
 - [x] `README.txt` 存在且非空。
 - [x] `README.txt` Stable tag 与主插件版本一致：`2.6.1083`。
 - [x] License 为 GPLv2 or later。
@@ -20,7 +20,7 @@
 - [x] PCP / Plugin Check 为 `0 ERROR / 0 WARNING`。
 - [x] `README.txt` 包含 `== Screenshots ==` 说明。
 - [x] `sj/assets/` 包含 banner、icon、`screenshot-1.png` 到 `screenshot-5.png`。
-- [x] `languages/npcink-device-manage.pot` 已更新。
+- [x] `languages/npcink-device-inventory.pot` 已更新。
 - [x] 提交资料包含新用户快速开始文档。
 - [x] 提交资料包含桌面上传软件单独发布说明。
 

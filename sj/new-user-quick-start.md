@@ -1,16 +1,16 @@
-# Npcink Device Manage 新用户快速开始
+# Npcink Device Inventory 新用户快速开始
 
 日期：2026-06-21
 
-这份文档面向第一次安装 `Npcink Device Manage` 的站点管理员，目标是在 10 到 15 分钟内完成插件启用、基础设置、设备录入和授权上传准备。
+这份文档面向第一次安装 `Npcink Device Inventory` 的站点管理员，目标是在 10 到 15 分钟内完成插件启用、基础设置、设备录入和授权上传准备。
 
 ## 1. 安装插件
 
 1. 登录 WordPress 后台。
 2. 打开 `Plugins > Add New Plugin > Upload Plugin`。
-3. 上传 `npcink-device-manage.zip`。
+3. 上传 `npcink-device-inventory.zip`。
 4. 启用插件。
-5. 打开 `Plugins > Device Asset Management`。
+5. 打开 `Plugins > Device Inventory`。
 
 启用后插件会创建自己的数据表和默认设置。除非管理员在卸载设置中明确启用删除数据，卸载时不会自动删除资产数据。
 

@@ -4,10 +4,10 @@
 
 ## 包信息
 
-- 文件：`sj/npcink-device-manage.zip`
-- 原始生成文件：`release/npcink-device-manage.zip`
+- 文件：`sj/npcink-device-inventory.zip`
+- 原始生成文件：`release/npcink-device-inventory.zip`
 - SHA-256：`59abf386cf9a531fd5347cca96833fea45e4035d299efa8c41a7aadee5029dc7`
-- zip 根目录：`npcink-device-manage/`
+- zip 根目录：`npcink-device-inventory/`
 - 文件数：218
 - 未压缩大小：3312522 bytes
 - 压缩大小：1015709 bytes
@@ -41,7 +41,7 @@ bash .github/scripts/package-wordpress-plugin.sh
 输出：
 
 ```text
-/Users/muze/gitee/npcink-device-manage/release/npcink-device-manage.zip
+/Users/muze/gitee/npcink-device-manage/release/npcink-device-inventory.zip
 ```
 
 ## Plugin Check / PCP
@@ -49,7 +49,7 @@ bash .github/scripts/package-wordpress-plugin.sh
 通过：
 
 ```bash
-wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin check /Users/muze/gitee/npcink-device-manage/release/npcink-device-manage --format=json
+wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin check /Users/muze/gitee/npcink-device-manage/release/npcink-device-inventory --format=json
 ```
 
 结果：
@@ -66,7 +66,7 @@ wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin check
 - 后台菜单标题、加载文案、插件列表 Settings 链接使用 gettext 字符串。
 - 后台 React 顶层标签通过 `dataLocal.labels` 覆盖英文和简体中文。
 - 公共查询页自动创建标题和 fallback 文案使用 gettext 字符串。
-- `languages/npcink-device-manage.pot` 已重新生成。
+- `languages/npcink-device-inventory.pot` 已重新生成。
 - `README.txt` 已增加 `== Screenshots ==` 区块。
 - `sj/assets/screenshot-1.png` 到 `sj/assets/screenshot-5.png` 已生成并记录到 `sj/assets/assets-manifest.json`。
 
@@ -75,8 +75,8 @@ wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin check
 通过：
 
 ```bash
-wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin deactivate npcink-device-manage
-wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin activate npcink-device-manage
+wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin deactivate npcink-device-inventory
+wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin activate npcink-device-inventory
 ```
 
 REST 未签名请求检查：
@@ -106,4 +106,4 @@ POST /wp-json/npcink/v1/device-post-data-v2 -> 403
 
 ## 最终判断
 
-`sj/npcink-device-manage.zip` 是当前准备提交到 WordPress.org 插件目录的候选包。
+`sj/npcink-device-inventory.zip` 是当前准备提交到 WordPress.org 插件目录的候选包。

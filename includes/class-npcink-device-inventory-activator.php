@@ -13,8 +13,8 @@ if (!defined('ABSPATH')) {
  * @link       https://www.npc.ink
  * @since      1.0.0
  *
- * @package    Npcink_Device_Manage
- * @subpackage Npcink_Device_Manage/includes
+ * @package    Npcink_Device_Inventory
+ * @subpackage Npcink_Device_Inventory/includes
  */
 
 /**
@@ -23,11 +23,11 @@ if (!defined('ABSPATH')) {
  * This class defines all code necessary to run during the plugin's activation.
  *
  * @since      1.0.0
- * @package    Npcink_Device_Manage
- * @subpackage Npcink_Device_Manage/includes
+ * @package    Npcink_Device_Inventory
+ * @subpackage Npcink_Device_Inventory/includes
  * @author     Npcink <1355471563@qq.com>
  */
-class Npcink_Device_Manage_Activator extends Npcink_Device_Manage_Admin_Interface
+class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_Interface
 {
 
 	/**
@@ -37,7 +37,7 @@ class Npcink_Device_Manage_Activator extends Npcink_Device_Manage_Admin_Interfac
 	 */
 	public static function run()
 	{
-		$current_version = defined('NPCINK_DEVICE_MANAGE_VERSION') ? NPCINK_DEVICE_MANAGE_VERSION : '1.0.0';
+		$current_version = defined('NPCINK_DEVICE_INVENTORY_VERSION') ? NPCINK_DEVICE_INVENTORY_VERSION : '1.0.0';
 		self::upgrade_schema(null, $current_version);
 	}
 
@@ -70,7 +70,7 @@ class Npcink_Device_Manage_Activator extends Npcink_Device_Manage_Admin_Interfac
 		}
 
 		if (!empty($current_version)) {
-			update_option('npcink_device_manage_plugin_version', $current_version);
+			update_option('npcink_device_inventory_plugin_version', $current_version);
 		}
 	}
 

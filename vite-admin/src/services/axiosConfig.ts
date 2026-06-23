@@ -17,7 +17,7 @@ let devRestNoncePromise: Promise<string | null> | null = null;
 const requestDevRestNonce = async (): Promise<string | null> => {
   try {
     const params = new URLSearchParams();
-    params.append("action", "npcink_device_manage_get_rest_nonce");
+    params.append("action", "npcink_device_inventory_get_rest_nonce");
     const response = await fetch("/api/wp-admin/admin-ajax.php", {
       method: "POST",
       headers: {

@@ -17,7 +17,7 @@ XSS 修复：移除/净化 dangerouslySetInnerHTML，改用白名单净化（如
 
 JSON 输入统一处理：wp_unslash + json_decode + wp_json_encode + 长度/结构校验，避免 sanitize_text_field 破坏 JSON；涉及 api.php、table-\*.php
 加基础限流：对 /query 和 /submit-data 做 IP/设备维度的失败锁定（Transient），降低爆破风险；涉及 api.php
-停止下发 option：dataLocal 中移除 option，仅下发必要 REST 地址与 nonce；涉及 npcink-device-manage-admin-menu.php、index.tsx
+停止下发 option：dataLocal 中移除 option，仅下发必要 REST 地址与 nonce；涉及 npcink-device-inventory-admin-menu.php、index.tsx
 优先级 P2（稳态与规范）
 
 补充审计日志：记录操作人、IP、字段变更，失败日志脱敏；涉及 table-pc.php、table-style.php
@@ -32,7 +32,7 @@ JSON 输入统一处理：wp_unslash + json_decode + wp_json_encode + 长度/结
 
 ### 1) 范围与入口
 
-- 管理端入口：`admin/partials/npcink-device-manage-admin-menu.php` 注入 React 管理端
+- 管理端入口：`admin/partials/npcink-device-inventory-admin-menu.php` 注入 React 管理端
 - 默认首屏 Tab：电脑设备（`vite-admin/src/pages/index.tsx`）
 
 ### 2) 构建快照
@@ -64,7 +64,7 @@ JSON 输入统一处理：wp_unslash + json_decode + wp_json_encode + 长度/结
   - GET `/admin/pc?fields=summary`
   - GET `/admin/pc-categories`
 - 开发：+1 次
-  - POST `/wp-admin/admin-ajax.php?action=npcink_device_manage_get_rest_nonce`
+  - POST `/wp-admin/admin-ajax.php?action=npcink_device_inventory_get_rest_nonce`
 
 ### 6) 各页面初始 API 请求
 

@@ -12,8 +12,8 @@ if (!defined('ABSPATH')) {
  * @link       https://www.npc.ink
  * @since      1.0.0
  *
- * @package    Npcink_Device_Manage
- * @subpackage Npcink_Device_Manage/admin/partials
+ * @package    Npcink_Device_Inventory
+ * @subpackage Npcink_Device_Inventory/admin/partials
  */
 ?>
 

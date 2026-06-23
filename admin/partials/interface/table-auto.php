@@ -7,8 +7,8 @@ if (!defined('ABSPATH')) {
 /**
  * 自动变更接口（REST 在 api.php 中处理）
  */
-if (!class_exists('Npcink_Device_Manage_Admin_Interface_Table_Auto')) {
-    class Npcink_Device_Manage_Admin_Interface_Table_Auto extends Npcink_Device_Manage_Admin_Interface
+if (!class_exists('Npcink_Device_Inventory_Admin_Interface_Table_Auto')) {
+    class Npcink_Device_Inventory_Admin_Interface_Table_Auto extends Npcink_Device_Inventory_Admin_Interface
     {
         public static function run()
         {

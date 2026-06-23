@@ -6,7 +6,7 @@ parameters:
   paths:
     - admin
     - includes
-    - npcink-device-manage.php
+    - npcink-device-inventory.php
     - uninstall.php
   excludePaths:
     analyse:

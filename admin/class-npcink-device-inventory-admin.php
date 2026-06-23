@@ -6,8 +6,8 @@
  * @link       https://www.npc.ink
  * @since      1.0.0
  *
- * @package    Npcink_Device_Manage
- * @subpackage Npcink_Device_Manage/admin
+ * @package    Npcink_Device_Inventory
+ * @subpackage Npcink_Device_Inventory/admin
  */
 
 /**
@@ -16,11 +16,11 @@
  * Defines the plugin name, version, and two examples hooks for how to
  * enqueue the admin-specific stylesheet and JavaScript.
  *
- * @package    Npcink_Device_Manage
- * @subpackage Npcink_Device_Manage/admin
+ * @package    Npcink_Device_Inventory
+ * @subpackage Npcink_Device_Inventory/admin
  * @author     Npcink <1355471563@qq.com>
  */
-class Npcink_Device_Manage_Admin
+class Npcink_Device_Inventory_Admin
 {
 
 	/**
@@ -69,15 +69,15 @@ class Npcink_Device_Manage_Admin
 		 * This function is provided for demonstration purposes only.
 		 *
 		 * An instance of this class should be passed to the run() function
-		 * defined in Npcink_Device_Manage_Loader as all of the hooks are defined
+		 * defined in Npcink_Device_Inventory_Loader as all of the hooks are defined
 		 * in that particular class.
 		 *
-		 * The Npcink_Device_Manage_Loader will then create the relationship
+		 * The Npcink_Device_Inventory_Loader will then create the relationship
 		 * between the defined hooks and the functions defined in this
 		 * class.
 		 */
 
-		wp_enqueue_style($this->plugin_name, plugin_dir_url(__FILE__) . 'css/npcink-device-manage-admin.css', array(), $this->version, 'all');
+		wp_enqueue_style($this->plugin_name, plugin_dir_url(__FILE__) . 'css/npcink-device-inventory-admin.css', array(), $this->version, 'all');
 	}
 
 	/**
@@ -92,15 +92,15 @@ class Npcink_Device_Manage_Admin
 		 * This function is provided for demonstration purposes only.
 		 *
 		 * An instance of this class should be passed to the run() function
-		 * defined in Npcink_Device_Manage_Loader as all of the hooks are defined
+		 * defined in Npcink_Device_Inventory_Loader as all of the hooks are defined
 		 * in that particular class.
 		 *
-		 * The Npcink_Device_Manage_Loader will then create the relationship
+		 * The Npcink_Device_Inventory_Loader will then create the relationship
 		 * between the defined hooks and the functions defined in this
 		 * class.
 		 */
 
-		wp_enqueue_script($this->plugin_name, plugin_dir_url(__FILE__) . 'js/npcink-device-manage-admin.js', array('jquery'), $this->version, false);
+		wp_enqueue_script($this->plugin_name, plugin_dir_url(__FILE__) . 'js/npcink-device-inventory-admin.js', array('jquery'), $this->version, false);
 	}
 	/**
 	 * 载入文件
@@ -108,18 +108,18 @@ class Npcink_Device_Manage_Admin
 	public static function load()
 	{
 		//接口文件
-		require_once plugin_dir_path(__FILE__) . 'partials/npcink-device-manage-admin-interface.php';
+		require_once plugin_dir_path(__FILE__) . 'partials/npcink-device-inventory-admin-interface.php';
 
 		//菜单
-		require_once plugin_dir_path(__FILE__) . 'partials/npcink-device-manage-admin-menu.php';
+		require_once plugin_dir_path(__FILE__) . 'partials/npcink-device-inventory-admin-menu.php';
 	}
 	
 	public function run()
 	{
 		//添加接口
-		Npcink_Device_Manage_Admin_Interface::run();
+		Npcink_Device_Inventory_Admin_Interface::run();
 
 		//添加菜单
-		Npcink_Device_Manage_Admin_Menu::run_menu($this->plugin_name, $this->version);
+		Npcink_Device_Inventory_Admin_Menu::run_menu($this->plugin_name, $this->version);
 	}
 }

@@ -1,14 +1,14 @@
 # Notes for the WordPress.org Plugin Review Team
 
-Plugin: Npcink Device Manage
+Plugin: Npcink Device Inventory
 
 Version: 2.6.1083
 
-Slug: npcink-device-manage
+Slug: npcink-device-inventory
 
 ## Summary
 
-Npcink Device Manage is a device asset management plugin. It stores device
+Npcink Device Inventory is a device asset management plugin. It stores device
 inventory data in WordPress, supports signed device upload workflows, provides
 admin inventory screens, tracks manual and automatic changes, and exposes an
 authorized public search page.
@@ -96,7 +96,7 @@ npm run build --prefix vite-search
 composer phpcs
 composer phpstan
 bash .github/scripts/package-wordpress-plugin.sh
-wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin check /Users/muze/gitee/npcink-device-manage/release/npcink-device-manage --format=json
+wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin check /Users/muze/gitee/npcink-device-manage/release/npcink-device-inventory --format=json
 ```
 
 Plugin Check result:

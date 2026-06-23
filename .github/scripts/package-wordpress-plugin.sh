@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-PLUGIN_SLUG="npcink-device-manage"
+PLUGIN_SLUG="npcink-device-inventory"
 RELEASE_DIR="${ROOT_DIR}/release"
 PACKAGE_DIR="${RELEASE_DIR}/${PLUGIN_SLUG}"
 ZIP_PATH="${RELEASE_DIR}/${PLUGIN_SLUG}.zip"
@@ -28,7 +28,7 @@ require_path() {
   copy_path "${source}"
 }
 
-require_path "npcink-device-manage.php"
+require_path "npcink-device-inventory.php"
 require_path "uninstall.php"
 require_path "index.php"
 copy_path "README.txt"

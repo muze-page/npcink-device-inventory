@@ -9,8 +9,8 @@
  * @link       https://www.npc.ink
  * @since      1.0.0
  *
- * @package    Npcink_Device_Manage
- * @subpackage Npcink_Device_Manage/includes
+ * @package    Npcink_Device_Inventory
+ * @subpackage Npcink_Device_Inventory/includes
  */
 
 /**
@@ -23,11 +23,11 @@
  * version of the plugin.
  *
  * @since      1.0.0
- * @package    Npcink_Device_Manage
- * @subpackage Npcink_Device_Manage/includes
+ * @package    Npcink_Device_Inventory
+ * @subpackage Npcink_Device_Inventory/includes
  * @author     Npcink <1355471563@qq.com>
  */
-class Npcink_Device_Manage
+class Npcink_Device_Inventory
 {
 
 	/**
@@ -36,7 +36,7 @@ class Npcink_Device_Manage
 	 *
 	 * @since    1.0.0
 	 * @access   protected
-	 * @var      Npcink_Device_Manage_Loader    $loader    Maintains and registers all hooks for the plugin.
+	 * @var      Npcink_Device_Inventory_Loader    $loader    Maintains and registers all hooks for the plugin.
 	 */
 	protected $loader;
 
@@ -69,12 +69,12 @@ class Npcink_Device_Manage
 	 */
 	public function __construct()
 	{
-		if (defined('NPCINK_DEVICE_MANAGE_VERSION')) {
-			$this->version = NPCINK_DEVICE_MANAGE_VERSION;
+		if (defined('NPCINK_DEVICE_INVENTORY_VERSION')) {
+			$this->version = NPCINK_DEVICE_INVENTORY_VERSION;
 		} else {
 			$this->version = '1.0.0';
 		}
-		$this->plugin_name = 'npcink-device-manage';
+		$this->plugin_name = 'npcink-device-inventory';
 
 		$this->load_dependencies();
 		$this->set_locale();
@@ -86,10 +86,10 @@ class Npcink_Device_Manage
 	 *
 	 * Include the following files that make up the plugin:
 	 *
-	 * - Npcink_Device_Manage_Loader. Orchestrates the hooks of the plugin.
-	 * - Npcink_Device_Manage_I18n. Defines internationalization functionality.
-	 * - Npcink_Device_Manage_Admin. Defines all hooks for the admin area.
-	 * - Npcink_Device_Manage_Public. Defines all hooks for the public side of the site.
+	 * - Npcink_Device_Inventory_Loader. Orchestrates the hooks of the plugin.
+	 * - Npcink_Device_Inventory_I18n. Defines internationalization functionality.
+	 * - Npcink_Device_Inventory_Admin. Defines all hooks for the admin area.
+	 * - Npcink_Device_Inventory_Public. Defines all hooks for the public side of the site.
 	 *
 	 * Create an instance of the loader which will be used to register the hooks
 	 * with WordPress.
@@ -104,28 +104,28 @@ class Npcink_Device_Manage
 		 * The class responsible for orchestrating the actions and filters of the
 		 * core plugin.
 		 */
-		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-npcink-device-manage-loader.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-npcink-device-inventory-loader.php';
 
 		/**
 		 * The class responsible for defining internationalization functionality
 		 * of the plugin.
 		 */
-		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-npcink-device-manage-i18n.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-npcink-device-inventory-i18n.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
-		require_once plugin_dir_path(dirname(__FILE__)) . 'admin/class-npcink-device-manage-admin.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'admin/class-npcink-device-inventory-admin.php';
 
 
 
-		$this->loader = new Npcink_Device_Manage_Loader();
+		$this->loader = new Npcink_Device_Inventory_Loader();
 	}
 
 	/**
 	 * Define the locale for this plugin for internationalization.
 	 *
-	 * Uses the Npcink_Device_Manage_I18n class in order to set the domain and to register the hook
+	 * Uses the Npcink_Device_Inventory_I18n class in order to set the domain and to register the hook
 	 * with WordPress.
 	 *
 	 * @since    1.0.0
@@ -146,7 +146,7 @@ class Npcink_Device_Manage
 	private function define_admin_hooks()
 	{
 
-		$plugin_admin = new Npcink_Device_Manage_Admin($this->get_plugin_name(), $this->get_version());
+		$plugin_admin = new Npcink_Device_Inventory_Admin($this->get_plugin_name(), $this->get_version());
 
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
@@ -174,13 +174,13 @@ class Npcink_Device_Manage
 			return;
 		}
 
-		$installed_version = get_option('npcink_device_manage_plugin_version');
+		$installed_version = get_option('npcink_device_inventory_plugin_version');
 		if ($installed_version === $this->version) {
 			return;
 		}
 
-		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-npcink-device-manage-activator.php';
-		Npcink_Device_Manage_Activator::upgrade_schema($installed_version, $this->version);
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-npcink-device-inventory-activator.php';
+		Npcink_Device_Inventory_Activator::upgrade_schema($installed_version, $this->version);
 	}
 
 	/**
@@ -199,7 +199,7 @@ class Npcink_Device_Manage
 	 * The reference to the class that orchestrates the hooks with the plugin.
 	 *
 	 * @since     1.0.0
-	 * @return    Npcink_Device_Manage_Loader    Orchestrates the hooks of the plugin.
+	 * @return    Npcink_Device_Inventory_Loader    Orchestrates the hooks of the plugin.
 	 */
 	public function get_loader()
 	{

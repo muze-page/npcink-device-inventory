@@ -1,7 +1,7 @@
 {
   "plugin": {
-    "name": "Npcink Device Manage",
-    "slug": "npcink-device-manage",
+    "name": "Npcink Device Inventory",
+    "slug": "npcink-device-inventory",
     "version": "2.6.1083",
     "requires_at_least": "6.5",
     "tested_up_to": "7.0",
@@ -9,13 +9,13 @@
     "license": "GPLv2 or later"
   },
   "package": {
-    "upload_file": "sj/npcink-device-manage.zip",
-    "source_file": "release/npcink-device-manage.zip",
-    "zip_root": "npcink-device-manage/",
-    "sha256": "59abf386cf9a531fd5347cca96833fea45e4035d299efa8c41a7aadee5029dc7",
-    "file_count": 218,
-    "uncompressed_bytes": 3312522,
-    "compressed_bytes": 1015709
+    "upload_file": "sj/npcink-device-inventory.zip",
+    "source_file": "release/npcink-device-inventory.zip",
+    "zip_root": "npcink-device-inventory/",
+    "sha256": "f94739d08938e1f1ee89dad0aaa36c25b652cc4a0b2493bdc8cfcae77bf527c8",
+    "file_count": 212,
+    "uncompressed_bytes": 3313053,
+    "compressed_bytes": 1015772
   },
   "verification": {
     "plugin_check": {

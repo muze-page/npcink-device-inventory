@@ -1,16 +1,16 @@
-# Npcink Device Manage WordPress.org 提交资料
+# Npcink Device Inventory WordPress.org 提交资料
 
 日期：2026-06-21
 
-这个目录用于提交 `Npcink Device Manage` 到 WordPress.org 插件目录前的资料归档。
+这个目录用于提交 `Npcink Device Inventory` 到 WordPress.org 插件目录前的资料归档。
 
 ## 上传文件
 
-- 上传包：`sj/npcink-device-manage.zip`
-- 原始生成位置：`release/npcink-device-manage.zip`
-- 插件 slug：`npcink-device-manage`
+- 上传包：`sj/npcink-device-inventory.zip`
+- 原始生成位置：`release/npcink-device-inventory.zip`
+- 插件 slug：`npcink-device-inventory`
 - 插件版本：`2.6.1083`
-- zip 根目录：`npcink-device-manage/`
+- zip 根目录：`npcink-device-inventory/`
 
 ## 文件说明
 
@@ -23,7 +23,7 @@
 - `package-manifest.json`：包名、版本、hash、验证摘要的机器可读记录。
 - `new-user-quick-start.md`：新用户安装、设置、录入、上传、公共查询快速开始。
 - `desktop-uploader-release-notes.md`：桌面上传软件单独发布说明。
-- `npcink-device-manage.zip`：准备上传的插件 zip。
+- `npcink-device-inventory.zip`：准备上传的插件 zip。
 - `assets/`：WordPress.org 插件目录展示用 banner、icon、screenshots，审核通过后放到 SVN 顶层 `assets/` 目录。
 - `listing-copy.md`：英文插件目录描述、FAQ、隐私说明主文案。
 - `listing-copy-zh_CN.md`：简体中文描述、FAQ、隐私说明主文案。
@@ -40,7 +40,7 @@
 
 1. 登录 WordPress.org 账号。
 2. 打开插件提交页：https://wordpress.org/plugins/developers/add/
-3. 上传 `sj/npcink-device-manage.zip`。
+3. 上传 `sj/npcink-device-inventory.zip`。
 4. 使用 `submission-form-copy.md` 中的英文简介作为提交说明。
 5. 提交后关注 WordPress.org 账号邮箱，等待自动确认和人工审核邮件。
 6. 如果收到审核问题，优先参考 `review-response-templates.md` 回复。

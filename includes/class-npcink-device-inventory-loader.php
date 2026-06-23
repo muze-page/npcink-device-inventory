@@ -6,8 +6,8 @@
  * @link       https://www.npc.ink
  * @since      1.0.0
  *
- * @package    Npcink_Device_Manage
- * @subpackage Npcink_Device_Manage/includes
+ * @package    Npcink_Device_Inventory
+ * @subpackage Npcink_Device_Inventory/includes
  */
 
 /**
@@ -17,11 +17,11 @@
  * the plugin, and register them with the WordPress API. Call the
  * run function to execute the list of actions and filters.
  *
- * @package    Npcink_Device_Manage
- * @subpackage Npcink_Device_Manage/includes
+ * @package    Npcink_Device_Inventory
+ * @subpackage Npcink_Device_Inventory/includes
  * @author     Npcink <1355471563@qq.com>
  */
-class Npcink_Device_Manage_Loader
+class Npcink_Device_Inventory_Loader
 {
 
 	/**

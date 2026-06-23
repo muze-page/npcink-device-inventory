@@ -22,7 +22,7 @@
  * @link       https://www.npc.ink
  * @since      1.0.0
  *
- * @package    Npcink_Device_Manage
+ * @package    Npcink_Device_Inventory
  */
 
 // If uninstall not called from WordPress, then exit.
@@ -32,10 +32,10 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 
 
 //执行卸载插件时的动作
-require plugin_dir_path(__FILE__) . 'admin/partials/npcink-device-manage-admin-uninstall.php';
-function npcink_device_manage_run_uninstall()
+require plugin_dir_path(__FILE__) . 'admin/partials/npcink-device-inventory-admin-uninstall.php';
+function npcink_device_inventory_run_uninstall()
 {
-	$plugin = new Npcink_Device_Manage_Admin_Uninstall();
+	$plugin = new Npcink_Device_Inventory_Admin_Uninstall();
 	$plugin->run();
 }
-npcink_device_manage_run_uninstall();
+npcink_device_inventory_run_uninstall();

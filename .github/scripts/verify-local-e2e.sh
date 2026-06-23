@@ -12,7 +12,7 @@ cleanup() {
     WP_E2E_TOKEN_ID="${TOKEN_ID}" wp --path="${WP_PATH}" eval '
       $request = new WP_REST_Request("DELETE", "/npcink/v1/admin/client-token/" . getenv("WP_E2E_TOKEN_ID"));
       $request->set_param("id", getenv("WP_E2E_TOKEN_ID"));
-      Npcink_Device_Manage_Admin_Interface_API::admin_revoke_client_token($request);
+      Npcink_Device_Inventory_Admin_Interface_API::admin_revoke_client_token($request);
     ' >/dev/null 2>&1 || true
   fi
 }
@@ -42,7 +42,7 @@ fi
 echo "Generating a temporary local upload authorization code..."
 TOKEN="$(
   wp --path="${WP_PATH}" eval '
-    $response = Npcink_Device_Manage_Admin_Interface_API::admin_generate_client_token(new WP_REST_Request("POST", "/npcink/v1/admin/client-token"));
+    $response = Npcink_Device_Inventory_Admin_Interface_API::admin_generate_client_token(new WP_REST_Request("POST", "/npcink/v1/admin/client-token"));
     $data = $response instanceof WP_REST_Response ? $response->get_data() : $response;
     if (!is_array($data) || empty($data["token"])) {
         fwrite(STDERR, "Failed to generate client token\n");

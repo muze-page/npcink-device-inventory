@@ -10,10 +10,10 @@
  *
  * @link              https://www.npc.ink
  * @since             2.0.0
- * @package    Npcink_Device_Manage
+ * @package    Npcink_Device_Inventory
  *
  * @wordpress-plugin
- * Plugin Name:       Npcink Device Manage
+ * Plugin Name:       Npcink Device Inventory
  * Plugin URI:        https://www.npc.ink/277900.html
  * Description:       设备资产管理插件，提供设备录入、客户端上报、后台台账、变更记录和授权查询。
  * Version:           2.6.1083
@@ -24,7 +24,7 @@
  * Author URI:        https://www.npc.ink
  * License:           GPL-2.0+
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
- * Text Domain:       npcink-device-manage
+ * Text Domain:       npcink-device-inventory
  * Domain Path:       /languages
  */
 
@@ -38,36 +38,36 @@ if (!defined('WPINC')) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define('NPCINK_DEVICE_MANAGE_VERSION', '2.6.1083');
+define('NPCINK_DEVICE_INVENTORY_VERSION', '2.6.1083');
 
 /**
  * The code that runs during plugin activation.
- * This action is documented in includes/class-npcink-device-manage-activator.php
+ * This action is documented in includes/class-npcink-device-inventory-activator.php
  */
-function npcink_device_manage_activate()
+function npcink_device_inventory_activate()
 {
-	require_once plugin_dir_path(__FILE__) . 'includes/class-npcink-device-manage-activator.php';
-	Npcink_Device_Manage_Activator::run();
+	require_once plugin_dir_path(__FILE__) . 'includes/class-npcink-device-inventory-activator.php';
+	Npcink_Device_Inventory_Activator::run();
 }
 
 /**
  * The code that runs during plugin deactivation.
- * This action is documented in includes/class-npcink-device-manage-deactivator.php
+ * This action is documented in includes/class-npcink-device-inventory-deactivator.php
  */
-function npcink_device_manage_deactivate()
+function npcink_device_inventory_deactivate()
 {
-	require_once plugin_dir_path(__FILE__) . 'includes/class-npcink-device-manage-deactivator.php';
-	Npcink_Device_Manage_Deactivator::deactivate();
+	require_once plugin_dir_path(__FILE__) . 'includes/class-npcink-device-inventory-deactivator.php';
+	Npcink_Device_Inventory_Deactivator::deactivate();
 }
 
-register_activation_hook(__FILE__, 'npcink_device_manage_activate');
-register_deactivation_hook(__FILE__, 'npcink_device_manage_deactivate');
+register_activation_hook(__FILE__, 'npcink_device_inventory_activate');
+register_deactivation_hook(__FILE__, 'npcink_device_inventory_deactivate');
 
 /**
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
-require plugin_dir_path(__FILE__) . 'includes/class-npcink-device-manage.php';
+require plugin_dir_path(__FILE__) . 'includes/class-npcink-device-inventory.php';
 
 /**
  * Begins execution of the plugin.
@@ -78,18 +78,18 @@ require plugin_dir_path(__FILE__) . 'includes/class-npcink-device-manage.php';
  *
  * @since    1.0.0
  */
-function npcink_device_manage_run()
+function npcink_device_inventory_run()
 {
 
-	$plugin = new Npcink_Device_Manage();
+	$plugin = new Npcink_Device_Inventory();
 	$plugin->run();
 }
-npcink_device_manage_run();
+npcink_device_inventory_run();
 
 
 //设置按钮
 add_filter('plugin_action_links_' . plugin_basename(__FILE__), function ($links) {
-	$links[] = '<a href="' . get_admin_url(null, 'plugins.php?page=npcink_device_manage_settings') . '">' . __('Settings', 'npcink-device-manage') . '</a>';
+	$links[] = '<a href="' . get_admin_url(null, 'plugins.php?page=npcink_device_inventory_settings') . '">' . __('Settings', 'npcink-device-inventory') . '</a>';
 	return $links;
 });
 

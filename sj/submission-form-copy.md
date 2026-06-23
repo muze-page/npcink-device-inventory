@@ -5,19 +5,19 @@
 Use:
 
 ```text
-/Users/muze/gitee/npcink-device-manage/sj/npcink-device-manage.zip
+/Users/muze/gitee/npcink-device-manage/sj/npcink-device-inventory.zip
 ```
 
 ## Plugin Name
 
 ```text
-Npcink Device Manage
+Npcink Device Inventory
 ```
 
 ## Suggested Slug
 
 ```text
-npcink-device-manage
+npcink-device-inventory
 ```
 
 ## Short Description
@@ -29,7 +29,7 @@ Manage device assets in WordPress with an admin inventory, signed client uploads
 ## Brief Overview for Submission
 
 ```text
-Npcink Device Manage is a WordPress plugin for managing device and hardware asset records inside WordPress. It provides an admin inventory for computers and custom assets, device numbers, departments, status fields, purchase and depreciation values, manual and automatic change records, import/export tools, a signed REST upload endpoint for an optional collection client, and an authorized public search page.
+Npcink Device Inventory is a WordPress plugin for managing device and hardware asset records inside WordPress. It provides an admin inventory for computers and custom assets, device numbers, departments, status fields, purchase and depreciation values, manual and automatic change records, import/export tools, a signed REST upload endpoint for an optional collection client, and an authorized public search page.
 
 The plugin stores data in the site's own WordPress database and does not contact a third-party service during normal operation. Public query and upload endpoints require a client authorization token and HMAC signature. Admin endpoints require a WordPress user with manage_options.
 

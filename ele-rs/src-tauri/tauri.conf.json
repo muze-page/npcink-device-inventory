@@ -29,6 +29,6 @@
     "targets": ["nsis", "dmg", "app"],
     "category": "Utility",
     "shortDescription": "Device hardware collector",
-    "longDescription": "Collects device hardware data and submits it to Npcink Device Manage."
+    "longDescription": "Collects device hardware data and submits it to Npcink Device Inventory."
   }
 }

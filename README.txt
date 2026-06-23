@@ -1,4 +1,4 @@
-=== Npcink Device Manage ===
+=== Npcink Device Inventory ===
 Contributors: npcink
 Tags: inventory, assets, device management, rest api, admin
 Requires at least: 6.5
@@ -12,7 +12,7 @@ Manage device assets in WordPress with an admin inventory, signed client uploads
 
 == Description ==
 
-Npcink Device Manage is a device asset management plugin for small teams that want to keep hardware inventory inside WordPress.
+Npcink Device Inventory is a device asset management plugin for small teams that want to keep hardware inventory inside WordPress.
 
 The plugin provides:
 
@@ -27,9 +27,9 @@ The WordPress plugin does not load JavaScript or CSS from third-party CDNs. Buil
 
 == Installation ==
 
-1. Upload the `npcink-device-manage` folder to `/wp-content/plugins/`.
+1. Upload the `npcink-device-inventory` folder to `/wp-content/plugins/`.
 2. Activate the plugin from the WordPress Plugins screen.
-3. Open Plugins > Device Asset Management.
+3. Open Plugins > Device Inventory.
 4. Review plugin settings and generate a client authorization token before using upload or public query workflows.
 
 == Frequently Asked Questions ==
@@ -70,7 +70,7 @@ Run `npm install && npm run build` inside each Vite app directory to rebuild the
 
 == Privacy ==
 
-Npcink Device Manage stores device asset data in the local WordPress database. Depending on how the site owner configures and uses the plugin, stored data may include device names, assigned users or locations, departments, status values, IP addresses, hardware identifiers, hardware details, and change history.
+Npcink Device Inventory stores device asset data in the local WordPress database. Depending on how the site owner configures and uses the plugin, stored data may include device names, assigned users or locations, departments, status values, IP addresses, hardware identifiers, hardware details, and change history.
 
 The plugin does not transmit this data to Npcink or any third-party server during normal plugin operation. Site administrators are responsible for informing users and employees about their own device inventory policies.
 

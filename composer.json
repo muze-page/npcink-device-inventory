@@ -1,6 +1,6 @@
 {
-  "name": "npcink/npcink-device-manage",
-  "description": "Npcink Device Manage WordPress plugin.",
+  "name": "npcink/npcink-device-inventory",
+  "description": "Npcink Device Inventory WordPress plugin.",
   "type": "wordpress-plugin",
   "license": "GPL-2.0-or-later",
   "require-dev": {

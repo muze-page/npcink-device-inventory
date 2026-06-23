@@ -23,8 +23,8 @@ GitHub 上已确认的最新提交：
 
 这一轮清理按几个独立提交推进：
 
-- `330591d chore: rename project to Npcink Device Manage`
-  - 将项目从旧 Magick/DEMA 命名迁移到 `Npcink Device Manage`。
+- `330591d chore: rename project to Npcink Device Inventory`
+  - 将项目从旧 Magick/DEMA 命名迁移到 `Npcink Device Inventory`。
   - 统一 WordPress 插件和桌面采集器的产品命名。
 - `6a7b7d8 Clean up legacy DEMA naming`
   - 清理项目自有代码和文档里的 `DEMA / Dema / dema` 内部命名。
