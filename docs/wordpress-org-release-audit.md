@@ -156,7 +156,7 @@ npm run build --prefix vite-search
 composer phpcs
 composer phpstan
 bash .github/scripts/package-wordpress-plugin.sh
-wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin check /Users/muze/gitee/npcink-device-manage/release/npcink-device-inventory --format=json
+wp --path='/Users/muze/Local Sites/npcink-device-inventory/app/public' plugin check /Users/muze/gitee/npcink-device-inventory/release/npcink-device-inventory --format=json
 ```
 
 Additional verification on 2026-06-23:

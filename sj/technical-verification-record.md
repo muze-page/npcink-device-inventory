@@ -41,7 +41,7 @@ bash .github/scripts/package-wordpress-plugin.sh
 输出：
 
 ```text
-/Users/muze/gitee/npcink-device-manage/release/npcink-device-inventory.zip
+/Users/muze/gitee/npcink-device-inventory/release/npcink-device-inventory.zip
 ```
 
 ## Plugin Check / PCP
@@ -49,7 +49,7 @@ bash .github/scripts/package-wordpress-plugin.sh
 通过：
 
 ```bash
-wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin check /Users/muze/gitee/npcink-device-manage/release/npcink-device-inventory --format=json
+wp --path='/Users/muze/Local Sites/npcink-device-inventory/app/public' plugin check /Users/muze/gitee/npcink-device-inventory/release/npcink-device-inventory --format=json
 ```
 
 结果：
@@ -75,8 +75,8 @@ wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin check
 通过：
 
 ```bash
-wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin deactivate npcink-device-inventory
-wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin activate npcink-device-inventory
+wp --path='/Users/muze/Local Sites/npcink-device-inventory/app/public' plugin deactivate npcink-device-inventory
+wp --path='/Users/muze/Local Sites/npcink-device-inventory/app/public' plugin activate npcink-device-inventory
 ```
 
 REST 未签名请求检查：

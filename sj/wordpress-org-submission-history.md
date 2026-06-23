@@ -108,7 +108,7 @@ Npcink Device Inventory
 - 语言模板：`languages/npcink-device-inventory.pot`
 - 打包脚本、CI workflow、README、提交资料和审核资料
 
-未改动的旧字符串只保留在真实本地路径或 GitHub 仓库 URL 中，例如 `/Users/muze/gitee/npcink-device-manage` 和 `github.com/muze-page/npcink-device-manage`。这些是仓库路径，不是插件目录身份。
+后续仓库名和本地目录也统一为 `npcink-device-inventory`，旧字符串只作为历史旧名说明保留。
 
 ## 最终验证结果
 
@@ -126,7 +126,7 @@ npm run build --prefix vite-admin
 npm install --prefix vite-search
 npm run build --prefix vite-search
 bash .github/scripts/package-wordpress-plugin.sh
-wp --path='/Users/muze/Local Sites/magick-device-manage/app/public' plugin check /Users/muze/gitee/npcink-device-manage/release/npcink-device-inventory --format=json
+wp --path='/Users/muze/Local Sites/npcink-device-inventory/app/public' plugin check /Users/muze/gitee/npcink-device-inventory/release/npcink-device-inventory --format=json
 ```
 
 结果：
@@ -200,4 +200,3 @@ WordPress.org 审核通过后会分配 SVN 仓库。首次发布时应：
 2. 创建 `tags/2.6.1083/`。
 3. 将 `sj/assets/` 中的 banner、icon 和 screenshots 提交到 SVN 顶层 `assets/`。
 4. 不要向 SVN 提交 zip 文件。
-

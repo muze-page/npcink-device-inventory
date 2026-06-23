@@ -7,7 +7,7 @@
 项目后续以 GitHub 为主要管理入口。本地仓库当前默认 remote：
 
 ```text
-origin  https://github.com/muze-page/npcink-device-manage.git
+origin  https://github.com/muze-page/npcink-device-inventory.git
 ```
 
 Gitee remote 已从当前 checkout 移除。当前分支是 `master`，并已跟踪

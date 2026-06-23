@@ -5,7 +5,7 @@
 Use:
 
 ```text
-/Users/muze/gitee/npcink-device-manage/sj/npcink-device-inventory.zip
+/Users/muze/gitee/npcink-device-inventory/sj/npcink-device-inventory.zip
 ```
 
 ## Plugin Name
@@ -63,4 +63,3 @@ Tested up to: 7.0
 Requires PHP: 7.4
 License: GPLv2 or later
 ```
-

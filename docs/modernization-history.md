@@ -142,7 +142,7 @@ Implemented quality gates:
 Before the final identity re-key, a JSON backup was written to:
 
 ```text
-/Users/muze/gitee/npcink-device-manage/.local-backups/pre-identity-rekey-20260620-064542.json
+/Users/muze/gitee/npcink-device-inventory/.local-backups/pre-identity-rekey-20260620-064542.json
 ```
 
 Local WordPress migration result:
