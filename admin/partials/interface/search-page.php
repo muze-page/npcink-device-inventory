@@ -1,5 +1,9 @@
 <?php
 
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 /**
  * 添加前端搜索页接口
  */
@@ -19,8 +23,8 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_Search_Page')) {
         public static  function add_page($route)
         {
             // 创建新页面
-            $page_title = '勿删：公共查询设备页';
-            $page_content = '<div id="npcinkSearch">错误，请联系管理员</div>';
+            $page_title = __('Device Public Search', 'npcink-device-manage');
+            $page_content = '<div id="npcinkSearch">' . esc_html__('Unable to load the device search app. Please contact the site administrator.', 'npcink-device-manage') . '</div>';
 
             $page = array(
                 'post_title'   => $page_title,

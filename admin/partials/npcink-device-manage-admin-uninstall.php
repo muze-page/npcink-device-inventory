@@ -1,4 +1,11 @@
 <?php
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange -- Optional uninstall cleanup checks and drops only plugin-owned custom tables.
+
 //删除插件时执行
 if (!class_exists('Npcink_Device_Manage_Admin_Uninstall')) {
     class Npcink_Device_Manage_Admin_Uninstall
@@ -54,12 +61,11 @@ if (!class_exists('Npcink_Device_Manage_Admin_Uninstall')) {
                 }
 
                 $table_name = $wpdb->prefix . $name;
-                $escaped_table_name = '`' . str_replace('`', '``', $table_name) . '`';
 
                 if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($table_name))) != $table_name) {
                     return "数据表 $table_name 不存在！";
                 } else {
-                    $wpdb->query("DROP TABLE IF EXISTS $escaped_table_name");
+                    $wpdb->query($wpdb->prepare('DROP TABLE IF EXISTS %i', $table_name));
                 }
             }
 

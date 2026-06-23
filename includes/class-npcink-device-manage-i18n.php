@@ -35,11 +35,6 @@ class Npcink_Device_Manage_I18n
 	 */
 	public function load_plugin_textdomain()
 	{
-
-		load_plugin_textdomain(
-			'npcink-device-manage',
-			false,
-			dirname(dirname(plugin_basename(__FILE__))) . '/languages/'
-		);
+		return;
 	}
 }

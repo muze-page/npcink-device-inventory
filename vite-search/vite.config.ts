@@ -16,19 +16,6 @@ export default defineConfig({
         entryFileNames: "index.js",
         assetFileNames: "[name][extname]",
         chunkFileNames: "[name].js",
-        manualChunks(id) {
-          if (!id.includes("node_modules")) return;
-          const reactChunkRE =
-            /[\\/]node_modules[\\/](react|react-dom|react-is|scheduler)[\\/]/;
-          if (reactChunkRE.test(id)) return "react";
-          if (id.includes("antd") || id.includes("@ant-design")) {
-            return "antd";
-          }
-          if (id.includes("@rc-component") || /[\\/]rc-/.test(id)) {
-            return "rc";
-          }
-          return "vendor";
-        },
       },
     },
   },

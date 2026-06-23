@@ -62,27 +62,6 @@ const App: React.FC<Props> = ({
             <Checkbox checked={selected} onChange={() => onSelect?.()} />
           </div>
         ) : null}
-        {/**顶部标志 */}
-        {/** 
-        <Space className="flex justify-between">
-          <Tooltip title={"采购平台：" + platformObj.name}>
-            <img
-              key={platformObj.name}
-              src={platformObj.image}
-              className="h-10"
-            />
-          </Tooltip>
-
-          <Tooltip title={"付款方式：" + payFormObj.name}>
-            <img
-              key={payFormObj.name}
-              src={payFormObj.image}
-              className="h-10"
-            />
-          </Tooltip>
-        </Space>
-        */}
-
         {/**底部数据 */}
         <div className="text-xs text-zinc-500  rounded whitespace-nowrap min-h-[190px]  overflow-hidden">
           {/*设备名称*/}

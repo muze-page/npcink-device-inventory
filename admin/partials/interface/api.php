@@ -1,5 +1,12 @@
 <?php
 
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Custom table SQL uses plugin-owned table names and allow-listed column/order fragments.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- REST handlers read and mutate plugin-owned inventory tables; results are request-scoped and must reflect current data.
+
 /**
  * 接口 接收软件传来的数据
  * 使用特定算法算出的UUID，用于校验机器唯一性，
@@ -24,13 +31,13 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
 
             /**
              * 添加接收设备数据api接口
-             * http://localhost:10048/wp-json/npcink/v1/submit-data
+             * /wp-json/npcink/v1/submit-data
              */
             add_action('rest_api_init', array(__CLASS__, 'create_custom_endpoint'));
 
             /**
              * 添加查询设备数据api接口
-             * http://localhost:10048/wp-json/npcink/v1/query?number=1
+             * /wp-json/npcink/v1/query?number=1
              */
             add_action('rest_api_init', array(__CLASS__, 'create_query_endpoint'));
 
@@ -240,7 +247,7 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                 ));
             }
 
-            $random_string = uniqid(mt_rand(), true);
+            $random_string = uniqid(wp_rand(), true);
             $last_six_digits = substr($random_string, -6);
             $device_ip = self::device_ip_or_default($data_obj);
 
@@ -2664,11 +2671,11 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             }
 
             $platform_labels = array(
-                '京东' => '京东',
-                '淘宝' => '淘宝',
-                '拼多多' => '拼多多',
-                '美团' => '美团',
-                '闲鱼' => '闲鱼',
+                '电商平台A' => '电商平台A',
+                '电商平台B' => '电商平台B',
+                '电商平台C' => '电商平台C',
+                '本地服务平台' => '本地服务平台',
+                '二手交易平台' => '二手交易平台',
                 '线下' => '线下',
             );
             $existing_platforms = array_column($platforms, 'platform');
@@ -2689,8 +2696,8 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             }
 
             $pay_method_labels = array(
-                '支付宝' => '支付宝',
-                '微信' => '微信',
+                '电子钱包A' => '电子钱包A',
+                '电子钱包B' => '电子钱包B',
                 '现金' => '现金',
             );
             $existing_pay_methods = array_column($pay_methods, 'pay_method');
@@ -3128,9 +3135,9 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
             }
 
             $columns = array_keys(reset($rows));
-            $fp = fopen('php://temp', 'r+');
+            $lines = array();
             if ($include_header) {
-                fputcsv($fp, $columns);
+                $lines[] = self::build_csv_line($columns);
             }
 
             foreach ($rows as $row) {
@@ -3142,13 +3149,26 @@ if (!class_exists('Npcink_Device_Manage_Admin_Interface_API')) {
                     }
                     $line[] = $value;
                 }
-                fputcsv($fp, $line);
+                $lines[] = self::build_csv_line($line);
             }
 
-            rewind($fp);
-            $csv = stream_get_contents($fp);
-            fclose($fp);
-            return $csv ? $csv : '';
+            return implode("\n", $lines) . "\n";
+        }
+
+        /**
+         * CSV 行构建
+         */
+        private static function build_csv_line($values)
+        {
+            $escaped = array();
+            foreach ($values as $value) {
+                $value = (string) $value;
+                $needs_quotes = strpbrk($value, "\",\r\n") !== false;
+                $value = str_replace('"', '""', $value);
+                $escaped[] = $needs_quotes ? '"' . $value . '"' : $value;
+            }
+
+            return implode(',', $escaped);
         }
 
         /**

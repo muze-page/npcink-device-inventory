@@ -9,32 +9,33 @@ import Details from "@/pages/pcList/index";
 import ChangeList from "@/pages/changeList/index";
 import Config from "@/pages/config/index";
 import Style from "@/pages/styleList/index";
+import { AdminText } from "@/utils/index";
 
 const items: TabsProps["items"] = [
   {
     key: "sbxq",
-    label: `电脑设备`,
+    label: AdminText.computer_devices,
     children: <Details />,
   },
 
   {
     key: "style",
-    label: `自定义设备`,
+    label: AdminText.custom_devices,
     children: <Style />,
   },
   {
     key: "bgjl",
-    label: `变更数据`,
+    label: AdminText.change_records,
     children: <ChangeList />,
   },
   {
     key: "yjpd",
-    label: `硬件盘点`,
+    label: AdminText.hardware_audit,
     children: <Check />,
   },
   {
     key: "sz",
-    label: `设置`,
+    label: AdminText.settings,
     children: <Config />,
   },
 ];

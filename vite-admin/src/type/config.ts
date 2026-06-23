@@ -53,3 +53,11 @@ export interface OptionType {
   department: string[]; //部门数组
   public_search_route: string; //前端公共搜索路由
 }
+
+export interface AdminLabels {
+  computer_devices?: string;
+  custom_devices?: string;
+  change_records?: string;
+  hardware_audit?: string;
+  settings?: string;
+}

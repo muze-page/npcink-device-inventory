@@ -1,5 +1,12 @@
 <?php
 
+if (!defined('ABSPATH')) {
+	exit;
+}
+
+// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Activation SQL only touches plugin-owned tables and internally constructed schema fragments.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.SchemaChange -- Activation and upgrade routines create or update plugin-owned custom tables, indexes, and triggers.
+
 /**
  * 在插件激活期间激发 - 创建数据表用
  *

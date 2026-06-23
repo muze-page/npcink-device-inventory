@@ -7,6 +7,6 @@ export const option = {
 
 const data = {
   option: option, //选项
-  site: "http://localhost:10048",
+  site: "",
 };
 export default data;

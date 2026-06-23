@@ -1,6 +1,12 @@
 //准备初始数据
 import data from "@/utils/demoConfig";
-import { MysqlDevice, OptionType, Computer, StyleDevice } from "@/type/index";
+import {
+  MysqlDevice,
+  OptionType,
+  Computer,
+  StyleDevice,
+  AdminLabels,
+} from "@/type/index";
 //开发环境状态
 const devStatus = import.meta.env.VITE_STATE;
 
@@ -70,6 +76,14 @@ export const Site: string = dataLocal.site;
 export const RestUrl: string =
   dataLocal.rest_url || (Site ? `${Site}/wp-json/npcink/v1` : "");
 export const RestNonce: string = dataLocal.rest_nonce || "";
+
+export const AdminText: Required<AdminLabels> = {
+  computer_devices: dataLocal.labels?.computer_devices || "电脑设备",
+  custom_devices: dataLocal.labels?.custom_devices || "自定义设备",
+  change_records: dataLocal.labels?.change_records || "变更数据",
+  hardware_audit: dataLocal.labels?.hardware_audit || "硬件盘点",
+  settings: dataLocal.labels?.settings || "设置",
+};
 
 //输出数据库表名
 export const TableDataName: string = dataLocal.table_data_name; //电脑设备表名称

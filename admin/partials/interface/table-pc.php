@@ -1,5 +1,9 @@
 <?php
 
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 /**
  * 电脑信息接口（REST 在 api.php 中处理）
  */

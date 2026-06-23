@@ -1,4 +1,9 @@
 <?php
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 //添加菜单，传递数据
 if (!class_exists('Npcink_Device_Manage_Admin_Menu')) {
     class Npcink_Device_Manage_Admin_Menu extends Npcink_Device_Manage_Admin_Interface
@@ -22,11 +27,12 @@ if (!class_exists('Npcink_Device_Manage_Admin_Menu')) {
         //创建菜单
         public static function register_admin_menu()
         {
+            $page_title = __('Device Asset Management', 'npcink-device-manage');
             // 添加一个菜单到 WordPress 后台的“设置”菜单下
             add_submenu_page(
                 'plugins.php',
-                '设备资产管理',
-                '设备资产管理',
+                $page_title,
+                $page_title,
                 'manage_options',
                 'npcink_device_manage_settings',
                 array(__CLASS__, 'menu_displays'),
@@ -43,10 +49,39 @@ if (!class_exists('Npcink_Device_Manage_Admin_Menu')) {
             <div class="wrap">
                 <!--标题-->
                 <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-                <div id='root'>数据加载中，请稍等</div>
+                <div id='root'><?php echo esc_html__('Loading data, please wait.', 'npcink-device-manage'); ?></div>
             </div>
 <?php
 
+        }
+
+        /**
+         * Admin labels used by the bundled React app.
+         *
+         * WordPress.org will handle gettext translations for PHP strings after release.
+         * The bundled app receives a small locale-aware label map so the first admin
+         * screen is usable in both English and Simplified Chinese immediately.
+         */
+        private static function admin_labels()
+        {
+            $locale = function_exists('determine_locale') ? determine_locale() : get_locale();
+            if (0 === strpos($locale, 'zh_')) {
+                return array(
+                    'computer_devices' => '电脑设备',
+                    'custom_devices' => '自定义设备',
+                    'change_records' => '变更数据',
+                    'hardware_audit' => '硬件盘点',
+                    'settings' => '设置',
+                );
+            }
+
+            return array(
+                'computer_devices' => __('Computer Devices', 'npcink-device-manage'),
+                'custom_devices' => __('Custom Devices', 'npcink-device-manage'),
+                'change_records' => __('Change Records', 'npcink-device-manage'),
+                'hardware_audit' => __('Hardware Audit', 'npcink-device-manage'),
+                'settings' => __('Settings', 'npcink-device-manage'),
+            );
         }
         /**
          * 加载资源
@@ -101,6 +136,8 @@ if (!class_exists('Npcink_Device_Manage_Admin_Menu')) {
                 'rest_nonce' => wp_create_nonce('wp_rest'),
                 'option' => $option, //传递选项（脱敏）
                 'sqlTableName' => $sql_table_name, //数据库表名
+                'locale' => function_exists('determine_locale') ? determine_locale() : get_locale(),
+                'labels' => self::admin_labels(),
             );
             wp_localize_script($name, 'dataLocal', $pf_api_translation_array); //传给vite项目
         }

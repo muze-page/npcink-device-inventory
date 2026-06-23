@@ -36,6 +36,15 @@ jobs:
             vite-admin/package-lock.json
             vite-search/package-lock.json
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: composer:v2
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
       - name: PHP syntax check
         run: |
           php -v
@@ -44,26 +53,37 @@ jobs:
           php -l index.php
           find admin includes -name "*.php" -print0 | xargs -0 -n1 php -l
 
+      - name: PHP coding standards
+        run: composer phpcs
+
+      - name: PHP static analysis
+        run: composer phpstan
+
       - name: Build admin app
         working-directory: vite-admin
         run: |
-          npm ci
+          npm install
           npm run build
 
       - name: Build search app
         working-directory: vite-search
         run: |
-          npm ci
+          npm install
           npm run build
 
       - name: Package plugin
         run: bash .github/scripts/package-wordpress-plugin.sh
 
+      - name: Plugin Check
+        uses: wordpress/plugin-check-action@v1
+        with:
+          build-dir: ./release/npcink-device-manage
+
       - name: Upload plugin artifact
         uses: actions/upload-artifact@v7
         with:
           name: preview-npcink-device-manage-plugin
-          path: release/npcink-device-manage-plugin.zip
+          path: release/npcink-device-manage.zip
           if-no-files-found: error
           retention-days: 7
 

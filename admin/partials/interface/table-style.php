@@ -1,5 +1,9 @@
 <?php
 
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 /**
  * 自定义设备接口（REST 在 api.php 中处理）
  */

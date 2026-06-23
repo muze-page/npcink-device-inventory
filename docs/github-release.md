@@ -49,7 +49,7 @@ Create and push a version tag:
 
 ```bash
 git tag v0.1.0
-git push github v0.1.0
+git push origin v0.1.0
 ```
 
 The `Build release packages` workflow runs only for `v*` tags and uploads the

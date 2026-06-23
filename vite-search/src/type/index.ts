@@ -110,7 +110,7 @@ export interface MysqlChange {
  */
 export interface OsTypeArray {
   name: string;
-  image: string;
+  label: string;
 }
 
 //硬件基本信息

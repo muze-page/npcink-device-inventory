@@ -15,12 +15,15 @@
  * @wordpress-plugin
  * Plugin Name:       Npcink Device Manage
  * Plugin URI:        https://www.npc.ink/277900.html
- * Description:       Npcink 设备资产管理插件，用于小型公司电脑资产管理，支持数据录入、设备编号、变更记录、部门分组、前后端搜索查询和数据大盘。
- * Version:           2601083
+ * Description:       设备资产管理插件，提供设备录入、客户端上报、后台台账、变更记录和授权查询。
+ * Version:           2.6.1083
+ * Requires at least: 6.5
+ * Tested up to:      7.0
+ * Requires PHP:      7.4
  * Author:            Npcink
  * Author URI:        https://www.npc.ink
  * License:           GPL-2.0+
- * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       npcink-device-manage
  * Domain Path:       /languages
  */
@@ -35,13 +38,13 @@ if (!defined('WPINC')) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define('NPCINK_DEVICE_MANAGE_VERSION', '2601083');
+define('NPCINK_DEVICE_MANAGE_VERSION', '2.6.1083');
 
 /**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-npcink-device-manage-activator.php
  */
-function activate_npcink_device_manage()
+function npcink_device_manage_activate()
 {
 	require_once plugin_dir_path(__FILE__) . 'includes/class-npcink-device-manage-activator.php';
 	Npcink_Device_Manage_Activator::run();
@@ -51,14 +54,14 @@ function activate_npcink_device_manage()
  * The code that runs during plugin deactivation.
  * This action is documented in includes/class-npcink-device-manage-deactivator.php
  */
-function deactivate_npcink_device_manage()
+function npcink_device_manage_deactivate()
 {
 	require_once plugin_dir_path(__FILE__) . 'includes/class-npcink-device-manage-deactivator.php';
 	Npcink_Device_Manage_Deactivator::deactivate();
 }
 
-register_activation_hook(__FILE__, 'activate_npcink_device_manage');
-register_deactivation_hook(__FILE__, 'deactivate_npcink_device_manage');
+register_activation_hook(__FILE__, 'npcink_device_manage_activate');
+register_deactivation_hook(__FILE__, 'npcink_device_manage_deactivate');
 
 /**
  * The core plugin class that is used to define internationalization,
@@ -75,18 +78,18 @@ require plugin_dir_path(__FILE__) . 'includes/class-npcink-device-manage.php';
  *
  * @since    1.0.0
  */
-function run_npcink_device_manage()
+function npcink_device_manage_run()
 {
 
 	$plugin = new Npcink_Device_Manage();
 	$plugin->run();
 }
-run_npcink_device_manage();
+npcink_device_manage_run();
 
 
 //设置按钮
 add_filter('plugin_action_links_' . plugin_basename(__FILE__), function ($links) {
-	$links[] = '<a href="' . get_admin_url(null, 'plugins.php?page=npcink_device_manage_settings') . '">' . __('设置', 'npcink-device-manage') . '</a>';
+	$links[] = '<a href="' . get_admin_url(null, 'plugins.php?page=npcink_device_manage_settings') . '">' . __('Settings', 'npcink-device-manage') . '</a>';
 	return $links;
 });
 

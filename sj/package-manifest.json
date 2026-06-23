@@ -1,0 +1,42 @@
+{
+  "plugin": {
+    "name": "Npcink Device Manage",
+    "slug": "npcink-device-manage",
+    "version": "2.6.1083",
+    "requires_at_least": "6.5",
+    "tested_up_to": "7.0",
+    "requires_php": "7.4",
+    "license": "GPLv2 or later"
+  },
+  "package": {
+    "upload_file": "sj/npcink-device-manage.zip",
+    "source_file": "release/npcink-device-manage.zip",
+    "zip_root": "npcink-device-manage/",
+    "sha256": "59abf386cf9a531fd5347cca96833fea45e4035d299efa8c41a7aadee5029dc7",
+    "file_count": 218,
+    "uncompressed_bytes": 3312522,
+    "compressed_bytes": 1015709
+  },
+  "verification": {
+    "plugin_check": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "phpcs": "passed",
+    "phpstan": "passed",
+    "vite_admin_build": "passed",
+    "vite_search_build": "passed",
+    "activation_smoke": "passed",
+    "unsigned_public_query_status": 403,
+    "unsigned_upload_status": 403,
+    "screenshots": "prepared",
+    "i18n_pot": "updated"
+  },
+  "official_references": [
+    "https://wordpress.org/plugins/developers/add/",
+    "https://developer.wordpress.org/plugins/wordpress-org/plugin-developer-faq/",
+    "https://developer.wordpress.org/plugins/wordpress-org/planning-submitting-and-maintaining-plugins/",
+    "https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/",
+    "https://developer.wordpress.org/plugins/wordpress-org/how-to-use-subversion/"
+  ]
+}
