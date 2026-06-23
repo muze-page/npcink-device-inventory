@@ -7,22 +7,22 @@
 - `banner-772x250.png`
   - 标准横幅图
   - 尺寸：772 x 250
-  - SHA-256：`30cdaafbe9b61451f69bcc2806d2bc066cfd9ecf68d3499b4ee33d95b9f25565`
+  - SHA-256：`531d839f681f49d753bf6fdea3a5731f39c3bde40c9f3bb7f696f0c40dc78289`
 
 - `banner-1544x500.png`
   - Retina 横幅图
   - 尺寸：1544 x 500
-  - SHA-256：`897c25f484d92872f1a1cc8246713d5033ba3f1c440f58cfb9ea04f7a2b3ef2d`
+  - SHA-256：`b82d10ea9a54b8e05e874304803eb21502ea23bac7ad8cb4d56ca4c2b97807e0`
 
 - `icon-128x128.png`
   - 标准插件图标
   - 尺寸：128 x 128
-  - SHA-256：`3bed2215b2dda4a25c634e034e2818915067042492edf677df2e30d76a40f838`
+  - SHA-256：`731c360556550ea1910129c32c3e70532bac152e2598538cd7d08b18467f5f25`
 
 - `icon-256x256.png`
   - Retina 插件图标
   - 尺寸：256 x 256
-  - SHA-256：`fb702f7137247d89bf0a6f2cc8df6d7422d6afd6fa723542fb73f2cc76600cb3`
+  - SHA-256：`43d5ecca4b3bb98f81c2620c1d047bb5ab83c5616a57bc980924ba9e7bec7a8c`
 
 - `screenshot-1.png`
   - 电脑设备后台台账截图
@@ -69,7 +69,7 @@ assets/screenshot-5.png
 
 ## 来源
 
-- 原始 icon 图：`sj/img/ChatGPT Image 2026年6月21日 11_11_25.png`
+- 原始 icon 图：`sj/img/LOGO.png`
 - 原始 banner 图：`sj/img/banner.png`
 
 已处理为 WordPress.org 规范命名和尺寸。

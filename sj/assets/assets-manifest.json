@@ -2,7 +2,7 @@
   "plugin_slug": "npcink-device-manage",
   "created_at": "2026-06-21",
   "source_files": {
-    "icon": "sj/img/ChatGPT Image 2026年6月21日 11_11_25.png",
+    "icon": "sj/img/LOGO.png",
     "banner": "sj/img/banner.png"
   },
   "assets": [
@@ -11,32 +11,32 @@
       "purpose": "standard banner",
       "width": 772,
       "height": 250,
-      "bytes": 194258,
-      "sha256": "30cdaafbe9b61451f69bcc2806d2bc066cfd9ecf68d3499b4ee33d95b9f25565"
+      "bytes": 194840,
+      "sha256": "531d839f681f49d753bf6fdea3a5731f39c3bde40c9f3bb7f696f0c40dc78289"
     },
     {
       "file": "sj/assets/banner-1544x500.png",
       "purpose": "retina banner",
       "width": 1544,
       "height": 500,
-      "bytes": 682291,
-      "sha256": "897c25f484d92872f1a1cc8246713d5033ba3f1c440f58cfb9ea04f7a2b3ef2d"
+      "bytes": 677916,
+      "sha256": "b82d10ea9a54b8e05e874304803eb21502ea23bac7ad8cb4d56ca4c2b97807e0"
     },
     {
       "file": "sj/assets/icon-128x128.png",
       "purpose": "standard icon",
       "width": 128,
       "height": 128,
-      "bytes": 12140,
-      "sha256": "3bed2215b2dda4a25c634e034e2818915067042492edf677df2e30d76a40f838"
+      "bytes": 15082,
+      "sha256": "731c360556550ea1910129c32c3e70532bac152e2598538cd7d08b18467f5f25"
     },
     {
       "file": "sj/assets/icon-256x256.png",
       "purpose": "retina icon",
       "width": 256,
       "height": 256,
-      "bytes": 56238,
-      "sha256": "fb702f7137247d89bf0a6f2cc8df6d7422d6afd6fa723542fb73f2cc76600cb3"
+      "bytes": 63541,
+      "sha256": "43d5ecca4b3bb98f81c2620c1d047bb5ab83c5616a57bc980924ba9e7bec7a8c"
     },
     {
       "file": "sj/assets/screenshot-1.png",
