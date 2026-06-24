@@ -25,16 +25,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: |
-            vite-admin/package-lock.json
-            vite-search/package-lock.json
+          cache-dependency-path: vite-admin/package-lock.json
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -65,12 +63,6 @@ jobs:
           npm install
           npm run build
 
-      - name: Build search app
-        working-directory: vite-search
-        run: |
-          npm install
-          npm run build
-
       - name: Package plugin
         run: bash .github/scripts/package-wordpress-plugin.sh
 
@@ -80,7 +72,7 @@ jobs:
           build-dir: ./release/npcink-device-inventory
 
       - name: Upload plugin artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: preview-npcink-device-inventory-plugin
           path: release/npcink-device-inventory.zip
@@ -93,10 +85,10 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
@@ -124,7 +116,7 @@ jobs:
         run: npm run tauri:build
 
       - name: Upload macOS DMG
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: preview-npcink-device-agent-macos
           path: ele-rs/src-tauri/target/release/bundle/dmg/*.dmg
@@ -137,10 +129,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
@@ -168,7 +160,7 @@ jobs:
         run: npm run tauri:build
 
       - name: Upload Windows installer
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: preview-npcink-device-agent-windows
           path: ele-rs/src-tauri/target/release/bundle/nsis/*.exe
