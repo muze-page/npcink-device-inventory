@@ -96,6 +96,21 @@
   word-break: break-all;
 }
 
+.npcink-v3-client-snippet {
+  width: 100%;
+}
+
+.npcink-v3-client-snippet > div {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.npcink-v3-client-snippet code {
+  line-height: 1.7;
+}
+
 .npcink-v3-app .ant-table-wrapper {
   background: #ffffff;
   border: 1px solid #dcdcde;

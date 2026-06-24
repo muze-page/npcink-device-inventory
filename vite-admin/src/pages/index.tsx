@@ -20,6 +20,7 @@ import {
   message,
 } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
+import { RestUrl } from "@/utils/index";
 import {
   archiveAsset,
   createAsset,
@@ -93,6 +94,12 @@ const formatMoney = (value: number) =>
     currency: "CNY",
     maximumFractionDigits: 2,
   }).format(Number.isFinite(value) ? value : 0);
+
+const buildClientTokenValue = (token: CreatedClientToken) =>
+  `mda_${token.id}_${token.secret}`;
+
+const buildClientSubmitCommand = (token: CreatedClientToken) =>
+  `npcink-device-agent submit --site "${RestUrl}" --token "${buildClientTokenValue(token)}" --note "测试电脑"`;
 
 const compactJson = (value: JsonRecord) => {
   const entries = Object.entries(value || {});
@@ -362,9 +369,26 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
           showIcon
           message="完整授权码只显示一次"
           description={
-            <Text copyable code>
-              {`mda_${createdToken.id}_${createdToken.secret}`}
-            </Text>
+            <Space direction="vertical" size={8} className="npcink-v3-client-snippet">
+              <div>
+                <Text type="secondary">站点地址</Text>
+                <Text copyable code>
+                  {RestUrl}
+                </Text>
+              </div>
+              <div>
+                <Text type="secondary">完整授权码</Text>
+                <Text copyable code>
+                  {buildClientTokenValue(createdToken)}
+                </Text>
+              </div>
+              <div>
+                <Text type="secondary">命令行验收</Text>
+                <Text copyable code>
+                  {buildClientSubmitCommand(createdToken)}
+                </Text>
+              </div>
+            </Space>
           }
         />
       ) : null}
