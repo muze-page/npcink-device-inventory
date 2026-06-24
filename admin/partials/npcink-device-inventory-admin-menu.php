@@ -43,15 +43,15 @@ if (!class_exists('Npcink_Device_Inventory_Admin_Menu')) {
 
 
 
-        public static function menu_displays()
-        {
-?>
-            <div class="wrap">
-                <!--标题-->
-                <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-                <div id='root'><?php echo esc_html__('Loading data, please wait.', 'npcink-device-inventory'); ?></div>
-            </div>
-<?php
+	        public static function menu_displays()
+	        {
+	?>
+	            <div class="wrap">
+	                <!--标题-->
+	                <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+	                <div id="root"></div>
+	            </div>
+	<?php
 
         }
 
@@ -67,19 +67,15 @@ if (!class_exists('Npcink_Device_Inventory_Admin_Menu')) {
             $locale = function_exists('determine_locale') ? determine_locale() : get_locale();
             if (0 === strpos($locale, 'zh_')) {
                 return array(
-                    'computer_devices' => '电脑设备',
-                    'custom_devices' => '自定义设备',
-                    'change_records' => '变更数据',
-                    'hardware_audit' => '硬件盘点',
+                    'assets' => '资产台账',
+                    'client_tokens' => '客户端令牌',
                     'settings' => '设置',
                 );
             }
 
             return array(
-                'computer_devices' => __('Computer Devices', 'npcink-device-inventory'),
-                'custom_devices' => __('Custom Devices', 'npcink-device-inventory'),
-                'change_records' => __('Change Records', 'npcink-device-inventory'),
-                'hardware_audit' => __('Hardware Audit', 'npcink-device-inventory'),
+                'assets' => __('Assets', 'npcink-device-inventory'),
+                'client_tokens' => __('Client Tokens', 'npcink-device-inventory'),
                 'settings' => __('Settings', 'npcink-device-inventory'),
             );
         }
@@ -95,52 +91,22 @@ if (!class_exists('Npcink_Device_Inventory_Admin_Menu')) {
                 return;
             }
 
-            //准备地址
-            $index_css = plugin_dir_url(dirname(__DIR__)) . 'vite-admin/dist/index.css';
-            $index_js = plugin_dir_url(dirname(__DIR__)) . 'vite-admin/dist/index.js';
-
-            wp_enqueue_style($name, $index_css, array(), $ver, false);
-            wp_enqueue_script($name, $index_js, array(), $ver, true);
-
-            //准备数据库名称
-            $sql_table_name = [
-                'pcData' => self::$table_pc_name, //设备数据表名
-                'styleData' => self::$table_style_name, //自定义设备数据表名
-                'changeManualData' => self::$table_manual_name, //手动变更记录数据表名
-                'changeAutoData' => self::$table_auto_name, //自动变更记录表名
-            ];
-
-
-            $option = get_option(self::$option);
-            if (is_object($option)) {
-                $option->client_tokens = Npcink_Device_Inventory_Admin_Interface_API::public_client_tokens();
-                $option->has_client_token = !empty(array_filter($option->client_tokens, function ($token) {
-                    return !empty($token['enabled']);
-                }));
-                unset($option->password);
-                unset($option->client_token_key_hash);
-                unset($option->client_token_id, $option->client_token_preview, $option->client_token_created_at);
-            } elseif (is_array($option)) {
-                $option['client_tokens'] = Npcink_Device_Inventory_Admin_Interface_API::public_client_tokens();
-                $option['has_client_token'] = !empty(array_filter($option['client_tokens'], function ($token) {
-                    return !empty($token['enabled']);
-                }));
-                unset($option['password']);
-                unset($option['client_token_key_hash']);
-                unset($option['client_token_id'], $option['client_token_preview'], $option['client_token_created_at']);
-            }
-
-            $pf_api_translation_array = array(
-                'site' => get_home_url(), //首页网址
-                'rest_url' => rest_url('npcink/v1'), //REST API 基础地址
-                'rest_nonce' => wp_create_nonce('wp_rest'),
-                'option' => $option, //传递选项（脱敏）
-                'sqlTableName' => $sql_table_name, //数据库表名
-                'locale' => function_exists('determine_locale') ? determine_locale() : get_locale(),
-                'labels' => self::admin_labels(),
-            );
-            wp_localize_script($name, 'dataLocal', $pf_api_translation_array); //传给vite项目
-        }
+	            $plugin_url = plugin_dir_url(dirname(__DIR__));
+	            wp_enqueue_style($name, $plugin_url . 'admin/css/npcink-device-inventory-admin.css', array(), $ver, false);
+	            wp_enqueue_style($name . '-app', $plugin_url . 'vite-admin/dist/index.css', array(), $ver, false);
+	            wp_enqueue_script($name, $plugin_url . 'vite-admin/dist/index.js', array(), $ver, true);
+	            wp_localize_script(
+	                $name,
+	                'dataLocal',
+	                array(
+	                    'site' => home_url(),
+	                    'rest_url' => esc_url_raw(rest_url('npcink/v1')),
+	                    'rest_nonce' => wp_create_nonce('wp_rest'),
+	                    'locale' => function_exists('determine_locale') ? determine_locale() : get_locale(),
+	                    'labels' => self::admin_labels(),
+	                )
+	            );
+	        }
 
         //对js文件进行module接入
         public static function refund_type_script($tag, $handle)

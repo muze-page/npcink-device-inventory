@@ -43,7 +43,7 @@ fn submit(args: &[String]) -> Result<()> {
         .unwrap_or_default();
     let token = required_flag(args, "--token")?;
     let data = collector::collect_static_data()?;
-    let response = upload::submit_v2(&site, &note, &token, &data)?;
+    let response = upload::submit_v3(&site, &note, &token, &data)?;
     println!("{}", serde_json::to_string_pretty(&response)?);
     Ok(())
 }
@@ -69,6 +69,6 @@ fn print_help() {
 Commands:\n\
   inspect [--pretty]    Print compatible hardware JSON\n\
   stable-id             Print v2 stable device id\n\
-  submit --site URL --token TOKEN [--note NOTE]            Submit to v2 endpoint\n"
+  submit --site URL --token TOKEN [--note NOTE]            Submit to v3 observation endpoint\n"
     );
 }

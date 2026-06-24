@@ -46,14 +46,14 @@ app.innerHTML = `
           <details class="more-config">
             <summary>更多配置</summary>
             <label class="field">
-              <span>上传授权码</span>
+              <span>完整授权码</span>
               <input id="token" name="token" type="password" placeholder="后台生成的上传授权码" />
             </label>
             <label class="field">
-              <span>接口地址</span>
-              <input id="site" name="site" placeholder="https://example.com/wp-json/npcink/v1/device-post-data-v2" />
+              <span>站点地址</span>
+              <input id="site" name="site" placeholder="https://example.com 或 https://example.com/wp-json/npcink/v1" />
             </label>
-            <p class="tip">默认提交新版 v2 接口，并使用授权码 HMAC 签名。</p>
+            <p class="tip">默认提交 v3 采集接口，并使用完整授权码 HMAC 签名。</p>
           </details>
 
           <div class="form-actions">
@@ -531,7 +531,7 @@ const loadConfig = async () => {
 const saveConfig = async () => {
   const config = getConfig();
   if (!config.site || !config.token) {
-    setToast("请填写上传授权码和接口地址。", "error");
+    setToast("请填写完整授权码和站点地址。", "error");
     return false;
   }
 

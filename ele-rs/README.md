@@ -1,26 +1,39 @@
 # Npcink Device Agent
 
-第一阶段 Rust 迁移客户端，目标是替代 Electron 主进程里的 `systeminformation.getStaticData()`，并上传到 WordPress v2 接口。
+Rust/Tauri 设备采集与上传客户端，负责采集本机硬件事实并提交到 WordPress 插件 v3 资产模型。
 
-现代化后的 v2 数据契约见 `../docs/device-data-v2-contract.md`。服务端会把采集
-输入规范化为 `_npcink_device`、`asset`、`raw`，后台列表、统计和导出读取
-`asset` 数据。
+客户端上传到：
 
-## 为什么先做这个
+```text
+POST /wp-json/npcink/v1/device-observations
+```
 
-新客户端会输出用于生成 `stable_device_id_v2` 的硬件身份信号：
+上传 body 使用 v3 observation 合同：
 
 ```json
 {
-  "uuid": {
-    "hardware": "...",
-    "macs": ["..."]
-  },
-  "net": []
+  "observation": {
+    "_npcink_device": {
+      "schema_version": 3,
+      "stable_device_id_v2": "...",
+      "collector": {}
+    },
+    "asset": {
+      "identity": {},
+      "upload": {},
+      "summary": {},
+      "hardware": {}
+    },
+    "raw": {}
+  }
 }
 ```
 
-并附加 `collector` 元数据，便于后台识别新客户端来源。新客户端不兼容旧结构。
+请求必须携带后台生成的完整授权码对应的 HMAC 头。完整授权码形如：
+
+```text
+mda_<token-id>_<token-secret>
+```
 
 ## 命令
 
@@ -38,26 +51,10 @@ npm run tauri:build
 ```bash
 cargo run -- inspect --pretty
 cargo run -- stable-id
-cargo run -- submit --site "https://example.com/wp-json/npcink/v1/device-post-data-v2" --token "后台生成的上传授权码" --note "张三"
+cargo run -- submit --site "https://example.com" --token "后台生成的完整授权码" --note "张三"
 ```
 
-`submit` 使用 v2 接口 body：
-
-```json
-{
-  "name": "上传备注，可选",
-  "data": {}
-}
-```
-
-v2 上传会自动附加 HMAC 请求头，用户只需要在桌面端填写后台生成的上传授权码。`name` 只作为后台备注，方便识别当前电脑可能是谁在用，不参与设备合并判断。
-
-## 阶段边界
-
-- 不替换已有 Electron 包。
-- v2 使用后台生成的上传授权码和 HMAC 签名。
-- 同一台设备再次上传时按 `stable_device_id_v2` 更新原记录，不新增重复设备。
-- 先验证 Windows/macOS 采集字段是否足以支撑新 `asset` 结构。
+`--site` 可以填写站点首页、`/wp-json`、`/wp-json/npcink/v1` 或完整 `/device-observations` endpoint；客户端会自动归一化到 v3 上传接口。
 
 ## 桌面客户端结构
 
@@ -71,10 +68,10 @@ ele-rs/
 
 桌面 UI 当前提供：
 
-- v2 接口地址、上传备注、上传授权码配置
+- 站点地址、上传备注、完整授权码配置
 - 本机硬件采集预览
 - stable device id 展示
-- 提交到 `/device-post-data-v2`
+- 提交到 v3 `/device-observations`
 
 ## 本地环境
 

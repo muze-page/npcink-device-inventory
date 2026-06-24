@@ -69,7 +69,10 @@ pub fn stable_device_id_v2(data: &Value) -> Option<String> {
             "baseboard_serial",
             data.pointer("/baseboard/serial").and_then(Value::as_str),
         ),
-        ("bios_serial", data.pointer("/bios/serial").and_then(Value::as_str)),
+        (
+            "bios_serial",
+            data.pointer("/bios/serial").and_then(Value::as_str),
+        ),
     ];
 
     for (kind, value) in candidates {
@@ -161,7 +164,9 @@ fn collect_cpu(system: &System) -> Value {
 }
 
 fn collect_memory(system: &System) -> Value {
-    let used_memory = system.total_memory().saturating_sub(system.available_memory());
+    let used_memory = system
+        .total_memory()
+        .saturating_sub(system.available_memory());
     let used_swap = system.total_swap().saturating_sub(system.free_swap());
     json!({
         "total": system.total_memory(),
@@ -349,10 +354,7 @@ fn fallback_hardware_uuid(macs: &[String]) -> String {
 
 fn is_internal_iface(iface: &str, ip4: &str, ip6: &str) -> bool {
     let lower = iface.to_ascii_lowercase();
-    lower == "lo"
-        || lower == "lo0"
-        || ip4.starts_with("127.")
-        || ip6 == "::1"
+    lower == "lo" || lower == "lo0" || ip4.starts_with("127.") || ip6 == "::1"
 }
 
 fn has_routable_ip(ip4: &str, ip6: &str) -> bool {
@@ -362,9 +364,11 @@ fn has_routable_ip(ip4: &str, ip6: &str) -> bool {
 
 fn is_virtual_iface(iface: &str) -> bool {
     let lower = iface.to_ascii_lowercase();
-    if ["anpi", "ap", "awdl", "bridge", "gif", "llw", "p2p", "stf", "utun"]
-        .iter()
-        .any(|prefix| lower.starts_with(prefix))
+    if [
+        "anpi", "ap", "awdl", "bridge", "gif", "llw", "p2p", "stf", "utun",
+    ]
+    .iter()
+    .any(|prefix| lower.starts_with(prefix))
     {
         return true;
     }

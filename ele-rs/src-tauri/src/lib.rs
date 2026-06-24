@@ -43,7 +43,7 @@ fn collect_device_snapshot() -> Result<DeviceSnapshot, String> {
 fn submit_device_data(config: AgentConfig) -> Result<Value, String> {
     validate_config(&config)?;
     let data = collector::collect_static_data().map_err(|error| error.to_string())?;
-    upload::submit_v2(&config.site, &config.name, &config.token, &data)
+    upload::submit_v3(&config.site, &config.name, &config.token, &data)
         .map_err(|error| error.to_string())
 }
 
@@ -62,7 +62,7 @@ pub fn run() {
 
 fn validate_config(config: &AgentConfig) -> Result<(), String> {
     if config.site.trim().is_empty() {
-        return Err("请填写 v2 接口地址".to_string());
+        return Err("请填写站点地址或 v3 接口地址".to_string());
     }
     if config.token.is_empty() {
         return Err("请填写上传授权码".to_string());

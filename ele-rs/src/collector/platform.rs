@@ -16,7 +16,9 @@ fn enrich_impl(root: &mut Map<String, Value>) {
     if let Some(value) = powershell_json("Get-CimInstance Win32_BIOS | Select-Object Manufacturer,SMBIOSBIOSVersion,SerialNumber,ReleaseDate") {
         root.insert("bios".to_string(), value);
     }
-    if let Some(value) = powershell_json("Get-CimInstance Win32_BaseBoard | Select-Object Manufacturer,Product,SerialNumber,Version") {
+    if let Some(value) = powershell_json(
+        "Get-CimInstance Win32_BaseBoard | Select-Object Manufacturer,Product,SerialNumber,Version",
+    ) {
         root.insert("baseboard".to_string(), value);
     }
     if let Some(value) = powershell_json("Get-CimInstance Win32_SystemEnclosure | Select-Object Manufacturer,SerialNumber,ChassisTypes") {
@@ -33,7 +35,10 @@ fn enrich_impl(root: &mut Map<String, Value>) {
 
 #[cfg(target_os = "macos")]
 fn enrich_impl(root: &mut Map<String, Value>) {
-    if let Some(value) = command_json("system_profiler", &["-json", "SPHardwareDataType", "SPDisplaysDataType"]) {
+    if let Some(value) = command_json(
+        "system_profiler",
+        &["-json", "SPHardwareDataType", "SPDisplaysDataType"],
+    ) {
         enrich_macos_system_profiler(root, &value);
         root.insert("platformData".to_string(), value);
     }
@@ -98,7 +103,10 @@ fn enrich_macos_system_profiler(root: &mut Map<String, Value>, value: &Value) {
         let controllers = displays
             .iter()
             .map(|item| {
-                let model = first_non_empty(&[string_value(item, "sppci_model"), string_value(item, "_name")]);
+                let model = first_non_empty(&[
+                    string_value(item, "sppci_model"),
+                    string_value(item, "_name"),
+                ]);
                 json!({
                     "vendor": string_value(item, "spdisplays_vendor").replace("sppci_vendor_", ""),
                     "model": model,

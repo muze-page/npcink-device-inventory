@@ -45,14 +45,6 @@ require_path "vite-admin/package-lock.json"
 require_path "vite-admin/tsconfig.json"
 require_path "vite-admin/tsconfig.node.json"
 require_path "vite-admin/vite.config.ts"
-require_path "vite-search/dist"
-require_path "vite-search/src"
-require_path "vite-search/index.html"
-require_path "vite-search/package.json"
-require_path "vite-search/package-lock.json"
-require_path "vite-search/tsconfig.json"
-require_path "vite-search/tsconfig.node.json"
-require_path "vite-search/vite.config.ts"
 
 find "${PACKAGE_DIR}" -name ".DS_Store" -delete
 find "${PACKAGE_DIR}" -type d -name "node_modules" -prune -exec rm -rf {} +
@@ -82,7 +74,7 @@ for forbidden_path in \
   "ele-rs" \
   "release" \
   "vite-admin/node_modules" \
-  "vite-search/node_modules"
+  "vite-search"
 do
   if [ -e "${PACKAGE_DIR}/${forbidden_path}" ]; then
     echo "Forbidden package path found: ${forbidden_path}" >&2

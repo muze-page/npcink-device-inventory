@@ -1,0 +1,126 @@
+import { restInstance, type RequestConfig } from "@/services/axiosConfig";
+import type {
+  Asset,
+  AssetEvent,
+  AssetIdentity,
+  AssetInput,
+  AssetListParams,
+  AssetObservation,
+  CreatedClientToken,
+  InventorySettings,
+  PaginatedResult,
+} from "@/type/v3";
+
+interface DataEnvelope<T> {
+  data: T;
+}
+
+const unwrapData = <T>(payload: DataEnvelope<T>): T => payload.data;
+
+export const getAssets = async (
+  params: AssetListParams
+): Promise<PaginatedResult<Asset>> => {
+  const response = await restInstance.get<PaginatedResult<Asset>>("/assets", {
+    params,
+    showSuccessMessage: false,
+  } as RequestConfig);
+  return response.data;
+};
+
+export const getAsset = async (uuid: string): Promise<Asset> => {
+  const response = await restInstance.get<DataEnvelope<Asset>>(`/assets/${uuid}`, {
+    showSuccessMessage: false,
+  } as RequestConfig);
+  return unwrapData(response.data);
+};
+
+export const createAsset = async (input: AssetInput): Promise<Asset> => {
+  const response = await restInstance.post<DataEnvelope<Asset>>("/assets", input, {
+    showSuccessMessage: false,
+  } as RequestConfig);
+  return unwrapData(response.data);
+};
+
+export const updateAsset = async (
+  uuid: string,
+  input: AssetInput
+): Promise<Asset> => {
+  const response = await restInstance.patch<DataEnvelope<Asset>>(
+    `/assets/${uuid}`,
+    input,
+    { showSuccessMessage: false } as RequestConfig
+  );
+  return unwrapData(response.data);
+};
+
+export const archiveAsset = async (uuid: string): Promise<Asset> => {
+  const response = await restInstance.delete<DataEnvelope<Asset>>(`/assets/${uuid}`, {
+    showSuccessMessage: false,
+  } as RequestConfig);
+  return unwrapData(response.data);
+};
+
+export const getAssetIdentities = async (
+  uuid: string
+): Promise<AssetIdentity[]> => {
+  const response = await restInstance.get<DataEnvelope<AssetIdentity[]>>(
+    `/assets/${uuid}/identities`,
+    { showSuccessMessage: false } as RequestConfig
+  );
+  return unwrapData(response.data);
+};
+
+export const getAssetObservations = async (
+  uuid: string,
+  page = 1,
+  pageSize = 20
+): Promise<PaginatedResult<AssetObservation>> => {
+  const response = await restInstance.get<PaginatedResult<AssetObservation>>(
+    `/assets/${uuid}/observations`,
+    {
+      params: { page, pageSize },
+      showSuccessMessage: false,
+    } as RequestConfig
+  );
+  return response.data;
+};
+
+export const getAssetEvents = async (
+  uuid: string,
+  page = 1,
+  pageSize = 30
+): Promise<PaginatedResult<AssetEvent>> => {
+  const response = await restInstance.get<PaginatedResult<AssetEvent>>(
+    `/assets/${uuid}/events`,
+    {
+      params: { page, pageSize },
+      showSuccessMessage: false,
+    } as RequestConfig
+  );
+  return response.data;
+};
+
+export const getSettings = async (): Promise<InventorySettings> => {
+  const response = await restInstance.get<DataEnvelope<InventorySettings>>(
+    "/settings",
+    { showSuccessMessage: false } as RequestConfig
+  );
+  return unwrapData(response.data);
+};
+
+export const createClientToken = async (
+  name: string
+): Promise<CreatedClientToken> => {
+  const response = await restInstance.post<DataEnvelope<CreatedClientToken>>(
+    "/client-tokens",
+    { name },
+    { showSuccessMessage: false } as RequestConfig
+  );
+  return unwrapData(response.data);
+};
+
+export const deleteClientToken = async (id: string): Promise<void> => {
+  await restInstance.delete(`/client-tokens/${id}`, {
+    showSuccessMessage: false,
+  } as RequestConfig);
+};

@@ -2,78 +2,121 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  /**
-  button,
-  [type="button"],
-  [type="reset"],
-  [type="submit"] {
-    
-    background: var(--ant-color-primary);
-    box-shadow: none;
-  }
-  */
-}
-
-@layer components {
-  /*设备详情 mac*/
-  .mac {
-    @apply border border-gray-300 bg-gradient-to-r from-[#fcfcfc] to-[#f7f7f7];
-  }
-  /*SVG 图标*/
-  .svg {
-    @apply w-[1em] h-[1em] mr-1 text-sm;
-  }
-  /*反转颜色*/
-  .svgReversal {
-    @apply filter invert-[1] sepia-[1] hue-rotate-[180deg];
-  }
-  /*设备详情 - 蓝色*/
-  .bg_blue {
-    @apply from-[rgba(250,251,254,0.66)] to-[#f2f5fb]   border-blue-400 border-opacity-25;
-  }
-  /*设备详情 - 黄色*/
-  .bg_yellow {
-    @apply border-gray-300  from-[#fcfcfc] to-[#f7f7f7];
-  }
-  /*通用 - 按钮*/
-  .bt {
-    @apply mx-2 px-2 rounded-lg  hover:bg-white hover:bg-opacity-10;
-  }
-}
-
-/*设备详情*/
-.Mac_icon_background_color {
-  background: linear-gradient(141deg, #454545 0, #000 100%);
-}
-.Mac_content_background_color {
-  background: linear-gradient(
-    140deg,
-    #454545 0,
-    rgba(70, 70, 70, 0.86) 33%,
-    #474747 100%
-  );
-  box-shadow: 0 8px 30px 0 rgba(0, 0, 0, 0.2);
-}
-
-.Windows_content_background_color {
-  background: linear-gradient(
-    142deg,
-    #5594ff 0,
-    rgba(70, 129, 247, 0.93) 26%,
-    #356dee 100%,
-    #356dee 100%
-  );
-  box-shadow: 0 8px 30px 0 rgba(53, 109, 238, 0.3);
-}
-
 #root {
-  width: 1200px;
+  max-width: 100%;
 }
 
-/*覆盖WordPress 样式 - 搜索框中的input*/
-.searchInput input {
-  line-height: inherit;
-  min-height: auto;
+.npcink-v3-app {
+  max-width: 1440px;
+  min-width: 960px;
+  padding: 18px 20px 28px;
+  background: #f6f7f9;
+  color: #1f2328;
+}
+
+.npcink-v3-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.npcink-v3-header h2.ant-typography {
+  margin: 0 0 4px;
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.npcink-v3-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.npcink-v3-search {
+  width: 360px;
+}
+
+.npcink-v3-filter {
+  width: 150px;
+}
+
+.npcink-v3-link {
   height: auto;
+  padding: 0;
+  white-space: normal;
+  text-align: left;
+}
+
+.npcink-v3-detail-stack {
+  width: 100%;
+}
+
+.npcink-v3-json {
+  max-height: 420px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  background: #f6f7f9;
+  border: 1px solid #dcdcde;
+  border-radius: 6px;
+  color: #1f2328;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.npcink-v3-half {
+  width: 50%;
+}
+
+.npcink-v3-number {
+  width: 100%;
+}
+
+.npcink-v3-token-form {
+  margin-bottom: 14px;
+}
+
+.npcink-v3-token-form .ant-form-item:first-child {
+  width: 320px;
+}
+
+.npcink-v3-secret {
+  margin-bottom: 14px;
+}
+
+.npcink-v3-secret code {
+  white-space: normal;
+  word-break: break-all;
+}
+
+.npcink-v3-app .ant-table-wrapper {
+  background: #ffffff;
+  border: 1px solid #dcdcde;
+  border-radius: 6px;
+}
+
+.npcink-v3-app .ant-table-thead > tr > th {
+  background: #f0f2f4;
+  color: #2c3338;
+  font-weight: 600;
+}
+
+.npcink-v3-app .ant-table-tbody > tr:hover > td {
+  background: #f7fbff;
+}
+
+.npcink-v3-app .ant-btn,
+.npcink-v3-app .ant-input,
+.npcink-v3-app .ant-select-selector,
+.npcink-v3-app .ant-input-number,
+.ant-modal .ant-btn,
+.ant-drawer .ant-btn {
+  border-radius: 6px;
 }
