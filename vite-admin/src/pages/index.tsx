@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
@@ -78,11 +78,15 @@ const EVENT_SOURCE_OPTIONS = [
   { label: "系统", value: "system" },
   { label: "上传", value: "upload" },
   { label: "导入", value: "import" },
+  { label: "旧版自动", value: "legacy_auto" },
+  { label: "旧版手动", value: "legacy_manual" },
+  { label: "旧版导入", value: "legacy_import" },
 ];
 
 const EVENT_TYPE_OPTIONS = [
   { label: "创建", value: "created" },
   { label: "更新", value: "updated" },
+  { label: "批量修改", value: "bulk_updated" },
   { label: "字段变更", value: "field_changed" },
   { label: "采集接收", value: "observation_received" },
   { label: "删除/归档", value: "deleted" },
@@ -92,6 +96,7 @@ const OBSERVATION_SOURCE_OPTIONS = [
   { label: "采集客户端", value: "uploader" },
   { label: "后台导入", value: "admin_import" },
   { label: "人工录入", value: "manual_entry" },
+  { label: "旧版导入", value: "legacy_import" },
 ];
 
 const MANUAL_RECORD_OPTIONS = [
@@ -473,6 +478,36 @@ const issuesToCsv = (issues: HardwareIssue[], handledIssueKeys: Set<string>) => 
   return [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
 };
 
+type BulkEditableField = "department" | "ownerName" | "status" | "category";
+
+const BULK_EDIT_FIELDS: Array<{ key: BulkEditableField; label: string }> = [
+  { key: "department", label: "部门" },
+  { key: "ownerName", label: "使用人" },
+  { key: "status", label: "状态" },
+  { key: "category", label: "分类" },
+];
+
+const displayBulkValue = (field: BulkEditableField, value: unknown) => {
+  if (field === "status") {
+    return statusLabel(String(value || ""));
+  }
+  return fieldText(value);
+};
+
+const bulkUpdateChanges = (asset: Asset, input: AssetInput) =>
+  BULK_EDIT_FIELDS.filter(({ key }) => Object.prototype.hasOwnProperty.call(input, key))
+    .map(({ key, label }) => {
+      const oldValue = displayBulkValue(key, asset[key]);
+      const newValue = displayBulkValue(key, input[key]);
+      return {
+        field: key,
+        label,
+        oldValue,
+        newValue,
+      };
+    })
+    .filter((change) => change.oldValue !== change.newValue);
+
 const buildClientTokenValue = (token: CreatedClientToken) =>
   `mda_${token.id}_${token.secret}`;
 
@@ -674,6 +709,162 @@ const observationChanges = (observations: AssetObservation[]) => {
   return changes;
 };
 
+interface FieldSourceRow {
+  key: string;
+  label: string;
+  standard: string;
+  imported: string;
+  latest: string;
+}
+
+const legacyFieldValue = (asset: Asset, field: (typeof LEGACY_IMPORT_FIELDS)[number]["value"]) => {
+  const raw = getRecord(getRecord(getRecord(asset.metadata).legacy).raw);
+  const aliases = LEGACY_IMPORT_FIELDS.find((item) => item.value === field)?.aliases || [];
+  return pickLegacyValue(raw, aliases);
+};
+
+const fieldSourceRows = (asset: Asset, context: ReturnType<typeof assetHardwareContext>): FieldSourceRow[] => {
+  const latestSummary = getRecord(asset.latestObservation?.summary);
+  const latestHardware = getRecord(asset.latestObservation?.hardware);
+  const latestExtracted = hardwareSummary(latestSummary, latestHardware);
+  const importedRaw = getRecord(context.importedHardware.raw);
+  const importedExtracted = hardwareSummary({}, importedRaw);
+  const importedMemory = firstText(context.importedHardware.memory, importedExtracted.memoryLines.join("\n"));
+  const latestMemory = firstText(latestExtracted.memoryLines.join("\n"), formatBytes(latestSummary.memory_bytes));
+
+  return [
+    {
+      key: "assetNumber",
+      label: "资产编号",
+      standard: fieldText(asset.assetNumber),
+      imported: fieldText(legacyFieldValue(asset, "assetNumber")),
+      latest: "-",
+    },
+    {
+      key: "name",
+      label: "资产名称",
+      standard: fieldText(asset.name),
+      imported: fieldText(legacyFieldValue(asset, "name")),
+      latest: fieldText(firstText(latestSummary.hostname, latestSummary.device_model)),
+    },
+    {
+      key: "owner",
+      label: "使用人",
+      standard: fieldText(asset.ownerName),
+      imported: fieldText(legacyFieldValue(asset, "ownerName")),
+      latest: "-",
+    },
+    {
+      key: "department",
+      label: "部门",
+      standard: fieldText(asset.department),
+      imported: fieldText(legacyFieldValue(asset, "department")),
+      latest: "-",
+    },
+    {
+      key: "status",
+      label: "状态",
+      standard: statusLabel(asset.status),
+      imported: fieldText(legacyFieldValue(asset, "status")),
+      latest: "-",
+    },
+    {
+      key: "cpu",
+      label: "CPU",
+      standard: fieldText(context.extracted.cpu),
+      imported: fieldText(firstText(context.importedHardware.cpu, importedExtracted.cpu)),
+      latest: fieldText(latestExtracted.cpu),
+    },
+    {
+      key: "graphics",
+      label: "显卡",
+      standard: fieldText(context.extracted.graphics),
+      imported: fieldText(firstText(context.importedHardware.graphics, importedExtracted.graphics)),
+      latest: fieldText(latestExtracted.graphics),
+    },
+    {
+      key: "deviceModel",
+      label: "计算机型号",
+      standard: fieldText(context.extracted.deviceModel),
+      imported: fieldText(importedExtracted.deviceModel),
+      latest: fieldText(latestExtracted.deviceModel),
+    },
+    {
+      key: "baseboard",
+      label: "主板型号",
+      standard: fieldText(context.extracted.baseboard),
+      imported: fieldText(importedExtracted.baseboard),
+      latest: fieldText(latestExtracted.baseboard),
+    },
+    {
+      key: "memory",
+      label: "内存",
+      standard: fieldText(firstText(context.extracted.memoryLines.join("\n"), context.importedHardware.memory, formatBytes(context.summary.memory_bytes))),
+      imported: fieldText(importedMemory),
+      latest: fieldText(latestMemory),
+    },
+    {
+      key: "disk",
+      label: "硬盘",
+      standard: fieldText(firstText(context.extracted.primaryDisk, context.importedHardware.disk, formatBytes(context.summary.disk_bytes))),
+      imported: fieldText(firstText(context.importedHardware.disk, importedExtracted.primaryDisk)),
+      latest: fieldText(firstText(latestExtracted.primaryDisk, formatBytes(latestSummary.disk_bytes))),
+    },
+    {
+      key: "ip",
+      label: "IP",
+      standard: fieldText(context.extracted.primaryIp),
+      imported: fieldText(firstText(context.importedHardware.ip, importedExtracted.primaryIp)),
+      latest: fieldText(latestExtracted.primaryIp),
+    },
+  ];
+};
+
+interface ActivityItem {
+  key: string;
+  tag: string;
+  color: string;
+  title: string;
+  description: string;
+  time: string;
+}
+
+const recentActivityItems = (
+  observations: AssetObservation[],
+  events: AssetEvent[],
+  changes: ReturnType<typeof observationChanges>
+): ActivityItem[] => [
+  ...changes.map((change) => ({
+    key: `change-${change.key}`,
+    tag: "配置变化",
+    color: "purple",
+    title: change.label,
+    description: `${change.oldValue} -> ${change.newValue}`,
+    time: change.observedAt,
+  })),
+  ...observations.map((observation) => {
+    const snapshot = observationSnapshot(observation);
+    return {
+      key: `observation-${observation.id}`,
+      tag: "自动采集",
+      color: "blue",
+      title: optionLabel(OBSERVATION_SOURCE_OPTIONS, observation.source),
+      description: [snapshot.cpu, snapshot.memory_bytes, snapshot.disk_bytes, snapshot.primary_ip]
+        .filter((item) => item && item !== "-")
+        .join(" / ") || "收到一条硬件采集",
+      time: observation.observedAt || observation.receivedAt,
+    };
+  }),
+  ...events.map((event) => ({
+    key: `event-${event.id}`,
+    tag: optionLabel(EVENT_SOURCE_OPTIONS, event.eventSource),
+    color: event.eventSource === "manual" ? "orange" : "green",
+    title: optionLabel(EVENT_TYPE_OPTIONS, event.eventType),
+    description: event.message || [event.fieldName, event.oldValue, event.newValue].filter(Boolean).join(" / ") || "记录已写入",
+    time: event.createdAt,
+  })),
+].sort((a, b) => new Date(b.time.replace(" ", "T")).getTime() - new Date(a.time.replace(" ", "T")).getTime()).slice(0, 8);
+
 const latestObservationTime = (asset: Asset) => asset.latestObservation?.observedAt || "";
 
 const daysSince = (value?: string) => {
@@ -704,6 +895,27 @@ const duplicateMap = (assets: Asset[], getValue: (asset: Asset) => string) => {
   return result;
 };
 
+const missingHardwareValue = (value: string) => !value || value.trim() === "-" || /^暂无/.test(value.trim());
+
+const issueGroup = (type: string) => {
+  if (type.includes("重复")) {
+    return "重复风险";
+  }
+  if (type.includes("CPU") || type.includes("显卡") || type.includes("内存") || type.includes("硬盘")) {
+    return "硬件缺失";
+  }
+  if (type.includes("缺失")) {
+    return "资料缺失";
+  }
+  if (type.includes("采集")) {
+    return "采集状态";
+  }
+  if (type.includes("维护")) {
+    return "维护状态";
+  }
+  return "其他";
+};
+
 const detectHardwareIssues = (assets: Asset[]) => {
   const byNumber = duplicateMap(assets, (asset) => asset.assetNumber);
   const byIp = duplicateMap(assets, (asset) => assetHardwareContext(asset).extracted.primaryIp);
@@ -714,6 +926,7 @@ const detectHardwareIssues = (assets: Asset[]) => {
     const ignored = ignoredAuditFields(asset);
     const context = assetHardwareContext(asset);
     const assetLabel = asset.assetNumber || asset.name || asset.uuid;
+    const extracted = context.extracted;
     if (asset.assetNumber && (byNumber.get(asset.assetNumber)?.length || 0) > 1) {
       issues.push({
         key: `${asset.uuid}-duplicate-number`,
@@ -759,6 +972,42 @@ const detectHardwareIssues = (assets: Asset[]) => {
         type: "责任人缺失",
         asset,
         message: `${assetLabel} 未设置责任人`,
+      });
+    }
+    if (!ignored.has("cpu") && missingHardwareValue(extracted.cpu)) {
+      issues.push({
+        key: `${asset.uuid}-missing-cpu`,
+        level: "warning",
+        type: "CPU 缺失",
+        asset,
+        message: `${assetLabel} 缺少 CPU 型号`,
+      });
+    }
+    if (!ignored.has("graphics") && missingHardwareValue(extracted.graphics)) {
+      issues.push({
+        key: `${asset.uuid}-missing-graphics`,
+        level: "warning",
+        type: "显卡缺失",
+        asset,
+        message: `${assetLabel} 缺少显卡型号`,
+      });
+    }
+    if (!ignored.has("memory_bytes") && hardwareMemoryBytes(asset) <= 0 && missingHardwareValue(String(context.importedHardware.memory || ""))) {
+      issues.push({
+        key: `${asset.uuid}-missing-memory`,
+        level: "warning",
+        type: "内存缺失",
+        asset,
+        message: `${assetLabel} 缺少内存信息`,
+      });
+    }
+    if (!ignored.has("disk_bytes") && hardwareDiskBytes(asset) <= 0 && missingHardwareValue(String(context.importedHardware.disk || ""))) {
+      issues.push({
+        key: `${asset.uuid}-missing-disk`,
+        level: "warning",
+        type: "硬盘缺失",
+        asset,
+        message: `${assetLabel} 缺少硬盘信息`,
       });
     }
     if (!latestObservationTime(asset) && Object.keys(context.importedHardware).length > 0) {
@@ -1076,7 +1325,7 @@ const BulkEditModal = ({ open, count, loading, onClose, onSubmit }: BulkEditModa
         showIcon
         className="npcink-v3-secret"
         message={`将修改 ${count} 条已选资产`}
-        description="留空的字段不会覆盖原值。"
+        description="留空字段不会覆盖原值；发生变化的资产会写入一条批量修改记录。"
       />
       <Form
         form={form}
@@ -1411,6 +1660,14 @@ const DetailDrawer = ({ uuid, open, onClose, onEdit, onArchive }: DetailDrawerPr
   const summary = hardwareContext.summary;
   const extracted = hardwareContext.extracted;
   const changes = useMemo(() => observationChanges(observations).slice(0, 8), [observations]);
+  const sourceRows = useMemo(
+    () => (asset ? fieldSourceRows(asset, hardwareContext) : []),
+    [asset, hardwareContext]
+  );
+  const activityItems = useMemo(
+    () => recentActivityItems(observations, events, changes),
+    [changes, events, observations]
+  );
   const createEventMutation = useMutation(
     (input: AssetEventInput) => createAssetEvent(uuid || "", input),
     {
@@ -1561,6 +1818,28 @@ const DetailDrawer = ({ uuid, open, onClose, onEdit, onArchive }: DetailDrawerPr
                       <strong>{formatDate(asset.createdAt)}</strong>
                     </div>
                   </div>
+                  <div className="npcink-v3-activity-list">
+                    <div className="npcink-v3-activity-head">
+                      <Text strong>最近记录</Text>
+                      <Text type="secondary">合并自动采集、配置变化和手动记录</Text>
+                    </div>
+                    {activityItems.length ? (
+                      activityItems.map((item) => (
+                        <div key={item.key}>
+                          <Tag color={item.color}>{item.tag}</Tag>
+                          <div>
+                            <Text strong>{item.title}</Text>
+                            <Text type="secondary">{item.description}</Text>
+                          </div>
+                          <Text type="secondary">{formatDate(item.time)}</Text>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="npcink-v3-activity-empty">
+                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无最近记录" />
+                      </div>
+                    )}
+                  </div>
                   <Collapse
                     size="small"
                     items={[
@@ -1585,6 +1864,26 @@ const DetailDrawer = ({ uuid, open, onClose, onEdit, onArchive }: DetailDrawerPr
               children: (
                 <Space direction="vertical" size={14} className="npcink-v3-detail-stack">
                   <Descriptions bordered size="small" column={2} items={detailItems(asset)} />
+                  <div className="npcink-v3-field-source">
+                    <div className="npcink-v3-field-source-head">
+                      <Text strong>字段来源对照</Text>
+                      <Text type="secondary">标准字段、导入字段和最新采集字段并排查看。</Text>
+                    </div>
+                    <div className="npcink-v3-field-source-grid">
+                      <strong>字段</strong>
+                      <strong>标准字段</strong>
+                      <strong>导入字段</strong>
+                      <strong>最新采集</strong>
+                      {sourceRows.map((row) => (
+                        <Fragment key={row.key}>
+                          <span>{row.label}</span>
+                          <span>{row.standard}</span>
+                          <span>{row.imported}</span>
+                          <span>{row.latest}</span>
+                        </Fragment>
+                      ))}
+                    </div>
+                  </div>
                   <Table
                     rowKey="id"
                     size="small"
@@ -1839,6 +2138,10 @@ const HardwareAuditWorkspace = () => {
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState("");
   const [source, setSource] = useState<string | undefined>();
+  const [selectedIssueGroup, setSelectedIssueGroup] = useState<string>("全部");
+  const [selectedIssueType, setSelectedIssueType] = useState<string>();
+  const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
+  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [showHandledIssues, setShowHandledIssues] = useState(false);
   const [handledIssueKeys, setHandledIssueKeys] = useState<Set<string>>(loadHandledIssueKeys);
   const queryParams = useMemo(
@@ -1932,12 +2235,32 @@ const HardwareAuditWorkspace = () => {
     };
   }, [auditAssets]);
   const hardwareIssues = useMemo(() => detectHardwareIssues(auditAssets), [auditAssets]);
+  const filteredIssuePool = useMemo(
+    () =>
+      hardwareIssues.filter((issue) => {
+        const groupMatched = selectedIssueGroup === "全部" || issueGroup(issue.type) === selectedIssueGroup;
+        const typeMatched = !selectedIssueType || issue.type === selectedIssueType;
+        return groupMatched && typeMatched;
+      }),
+    [hardwareIssues, selectedIssueGroup, selectedIssueType]
+  );
   const visibleIssues = useMemo(
-    () => hardwareIssues.filter((issue) => showHandledIssues || !handledIssueKeys.has(issue.key)),
-    [handledIssueKeys, hardwareIssues, showHandledIssues]
+    () => filteredIssuePool.filter((issue) => showHandledIssues || !handledIssueKeys.has(issue.key)),
+    [filteredIssuePool, handledIssueKeys, showHandledIssues]
   );
   const unresolvedIssues = hardwareIssues.filter((issue) => !handledIssueKeys.has(issue.key));
-  const issueCounts = countBy(visibleIssues, (issue) => issue.type);
+  const issueCounts = countBy(filteredIssuePool, (issue) => issue.type);
+  const issueGroups = useMemo(() => {
+    const counts = countBy(hardwareIssues, (issue) => issueGroup(issue.type));
+    return [
+      { group: "全部", total: hardwareIssues.length, unresolved: unresolvedIssues.length },
+      ...sortedEntries(counts).map(([group, total]) => ({
+        group,
+        total,
+        unresolved: hardwareIssues.filter((issue) => issueGroup(issue.type) === group && !handledIssueKeys.has(issue.key)).length,
+      })),
+    ];
+  }, [handledIssueKeys, hardwareIssues, unresolvedIssues.length]);
   const issueRecordMutation = useMutation(
     ({ issue, message: recordMessage }: { issue: HardwareIssue; message: string }) =>
       createAssetEvent(issue.asset.uuid, {
@@ -1963,6 +2286,18 @@ const HardwareAuditWorkspace = () => {
       },
     }
   );
+  const updateAssetMutation = useMutation(
+    ({ uuid, input }: { uuid: string; input: AssetInput }) => updateAsset(uuid, input),
+    {
+      onSuccess: (asset) => {
+        setEditingAsset(null);
+        queryClient.invalidateQueries(["v3-hardware-audit-assets"]);
+        queryClient.invalidateQueries(["v3-assets"]);
+        queryClient.invalidateQueries(["v3-asset", asset.uuid]);
+        message.success("资产已更新");
+      },
+    }
+  );
 
   const markIssueHandled = (issue: HardwareIssue) => {
     const note = window.prompt("处理说明", `已处理：${issue.type} - ${issue.message}`);
@@ -1980,6 +2315,16 @@ const HardwareAuditWorkspace = () => {
       return next;
     });
     message.success("已标记处理");
+  };
+
+  const restoreIssue = (issue: HardwareIssue) => {
+    setHandledIssueKeys((previous) => {
+      const next = new Set(previous);
+      next.delete(issue.key);
+      saveHandledIssueKeys(next);
+      return next;
+    });
+    message.success("已恢复为未处理");
   };
 
   const columns: ColumnsType<AssetObservation> = [
@@ -2111,15 +2456,21 @@ const HardwareAuditWorkspace = () => {
           <div>
             <Text strong>异常发现</Text>
             <Text type="secondary">
-              未处理 {unresolvedIssues.length} / 全部 {hardwareIssues.length}
+              当前显示 {visibleIssues.length} 条，未处理 {unresolvedIssues.length} / 全部 {hardwareIssues.length}
             </Text>
           </div>
           <Space wrap>
-            {sortedEntries(issueCounts).slice(0, 5).map(([label, count]) => (
-              <Tag key={label} color={label.includes("重复") ? "red" : "orange"}>
-                {label} {count}
-              </Tag>
-            ))}
+            <Select
+              allowClear
+              placeholder="问题类型"
+              value={selectedIssueType}
+              onChange={setSelectedIssueType}
+              className="npcink-v3-filter"
+              options={sortedEntries(issueCounts).map(([label, count]) => ({
+                label: `${label} ${count}`,
+                value: label,
+              }))}
+            />
             <Checkbox
               checked={showHandledIssues}
               onChange={(event) => setShowHandledIssues(event.target.checked)}
@@ -2134,6 +2485,23 @@ const HardwareAuditWorkspace = () => {
               导出异常
             </Button>
           </Space>
+        </div>
+        <div className="npcink-v3-issue-groups">
+          {issueGroups.map((item) => (
+            <button
+              key={item.group}
+              type="button"
+              className={selectedIssueGroup === item.group ? "is-active" : ""}
+              onClick={() => {
+                setSelectedIssueGroup(item.group);
+                setSelectedIssueType(undefined);
+              }}
+            >
+              <span>{item.group}</span>
+              <strong>{item.unresolved}</strong>
+              <em>全部 {item.total}</em>
+            </button>
+          ))}
         </div>
         <Table
           rowKey="key"
@@ -2161,9 +2529,20 @@ const HardwareAuditWorkspace = () => {
                 </Tag>
               ),
             },
-            { title: "类型", dataIndex: "type", width: 130 },
+            {
+              title: "类型",
+              dataIndex: "type",
+              width: 140,
+              render: (type: string) => (
+                <Space direction="vertical" size={2}>
+                  <Text>{type}</Text>
+                  <Text type="secondary">{issueGroup(type)}</Text>
+                </Space>
+              ),
+            },
             {
               title: "资产",
+              width: 180,
               render: (_, issue) => (
                 <Space direction="vertical" size={2}>
                   <Text strong>{issue.asset.assetNumber || issue.asset.name || issue.asset.uuid}</Text>
@@ -2171,12 +2550,20 @@ const HardwareAuditWorkspace = () => {
                 </Space>
               ),
             },
-            { title: "说明", dataIndex: "message" },
+            { title: "说明", dataIndex: "message", width: 260 },
             {
               title: "操作",
-              width: 180,
+              width: 250,
               render: (_, issue) => (
                 <Space>
+                  <Button
+                    size="small"
+                    type="link"
+                    className="npcink-v3-link"
+                    onClick={() => setSelectedUuid(issue.asset.uuid)}
+                  >
+                    查看资产
+                  </Button>
                   <Button
                     size="small"
                     type="link"
@@ -2195,10 +2582,21 @@ const HardwareAuditWorkspace = () => {
                   >
                     标记
                   </Button>
+                  {handledIssueKeys.has(issue.key) ? (
+                    <Button
+                      size="small"
+                      type="link"
+                      className="npcink-v3-link"
+                      onClick={() => restoreIssue(issue)}
+                    >
+                      恢复
+                    </Button>
+                  ) : null}
                 </Space>
               ),
             },
           ]}
+          scroll={{ x: 1000 }}
           locale={{ emptyText: <Empty description="暂无异常发现" /> }}
         />
       </div>
@@ -2268,6 +2666,27 @@ const HardwareAuditWorkspace = () => {
           setPageSize(nextPagination.pageSize || 20);
         }}
         locale={{ emptyText: <Empty description="暂无硬件采集数据" /> }}
+      />
+      <DetailDrawer
+        uuid={selectedUuid}
+        open={Boolean(selectedUuid)}
+        onClose={() => setSelectedUuid(null)}
+        onEdit={(asset) => setEditingAsset(asset)}
+        onArchive={() => {
+          queryClient.invalidateQueries(["v3-hardware-audit-assets"]);
+          queryClient.invalidateQueries(["v3-assets"]);
+        }}
+      />
+      <AssetFormModal
+        asset={editingAsset}
+        open={Boolean(editingAsset)}
+        onClose={() => setEditingAsset(null)}
+        onSubmit={async (input) => {
+          if (!editingAsset) {
+            return;
+          }
+          await updateAssetMutation.mutateAsync({ uuid: editingAsset.uuid, input });
+        }}
       />
     </div>
   );
@@ -2523,19 +2942,41 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
     }
   );
   const batchUpdateMutation = useMutation(
-    async ({ uuids, input }: { uuids: string[]; input: AssetInput }) => {
-      for (const uuid of uuids) {
-        await updateAsset(uuid, input);
+    async ({ targets, input }: { targets: Asset[]; input: AssetInput }) => {
+      const changedTargets = targets
+        .map((asset) => ({ asset, changes: bulkUpdateChanges(asset, input) }))
+        .filter((item) => item.changes.length > 0);
+
+      if (!changedTargets.length) {
+        message.warning("没有字段发生变化");
+        return 0;
       }
+
+      for (const { asset, changes } of changedTargets) {
+        await updateAsset(asset.uuid, input);
+        await createAssetEvent(asset.uuid, {
+          eventType: "bulk_updated",
+          message: `批量修改：${changes.map((change) => change.label).join("、")}`,
+          payload: {
+            source: "asset_batch_edit",
+            changedFields: changes,
+            selectedCount: targets.length,
+          },
+        });
+      }
+      return changedTargets.length;
     },
     {
-      onSuccess: () => {
+      onSuccess: (changedCount) => {
+        if (changedCount === 0) {
+          return;
+        }
         queryClient.invalidateQueries(["v3-assets"]);
         queryClient.invalidateQueries(["v3-events"]);
         setBulkModalOpen(false);
         setSelectedUuids(new Set());
         setBatchMode(false);
-        message.success("已批量修改资产");
+        message.success(`已批量修改 ${changedCount} 条资产并写入变更记录`);
       },
     }
   );
@@ -2952,9 +3393,9 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
         count={selectedCount}
         loading={batchUpdateMutation.isLoading}
         onClose={() => setBulkModalOpen(false)}
-        onSubmit={(input) =>
-          batchUpdateMutation.mutateAsync({ uuids: selectedAssets.map((asset) => asset.uuid), input })
-        }
+        onSubmit={async (input) => {
+          await batchUpdateMutation.mutateAsync({ targets: selectedAssets, input });
+        }}
       />
       <TokenModal open={tokenModalOpen} onClose={() => setTokenModalOpen(false)} />
     </div>
