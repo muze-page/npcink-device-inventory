@@ -14,12 +14,12 @@ class Npcink_Device_Inventory_Event_Repository
 			'event_source' => sanitize_key($event['event_source']),
 			'event_type' => sanitize_key($event['event_type']),
 			'field_name' => isset($event['field_name']) ? sanitize_text_field($event['field_name']) : null,
-			'old_value' => isset($event['old_value']) ? (string) $event['old_value'] : null,
-			'new_value' => isset($event['new_value']) ? (string) $event['new_value'] : null,
+			'old_value' => isset($event['old_value']) ? sanitize_textarea_field((string) $event['old_value']) : null,
+			'new_value' => isset($event['new_value']) ? sanitize_textarea_field((string) $event['new_value']) : null,
 			'message' => isset($event['message']) ? sanitize_textarea_field($event['message']) : null,
 			'actor_user_id' => isset($event['actor_user_id']) ? intval($event['actor_user_id']) : null,
 			'actor_name' => isset($event['actor_name']) ? sanitize_text_field($event['actor_name']) : '',
-			'payload_json' => isset($event['payload']) ? wp_json_encode($event['payload']) : null,
+			'payload_json' => isset($event['payload']) ? Npcink_Device_Inventory_V3_Sanitizer::json_encode($event['payload']) : null,
 		);
 
 		return $wpdb->insert(

@@ -104,7 +104,7 @@ class Npcink_Device_Inventory_Asset_Repository
 			'category' => sanitize_text_field($data['category']),
 			'purchase_price' => floatval($data['purchase_price']),
 			'residual_value' => floatval($data['residual_value']),
-			'metadata_json' => wp_json_encode($data['metadata']),
+			'metadata_json' => Npcink_Device_Inventory_V3_Sanitizer::json_encode($data['metadata']),
 		);
 
 		$result = $wpdb->insert(
@@ -143,7 +143,7 @@ class Npcink_Device_Inventory_Asset_Repository
 			}
 			$value = $data[$field];
 			if ($field === 'metadata_json' && is_array($value)) {
-				$value = wp_json_encode($value);
+				$value = Npcink_Device_Inventory_V3_Sanitizer::json_encode($value);
 			} elseif ($format === '%s') {
 				$value = sanitize_text_field($value);
 			} elseif ($format === '%f') {

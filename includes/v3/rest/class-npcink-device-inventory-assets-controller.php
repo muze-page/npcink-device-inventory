@@ -348,14 +348,14 @@ class Npcink_Device_Inventory_Assets_Controller
 			return $asset;
 		}
 		$params = $request->get_json_params();
-		if (!is_array($params) || empty($params['message'])) {
+		if (!is_array($params) || !isset($params['message']) || !is_scalar($params['message']) || trim((string) $params['message']) === '') {
 			return Npcink_Device_Inventory_V3_Response::error('invalid_event', 'Event message is required.', 422);
 		}
 		$this->event_service->record(
 			intval($asset['id']),
 			'manual',
 			isset($params['eventType']) ? sanitize_key($params['eventType']) : 'note',
-			$params['message'],
+			sanitize_textarea_field((string) $params['message']),
 			isset($params['payload']) && is_array($params['payload']) ? $params['payload'] : array()
 		);
 		return rest_ensure_response(array('data' => array('success' => true)));

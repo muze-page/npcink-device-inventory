@@ -24,6 +24,9 @@ export default defineConfig(({ mode }) => {
           chunkFileNames: "[name].js",
         },
       },
+      // The admin app is intentionally loaded as one module in WordPress admin.
+      // Splitting Ant Design into manual chunks introduced runtime cycles in WP.
+      chunkSizeWarningLimit: 1300,
       //sourcemap: true,//保留映射关系，方便调试
     },
     esbuild: {

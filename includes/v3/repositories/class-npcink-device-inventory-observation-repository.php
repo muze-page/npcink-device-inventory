@@ -14,9 +14,9 @@ class Npcink_Device_Inventory_Observation_Repository
 			'source' => sanitize_key($observation['source']),
 			'schema_version' => intval($observation['schema_version']),
 			'observed_at' => sanitize_text_field($observation['observed_at']),
-			'summary_json' => wp_json_encode($observation['summary']),
-			'hardware_json' => wp_json_encode($observation['hardware']),
-			'raw_json' => wp_json_encode($observation['raw']),
+			'summary_json' => Npcink_Device_Inventory_V3_Sanitizer::json_encode($observation['summary']),
+			'hardware_json' => Npcink_Device_Inventory_V3_Sanitizer::json_encode($observation['hardware']),
+			'raw_json' => Npcink_Device_Inventory_V3_Sanitizer::json_encode($observation['raw']),
 		);
 
 		$result = $wpdb->insert(

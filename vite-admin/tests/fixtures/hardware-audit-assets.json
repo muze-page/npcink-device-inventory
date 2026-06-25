@@ -1,0 +1,171 @@
+[
+  {
+    "id": 1,
+    "uuid": "fixture-missing-hardware",
+    "assetType": "pc",
+    "assetNumber": "DUP-001",
+    "name": "缺失硬件样本",
+    "ownerName": "",
+    "department": "",
+    "status": "active",
+    "category": "computer",
+    "purchasePrice": 0,
+    "residualValue": 0,
+    "metadata": {},
+    "latestObservation": {
+      "summary": {
+        "platform": "Windows",
+        "primary_ip": "10.0.0.8",
+        "memory_bytes": 0,
+        "disk_bytes": 0
+      },
+      "hardware": {
+        "baseboard": {
+          "serial": "BOARD-MISSING"
+        },
+        "graphics": {
+          "controllers": []
+        },
+        "memory": [],
+        "disks": []
+      },
+      "observedAt": "2026-06-25 10:00:00",
+      "source": "fixture"
+    },
+    "createdAt": "2026-06-25 10:00:00",
+    "updatedAt": "2026-06-25 10:00:00"
+  },
+  {
+    "id": 2,
+    "uuid": "fixture-duplicate-hardware",
+    "assetType": "pc",
+    "assetNumber": "DUP-001",
+    "name": "重复硬件样本",
+    "ownerName": "张三",
+    "department": "运营部",
+    "status": "active",
+    "category": "computer",
+    "purchasePrice": 0,
+    "residualValue": 0,
+    "metadata": {},
+    "latestObservation": {
+      "summary": {
+        "platform": "Windows",
+        "primary_ip": "10.0.0.8",
+        "cpu": "Intel Core i5",
+        "graphics": "Intel UHD",
+        "memory_bytes": 17179869184,
+        "disk_bytes": 549755813888
+      },
+      "hardware": {
+        "cpu": {
+          "brand": "Intel Core i5"
+        },
+        "baseboard": {
+          "serial": "BOARD-DUPLICATE"
+        },
+        "graphics": {
+          "controllers": [
+            {
+              "model": "Intel UHD"
+            }
+          ]
+        },
+        "memory": [
+          {
+            "size": 17179869184
+          }
+        ],
+        "disks": [
+          {
+            "name": "NVMe SSD",
+            "size": 549755813888
+          }
+        ]
+      },
+      "observedAt": "2026-06-25 10:00:00",
+      "source": "fixture"
+    },
+    "createdAt": "2026-06-25 10:00:00",
+    "updatedAt": "2026-06-25 10:00:00"
+  },
+  {
+    "id": 3,
+    "uuid": "fixture-imported-only",
+    "assetType": "pc",
+    "assetNumber": "IMP-001",
+    "name": "仅导入样本",
+    "ownerName": "李四",
+    "department": "财务部",
+    "status": "active",
+    "category": "computer",
+    "purchasePrice": 0,
+    "residualValue": 0,
+    "metadata": {
+      "importedHardware": {
+        "cpu": "Intel Core i7",
+        "graphics": "Intel Iris Xe",
+        "memory": "16 GB",
+        "disk": "512 GB",
+        "ip": "10.0.0.9",
+        "raw": {}
+      }
+    },
+    "createdAt": "2026-06-25 10:00:00",
+    "updatedAt": "2026-06-25 10:00:00"
+  },
+  {
+    "id": 4,
+    "uuid": "fixture-maintenance",
+    "assetType": "pc",
+    "assetNumber": "MNT-001",
+    "name": "维护状态样本",
+    "ownerName": "王五",
+    "department": "技术部",
+    "status": "maintenance",
+    "category": "computer",
+    "purchasePrice": 0,
+    "residualValue": 0,
+    "metadata": {},
+    "latestObservation": {
+      "summary": {
+        "platform": "Windows",
+        "primary_ip": "10.0.0.10",
+        "cpu": "AMD Ryzen 7",
+        "graphics": "NVIDIA RTX",
+        "memory_bytes": 34359738368,
+        "disk_bytes": 1099511627776
+      },
+      "hardware": {
+        "cpu": {
+          "brand": "AMD Ryzen 7"
+        },
+        "baseboard": {
+          "serial": "BOARD-MAINTENANCE"
+        },
+        "graphics": {
+          "controllers": [
+            {
+              "model": "NVIDIA RTX"
+            }
+          ]
+        },
+        "memory": [
+          {
+            "size": 34359738368
+          }
+        ],
+        "disks": [
+          {
+            "name": "NVMe SSD",
+            "size": 1099511627776
+          }
+        ]
+      },
+      "observedAt": "2026-06-25 10:00:00",
+      "source": "fixture"
+    },
+    "createdAt": "2026-06-25 10:00:00",
+    "updatedAt": "2026-06-25 10:00:00"
+  }
+]

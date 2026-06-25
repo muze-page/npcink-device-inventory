@@ -12,10 +12,10 @@
     "upload_file": "sj/npcink-device-inventory.zip",
     "source_file": "release/npcink-device-inventory.zip",
     "zip_root": "npcink-device-inventory/",
-    "sha256": "f94739d08938e1f1ee89dad0aaa36c25b652cc4a0b2493bdc8cfcae77bf527c8",
-    "file_count": 212,
-    "uncompressed_bytes": 3313053,
-    "compressed_bytes": 1015772
+    "sha256": "36b4aff57e15210c68f777417adbe35a89d0683535ca4e017f47b15dae97c7e3",
+    "file_count": 53,
+    "uncompressed_bytes": 1377513,
+    "compressed_bytes": 444611
   },
   "verification": {
     "plugin_check": {
@@ -25,7 +25,8 @@
     "phpcs": "passed",
     "phpstan": "passed",
     "vite_admin_build": "passed",
-    "vite_search_build": "passed",
+    "hardware_audit_fixture": "passed",
+    "release_package_check": "passed",
     "activation_smoke": "passed",
     "unsigned_public_query_status": 403,
     "unsigned_upload_status": 403,

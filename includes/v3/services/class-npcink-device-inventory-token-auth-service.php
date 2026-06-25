@@ -19,6 +19,10 @@ class Npcink_Device_Inventory_Token_Auth_Service
 			return Npcink_Device_Inventory_V3_Response::error('missing_signature', 'Device upload signature headers are required.', 401);
 		}
 
+		if (!ctype_digit($timestamp) || strlen($nonce) > 128 || !preg_match('/^sha256=[a-f0-9]{64}$/', $signature)) {
+			return Npcink_Device_Inventory_V3_Response::error('invalid_signature_headers', 'Device upload signature headers are invalid.', 401);
+		}
+
 		if (abs(time() - intval($timestamp)) > 300) {
 			return Npcink_Device_Inventory_V3_Response::error('expired_signature', 'Device upload signature has expired.', 401);
 		}

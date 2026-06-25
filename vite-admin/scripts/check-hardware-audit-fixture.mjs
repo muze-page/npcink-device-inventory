@@ -1,0 +1,77 @@
+import { build } from "esbuild";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+
+const root = path.resolve(new URL("..", import.meta.url).pathname);
+const fixturePath = path.join(root, "tests/fixtures/hardware-audit-assets.json");
+const entryPath = path.join(root, "src/utils/hardwareAudit.ts");
+const outDir = await mkdtemp(path.join(tmpdir(), "npcink-hardware-audit-"));
+const outFile = path.join(outDir, "hardwareAudit.mjs");
+
+const aliasPlugin = {
+  name: "npcink-alias",
+  setup(buildApi) {
+    buildApi.onResolve({ filter: /^@\// }, (args) => ({
+      path: path.join(root, "src", args.path.slice(2)),
+    }));
+  },
+};
+
+try {
+  await build({
+    entryPoints: [entryPath],
+    outfile: outFile,
+    bundle: true,
+    format: "esm",
+    platform: "node",
+    plugins: [aliasPlugin],
+    logLevel: "silent",
+  });
+
+  const { detectHardwareIssues, issueGroup } = await import(pathToFileURL(outFile).href);
+  const assets = JSON.parse(await readFile(fixturePath, "utf8"));
+  const issues = detectHardwareIssues(assets);
+  const issueTypes = new Set(issues.map((issue) => issue.type));
+  const groups = new Set(issues.map((issue) => issueGroup(issue.type)));
+
+  const expectedTypes = [
+    "重复编号",
+    "重复 IP",
+    "部门缺失",
+    "责任人缺失",
+    "CPU 缺失",
+    "显卡缺失",
+    "内存缺失",
+    "硬盘缺失",
+    "未接入采集",
+    "待维护",
+  ];
+  const expectedGroups = [
+    "重复风险",
+    "资料缺失",
+    "硬件缺失",
+    "采集状态",
+    "维护状态",
+  ];
+
+  const missingTypes = expectedTypes.filter((type) => !issueTypes.has(type));
+  const missingGroups = expectedGroups.filter((group) => !groups.has(group));
+
+  if (missingTypes.length || missingGroups.length) {
+    console.error("Hardware audit fixture check failed.");
+    if (missingTypes.length) {
+      console.error(`Missing issue types: ${missingTypes.join(", ")}`);
+    }
+    if (missingGroups.length) {
+      console.error(`Missing issue groups: ${missingGroups.join(", ")}`);
+    }
+    console.error(`Detected types: ${Array.from(issueTypes).join(", ")}`);
+    process.exit(1);
+  }
+
+  console.log(`Hardware audit fixture check passed: ${issues.length} issues, ${groups.size} groups.`);
+} finally {
+  await rm(outDir, { recursive: true, force: true });
+}

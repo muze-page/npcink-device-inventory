@@ -11,6 +11,7 @@ class Npcink_Device_Inventory_V3_Rest
 		$base = plugin_dir_path(dirname(dirname(__FILE__))) . 'includes/v3/';
 		require_once $base . 'class-npcink-device-inventory-v3-tables.php';
 		require_once $base . 'class-npcink-device-inventory-v3-response.php';
+		require_once $base . 'class-npcink-device-inventory-v3-sanitizer.php';
 		require_once $base . 'repositories/class-npcink-device-inventory-asset-repository.php';
 		require_once $base . 'repositories/class-npcink-device-inventory-identity-repository.php';
 		require_once $base . 'repositories/class-npcink-device-inventory-observation-repository.php';
