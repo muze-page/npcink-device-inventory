@@ -43,4 +43,46 @@ class Npcink_Device_Inventory_Event_Repository
 		);
 		return array('items' => $items ?: array(), 'total' => intval($total), 'page' => $page, 'pageSize' => $page_size);
 	}
+
+	public function list_all($args)
+	{
+		global $wpdb;
+		$page = max(1, intval($args['page']));
+		$page_size = max(1, min(100, intval($args['pageSize'])));
+		$offset = ($page - 1) * $page_size;
+		$events_table = Npcink_Device_Inventory_V3_Tables::events();
+		$assets_table = Npcink_Device_Inventory_V3_Tables::assets();
+		$where = array();
+		$params = array();
+
+		if (!empty($args['event_source'])) {
+			$where[] = 'e.event_source = %s';
+			$params[] = sanitize_key($args['event_source']);
+		}
+
+		if (!empty($args['event_type'])) {
+			$where[] = 'e.event_type = %s';
+			$params[] = sanitize_key($args['event_type']);
+		}
+
+		if (!empty($args['search'])) {
+			$like = '%' . $wpdb->esc_like(sanitize_text_field($args['search'])) . '%';
+			$where[] = '(e.message LIKE %s OR e.field_name LIKE %s OR a.asset_number LIKE %s OR a.name LIKE %s)';
+			array_push($params, $like, $like, $like, $like);
+		}
+
+		$where_sql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+		$count_sql = "SELECT COUNT(*) FROM $events_table e LEFT JOIN $assets_table a ON a.id = e.asset_id $where_sql";
+		$total = $params ? $wpdb->get_var($wpdb->prepare($count_sql, $params)) : $wpdb->get_var($count_sql);
+		$query_sql = "SELECT e.*, a.uuid AS asset_uuid, a.asset_number, a.name AS asset_name, a.asset_type, a.status, a.department, a.owner_name
+			FROM $events_table e
+			LEFT JOIN $assets_table a ON a.id = e.asset_id
+			$where_sql
+			ORDER BY e.created_at DESC, e.id DESC
+			LIMIT %d OFFSET %d";
+		$query_params = array_merge($params, array($page_size, $offset));
+		$items = $wpdb->get_results($wpdb->prepare($query_sql, $query_params), ARRAY_A);
+
+		return array('items' => $items ?: array(), 'total' => intval($total), 'page' => $page, 'pageSize' => $page_size);
+	}
 }

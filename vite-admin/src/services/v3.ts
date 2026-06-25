@@ -2,12 +2,15 @@ import { restInstance, type RequestConfig } from "@/services/axiosConfig";
 import type {
   Asset,
   AssetEvent,
+  AssetEventInput,
   AssetIdentity,
   AssetInput,
   AssetListParams,
   AssetObservation,
   CreatedClientToken,
+  EventListParams,
   InventorySettings,
+  ObservationListParams,
   PaginatedResult,
 } from "@/type/v3";
 
@@ -100,9 +103,55 @@ export const getAssetEvents = async (
   return response.data;
 };
 
+export const createAssetEvent = async (
+  uuid: string,
+  input: AssetEventInput
+): Promise<{ success: boolean }> => {
+  const response = await restInstance.post<DataEnvelope<{ success: boolean }>>(
+    `/assets/${uuid}/events`,
+    input,
+    { showSuccessMessage: false } as RequestConfig
+  );
+  return unwrapData(response.data);
+};
+
+export const getEvents = async (
+  params: EventListParams
+): Promise<PaginatedResult<AssetEvent>> => {
+  const response = await restInstance.get<PaginatedResult<AssetEvent>>("/events", {
+    params,
+    showSuccessMessage: false,
+  } as RequestConfig);
+  return response.data;
+};
+
+export const getObservations = async (
+  params: ObservationListParams
+): Promise<PaginatedResult<AssetObservation>> => {
+  const response = await restInstance.get<PaginatedResult<AssetObservation>>(
+    "/observations",
+    {
+      params,
+      showSuccessMessage: false,
+    } as RequestConfig
+  );
+  return response.data;
+};
+
 export const getSettings = async (): Promise<InventorySettings> => {
   const response = await restInstance.get<DataEnvelope<InventorySettings>>(
     "/settings",
+    { showSuccessMessage: false } as RequestConfig
+  );
+  return unwrapData(response.data);
+};
+
+export const updateSettings = async (
+  input: Partial<InventorySettings>
+): Promise<InventorySettings> => {
+  const response = await restInstance.patch<DataEnvelope<InventorySettings>>(
+    "/settings",
+    input,
     { showSuccessMessage: false } as RequestConfig
   );
   return unwrapData(response.data);

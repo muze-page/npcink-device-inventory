@@ -110,6 +110,26 @@ class Npcink_Device_Inventory_Assets_Controller
 				),
 			)
 		);
+
+		register_rest_route(
+			'npcink/v1',
+			'/events',
+			array(
+				'methods' => WP_REST_Server::READABLE,
+				'callback' => array($this, 'get_all_events'),
+				'permission_callback' => array($this, 'admin_permissions_check'),
+			)
+		);
+
+		register_rest_route(
+			'npcink/v1',
+			'/observations',
+			array(
+				'methods' => WP_REST_Server::READABLE,
+				'callback' => array($this, 'get_all_observations'),
+				'permission_callback' => array($this, 'admin_permissions_check'),
+			)
+		);
 	}
 
 	public function admin_permissions_check()
@@ -128,6 +148,7 @@ class Npcink_Device_Inventory_Assets_Controller
 				'pageSize' => $request->get_param('pageSize') ?: 20,
 				'search' => $request->get_param('search'),
 				'asset_type' => $request->get_param('assetType'),
+				'asset_scope' => $request->get_param('assetScope'),
 				'status' => $request->get_param('status'),
 				'department' => $request->get_param('department'),
 				'category' => $request->get_param('category'),
@@ -287,6 +308,39 @@ class Npcink_Device_Inventory_Assets_Controller
 		);
 	}
 
+	public function get_all_events($request)
+	{
+		$result = $this->events->list_all(
+			array(
+				'page' => $request->get_param('page') ?: 1,
+				'pageSize' => $request->get_param('pageSize') ?: 20,
+				'event_source' => $request->get_param('eventSource'),
+				'event_type' => $request->get_param('eventType'),
+				'search' => $request->get_param('search'),
+			)
+		);
+		$items = array_map(array($this, 'format_event'), $result['items']);
+		return rest_ensure_response(
+			Npcink_Device_Inventory_V3_Response::paginated($items, $result['page'], $result['pageSize'], $result['total'])
+		);
+	}
+
+	public function get_all_observations($request)
+	{
+		$result = $this->observations->list_all(
+			array(
+				'page' => $request->get_param('page') ?: 1,
+				'pageSize' => $request->get_param('pageSize') ?: 20,
+				'source' => $request->get_param('source'),
+				'search' => $request->get_param('search'),
+			)
+		);
+		$items = array_map(array($this, 'format_observation'), $result['items']);
+		return rest_ensure_response(
+			Npcink_Device_Inventory_V3_Response::paginated($items, $result['page'], $result['pageSize'], $result['total'])
+		);
+	}
+
 	public function create_event($request)
 	{
 		$asset = $this->asset_from_request($request);
@@ -323,7 +377,7 @@ class Npcink_Device_Inventory_Assets_Controller
 			return null;
 		}
 
-		return array(
+		$item = array(
 			'id' => intval($row['id']),
 			'uuid' => (string) $row['uuid'],
 			'assetType' => (string) $row['asset_type'],
@@ -339,6 +393,15 @@ class Npcink_Device_Inventory_Assets_Controller
 			'createdAt' => (string) $row['created_at'],
 			'updatedAt' => (string) $row['updated_at'],
 		);
+		if (array_key_exists('latest_summary_json', $row)) {
+			$item['latestObservation'] = array(
+				'summary' => $this->decode_json(isset($row['latest_summary_json']) ? $row['latest_summary_json'] : '', array()),
+				'hardware' => $this->decode_json(isset($row['latest_hardware_json']) ? $row['latest_hardware_json'] : '', array()),
+				'observedAt' => isset($row['latest_observed_at']) ? (string) $row['latest_observed_at'] : '',
+				'source' => isset($row['latest_observation_source']) ? (string) $row['latest_observation_source'] : '',
+			);
+		}
+		return $item;
 	}
 
 	private function format_identity($row)
@@ -357,7 +420,7 @@ class Npcink_Device_Inventory_Assets_Controller
 
 	private function format_observation($row)
 	{
-		return array(
+		$item = array(
 			'id' => intval($row['id']),
 			'assetId' => intval($row['asset_id']),
 			'source' => (string) $row['source'],
@@ -368,11 +431,15 @@ class Npcink_Device_Inventory_Assets_Controller
 			'hardware' => $this->decode_json(isset($row['hardware_json']) ? $row['hardware_json'] : '', array()),
 			'raw' => $this->decode_json(isset($row['raw_json']) ? $row['raw_json'] : '', array()),
 		);
+		if (isset($row['asset_uuid'])) {
+			$item['asset'] = $this->format_asset_reference($row);
+		}
+		return $item;
 	}
 
 	private function format_event($row)
 	{
-		return array(
+		$item = array(
 			'id' => intval($row['id']),
 			'assetId' => isset($row['asset_id']) ? intval($row['asset_id']) : null,
 			'eventSource' => (string) $row['event_source'],
@@ -385,6 +452,23 @@ class Npcink_Device_Inventory_Assets_Controller
 			'actorName' => isset($row['actor_name']) ? (string) $row['actor_name'] : '',
 			'payload' => $this->decode_json(isset($row['payload_json']) ? $row['payload_json'] : '', array()),
 			'createdAt' => (string) $row['created_at'],
+		);
+		if (isset($row['asset_uuid'])) {
+			$item['asset'] = $this->format_asset_reference($row);
+		}
+		return $item;
+	}
+
+	private function format_asset_reference($row)
+	{
+		return array(
+			'uuid' => isset($row['asset_uuid']) ? (string) $row['asset_uuid'] : '',
+			'assetNumber' => isset($row['asset_number']) ? (string) $row['asset_number'] : '',
+			'name' => isset($row['asset_name']) ? (string) $row['asset_name'] : '',
+			'assetType' => isset($row['asset_type']) ? (string) $row['asset_type'] : '',
+			'status' => isset($row['status']) ? (string) $row['status'] : '',
+			'department' => isset($row['department']) ? (string) $row['department'] : '',
+			'ownerName' => isset($row['owner_name']) ? (string) $row['owner_name'] : '',
 		);
 	}
 

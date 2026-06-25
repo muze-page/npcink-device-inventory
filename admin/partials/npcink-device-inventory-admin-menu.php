@@ -27,7 +27,7 @@ if (!class_exists('Npcink_Device_Inventory_Admin_Menu')) {
         //创建菜单
         public static function register_admin_menu()
         {
-            $page_title = __('Device Inventory', 'npcink-device-inventory');
+            $page_title = self::admin_page_title();
             // 添加一个菜单到 WordPress 后台的“设置”菜单下
             add_submenu_page(
                 'plugins.php',
@@ -53,6 +53,16 @@ if (!class_exists('Npcink_Device_Inventory_Admin_Menu')) {
 	            </div>
 	<?php
 
+        }
+
+        private static function admin_page_title()
+        {
+            $locale = function_exists('determine_locale') ? determine_locale() : get_locale();
+            if (0 === strpos($locale, 'zh_')) {
+                return '设备资产管理';
+            }
+
+            return __('Device Inventory', 'npcink-device-inventory');
         }
 
         /**

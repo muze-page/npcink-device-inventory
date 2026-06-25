@@ -40,6 +40,15 @@ class Npcink_Device_Inventory_Asset_Repository
 			}
 		}
 
+		if (!empty($args['asset_scope'])) {
+			$scope = sanitize_key($args['asset_scope']);
+			if ('computer' === $scope) {
+				$where[] = "asset_type IN ('pc', 'computer')";
+			} elseif ('other' === $scope) {
+				$where[] = "asset_type NOT IN ('pc', 'computer')";
+			}
+		}
+
 		if (!empty($args['search'])) {
 			$like = '%' . $wpdb->esc_like(sanitize_text_field($args['search'])) . '%';
 			$where[] = '(asset_number LIKE %s OR name LIKE %s OR owner_name LIKE %s OR department LIKE %s)';
@@ -51,7 +60,23 @@ class Npcink_Device_Inventory_Asset_Repository
 		$total_sql = "SELECT COUNT(*) FROM $table $where_sql";
 		$total = $params ? $wpdb->get_var($wpdb->prepare($total_sql, $params)) : $wpdb->get_var($total_sql);
 
-		$query_sql = "SELECT * FROM $table $where_sql ORDER BY updated_at DESC, id DESC LIMIT %d OFFSET %d";
+		$observations_table = Npcink_Device_Inventory_V3_Tables::observations();
+		$query_sql = "SELECT a.*,
+				lo.summary_json AS latest_summary_json,
+				lo.hardware_json AS latest_hardware_json,
+				lo.observed_at AS latest_observed_at,
+				lo.source AS latest_observation_source
+			FROM $table a
+			LEFT JOIN $observations_table lo ON lo.id = (
+				SELECT o.id
+				FROM $observations_table o
+				WHERE o.asset_id = a.id
+				ORDER BY o.observed_at DESC, o.id DESC
+				LIMIT 1
+			)
+			$where_sql
+			ORDER BY a.updated_at DESC, a.id DESC
+			LIMIT %d OFFSET %d";
 		$query_params = array_merge($params, array($page_size, $offset));
 		$items = $wpdb->get_results($wpdb->prepare($query_sql, $query_params), ARRAY_A);
 

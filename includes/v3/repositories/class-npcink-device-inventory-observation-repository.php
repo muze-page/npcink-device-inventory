@@ -53,4 +53,41 @@ class Npcink_Device_Inventory_Observation_Repository
 		);
 		return array('items' => $items ?: array(), 'total' => intval($total), 'page' => $page, 'pageSize' => $page_size);
 	}
+
+	public function list_all($args)
+	{
+		global $wpdb;
+		$page = max(1, intval($args['page']));
+		$page_size = max(1, min(100, intval($args['pageSize'])));
+		$offset = ($page - 1) * $page_size;
+		$observations_table = Npcink_Device_Inventory_V3_Tables::observations();
+		$assets_table = Npcink_Device_Inventory_V3_Tables::assets();
+		$where = array();
+		$params = array();
+
+		if (!empty($args['source'])) {
+			$where[] = 'o.source = %s';
+			$params[] = sanitize_key($args['source']);
+		}
+
+		if (!empty($args['search'])) {
+			$like = '%' . $wpdb->esc_like(sanitize_text_field($args['search'])) . '%';
+			$where[] = '(a.asset_number LIKE %s OR a.name LIKE %s OR a.department LIKE %s OR o.summary_json LIKE %s)';
+			array_push($params, $like, $like, $like, $like);
+		}
+
+		$where_sql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+		$count_sql = "SELECT COUNT(*) FROM $observations_table o LEFT JOIN $assets_table a ON a.id = o.asset_id $where_sql";
+		$total = $params ? $wpdb->get_var($wpdb->prepare($count_sql, $params)) : $wpdb->get_var($count_sql);
+		$query_sql = "SELECT o.*, a.uuid AS asset_uuid, a.asset_number, a.name AS asset_name, a.asset_type, a.status, a.department, a.owner_name
+			FROM $observations_table o
+			LEFT JOIN $assets_table a ON a.id = o.asset_id
+			$where_sql
+			ORDER BY o.observed_at DESC, o.id DESC
+			LIMIT %d OFFSET %d";
+		$query_params = array_merge($params, array($page_size, $offset));
+		$items = $wpdb->get_results($wpdb->prepare($query_sql, $query_params), ARRAY_A);
+
+		return array('items' => $items ?: array(), 'total' => intval($total), 'page' => $page, 'pageSize' => $page_size);
+	}
 }

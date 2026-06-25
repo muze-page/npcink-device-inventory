@@ -118,6 +118,73 @@ The local WordPress import baseline after cleanup is:
 - observations: 169
 - events: 933
 
+## Admin UI Reconciliation
+Date: 2026-06-25
+
+The admin surface was brought back closer to the useful old inventory workflow
+without restoring the old table model.
+
+Current admin UI capabilities:
+
+- top-level workspaces for asset ledger, change data, hardware audit, and settings
+- asset ledger sub-entries for computer assets, other assets, and all assets
+- card and table views with compact card mode
+- batch mode with current-page selection, batch archive, and batch field updates
+- current-filter export and saved local filters
+- legacy import preview with automatic field recognition only
+- device detail modal with hardware info, detailed info, automatic records,
+  manual records, and per-asset settings
+- hardware audit summaries, hardware buckets, anomaly discovery, issue export,
+  and issue handling records
+
+The manual field-mapping UI for legacy import was intentionally removed after
+product review. Legacy data is expected to be prepared locally before import,
+and the plugin now keeps the admin import path simple: paste or upload data,
+preview automatically recognized rows, then import.
+
+## Hardware Display Fallback
+Date: 2026-06-25
+
+For assets imported from locally prepared legacy data, hardware details may live
+under `metadata.importedHardware` instead of a live `latestObservation`.
+
+The admin UI now uses a shared hardware context so cards, detail views, audit
+summaries, and CSV export can read hardware values from either source:
+
+- `latestObservation.summary`
+- `latestObservation.hardware`
+- `metadata.importedHardware`
+- `metadata.importedHardware.raw`
+
+The fallback parser recognizes the legacy hardware shapes used by the local
+exports, including `memLayout`, `diskLayout`, `graphics.controllers`, `net`,
+`baseboard`, and `system`.
+
+Local sample validation against `设备数据备份/电脑设备数据_导出文件_...json`
+confirmed CPU, memory, and disk values can be extracted from the imported raw
+hardware data.
+
+## Admin Acceptance Status
+Date: 2026-06-25
+
+Code-level acceptance is complete for the current stage:
+
+- the admin bundle builds
+- TypeScript lint passes
+- PHP static analysis passes
+- PHPCS passes
+- whitespace checks pass
+
+Browser acceptance against the local WordPress admin page is still pending
+because the page redirects to WordPress login and the browser automation session
+did not complete a stable authenticated load. The local HTTP check confirmed:
+
+- `wp-login.php` responds normally
+- the admin plugin page redirects to login when unauthenticated
+
+The next manual step is to log in to the local WordPress admin and verify the
+actual page visually with prepared data.
+
 ## GitHub Packaging
 GitHub Actions now has two packaging workflows:
 
@@ -142,6 +209,14 @@ The release workflow builds plugin and desktop packages when a `v*` tag is pushe
 ## Remaining Release Risks
 Before full rollout:
 
+- Manually verify the rebuilt admin page after logging in to the local WordPress
+  backend.
+- Confirm imported assets with `metadata.importedHardware` render CPU, memory,
+  disk, GPU, baseboard, and IP as expected in both cards and detail views.
+- Confirm anomaly rules are useful with real operator data and do not over-report
+  duplicate devices.
+- Decide whether anomaly handled state should remain browser-local or move to a
+  server-side field before multi-admin use.
 - Test the Windows installer on real Windows desktop and laptop machines.
 - Confirm second upload from each Windows test machine returns `matched`.
 - Confirm Windows hardware UUID, serial, BIOS, baseboard, and MAC values are stable.
