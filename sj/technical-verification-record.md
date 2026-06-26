@@ -64,7 +64,7 @@ wp --path='/Users/muze/Local Sites/npcink-device-inventory/app/public' plugin ch
 已完成：
 
 - 后台菜单标题、加载文案、插件列表 Settings 链接使用 gettext 字符串。
-- 后台 React 顶层标签通过 `dataLocal.labels` 覆盖英文和简体中文。
+- 后台 React 顶层标签通过 `npcinkDeviceInventoryData.labels` 覆盖英文和简体中文。
 - 公共查询页自动创建标题和 fallback 文案使用 gettext 字符串。
 - `languages/npcink-device-inventory.pot` 已重新生成。
 - `README.txt` 已增加 `== Screenshots ==` 区块。

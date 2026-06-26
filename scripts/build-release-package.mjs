@@ -43,5 +43,9 @@ for (const dir of runtimeDirs) {
 await rm(output, { force: true });
 execFileSync("zip", ["-qr", output, slug], { cwd: stagingRoot });
 await rm(stagingRoot, { recursive: true, force: true });
+execFileSync("node", ["scripts/check-wordpress-org-review-rules.mjs", "release/npcink-device-inventory.zip"], {
+  cwd: repoRoot,
+  stdio: "inherit",
+});
 
 console.log(`Built ${path.relative(repoRoot, output)}`);

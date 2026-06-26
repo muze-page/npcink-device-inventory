@@ -17,11 +17,14 @@ npm run check:release
 - `npm run check:hardware-audit`，验证硬件盘点规则 fixture。
 - `npm run lint`，验证后台 React/TypeScript 代码。
 - `npm run build`，生成后台生产资源。
+- `node scripts/check-wordpress-org-review-rules.mjs`，检查 WordPress.org 人工审核曾指出但 PCP 不一定拦截的问题。
 - `composer run phpstan`，验证 PHP 静态类型。
 - `composer run phpcs`，验证 WordPress/PHP 编码规范。
 - `git diff --check`，检查空白字符问题。
 - `node scripts/check-release-package.mjs release/npcink-device-inventory.zip`。
 - `node scripts/check-release-package.mjs sj/npcink-device-inventory.zip`。
+- `node scripts/check-wordpress-org-review-rules.mjs release/npcink-device-inventory.zip`。
+- `node scripts/check-wordpress-org-review-rules.mjs sj/npcink-device-inventory.zip`。
 - 对比 zip 内的 `vite-admin/dist/index.html`、`index.css`、`index.js` 与本地刚构建的文件，避免源码已改但发布包仍是旧资源。
 - 对比 `release/` 和 `sj/` 两个 zip 的 SHA-256，确认提交包和备份包一致。
 
@@ -32,6 +35,23 @@ npm run build:release
 ```
 
 再把生成的 `release/npcink-device-inventory.zip` 同步到 `sj/npcink-device-inventory.zip` 后重新执行检查。
+
+## WordPress.org 人工审核规则
+
+2026-06-26 的插件审核反馈说明：PCP / Plugin Check 通过不代表人工审核规则全部覆盖。发布前必须额外确认：
+
+- 不得在源码或构建产物中硬编码 `/wp-admin/admin-ajax.php` 或 `/api/wp-admin/admin-ajax.php`。如果确实需要 Ajax endpoint，必须在 PHP 中使用 `admin_url('admin-ajax.php')` 计算地址，再通过 `wp_localize_script()` 或等价方式传给 JS。
+- `wp_localize_script()` 暴露到 `window` 的对象名必须使用插件唯一前缀。当前约定是 `npcinkDeviceInventoryData`，不得使用 `dataLocal` 这类泛名。
+- 不要从旧调试文档或历史构建产物中恢复 `dataLocal`、静态 `admin-ajax.php` 路径、`vite-search` 旧发布说明。
+
+这些规则已经固化在：
+
+```bash
+node scripts/check-wordpress-org-review-rules.mjs
+node scripts/check-wordpress-org-review-rules.mjs release/npcink-device-inventory.zip sj/npcink-device-inventory.zip
+```
+
+如果这个检查失败，先修源码并重新 `npm run build:release`，不要只手改 `dist` 或 zip。
 
 ## 本地后台冒烟
 

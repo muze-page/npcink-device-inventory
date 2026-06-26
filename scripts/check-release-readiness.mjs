@@ -35,6 +35,12 @@ const steps = [
     cwd: viteAdminDir,
   },
   {
+    title: "WordPress.org review rules",
+    command: "node",
+    args: ["scripts/check-wordpress-org-review-rules.mjs"],
+    cwd: repoRoot,
+  },
+  {
     title: "PHPStan",
     command: "composer",
     args: ["run", "phpstan"],
@@ -68,6 +74,13 @@ for (const zipPath of [releaseZip, submissionZip]) {
     title: `Package structure: ${path.relative(repoRoot, zipPath)}`,
     command: "node",
     args: ["scripts/check-release-package.mjs", path.relative(repoRoot, zipPath)],
+    cwd: repoRoot,
+  });
+
+  runStep({
+    title: `WordPress.org review rules: ${path.relative(repoRoot, zipPath)}`,
+    command: "node",
+    args: ["scripts/check-wordpress-org-review-rules.mjs", path.relative(repoRoot, zipPath)],
     cwd: repoRoot,
   });
 

@@ -17,7 +17,7 @@ XSS 修复：移除/净化 dangerouslySetInnerHTML，改用白名单净化（如
 
 JSON 输入统一处理：wp_unslash + json_decode + wp_json_encode + 长度/结构校验，避免 sanitize_text_field 破坏 JSON；涉及 api.php、table-\*.php
 加基础限流：对 /query 和 /submit-data 做 IP/设备维度的失败锁定（Transient），降低爆破风险；涉及 api.php
-停止下发 option：dataLocal 中移除 option，仅下发必要 REST 地址与 nonce；涉及 npcink-device-inventory-admin-menu.php、index.tsx
+停止下发 option：`npcinkDeviceInventoryData` 中仅下发必要 REST 地址与 nonce；涉及 npcink-device-inventory-admin-menu.php、index.tsx
 优先级 P2（稳态与规范）
 
 补充审计日志：记录操作人、IP、字段变更，失败日志脱敏；涉及 table-pc.php、table-style.php
@@ -63,8 +63,8 @@ JSON 输入统一处理：wp_unslash + json_decode + wp_json_encode + 长度/结
 - 生产：2 次
   - GET `/admin/pc?fields=summary`
   - GET `/admin/pc-categories`
-- 开发：+1 次
-  - POST `/wp-admin/admin-ajax.php?action=npcink_device_inventory_get_rest_nonce`
+- 开发历史记录：旧版本曾额外请求 nonce。
+  - 不要在新代码中硬编码 `/wp-admin/admin-ajax.php`；如果未来确实需要 Ajax endpoint，必须在 PHP 中用 `admin_url('admin-ajax.php')` 生成，并通过 `npcinkDeviceInventoryData` 传给 JS。
 
 ### 6) 各页面初始 API 请求
 
@@ -72,7 +72,7 @@ JSON 输入统一处理：wp_unslash + json_decode + wp_json_encode + 长度/结
 - 自定义设备：2 次（列表 + 分类）
 - 变更记录：1 次（手动列表），切换到自动再 +1
 - 资产盘点：1 次（`/admin/pc-summary`）
-- 设置：0 次（初始值来自 `dataLocal`）
+- 设置：0 次（初始值来自 `npcinkDeviceInventoryData`）
 
 ### 7) 数据规模（当前样例）
 

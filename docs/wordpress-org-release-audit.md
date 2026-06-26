@@ -104,7 +104,7 @@ if (!defined('ABSPATH')) {
   auto-load translations for the plugin text domain.
 - Added gettext coverage for the admin menu title, loading text, plugin action
   link, public search page title, and public search fallback text.
-- Added a locale-aware `dataLocal.labels` map for the bundled admin React
+- Added a locale-aware `npcinkDeviceInventoryData.labels` map for the bundled admin React
   top-level tabs.
 - Regenerated `languages/npcink-device-inventory.pot`.
 - Renamed global bootstrap/uninstall functions with the plugin prefix.

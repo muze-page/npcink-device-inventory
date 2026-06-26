@@ -12,10 +12,10 @@
     "upload_file": "sj/npcink-device-inventory.zip",
     "source_file": "release/npcink-device-inventory.zip",
     "zip_root": "npcink-device-inventory/",
-    "sha256": "36b4aff57e15210c68f777417adbe35a89d0683535ca4e017f47b15dae97c7e3",
+    "sha256": "7e68dc6d8408d1be91c9aee578bfa9076da19a18ea0b972320e8846a6b9147ee",
     "file_count": 53,
-    "uncompressed_bytes": 1377513,
-    "compressed_bytes": 444611
+    "uncompressed_bytes": 1381087,
+    "compressed_bytes": 443906
   },
   "verification": {
     "plugin_check": {
@@ -27,6 +27,7 @@
     "vite_admin_build": "passed",
     "hardware_audit_fixture": "passed",
     "release_package_check": "passed",
+    "wordpress_org_review_rules": "passed",
     "activation_smoke": "passed",
     "unsigned_public_query_status": 403,
     "unsigned_upload_status": 403,

@@ -107,7 +107,7 @@ if (!class_exists('Npcink_Device_Inventory_Admin_Menu')) {
 	            wp_enqueue_script($name, $plugin_url . 'vite-admin/dist/index.js', array(), $ver, true);
 	            wp_localize_script(
 	                $name,
-	                'dataLocal',
+	                'npcinkDeviceInventoryData',
 	                array(
 	                    'site' => home_url(),
 	                    'rest_url' => esc_url_raw(rest_url('npcink/v1')),

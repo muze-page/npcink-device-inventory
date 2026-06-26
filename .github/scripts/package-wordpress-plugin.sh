@@ -125,4 +125,6 @@ mkdir -p "${RELEASE_DIR}"
   zip -qr "${ZIP_PATH}" "${PLUGIN_SLUG}"
 )
 
+node "${ROOT_DIR}/scripts/check-wordpress-org-review-rules.mjs" "release/${PLUGIN_SLUG}.zip"
+
 echo "${ZIP_PATH}"

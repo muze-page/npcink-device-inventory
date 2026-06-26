@@ -12,20 +12,22 @@ type DataLocal = {
   labels?: AdminLabels;
 };
 
-const getDataLocal = (): DataLocal => {
-  const value = (window as Window & { dataLocal?: DataLocal }).dataLocal;
+const getLocalizedData = (): DataLocal => {
+  const value = (
+    window as Window & { npcinkDeviceInventoryData?: DataLocal }
+  ).npcinkDeviceInventoryData;
   return value && typeof value === "object" ? value : {};
 };
 
-const dataLocal = getDataLocal();
+const localizedData = getLocalizedData();
 
-export const Site = dataLocal.site || "";
-export const RestUrl = dataLocal.rest_url || (Site ? `${Site}/wp-json/npcink/v1` : "/wp-json/npcink/v1");
-export const RestNonce = dataLocal.rest_nonce || "";
-export const Locale = dataLocal.locale || "zh_CN";
+export const Site = localizedData.site || "";
+export const RestUrl = localizedData.rest_url || (Site ? `${Site}/wp-json/npcink/v1` : "/wp-json/npcink/v1");
+export const RestNonce = localizedData.rest_nonce || "";
+export const Locale = localizedData.locale || "zh_CN";
 
 export const AdminText: Required<AdminLabels> = {
-  assets: dataLocal.labels?.assets || "资产台账",
-  client_tokens: dataLocal.labels?.client_tokens || "客户端令牌",
-  settings: dataLocal.labels?.settings || "设置",
+  assets: localizedData.labels?.assets || "资产台账",
+  client_tokens: localizedData.labels?.client_tokens || "客户端令牌",
+  settings: localizedData.labels?.settings || "设置",
 };
