@@ -1,0 +1,10 @@
+{
+  "name": "npcink-device-inventory-release-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:release": "node scripts/build-release-package.mjs",
+    "check:package": "node scripts/check-release-package.mjs release/npcink-device-inventory.zip && node scripts/check-release-package.mjs sj/npcink-device-inventory.zip",
+    "check:release": "node scripts/check-release-readiness.mjs"
+  }
+}

@@ -1,11 +1,11 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
 import {
   Alert,
   Button,
   Checkbox,
   Collapse,
-  Descriptions,
   Dropdown,
   Empty,
   Form,
@@ -65,8 +65,6 @@ import {
   hardwareMemoryBytes,
   hardwareSummary,
   issueGroup,
-  observationChanges,
-  observationSnapshot,
   toNumber,
   type HardwareIssue,
 } from "@/utils/hardwareAudit";
@@ -121,15 +119,6 @@ const MANUAL_RECORD_OPTIONS = [
   { label: "借用", value: "borrowed" },
   { label: "归还", value: "returned" },
   { label: "转移", value: "transferred" },
-];
-
-const AUDIT_FIELD_OPTIONS = [
-  { label: "CPU", value: "cpu" },
-  { label: "内存", value: "memory_bytes" },
-  { label: "硬盘", value: "disk_bytes" },
-  { label: "显卡", value: "graphics" },
-  { label: "IP", value: "primary_ip" },
-  { label: "主板", value: "baseboard" },
 ];
 
 const ASSET_SCOPE_OPTIONS = [
@@ -209,6 +198,37 @@ const formatMemoryDiskText = (summary: JsonRecord, importedHardware?: JsonRecord
   const importedMemory = fieldText(importedHardware?.memory);
   const importedDisk = fieldText(importedHardware?.disk);
   return `${memory !== "-" ? memory : importedMemory} / ${disk !== "-" ? disk : importedDisk}`;
+};
+
+const cpuVendorLabel = (cpu: unknown) => {
+  const text = String(cpu || "");
+  if (/amd|ryzen|threadripper/i.test(text)) {
+    return "AMD";
+  }
+  if (/intel|core|celeron|pentium|xeon/i.test(text)) {
+    return "Intel";
+  }
+  if (/apple|m[1-9]\b/i.test(text)) {
+    return "Apple";
+  }
+  return text;
+};
+
+const formatHardwareHeroText = (
+  cpu: unknown,
+  summary: JsonRecord,
+  importedHardware: JsonRecord,
+  fallback: string
+) => {
+  const memoryDisk = formatMemoryDiskText(summary, importedHardware);
+  const vendor = cpuVendorLabel(cpu);
+  if (vendor && memoryDisk !== "- / -") {
+    return `${vendor} / ${memoryDisk}`;
+  }
+  if (memoryDisk !== "- / -") {
+    return memoryDisk;
+  }
+  return vendor || fallback;
 };
 
 const countStatus = (assets: Asset[], status: string) =>
@@ -543,10 +563,229 @@ interface FieldSourceRow {
   latest: string;
 }
 
+interface DetailSpecRow {
+  key: string;
+  attribute: string;
+  value: string;
+}
+
+interface DetailSpecSection {
+  key: string;
+  label: string;
+  rows: DetailSpecRow[];
+}
+
 const legacyFieldValue = (asset: Asset, field: (typeof LEGACY_IMPORT_FIELDS)[number]["value"]) => {
   const raw = getRecord(getRecord(getRecord(asset.metadata).legacy).raw);
   const aliases = LEGACY_IMPORT_FIELDS.find((item) => item.value === field)?.aliases || [];
   return pickLegacyValue(raw, aliases);
+};
+
+const detailRow = (key: string, attribute: string, value: unknown): DetailSpecRow | null => {
+  const text = fieldText(value);
+  return text === "-" ? null : { key, attribute, value: text };
+};
+
+const detailRows = (...rows: Array<DetailSpecRow | null>) => rows.filter(Boolean) as DetailSpecRow[];
+
+const formatFrequency = (value: unknown) => {
+  const number = toNumber(value);
+  if (number <= 0) {
+    return fieldText(value);
+  }
+  if (number >= 1000) {
+    return `${Number((number / 1000).toFixed(2))} GHz`;
+  }
+  return `${number} MHz`;
+};
+
+const formatCount = (value: unknown) => {
+  const number = toNumber(value);
+  if (number <= 0 && value !== 0) {
+    return fieldText(value);
+  }
+  return `${number} 个`;
+};
+
+const hardwareDetailSections = (
+  asset: Asset,
+  context: ReturnType<typeof assetHardwareContext>
+): DetailSpecSection[] => {
+  const hardware = context.hardware;
+  const summary = context.summary;
+  const cpu = getRecord(hardware.cpu);
+  const graphics = getRecord(hardware.graphics);
+  const controllers = getArray(graphics.controllers);
+  const displays = getArray(graphics.displays);
+  const baseboard = getRecord(hardware.baseboard);
+  const bios = getRecord(hardware.bios);
+  const os = getRecord(hardware.os);
+  const system = getRecord(hardware.system);
+  const chassis = getRecord(hardware.chassis);
+  const uuid = getRecord(hardware.uuid);
+  const net = getRecord(hardware.net);
+  const network = getArray(hardware.network).length ? getArray(hardware.network) : getArray(net.adapters);
+  const memory = getArray(hardware.memory).length
+    ? getArray(hardware.memory)
+    : getArray(hardware.mem).length
+      ? getArray(hardware.mem)
+      : getArray(hardware.memLayout);
+  const disks = getArray(hardware.disks).length
+    ? getArray(hardware.disks)
+    : getArray(hardware.disk).length
+      ? getArray(hardware.disk)
+      : getArray(hardware.diskLayout);
+
+  return [
+    {
+      key: "asset",
+      label: "资产",
+      rows: detailRows(
+        detailRow("asset-number", "资产编号", asset.assetNumber),
+        detailRow("asset-name", "资产名称", asset.name),
+        detailRow("owner", "使用人", asset.ownerName),
+        detailRow("department", "部门", asset.department),
+        detailRow("status", "状态", statusLabel(asset.status)),
+        detailRow("category", "分类", asset.category),
+        detailRow("purchase", "购置价值", formatMoney(asset.purchasePrice)),
+        detailRow("residual", "残值", formatMoney(asset.residualValue)),
+        detailRow("updated", "更新时间", formatDate(asset.updatedAt))
+      ),
+    },
+    {
+      key: "processor",
+      label: "处理器",
+      rows: detailRows(
+        detailRow("cpu-maker", "制造者", firstText(cpu.manufacturer, cpu.vendor, cpuVendorLabel(context.extracted.cpu))),
+        detailRow("cpu-brand", "品牌", context.extracted.cpu),
+        detailRow("cpu-base", "基准频率", formatFrequency(firstText(cpu.baseFrequency, cpu.base_frequency, cpu.baseSpeed, cpu.base_speed, cpu.frequency))),
+        detailRow("cpu-min", "最低频率", formatFrequency(firstText(cpu.minFrequency, cpu.min_frequency, cpu.minSpeed, cpu.min_speed))),
+        detailRow("cpu-max", "最大频率", formatFrequency(firstText(cpu.maxFrequency, cpu.max_frequency, cpu.maxSpeed, cpu.max_speed))),
+        detailRow("cpu-cores", "核心数", formatCount(firstText(cpu.cores, cpu.coreCount, cpu.logicalCores))),
+        detailRow("cpu-physical", "物理核心", formatCount(firstText(cpu.physicalCores, cpu.physicalCoreCount))),
+        detailRow("cpu-performance", "性能核心", formatCount(firstText(cpu.performanceCores, cpu.performanceCoreCount))),
+        detailRow("cpu-efficient", "效率核心", formatCount(firstText(cpu.efficiencyCores, cpu.efficiencyCoreCount))),
+        detailRow("cpu-processors", "处理器数量", formatCount(firstText(cpu.processors, cpu.packages, cpu.socketCount)))
+      ),
+    },
+    {
+      key: "memory",
+      label: "内存",
+      rows: detailRows(
+        detailRow("memory-total", "总容量", firstText(formatBytes(summary.memory_bytes), context.importedHardware.memory)),
+        ...memory.flatMap((item, index) => [
+          detailRow(`memory-${index}-size`, `内存 ${index + 1} 容量`, formatBytes(item.size)),
+          detailRow(`memory-${index}-clock`, `内存 ${index + 1} 频率`, formatFrequency(firstText(item.clockSpeed, item.clock))),
+          detailRow(`memory-${index}-type`, `内存 ${index + 1} 类型`, firstText(item.type, item.memoryType)),
+        ])
+      ),
+    },
+    {
+      key: "graphics",
+      label: "显卡",
+      rows: detailRows(
+        detailRow("graphics-main", "主显卡", context.extracted.graphics),
+        ...controllers.flatMap((item, index) => [
+          detailRow(`gpu-${index}-model`, `显卡 ${index + 1} 型号`, firstText(item.model, item.name)),
+          detailRow(`gpu-${index}-memory`, `显卡 ${index + 1} 显存`, formatBytes(firstText(item.memory, item.vram, item.vramBytes))),
+          detailRow(`gpu-${index}-vendor`, `显卡 ${index + 1} 厂商`, firstText(item.vendor, item.manufacturer)),
+        ])
+      ),
+    },
+    {
+      key: "display",
+      label: "显示器",
+      rows: detailRows(
+        detailRow("display-main", "当前显示", context.extracted.display),
+        detailRow("display-model", "显示器型号", context.extracted.displayModel),
+        ...displays.flatMap((item, index) => [
+          detailRow(`display-${index}-resolution`, `显示器 ${index + 1} 分辨率`, `${fieldText(item.currentResX || item.resolutionX)} x ${fieldText(item.currentResY || item.resolutionY)}`),
+          detailRow(`display-${index}-rate`, `显示器 ${index + 1} 刷新率`, item.currentRefreshRate ? `${item.currentRefreshRate} 赫兹` : ""),
+        ])
+      ),
+    },
+    {
+      key: "baseboard",
+      label: "主板",
+      rows: detailRows(
+        detailRow("baseboard-model", "型号", context.extracted.baseboard),
+        detailRow("baseboard-maker", "制造商", firstText(baseboard.manufacturer, baseboard.vendor)),
+        detailRow("baseboard-serial", "序列号", firstText(baseboard.serial, baseboard.serialNumber)),
+      ),
+    },
+    {
+      key: "disk",
+      label: "硬盘",
+      rows: detailRows(
+        detailRow("disk-total", "总容量", firstText(formatBytes(summary.disk_bytes), context.importedHardware.disk)),
+        ...disks.flatMap((item, index) => [
+          detailRow(`disk-${index}-name`, `硬盘 ${index + 1} 名称`, firstText(item.name, item.device, item.model)),
+          detailRow(`disk-${index}-size`, `硬盘 ${index + 1} 容量`, formatBytes(item.size)),
+          detailRow(`disk-${index}-serial`, `硬盘 ${index + 1} 序列号`, firstText(item.serialNum, item.serial, item.serialNumber)),
+        ])
+      ),
+    },
+    {
+      key: "network",
+      label: "网卡",
+      rows: detailRows(
+        detailRow("network-ip", "IP 地址", firstText(context.extracted.primaryIp, context.importedHardware.ip)),
+        detailRow("network-gateway", "默认网关", firstText(net.defaultGateway, net.gateway)),
+        ...network.flatMap((item, index) => [
+          detailRow(`network-${index}-name`, `网卡 ${index + 1} 名称`, firstText(item.name, item.iface, item.adapterName)),
+          detailRow(`network-${index}-mac`, `网卡 ${index + 1} MAC`, firstText(item.mac, item.macAddress)),
+          detailRow(`network-${index}-ip`, `网卡 ${index + 1} IP`, firstText(item.ip4, item.ip, item.address)),
+        ])
+      ),
+    },
+    {
+      key: "bios",
+      label: "BIOS",
+      rows: detailRows(
+        detailRow("bios-vendor", "制造商", firstText(bios.vendor, bios.manufacturer)),
+        detailRow("bios-version", "版本", bios.version),
+        detailRow("bios-release", "发布日期", firstText(bios.releaseDate, bios.date)),
+      ),
+    },
+    {
+      key: "chassis",
+      label: "机箱",
+      rows: detailRows(
+        detailRow("chassis-maker", "制造商", firstText(chassis.manufacturer, chassis.vendor)),
+        detailRow("chassis-model", "型号", firstText(chassis.model, chassis.type)),
+        detailRow("chassis-serial", "序列号", firstText(chassis.serial, chassis.serialNumber)),
+      ),
+    },
+    {
+      key: "os",
+      label: "OS",
+      rows: detailRows(
+        detailRow("os-platform", "平台", firstText(summary.platform, os.platform)),
+        detailRow("os-label", "系统版本", firstText(summary.os_label, os.distro, os.release)),
+        detailRow("os-kernel", "内核", os.kernel),
+        detailRow("os-arch", "架构", os.arch),
+      ),
+    },
+    {
+      key: "system",
+      label: "系统",
+      rows: detailRows(
+        detailRow("system-model", "计算机型号", context.extracted.deviceModel),
+        detailRow("system-maker", "制造商", firstText(system.manufacturer, system.vendor)),
+        detailRow("system-hostname", "主机名", summary.hostname),
+        detailRow("system-serial", "序列号", firstText(system.serial, system.serialNumber)),
+      ),
+    },
+    {
+      key: "uuid",
+      label: "UUID",
+      rows: detailRows(
+        detailRow("uuid-hardware", "硬件 UUID", firstText(uuid.hardware, uuid.uuid, uuid.machine, uuid.os)),
+        detailRow("uuid-asset", "资产 UUID", asset.uuid),
+        detailRow("uuid-legacy", "旧 UUID", getRecord(asset.metadata.legacy).uuid),
+      ),
+    },
+  ];
 };
 
 const fieldSourceRows = (asset: Asset, context: ReturnType<typeof assetHardwareContext>): FieldSourceRow[] => {
@@ -646,102 +885,105 @@ const fieldSourceRows = (asset: Asset, context: ReturnType<typeof assetHardwareC
   ];
 };
 
-interface ActivityItem {
+interface AutoChangeRow {
   key: string;
-  tag: string;
-  color: string;
-  title: string;
-  description: string;
+  option: string;
+  oldValue: string;
+  newValue: string;
   time: string;
 }
 
-const recentActivityItems = (
-  observations: AssetObservation[],
-  events: AssetEvent[],
-  changes: ReturnType<typeof observationChanges>
-): ActivityItem[] => [
-  ...changes.map((change) => ({
-    key: `change-${change.key}`,
-    tag: "配置变化",
-    color: "purple",
-    title: change.label,
-    description: `${change.oldValue} -> ${change.newValue}`,
-    time: change.observedAt,
-  })),
-  ...observations.map((observation) => {
-    const snapshot = observationSnapshot(observation);
-    return {
-      key: `observation-${observation.id}`,
-      tag: "自动采集",
-      color: "blue",
-      title: optionLabel(OBSERVATION_SOURCE_OPTIONS, observation.source),
-      description: [snapshot.cpu, snapshot.memory_bytes, snapshot.disk_bytes, snapshot.primary_ip]
-        .filter((item) => item && item !== "-")
-        .join(" / ") || "收到一条硬件采集",
-      time: observation.observedAt || observation.receivedAt,
-    };
-  }),
-  ...events.map((event) => ({
-    key: `event-${event.id}`,
-    tag: optionLabel(EVENT_SOURCE_OPTIONS, event.eventSource),
-    color: event.eventSource === "manual" ? "orange" : "green",
-    title: optionLabel(EVENT_TYPE_OPTIONS, event.eventType),
-    description: event.message || [event.fieldName, event.oldValue, event.newValue].filter(Boolean).join(" / ") || "记录已写入",
-    time: event.createdAt,
-  })),
-].sort((a, b) => new Date(b.time.replace(" ", "T")).getTime() - new Date(a.time.replace(" ", "T")).getTime()).slice(0, 8);
+const AUTO_RECORD_FIELDS: Record<string, string> = {
+  name: "姓名",
+  owner: "姓名",
+  ownerName: "姓名",
+  owner_name: "姓名",
+  state: "设备状态",
+  status: "设备状态",
+  number: "设备编号",
+  assetNumber: "设备编号",
+  asset_number: "设备编号",
+  department: "部门",
+  ip: "IP",
+  primary_ip: "IP",
+  primaryIp: "IP",
+  purchase: "采购价",
+  purchasePrice: "采购价",
+  purchase_price: "采购价",
+  depreciation: "二手价",
+  residualValue: "二手价",
+  residual_value: "二手价",
+};
+
+const normalizeAutoRecordField = (fieldName: string) => {
+  const normalized = String(fieldName || "").split(".").pop() || "";
+  return AUTO_RECORD_FIELDS[normalized] || "";
+};
+
+const formatAutoRecordValue = (option: string, value: unknown) => {
+  const text = fieldText(value);
+  if (text === "-") {
+    return "-";
+  }
+  if (option === "设备状态") {
+    return statusLabel(mapLegacyStatus(text));
+  }
+  return text;
+};
+
+const isAutoChangeRow = (row: AutoChangeRow | null): row is AutoChangeRow => Boolean(row);
+
+const automaticChangeRows = (events: AssetEvent[], search: string): AutoChangeRow[] => {
+  const keyword = search.trim().toLowerCase();
+  return events
+    .filter((event) => event.eventSource !== "manual")
+    .map((event) => {
+      const option = normalizeAutoRecordField(event.fieldName);
+      if (!option) {
+        return null;
+      }
+      const oldValue = formatAutoRecordValue(option, event.oldValue);
+      const newValue = formatAutoRecordValue(option, event.newValue);
+      if (oldValue === newValue) {
+        return null;
+      }
+      return {
+        key: String(event.id),
+        option,
+        oldValue,
+        newValue,
+        time: event.createdAt,
+      };
+    })
+    .filter(isAutoChangeRow)
+    .filter((row) => {
+      if (!keyword) {
+        return true;
+      }
+      const text = `${row.option} ${row.oldValue} ${row.newValue} ${formatDate(row.time)}`.toLowerCase();
+      return text.includes(keyword);
+    })
+    .sort((a, b) => new Date(b.time.replace(" ", "T")).getTime() - new Date(a.time.replace(" ", "T")).getTime()) as AutoChangeRow[];
+};
+
+const manualEventTypeLabel = (eventType: string) =>
+  MANUAL_RECORD_OPTIONS.find((option) => option.value === eventType)?.label || "手动记录";
+
+const manualRecordOperator = (event: AssetEvent) => {
+  const payload = getRecord(event.payload);
+  return fieldText(payload.operatorName || event.actorName);
+};
+
+const manualRecordItem = (event: AssetEvent) => {
+  const payload = getRecord(event.payload);
+  return fieldText(payload.changeItem || payload.targetDepartment || manualEventTypeLabel(event.eventType));
+};
 
 const assetReferenceLabel = (asset?: AssetReference) => {
   if (!asset) {
     return "-";
   }
   return [asset.assetNumber, asset.name].filter(Boolean).join(" / ") || asset.uuid || "-";
-};
-
-const hardwareSections = (hardware: JsonRecord) =>
-  Object.entries(hardware || {}).filter(([, value]) => {
-    if (Array.isArray(value)) {
-      return value.length > 0;
-    }
-    if (value && typeof value === "object") {
-      return Object.keys(value).length > 0;
-    }
-    return value !== null && value !== undefined && value !== "";
-  });
-
-const detailItems = (asset?: Asset) => {
-  if (!asset) {
-    return [];
-  }
-  return [
-    { key: "number", label: "资产编号", children: asset.assetNumber || "-" },
-    { key: "type", label: "资产类型", children: assetTypeLabel(asset.assetType) },
-    { key: "owner", label: "使用人", children: asset.ownerName || "-" },
-    { key: "department", label: "部门", children: asset.department || "-" },
-    { key: "category", label: "分类", children: asset.category || "-" },
-    {
-      key: "status",
-      label: "状态",
-      children: (
-        <Tag color={statusColor[asset.status] || "default"}>
-          {statusLabel(asset.status)}
-        </Tag>
-      ),
-    },
-    { key: "purchase", label: "购置价值", children: formatMoney(asset.purchasePrice) },
-    { key: "residual", label: "残值", children: formatMoney(asset.residualValue) },
-    { key: "updated", label: "更新时间", children: formatDate(asset.updatedAt) },
-    {
-      key: "legacy",
-      label: "旧数据来源",
-      children: fieldText(getRecord(asset.metadata.legacy).source_table),
-    },
-    {
-      key: "legacyUuid",
-      label: "旧UUID",
-      children: fieldText(getRecord(asset.metadata.legacy).uuid),
-    },
-  ];
 };
 
 interface AssetFormModalProps {
@@ -872,6 +1114,7 @@ const LegacyImportModal = ({ open, onClose, onImported }: LegacyImportModalProps
       open={open}
       onCancel={onClose}
       width={920}
+      className="npcink-v3-import-modal"
       destroyOnClose
       footer={[
         <Button key="cancel" onClick={onClose}>
@@ -936,7 +1179,14 @@ const LegacyImportModal = ({ open, onClose, onImported }: LegacyImportModalProps
             { title: "部门", dataIndex: "department", width: 120, render: fieldText },
             { title: "状态", dataIndex: "status", width: 100, render: statusLabel },
           ]}
-          locale={{ emptyText: <Empty description="暂无预览数据" /> }}
+          locale={{
+            emptyText: (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="先粘贴或选择文件，再生成导入预览"
+              />
+            ),
+          }}
         />
       </Space>
     </Modal>
@@ -1137,85 +1387,124 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
   );
 };
 
-interface ManualRecordModalProps {
+interface ManualRecordFormProps {
   open: boolean;
   asset: Asset | null;
   onClose: () => void;
   onSubmit: (values: AssetEventInput) => Promise<unknown>;
+  loading?: boolean;
 }
 
-const ManualRecordModal = ({ open, asset, onClose, onSubmit }: ManualRecordModalProps) => {
-  const [form] = Form.useForm<AssetEventInput & { targetDepartment?: string }>();
+interface ManualRecordFormValues {
+  operatorName: string;
+  changeItem: string;
+  changeDescription: string;
+}
+
+const ManualRecordModal = ({ open, asset, onClose, onSubmit, loading }: ManualRecordFormProps) => {
+  const [form] = Form.useForm<ManualRecordFormValues>();
 
   useEffect(() => {
     if (open) {
-      form.setFieldsValue({ eventType: "note", message: "", payload: {} });
+      form.resetFields();
     }
   }, [form, open]);
 
   return (
     <Modal
-      title="新增手动记录"
+      title="添加记录"
       open={open}
+      okText="添加记录"
+      cancelText="取消"
+      confirmLoading={loading}
       onCancel={onClose}
       onOk={() => form.submit()}
       destroyOnClose
       width={560}
+      className="npcink-v3-manual-record-modal"
     >
+      <div className="npcink-v3-manual-record-form">
       <Form
         form={form}
-        layout="vertical"
+        layout="horizontal"
+        labelCol={{ flex: "92px" }}
+        wrapperCol={{ flex: "1 1 auto" }}
+        colon={false}
         preserve={false}
-        onFinish={(values) =>
-          onSubmit({
-            eventType: values.eventType || "note",
-            message: values.message,
+        requiredMark
+        onFinish={async (values) => {
+          await onSubmit({
+            eventType: "manual_change",
+            message: values.changeDescription.trim(),
             payload: {
               assetNumber: asset?.assetNumber || "",
-              targetDepartment: values.targetDepartment || "",
+              operatorName: values.operatorName.trim(),
+              changeItem: values.changeItem.trim(),
             },
-          })
-        }
+          });
+          form.resetFields();
+        }}
       >
-        <Form.Item name="eventType" label="记录类型">
-          <Select options={MANUAL_RECORD_OPTIONS} />
+        <Form.Item
+          name="operatorName"
+          label="变更人"
+          rules={[{ required: true, whitespace: true, message: "请输入变更人" }]}
+        >
+          <Input placeholder="操作变更同事的名字" />
         </Form.Item>
-        <Form.Item name="targetDepartment" label="目标部门 / 去向">
-          <Input placeholder="转移、借用时可填写" />
+        <Form.Item
+          name="changeItem"
+          label="变更项目"
+          rules={[{ required: true, whitespace: true, message: "请输入变更项目" }]}
+        >
+          <Input placeholder="变更的项目，例如硬盘、内存条等" />
         </Form.Item>
-        <Form.Item name="message" label="记录内容" rules={[{ required: true, message: "请输入记录内容" }]}>
-          <Input.TextArea rows={4} placeholder="例如：更换硬盘，已交付财务部继续使用" />
+        <Form.Item
+          name="changeDescription"
+          label="变更说明"
+          rules={[{ required: true, whitespace: true, message: "请输入变更说明" }]}
+        >
+          <Input.TextArea rows={3} placeholder="变更内容详情" />
         </Form.Item>
       </Form>
+      </div>
     </Modal>
   );
 };
 
 interface AssetSettingsPanelProps {
   asset: Asset;
+  departmentOptions?: string[];
   onUpdated: (asset: Asset) => void;
-  onEdit: (asset: Asset) => void;
   onArchive: (asset: Asset) => void;
 }
 
-const AssetSettingsPanel = ({ asset, onUpdated, onEdit, onArchive }: AssetSettingsPanelProps) => {
-  const [form] = Form.useForm<AssetInput & { ignoredFields?: string[] }>();
-  const metadata = getRecord(asset.metadata);
-  const audit = getRecord(metadata.audit);
+const AssetSettingsPanel = ({ asset, departmentOptions = [], onUpdated, onArchive }: AssetSettingsPanelProps) => {
+  const [form] = Form.useForm<AssetInput>();
+  const settingsHardware = assetHardwareContext(asset);
+  const primaryIp = firstText(settingsHardware.extracted.primaryIp, settingsHardware.importedHardware.ip);
+  const normalizedDepartmentOptions = useMemo(
+    () =>
+      Array.from(new Set([asset.department, ...departmentOptions].map((item) => String(item || "").trim()).filter(Boolean)))
+        .sort((a, b) => a.localeCompare(b, "zh-CN")),
+    [asset.department, departmentOptions]
+  );
+  const watchedPurchasePrice = Form.useWatch("purchasePrice", form);
+  const watchedResidualValue = Form.useWatch("residualValue", form);
+  const purchasePrice = Number(watchedPurchasePrice ?? asset.purchasePrice ?? 0);
+  const residualValue = Number(watchedResidualValue ?? asset.residualValue ?? 0);
+  const residualRate = purchasePrice > 0 ? Math.round((residualValue / purchasePrice) * 100) : 0;
+  const depreciationRate = purchasePrice > 0 ? Math.max(0, 100 - residualRate) : 0;
   const updateMutation = useMutation(
-    (values: AssetInput & { ignoredFields?: string[] }) =>
+    (values: AssetInput) =>
       updateAsset(asset.uuid, {
-        name: values.name,
+        assetNumber: values.assetNumber,
+        name: values.name ?? asset.name,
         ownerName: values.ownerName,
         department: values.department,
         status: values.status,
-        metadata: {
-          ...metadata,
-          audit: {
-            ...audit,
-            ignoredFields: values.ignoredFields || [],
-          },
-        },
+        purchasePrice: Number(values.purchasePrice || 0),
+        residualValue: Number(values.residualValue || 0),
       }),
     {
       onSuccess: (updated) => {
@@ -1227,45 +1516,77 @@ const AssetSettingsPanel = ({ asset, onUpdated, onEdit, onArchive }: AssetSettin
 
   useEffect(() => {
     form.setFieldsValue({
+      assetNumber: asset.assetNumber,
       name: asset.name,
       ownerName: asset.ownerName,
       department: asset.department,
       status: asset.status,
-      ignoredFields: Array.isArray(audit.ignoredFields) ? (audit.ignoredFields as string[]) : [],
+      purchasePrice: asset.purchasePrice,
+      residualValue: asset.residualValue,
     });
-  }, [asset, audit.ignoredFields, form]);
+  }, [asset, form]);
 
   return (
     <div className="npcink-v3-settings-panel npcink-v3-detail-settings">
       <Form form={form} layout="vertical" onFinish={(values) => updateMutation.mutate(values)}>
-        <Space.Compact block>
-          <Form.Item name="name" label="资产别名" className="npcink-v3-half">
-            <Input />
-          </Form.Item>
-          <Form.Item name="ownerName" label="责任人" className="npcink-v3-half">
-            <Input />
-          </Form.Item>
-        </Space.Compact>
-        <Space.Compact block>
-          <Form.Item name="department" label="部门" className="npcink-v3-half">
-            <Input />
-          </Form.Item>
-          <Form.Item name="status" label="状态" className="npcink-v3-half">
-            <Select options={STATUS_OPTIONS} />
-          </Form.Item>
-        </Space.Compact>
-        <Form.Item name="ignoredFields" label="忽略盘点字段">
-          <Select mode="multiple" allowClear options={AUDIT_FIELD_OPTIONS} placeholder="选择后异常发现会跳过这些字段" />
-        </Form.Item>
-        <Space>
+        <div className="npcink-v3-settings-section">
+          <h4>基础信息</h4>
+          <div className="npcink-v3-settings-grid">
+            <Form.Item name="ownerName" label="姓名">
+              <Input />
+            </Form.Item>
+            <Form.Item name="assetNumber" label="编号">
+              <Input />
+            </Form.Item>
+            <Form.Item name="department" label="部门">
+              <Select
+                showSearch
+                allowClear
+                options={normalizedDepartmentOptions.map((department) => ({ label: department, value: department }))}
+                placeholder="选择或输入部门"
+                popupMatchSelectWidth={false}
+                filterOption={(input, option) => String(option?.label || "").toLowerCase().includes(input.toLowerCase())}
+                onSearch={(value) => {
+                  if (value.trim()) {
+                    form.setFieldValue("department", value.trim());
+                  }
+                }}
+              />
+            </Form.Item>
+            <Form.Item name="status" label="状态">
+              <Select options={STATUS_OPTIONS} />
+            </Form.Item>
+            <Form.Item label="IP 地址" className="npcink-v3-settings-wide">
+              <Input value={primaryIp} readOnly placeholder="暂无采集 IP" />
+            </Form.Item>
+          </div>
+        </div>
+
+        <div className="npcink-v3-settings-section">
+          <h4>财务参数</h4>
+          <div className="npcink-v3-settings-grid">
+            <Form.Item name="purchasePrice" label="采购价">
+              <InputNumber min={0} precision={2} className="npcink-v3-number" addonAfter="¥" />
+            </Form.Item>
+            <Form.Item name="residualValue" label="二手价">
+              <InputNumber min={0} precision={2} className="npcink-v3-number" addonAfter="¥" />
+            </Form.Item>
+          </div>
+          <div className="npcink-v3-finance-summary">
+            <span>折旧率：{depreciationRate}%</span>
+            <span>残值：{formatMoney(residualValue)}</span>
+            <span>残值率：{residualRate}%</span>
+          </div>
+        </div>
+
+        <div className="npcink-v3-settings-actions">
           <Button type="primary" htmlType="submit" loading={updateMutation.isLoading}>
             保存设置
           </Button>
-          <Button onClick={() => onEdit(asset)}>完整编辑</Button>
-          <Button danger onClick={() => onArchive(asset)}>
-            归档资产
+          <Button danger type="text" onClick={() => onArchive(asset)}>
+            移除设备
           </Button>
-        </Space>
+        </div>
       </Form>
     </div>
   );
@@ -1274,14 +1595,18 @@ const AssetSettingsPanel = ({ asset, onUpdated, onEdit, onArchive }: AssetSettin
 interface DetailDrawerProps {
   uuid: string | null;
   open: boolean;
+  departmentOptions?: string[];
   onClose: () => void;
-  onEdit: (asset: Asset) => void;
   onArchive: (asset: Asset) => void;
 }
 
-const DetailDrawer = ({ uuid, open, onClose, onEdit, onArchive }: DetailDrawerProps) => {
+const DetailDrawer = ({ uuid, open, departmentOptions = [], onClose, onArchive }: DetailDrawerProps) => {
   const queryClient = useQueryClient();
-  const [recordModalOpen, setRecordModalOpen] = useState(false);
+  const [manualRecordOpen, setManualRecordOpen] = useState(false);
+  const [manualRecordKeyword, setManualRecordKeyword] = useState("");
+  const [manualRecordSearch, setManualRecordSearch] = useState("");
+  const [activeDetailKey, setActiveDetailKey] = useState("processor");
+  const [autoRecordSearch, setAutoRecordSearch] = useState("");
   const enabled = Boolean(uuid && open);
   const assetQuery = useQuery(["v3-asset", uuid], () => getAsset(uuid || ""), {
     enabled,
@@ -1306,23 +1631,47 @@ const DetailDrawer = ({ uuid, open, onClose, onEdit, onArchive }: DetailDrawerPr
   const observations = observationsQuery.data?.data || [];
   const events = eventsQuery.data?.data || [];
   const hardwareContext = assetHardwareContext(asset);
-  const latestHardware = hardwareContext.hardware;
   const summary = hardwareContext.summary;
   const extracted = hardwareContext.extracted;
-  const changes = useMemo(() => observationChanges(observations).slice(0, 8), [observations]);
   const sourceRows = useMemo(
     () => (asset ? fieldSourceRows(asset, hardwareContext) : []),
     [asset, hardwareContext]
   );
-  const activityItems = useMemo(
-    () => recentActivityItems(observations, events, changes),
-    [changes, events, observations]
+  const detailSections = useMemo(
+    () => (asset ? hardwareDetailSections(asset, hardwareContext) : []),
+    [asset, hardwareContext]
   );
+  const activeDetailSection =
+    detailSections.find((section) => section.key === activeDetailKey) ||
+    detailSections.find((section) => section.key === "processor") ||
+    detailSections[0];
+  const autoRecordRows = useMemo(
+    () => automaticChangeRows(events, autoRecordSearch),
+    [autoRecordSearch, events]
+  );
+  const manualRecords = useMemo(() => events.filter((event) => event.eventSource === "manual"), [events]);
+  const filteredManualRecords = useMemo(() => {
+    const keyword = manualRecordSearch.trim().toLowerCase();
+    if (!keyword) {
+      return manualRecords;
+    }
+    return manualRecords.filter((event) => {
+      const text = [
+        manualRecordOperator(event),
+        manualRecordItem(event),
+        fieldText(event.message),
+        formatDate(event.createdAt),
+      ]
+        .join(" ")
+        .toLowerCase();
+      return text.includes(keyword);
+    });
+  }, [manualRecordSearch, manualRecords]);
   const createEventMutation = useMutation(
     (input: AssetEventInput) => createAssetEvent(uuid || "", input),
     {
       onSuccess: () => {
-        setRecordModalOpen(false);
+        setManualRecordOpen(false);
         queryClient.invalidateQueries(["v3-asset-events", uuid]);
         queryClient.invalidateQueries(["v3-events"]);
         message.success("手动记录已添加");
@@ -1371,23 +1720,31 @@ const DetailDrawer = ({ uuid, open, onClose, onEdit, onArchive }: DetailDrawerPr
   ];
 
   const eventColumns: ColumnsType<AssetEvent> = [
-    { title: "时间", dataIndex: "createdAt", width: 180, render: formatDate },
-    { title: "来源", dataIndex: "eventSource", width: 100 },
-    { title: "类型", dataIndex: "eventType", width: 140 },
-    { title: "字段", dataIndex: "fieldName", width: 120, render: fieldText },
     {
-      title: "说明",
-      render: (_, event) => (
-        <Space direction="vertical" size={2}>
-          <Text>{event.message || "-"}</Text>
-          {event.oldValue || event.newValue ? (
-            <Text type="secondary">
-              {fieldText(event.oldValue)} -&gt; {fieldText(event.newValue)}
-            </Text>
-          ) : null}
-          {event.actorName ? <Text type="secondary">操作人：{event.actorName}</Text> : null}
-        </Space>
-      ),
+      title: "序号",
+      width: 72,
+      render: (_value, _event, index) => index + 1,
+    },
+    {
+      title: "变更人",
+      width: 140,
+      render: (_, event) => manualRecordOperator(event),
+    },
+    {
+      title: "变更项目",
+      width: 180,
+      render: (_, event) => manualRecordItem(event),
+    },
+    {
+      title: "变更说明",
+      dataIndex: "message",
+      render: fieldText,
+    },
+    {
+      title: "时间",
+      dataIndex: "createdAt",
+      width: 180,
+      render: formatDate,
     },
   ];
 
@@ -1397,14 +1754,14 @@ const DetailDrawer = ({ uuid, open, onClose, onEdit, onArchive }: DetailDrawerPr
       open={open}
       onCancel={onClose}
       footer={null}
-      width="min(940px, calc(100vw - 32px))"
+      width="min(840px, calc(100vw - 40px))"
       className="npcink-v3-detail-modal"
       destroyOnClose
     >
       {assetQuery.isLoading ? (
         <Table loading pagination={false} showHeader={false} />
       ) : asset ? (
-        <Space direction="vertical" size={16} className="npcink-v3-detail-stack">
+        <Space direction="vertical" size={12} className="npcink-v3-detail-stack">
           <div className="npcink-v3-device-hero">
             <div className="npcink-v3-device-brand">
               <div className="npcink-v3-os-mark" aria-hidden="true">
@@ -1417,7 +1774,14 @@ const DetailDrawer = ({ uuid, open, onClose, onEdit, onArchive }: DetailDrawerPr
             </div>
             <div>
               <h3>{asset.ownerName || asset.name || "未命名资产"}</h3>
-              <p>{[extracted.cpu, formatMemoryDiskText(summary, hardwareContext.importedHardware)].filter((item) => item && item !== "- / -").join(" / ") || assetTypeLabel(asset.assetType)}</p>
+              <p>
+                {formatHardwareHeroText(
+                  extracted.cpu,
+                  summary,
+                  hardwareContext.importedHardware,
+                  assetTypeLabel(asset.assetType)
+                )}
+              </p>
               <div className="npcink-v3-device-meta">
                 <span>部门：{asset.department || "-"}</span>
                 <span>状态：{statusLabel(asset.status)}</span>
@@ -1432,7 +1796,7 @@ const DetailDrawer = ({ uuid, open, onClose, onEdit, onArchive }: DetailDrawerPr
               key: "overview",
               label: "硬件信息",
               children: (
-                <Space direction="vertical" size={14} className="npcink-v3-detail-stack">
+                <Space direction="vertical" size={12} className="npcink-v3-detail-stack">
                   <div className="npcink-v3-hardware-grid">
                     <div>
                       <Text strong>中央处理器(CPU)型号</Text>
@@ -1468,43 +1832,6 @@ const DetailDrawer = ({ uuid, open, onClose, onEdit, onArchive }: DetailDrawerPr
                       <strong>{formatDate(asset.createdAt)}</strong>
                     </div>
                   </div>
-                  <div className="npcink-v3-activity-list">
-                    <div className="npcink-v3-activity-head">
-                      <Text strong>最近记录</Text>
-                      <Text type="secondary">合并自动采集、配置变化和手动记录</Text>
-                    </div>
-                    {activityItems.length ? (
-                      activityItems.map((item) => (
-                        <div key={item.key}>
-                          <Tag color={item.color}>{item.tag}</Tag>
-                          <div>
-                            <Text strong>{item.title}</Text>
-                            <Text type="secondary">{item.description}</Text>
-                          </div>
-                          <Text type="secondary">{formatDate(item.time)}</Text>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="npcink-v3-activity-empty">
-                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无最近记录" />
-                      </div>
-                    )}
-                  </div>
-                  <Collapse
-                    size="small"
-                    items={[
-                      {
-                        key: "hardware",
-                        label: `硬件明细 ${hardwareSections(latestHardware).length}`,
-                        children: renderJsonBlock(latestHardware),
-                      },
-                      {
-                        key: "metadata",
-                        label: "资产扩展信息",
-                        children: renderJsonBlock(asset.metadata),
-                      },
-                    ]}
-                  />
                 </Space>
               ),
             },
@@ -1512,36 +1839,49 @@ const DetailDrawer = ({ uuid, open, onClose, onEdit, onArchive }: DetailDrawerPr
               key: "identities",
               label: "详细信息",
               children: (
-                <Space direction="vertical" size={14} className="npcink-v3-detail-stack">
-                  <Descriptions bordered size="small" column={2} items={detailItems(asset)} />
-                  <div className="npcink-v3-field-source">
-                    <div className="npcink-v3-field-source-head">
-                      <Text strong>字段来源对照</Text>
-                      <Text type="secondary">标准字段、导入字段和最新采集字段并排查看。</Text>
-                    </div>
-                    <div className="npcink-v3-field-source-grid">
-                      <strong>字段</strong>
-                      <strong>标准字段</strong>
-                      <strong>导入字段</strong>
-                      <strong>最新采集</strong>
-                      {sourceRows.map((row) => (
-                        <Fragment key={row.key}>
-                          <span>{row.label}</span>
-                          <span>{row.standard}</span>
-                          <span>{row.imported}</span>
-                          <span>{row.latest}</span>
-                        </Fragment>
+                <Space direction="vertical" size={12} className="npcink-v3-detail-stack">
+                  <div className="npcink-v3-spec-layout">
+                    <div className="npcink-v3-spec-nav">
+                      {detailSections.map((section) => (
+                        <button
+                          key={section.key}
+                          type="button"
+                          className={section.key === activeDetailSection?.key ? "is-active" : ""}
+                          onClick={() => setActiveDetailKey(section.key)}
+                        >
+                          {section.label}
+                        </button>
                       ))}
                     </div>
+                    <Table
+                      rowKey="key"
+                      size="small"
+                      className="npcink-v3-spec-table"
+                      columns={[
+                        {
+                          title: "序号",
+                          width: 92,
+                          render: (_value, _row, index) => index + 1,
+                        },
+                        {
+                          title: "属性",
+                          dataIndex: "attribute",
+                          width: 220,
+                        },
+                        {
+                          title: "配置",
+                          dataIndex: "value",
+                        },
+                      ]}
+                      dataSource={activeDetailSection?.rows || []}
+                      pagination={{
+                        pageSize: 10,
+                        hideOnSinglePage: true,
+                        showSizeChanger: false,
+                      }}
+                      locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无该分类信息" /> }}
+                    />
                   </div>
-                  <Table
-                    rowKey="id"
-                    size="small"
-                    columns={identityColumns}
-                    dataSource={identitiesQuery.data || []}
-                    loading={identitiesQuery.isLoading}
-                    pagination={false}
-                  />
                 </Space>
               ),
             },
@@ -1549,52 +1889,62 @@ const DetailDrawer = ({ uuid, open, onClose, onEdit, onArchive }: DetailDrawerPr
               key: "observations",
               label: "自动记录",
               children: (
-                <Space direction="vertical" size={14} className="npcink-v3-detail-stack">
-                  <div className="npcink-v3-change-strip">
-                    <div>
-                      <Text strong>采集变化</Text>
-                      <Text type="secondary">比较相邻两次自动采集</Text>
-                    </div>
-                    {changes.length ? (
-                      changes.map((change) => (
-                        <div key={change.key}>
-                          <Tag color="blue">{change.label}</Tag>
-                          <Text>{change.oldValue}</Text>
-                          <Text type="secondary">-&gt;</Text>
-                          <Text strong>{change.newValue}</Text>
-                          <Text type="secondary">{formatDate(change.observedAt)}</Text>
-                        </div>
-                      ))
-                    ) : (
-                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无可识别配置变化" />
-                    )}
+                <Space direction="vertical" size={12} className="npcink-v3-detail-stack">
+                  <Text type="secondary">
+                    自动记录字段：姓名、状态、编号、部门、IP、采购价、二手价
+                  </Text>
+                  <div className="npcink-v3-auto-search">
+                    <Input
+                      allowClear
+                      className="npcink-v3-auto-search-input"
+                      placeholder="搜索变更记录"
+                      value={autoRecordSearch}
+                      onChange={(event) => setAutoRecordSearch(event.target.value)}
+                      onPressEnter={() => setAutoRecordSearch(autoRecordSearch)}
+                    />
+                    <Button
+                      aria-label="搜索变更记录"
+                      className="npcink-v3-auto-search-button"
+                      icon={<SearchOutlined />}
+                      onClick={() => setAutoRecordSearch(autoRecordSearch)}
+                    />
                   </div>
                   <Table
-                    rowKey="id"
+                    rowKey="key"
                     size="small"
-                    columns={observationColumns}
-                    dataSource={observations}
-                    loading={observationsQuery.isLoading}
-                    pagination={false}
-                    expandable={{
-                      expandedRowRender: (observation) => (
-                        <Collapse
-                          size="small"
-                          items={[
-                            {
-                              key: "hardware",
-                              label: "硬件明细",
-                              children: renderJsonBlock(observation.hardware),
-                            },
-                            {
-                              key: "raw",
-                              label: "原始数据",
-                              children: renderJsonBlock(observation.raw),
-                            },
-                          ]}
-                        />
-                      ),
+                    className="npcink-v3-auto-table"
+                    columns={[
+                      {
+                        title: "序号",
+                        width: 72,
+                        render: (_value, _row, index) => index + 1,
+                      },
+                      {
+                        title: "选项",
+                        dataIndex: "option",
+                        width: 160,
+                      },
+                      {
+                        title: "变更前",
+                        dataIndex: "oldValue",
+                      },
+                      {
+                        title: "变更后",
+                        dataIndex: "newValue",
+                      },
+                      {
+                        title: "时间",
+                        dataIndex: "time",
+                        width: 180,
+                        render: formatDate,
+                      },
+                    ]}
+                    dataSource={autoRecordRows}
+                    pagination={{
+                      pageSize: 10,
+                      showSizeChanger: true,
                     }}
+                    locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无自动变更记录" /> }}
                   />
                 </Space>
               ),
@@ -1604,24 +1954,127 @@ const DetailDrawer = ({ uuid, open, onClose, onEdit, onArchive }: DetailDrawerPr
               label: "手动记录",
               children: (
                 <Space direction="vertical" size={12} className="npcink-v3-detail-stack">
-                  <div className="npcink-v3-record-toolbar">
-                    <Text type="secondary">维修、借用、归还、转移和备注会写入统一事件表。</Text>
-                    <Button type="primary" onClick={() => setRecordModalOpen(true)}>
-                      新增记录
+                  <div className="npcink-v3-manual-record-toolbar">
+                    <Input
+                      allowClear
+                      className="npcink-v3-manual-record-search"
+                      placeholder="搜索变更记录"
+                      value={manualRecordKeyword}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setManualRecordKeyword(value);
+                        if (!value) {
+                          setManualRecordSearch("");
+                        }
+                      }}
+                      onPressEnter={() => setManualRecordSearch(manualRecordKeyword.trim())}
+                    />
+                    <Button icon={<SearchOutlined />} onClick={() => setManualRecordSearch(manualRecordKeyword.trim())}>
+                      搜索
+                    </Button>
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => setManualRecordOpen(true)}>
+                      添加记录
                     </Button>
                   </div>
                   <Table
                     rowKey="id"
                     size="small"
                     columns={eventColumns}
-                    dataSource={events}
+                    dataSource={filteredManualRecords}
                     loading={eventsQuery.isLoading}
                     pagination={false}
-                    expandable={{
-                      expandedRowRender: (event) => renderJsonBlock(event.payload),
-                    }}
+                    locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无记录" /> }}
                   />
                 </Space>
+              ),
+            },
+            {
+              key: "debug",
+              label: "调试",
+              children: (
+                <Collapse
+                  size="small"
+                  items={[
+                    {
+                      key: "identities",
+                      label: `身份标识 ${(identitiesQuery.data || []).length}`,
+                      children: (
+                        <Table
+                          rowKey="id"
+                          size="small"
+                          columns={identityColumns}
+                          dataSource={identitiesQuery.data || []}
+                          loading={identitiesQuery.isLoading}
+                          pagination={false}
+                        />
+                      ),
+                    },
+                    {
+                      key: "sources",
+                      label: "字段来源对照",
+                      children: (
+                        <div className="npcink-v3-field-source">
+                          <div className="npcink-v3-field-source-head">
+                            <Text strong>字段来源对照</Text>
+                            <Text type="secondary">标准字段、导入字段和最新采集字段并排查看。</Text>
+                          </div>
+                          <div className="npcink-v3-field-source-grid">
+                            <strong>字段</strong>
+                            <strong>标准字段</strong>
+                            <strong>导入字段</strong>
+                            <strong>最新采集</strong>
+                            {sourceRows.map((row) => (
+                              <Fragment key={row.key}>
+                                <span>{row.label}</span>
+                                <span>{row.standard}</span>
+                                <span>{row.imported}</span>
+                                <span>{row.latest}</span>
+                              </Fragment>
+                            ))}
+                          </div>
+                        </div>
+                      ),
+                    },
+                    {
+                      key: "metadata",
+                      label: "资产扩展信息",
+                      children: renderJsonBlock(asset.metadata),
+                    },
+                    {
+                      key: "observations",
+                      label: `采集记录 ${observations.length}`,
+                      children: (
+                        <Table
+                          rowKey="id"
+                          size="small"
+                          columns={observationColumns}
+                          dataSource={observations}
+                          loading={observationsQuery.isLoading}
+                          pagination={false}
+                          expandable={{
+                            expandedRowRender: (observation) => (
+                              <Collapse
+                                size="small"
+                                items={[
+                                  {
+                                    key: "hardware",
+                                    label: "硬件明细",
+                                    children: renderJsonBlock(observation.hardware),
+                                  },
+                                  {
+                                    key: "raw",
+                                    label: "原始数据",
+                                    children: renderJsonBlock(observation.raw),
+                                  },
+                                ]}
+                              />
+                            ),
+                          }}
+                        />
+                      ),
+                    },
+                  ]}
+                />
               ),
             },
             {
@@ -1630,8 +2083,8 @@ const DetailDrawer = ({ uuid, open, onClose, onEdit, onArchive }: DetailDrawerPr
               children: (
                 <AssetSettingsPanel
                   asset={asset}
+                  departmentOptions={departmentOptions}
                   onUpdated={handleAssetUpdated}
-                  onEdit={onEdit}
                   onArchive={onArchive}
                 />
               ),
@@ -1639,9 +2092,10 @@ const DetailDrawer = ({ uuid, open, onClose, onEdit, onArchive }: DetailDrawerPr
             ]}
           />
           <ManualRecordModal
-            open={recordModalOpen}
+            open={manualRecordOpen}
             asset={asset}
-            onClose={() => setRecordModalOpen(false)}
+            loading={createEventMutation.isLoading}
+            onClose={() => setManualRecordOpen(false)}
             onSubmit={(values) => createEventMutation.mutateAsync(values)}
           />
         </Space>
@@ -1822,6 +2276,12 @@ const HardwareAuditWorkspace = () => {
   const auditAssets = auditAssetsQuery.data || [];
   const auditTotal = auditAssets.length;
   const auditStatus = countBy(auditAssets, (asset) => statusLabel(asset.status));
+  const departmentOptions = useMemo(
+    () =>
+      Array.from(new Set(auditAssets.map((asset) => asset.department).filter(Boolean)))
+        .sort((a, b) => a.localeCompare(b, "zh-CN")),
+    [auditAssets]
+  );
   const departmentRows = useMemo(() => {
     const rows = new Map<string, Record<string, number | string>>();
     auditAssets.forEach((asset) => {
@@ -2320,8 +2780,8 @@ const HardwareAuditWorkspace = () => {
       <DetailDrawer
         uuid={selectedUuid}
         open={Boolean(selectedUuid)}
+        departmentOptions={departmentOptions}
         onClose={() => setSelectedUuid(null)}
-        onEdit={(asset) => setEditingAsset(asset)}
         onArchive={() => {
           queryClient.invalidateQueries(["v3-hardware-audit-assets"]);
           queryClient.invalidateQueries(["v3-assets"]);
@@ -2633,6 +3093,12 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
 
   const assets = assetsQuery.data?.data || [];
   const pagination = assetsQuery.data?.pagination;
+  const departmentOptions = useMemo(
+    () =>
+      Array.from(new Set(assets.map((asset) => asset.department).filter(Boolean)))
+        .sort((a, b) => a.localeCompare(b, "zh-CN")),
+    [assets]
+  );
   const selectedCount = selectedUuids.size;
   const allSelected = assets.length > 0 && assets.every((asset) => selectedUuids.has(asset.uuid));
   const activeCount = countStatus(assets, "active");
@@ -2779,11 +3245,6 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
 
   const openCreateModal = () => {
     setEditingAsset(null);
-    setAssetModalOpen(true);
-  };
-
-  const openEditModal = (asset: Asset) => {
-    setEditingAsset(asset);
     setAssetModalOpen(true);
   };
 
@@ -2967,7 +3428,9 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
               ))}
             </div>
           ) : (
-            <Empty description="暂无资产" />
+            <div className="npcink-v3-empty-state">
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无资产，先导入旧数据或新增资产" />
+            </div>
           )}
           <div className="npcink-v3-card-pagination">
             <Text type="secondary">共 {pagination?.totalItems || 0} 条资产</Text>
@@ -3023,8 +3486,8 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
       <DetailDrawer
         uuid={selectedUuid}
         open={Boolean(selectedUuid)}
+        departmentOptions={departmentOptions}
         onClose={() => setSelectedUuid(null)}
-        onEdit={openEditModal}
         onArchive={confirmArchive}
       />
       <AssetFormModal

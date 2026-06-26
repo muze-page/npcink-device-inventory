@@ -9,8 +9,26 @@ class Npcink_Device_Inventory_Asset_Repository
 	public function find_by_uuid($uuid)
 	{
 		global $wpdb;
+		$assets_table = Npcink_Device_Inventory_V3_Tables::assets();
+		$observations_table = Npcink_Device_Inventory_V3_Tables::observations();
 		return $wpdb->get_row(
-			$wpdb->prepare('SELECT * FROM ' . Npcink_Device_Inventory_V3_Tables::assets() . ' WHERE uuid = %s', $uuid),
+			$wpdb->prepare(
+				"SELECT a.*,
+					lo.summary_json AS latest_summary_json,
+					lo.hardware_json AS latest_hardware_json,
+					lo.observed_at AS latest_observed_at,
+					lo.source AS latest_observation_source
+				FROM $assets_table a
+				LEFT JOIN $observations_table lo ON lo.id = (
+					SELECT o.id
+					FROM $observations_table o
+					WHERE o.asset_id = a.id
+					ORDER BY o.observed_at DESC, o.id DESC
+					LIMIT 1
+				)
+				WHERE a.uuid = %s",
+				$uuid
+			),
 			ARRAY_A
 		);
 	}
@@ -18,8 +36,26 @@ class Npcink_Device_Inventory_Asset_Repository
 	public function find_by_id($id)
 	{
 		global $wpdb;
+		$assets_table = Npcink_Device_Inventory_V3_Tables::assets();
+		$observations_table = Npcink_Device_Inventory_V3_Tables::observations();
 		return $wpdb->get_row(
-			$wpdb->prepare('SELECT * FROM ' . Npcink_Device_Inventory_V3_Tables::assets() . ' WHERE id = %d', $id),
+			$wpdb->prepare(
+				"SELECT a.*,
+					lo.summary_json AS latest_summary_json,
+					lo.hardware_json AS latest_hardware_json,
+					lo.observed_at AS latest_observed_at,
+					lo.source AS latest_observation_source
+				FROM $assets_table a
+				LEFT JOIN $observations_table lo ON lo.id = (
+					SELECT o.id
+					FROM $observations_table o
+					WHERE o.asset_id = a.id
+					ORDER BY o.observed_at DESC, o.id DESC
+					LIMIT 1
+				)
+				WHERE a.id = %d",
+				$id
+			),
 			ARRAY_A
 		);
 	}
