@@ -55,6 +55,15 @@ class Npcink_Device_Inventory_Event_Repository
 		$where = array();
 		$params = array();
 
+		if (!empty($args['event_mode'])) {
+			$event_mode = sanitize_key($args['event_mode']);
+			if ($event_mode === 'manual') {
+				$where[] = "e.event_source IN ('manual', 'legacy_manual')";
+			} elseif ($event_mode === 'auto') {
+				$where[] = "e.event_source IN ('upload', 'system', 'import', 'legacy_auto', 'legacy_import')";
+			}
+		}
+
 		if (!empty($args['event_source'])) {
 			$where[] = 'e.event_source = %s';
 			$params[] = sanitize_key($args['event_source']);

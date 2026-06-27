@@ -8,6 +8,7 @@ import type {
   AssetListParams,
   AssetObservation,
   CreatedClientToken,
+  CreatedPublicQueryPage,
   EventListParams,
   InventorySettings,
   ObservationListParams,
@@ -152,6 +153,17 @@ export const updateSettings = async (
   const response = await restInstance.patch<DataEnvelope<InventorySettings>>(
     "/settings",
     input,
+    { showSuccessMessage: false } as RequestConfig
+  );
+  return unwrapData(response.data);
+};
+
+export const createPublicQueryPage = async (
+  input?: Pick<InventorySettings, "publicQueryPageSlug">
+): Promise<CreatedPublicQueryPage> => {
+  const response = await restInstance.post<DataEnvelope<CreatedPublicQueryPage>>(
+    "/settings/public-query-page",
+    input ?? {},
     { showSuccessMessage: false } as RequestConfig
   );
   return unwrapData(response.data);

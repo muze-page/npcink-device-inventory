@@ -87,8 +87,22 @@ class Npcink_Device_Inventory_Asset_Repository
 
 		if (!empty($args['search'])) {
 			$like = '%' . $wpdb->esc_like(sanitize_text_field($args['search'])) . '%';
-			$where[] = '(asset_number LIKE %s OR name LIKE %s OR owner_name LIKE %s OR department LIKE %s)';
-			array_push($params, $like, $like, $like, $like);
+			$where[] = '(asset_number LIKE %s OR name LIKE %s OR owner_name LIKE %s OR department LIKE %s OR metadata_json LIKE %s)';
+			array_push($params, $like, $like, $like, $like, $like);
+		}
+
+		if (!empty($args['purchase_platform'])) {
+			$platforms = array_filter(
+				array_map('sanitize_text_field', explode('|', (string) $args['purchase_platform']))
+			);
+			if (!empty($platforms)) {
+				$platform_where = array();
+				foreach ($platforms as $platform) {
+					$platform_where[] = 'metadata_json LIKE %s';
+					$params[] = '%' . $wpdb->esc_like($platform) . '%';
+				}
+				$where[] = '(' . implode(' OR ', $platform_where) . ')';
+			}
 		}
 
 		$where_sql = $where ? 'WHERE ' . implode(' AND ', $where) : '';

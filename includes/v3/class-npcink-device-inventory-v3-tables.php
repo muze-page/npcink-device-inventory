@@ -42,9 +42,14 @@ class Npcink_Device_Inventory_V3_Tables
 	{
 		return array(
 			'client_tokens' => array(),
+			'client_upload_base_url' => '',
 			'public_query_enabled' => false,
+			'public_query_page_slug' => 'public-search-page',
+			'public_query_access_code_hash' => '',
 			'observation_retention_days' => 0,
 			'asset_number_prefix' => 'A',
+			'depreciation_period_months' => 36,
+			'default_residual_rate' => 5,
 			'delete_data_on_uninstall' => false,
 		);
 	}

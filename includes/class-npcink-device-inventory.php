@@ -117,6 +117,11 @@ class Npcink_Device_Inventory
 		 */
 		require_once plugin_dir_path(dirname(__FILE__)) . 'admin/class-npcink-device-inventory-admin.php';
 
+		/**
+		 * The class responsible for public query pages and public REST routes.
+		 */
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-npcink-device-inventory-public.php';
+
 
 
 		$this->loader = new Npcink_Device_Inventory_Loader();
@@ -149,6 +154,18 @@ class Npcink_Device_Inventory
 		$plugin_admin = new Npcink_Device_Inventory_Admin($this->get_plugin_name(), $this->get_version());
 
 		$this->loader->add_action('admin_init', $this, 'maybe_upgrade');
+		$this->define_public_hooks();
+	}
+
+	/**
+	 * Register all hooks related to the public-facing side of the plugin.
+	 */
+	private function define_public_hooks()
+	{
+		$plugin_public = new Npcink_Device_Inventory_Public();
+
+		$this->loader->add_action('init', $plugin_public, 'register_shortcode');
+		$this->loader->add_action('rest_api_init', $plugin_public, 'register_routes');
 	}
 
 

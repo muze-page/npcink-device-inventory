@@ -152,6 +152,7 @@ class Npcink_Device_Inventory_Assets_Controller
 				'status' => $request->get_param('status'),
 				'department' => $request->get_param('department'),
 				'category' => $request->get_param('category'),
+				'purchase_platform' => $request->get_param('purchasePlatform'),
 			)
 		);
 		$items = array_map(array($this, 'format_asset'), $result['items']);
@@ -314,6 +315,7 @@ class Npcink_Device_Inventory_Assets_Controller
 			array(
 				'page' => $request->get_param('page') ?: 1,
 				'pageSize' => $request->get_param('pageSize') ?: 20,
+				'event_mode' => $request->get_param('eventMode'),
 				'event_source' => $request->get_param('eventSource'),
 				'event_type' => $request->get_param('eventType'),
 				'search' => $request->get_param('search'),

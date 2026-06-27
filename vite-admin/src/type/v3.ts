@@ -115,12 +115,14 @@ export interface AssetListParams {
   status?: string;
   department?: string;
   category?: string;
+  purchasePlatform?: string;
 }
 
 export interface EventListParams {
   page?: number;
   pageSize?: number;
   search?: string;
+  eventMode?: "manual" | "auto";
   eventSource?: string;
   eventType?: string;
 }
@@ -143,9 +145,28 @@ export interface CreatedClientToken extends ClientToken {
   secret: string;
 }
 
+export interface PublicQueryPageState {
+  exists: boolean;
+  id: number;
+  url: string;
+  editUrl: string;
+  slug: string;
+  status: string;
+}
+
 export interface InventorySettings {
+  clientUploadBaseUrl: string;
   publicQueryEnabled: boolean;
+  publicQueryPageSlug: string;
+  publicQueryAccessCode?: string;
+  publicQueryAccessCodeSet: boolean;
+  publicQueryPage?: PublicQueryPageState;
   observationRetentionDays: number;
   assetNumberPrefix: string;
+  depreciationPeriodMonths: number;
+  defaultResidualRate: number;
+  deleteDataOnUninstall: boolean;
   clientTokens: ClientToken[];
 }
+
+export type CreatedPublicQueryPage = PublicQueryPageState;

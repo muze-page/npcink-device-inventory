@@ -23,12 +23,13 @@ import {
   message,
 } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
-import { RestUrl } from "@/utils/index";
+import { RestUrl, Site } from "@/utils/index";
 import {
   archiveAsset,
   createAsset,
   createAssetEvent,
   createClientToken,
+  createPublicQueryPage,
   deleteClientToken,
   getAsset,
   getAssetEvents,
@@ -36,7 +37,6 @@ import {
   getAssetObservations,
   getAssets,
   getEvents,
-  getObservations,
   getSettings,
   updateSettings,
   updateAsset,
@@ -47,6 +47,7 @@ import type {
   AssetEventInput,
   AssetIdentity,
   AssetInput,
+  AssetListParams,
   AssetReference,
   AssetObservation,
   ClientToken,
@@ -79,22 +80,22 @@ const ASSET_TYPES = [
   { label: "自定义", value: "custom" },
 ];
 
+const DEFAULT_CUSTOM_CATEGORIES = ["显卡", "手机", "机房设备", "网络设备", "办公设备"];
+
+const CUSTOM_PURCHASE_PLATFORM_OPTIONS = [
+  { label: "京东", value: "京东|JingDong" },
+  { label: "淘宝", value: "淘宝|TaoBao" },
+  { label: "闲鱼", value: "闲鱼" },
+  { label: "微信", value: "微信" },
+  { label: "其他", value: "About" },
+];
+
 const STATUS_OPTIONS = [
   { label: "在用", value: "active" },
   { label: "停用", value: "inactive" },
   { label: "维护", value: "maintenance" },
   { label: "退役", value: "retired" },
   { label: "已归档", value: "deleted" },
-];
-
-const EVENT_SOURCE_OPTIONS = [
-  { label: "人工", value: "manual" },
-  { label: "系统", value: "system" },
-  { label: "上传", value: "upload" },
-  { label: "导入", value: "import" },
-  { label: "旧版自动", value: "legacy_auto" },
-  { label: "旧版手动", value: "legacy_manual" },
-  { label: "旧版导入", value: "legacy_import" },
 ];
 
 const EVENT_TYPE_OPTIONS = [
@@ -104,13 +105,6 @@ const EVENT_TYPE_OPTIONS = [
   { label: "字段变更", value: "field_changed" },
   { label: "采集接收", value: "observation_received" },
   { label: "删除/归档", value: "deleted" },
-];
-
-const OBSERVATION_SOURCE_OPTIONS = [
-  { label: "采集客户端", value: "uploader" },
-  { label: "后台导入", value: "admin_import" },
-  { label: "人工录入", value: "manual_entry" },
-  { label: "旧版导入", value: "legacy_import" },
 ];
 
 const MANUAL_RECORD_OPTIONS = [
@@ -136,6 +130,8 @@ interface SavedAssetFilter {
   assetType?: string;
   status?: string;
   search?: string;
+  category?: string;
+  purchasePlatform?: string;
 }
 
 const LEGACY_IMPORT_FIELDS = [
@@ -234,12 +230,44 @@ const formatHardwareHeroText = (
 const countStatus = (assets: Asset[], status: string) =>
   assets.filter((asset) => asset.status === status).length;
 
+const fetchAllAssets = async (params: Omit<AssetListParams, "page" | "pageSize"> = {}) => {
+  const first = await getAssets({ ...params, page: 1, pageSize: 100 });
+  const assets = [...first.data];
+  const totalPages = first.pagination.totalPages || 1;
+  for (let nextPage = 2; nextPage <= totalPages; nextPage += 1) {
+    const next = await getAssets({ ...params, page: nextPage, pageSize: 100 });
+    assets.push(...next.data);
+  }
+  return assets;
+};
+
 const bucketLabel = (value: unknown, buckets: { max: number; label: string }[], fallback: string) => {
   const number = toNumber(value);
   if (number <= 0) {
     return fallback;
   }
   return buckets.find((bucket) => number < bucket.max)?.label || buckets[buckets.length - 1]?.label || fallback;
+};
+
+const hardwareArray = (asset: Asset, primary: string, fallbackA: string, fallbackB: string) => {
+  const hardware = assetHardwareContext(asset).hardware;
+  const primaryItems = getArray(hardware[primary]);
+  if (primaryItems.length) {
+    return primaryItems.map(getRecord);
+  }
+  const fallbackAItems = getArray(hardware[fallbackA]);
+  if (fallbackAItems.length) {
+    return fallbackAItems.map(getRecord);
+  }
+  return getArray(hardware[fallbackB]).map(getRecord);
+};
+
+const hardwareModelLabel = (value: unknown, fallback: string) => {
+  const text = fieldText(value).replace(/\s+/g, " ").trim();
+  if (!text || text === "-") {
+    return fallback;
+  }
+  return text;
 };
 
 const countBy = <T,>(items: T[], getKey: (item: T) => string) =>
@@ -334,6 +362,73 @@ const pickLegacyValue = (row: JsonRecord, keys: readonly string[]) => {
   return "";
 };
 
+const parseJsonRecord = (value: unknown): JsonRecord => {
+  if (!value) {
+    return {};
+  }
+  if (typeof value === "string") {
+    try {
+      return getRecord(JSON.parse(value));
+    } catch {
+      return {};
+    }
+  }
+  return getRecord(value);
+};
+
+const legacyRawRecord = (asset: Asset | null): JsonRecord => {
+  const legacy = getRecord(getRecord(asset?.metadata).legacy);
+  const raw = getRecord(legacy.raw);
+  return Object.keys(raw).length ? raw : legacy;
+};
+
+const legacyOrderRecord = (asset: Asset | null): JsonRecord => {
+  const purchase = getRecord(getRecord(asset?.metadata).purchase);
+  if (Object.keys(purchase).length) {
+    return purchase;
+  }
+  const raw = legacyRawRecord(asset);
+  return parseJsonRecord(raw.data);
+};
+
+const isComputerAsset = (asset?: Asset | null) =>
+  asset?.assetType === "pc" || asset?.assetType === "computer";
+
+const plainMoneyText = (value: unknown) => {
+  const number = Number(value || 0);
+  if (!Number.isFinite(number) || number <= 0) {
+    return "-";
+  }
+  return `${new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 }).format(number)} 元`;
+};
+
+const customAssetInfo = (asset: Asset) => {
+  const raw = legacyRawRecord(asset);
+  const order = legacyOrderRecord(asset);
+  const quantity = firstText(order.numbers, order.quantity, order.count);
+  const total = firstText(order.total, asset.purchasePrice);
+  return {
+    title: firstText(order.title, asset.name, raw.name, asset.assetNumber, "未命名资产"),
+    usage: firstText(asset.ownerName, raw.name),
+    number: firstText(asset.assetNumber, raw.number),
+    category: firstText(asset.category, raw.category, assetTypeLabel(asset.assetType)),
+    purpose: firstText(raw.purpose, getRecord(asset.metadata).purpose, order.purpose),
+    status: firstText(raw.state, statusLabel(asset.status)),
+    createdAt: firstText(raw.created_at, asset.createdAt),
+    purchaser: firstText(order.purchaser),
+    quantity,
+    total,
+    platform: firstText(order.platform),
+    orderNo: firstText(order.order),
+    orderTime: firstText(order.order_time),
+    payMethod: firstText(order.pay_method),
+    shopName: firstText(order.shop_name),
+    link: firstText(order.link),
+    priceText: plainMoneyText(total),
+    quantityText: quantity || "-",
+  };
+};
+
 const mapLegacyStatus = (value: string) => {
   if (/闲置|停用|idle|inactive|apply/i.test(value)) {
     return "inactive";
@@ -393,15 +488,22 @@ const mapLegacyRow = (row: JsonRecord): AssetInput => {
   const disk = pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "disk")?.aliases || []) || parsedHardware.disk;
   const ip = pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "ip")?.aliases || []) || parsedHardware.ip;
   const legacyUuid = pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "legacyUuid")?.aliases || []);
+  const order = parseJsonRecord(row.data);
+  const isCustomLegacyAsset = Boolean(category && !cpu && !memory);
+  const legacyPurchasePrice =
+    Number(pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "purchasePrice")?.aliases || []) || 0) ||
+    Number(order.total || 0);
   return {
-    assetType: category && !cpu && !memory ? "custom" : "pc",
+    assetType: isCustomLegacyAsset ? "custom" : "pc",
     assetNumber,
-    name: name || ownerName || parsedHardware.deviceModel || assetNumber || "旧数据资产",
-    ownerName,
+    name: isCustomLegacyAsset
+      ? firstText(order.title, name, assetNumber, "旧数据资产")
+      : name || ownerName || parsedHardware.deviceModel || assetNumber || "旧数据资产",
+    ownerName: isCustomLegacyAsset ? firstText(ownerName, name) : ownerName,
     department,
     status: mapLegacyStatus(status),
     category,
-    purchasePrice: Number(pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "purchasePrice")?.aliases || []) || 0),
+    purchasePrice: legacyPurchasePrice,
     residualValue: Number(pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "residualValue")?.aliases || []) || 0),
     metadata: {
       legacy: {
@@ -495,6 +597,85 @@ const BULK_EDIT_FIELDS: Array<{ key: BulkEditableField; label: string }> = [
   { key: "category", label: "分类" },
 ];
 
+type AnalysisViewMode = "chart" | "table";
+
+interface AnalysisBarDatum {
+  key: string;
+  label: string;
+  value: number;
+  valueText?: string;
+  caption?: string;
+  accent?: string;
+}
+
+const ViewModeToggle = ({
+  value,
+  onChange,
+}: {
+  value: AnalysisViewMode;
+  onChange: (value: AnalysisViewMode) => void;
+}) => (
+  <div className="npcink-v3-view-toggle" role="group" aria-label="视图切换">
+    <button
+      type="button"
+      className={value === "chart" ? "is-active" : ""}
+      aria-pressed={value === "chart"}
+      onClick={() => onChange("chart")}
+    >
+      图表
+    </button>
+    <button
+      type="button"
+      className={value === "table" ? "is-active" : ""}
+      aria-pressed={value === "table"}
+      onClick={() => onChange("table")}
+    >
+      表格
+    </button>
+  </div>
+);
+
+const AnalysisBarChart = ({
+  rows,
+  loading,
+  emptyText,
+  valueFormatter = (value) => String(value),
+}: {
+  rows: AnalysisBarDatum[];
+  loading?: boolean;
+  emptyText: string;
+  valueFormatter?: (value: number) => string;
+}) => {
+  if (loading) {
+    return <div className="npcink-v3-chart-placeholder">统计中</div>;
+  }
+  if (!rows.length) {
+    return <Empty description={emptyText} />;
+  }
+  const maxValue = Math.max(...rows.map((row) => row.value), 1);
+  return (
+    <div className="npcink-v3-analysis-bars">
+      {rows.map((row) => (
+        <div key={row.key} className="npcink-v3-analysis-bar-row">
+          <div className="npcink-v3-analysis-bar-head">
+            <span>{row.label}</span>
+            <strong>{row.valueText || valueFormatter(row.value)}</strong>
+          </div>
+          <div className="npcink-v3-analysis-bar-track">
+            <i
+              style={{
+                width: `${Math.max(4, Math.round((row.value / maxValue) * 100))}%`,
+                background: row.accent,
+              }}
+            />
+          </div>
+          {row.caption ? <em>{row.caption}</em> : null}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const displayBulkValue = (field: BulkEditableField, value: unknown) => {
   if (field === "status") {
     return statusLabel(String(value || ""));
@@ -519,8 +700,25 @@ const bulkUpdateChanges = (asset: Asset, input: AssetInput) =>
 const buildClientTokenValue = (token: CreatedClientToken) =>
   `mda_${token.id}_${token.secret}`;
 
-const buildClientSubmitCommand = (token: CreatedClientToken) =>
-  `npcink-device-agent submit --site "${RestUrl}" --token "${buildClientTokenValue(token)}" --note "测试电脑"`;
+const buildClientUploadEndpoint = (input?: string) => {
+  const base = (input || RestUrl).trim().replace(/\/+$/, "");
+  if (!base) {
+    return "/wp-json/npcink/v1/device-observations";
+  }
+  if (base.endsWith("/device-observations")) {
+    return base;
+  }
+  if (base.endsWith("/npcink/v1")) {
+    return `${base}/device-observations`;
+  }
+  if (base.endsWith("/wp-json")) {
+    return `${base}/npcink/v1/device-observations`;
+  }
+  return `${base}/wp-json/npcink/v1/device-observations`;
+};
+
+const buildClientSubmitCommand = (token: CreatedClientToken, uploadEndpoint: string) =>
+  `npcink-device-agent submit --site "${uploadEndpoint}" --token "${buildClientTokenValue(token)}" --note "测试电脑"`;
 
 const compactJson = (value: JsonRecord) => {
   const entries = Object.entries(value || {});
@@ -979,11 +1177,77 @@ const manualRecordItem = (event: AssetEvent) => {
   return fieldText(payload.changeItem || payload.targetDepartment || manualEventTypeLabel(event.eventType));
 };
 
-const assetReferenceLabel = (asset?: AssetReference) => {
-  if (!asset) {
-    return "-";
+const changeActorName = (event: AssetEvent) => {
+  const payload = getRecord(event.payload);
+  return fieldText(payload.operatorName || event.actorName || (event.eventSource.startsWith("legacy") ? "旧版数据" : "系统"));
+};
+
+const changeTypeLabel = (event: AssetEvent) => {
+  const payload = getRecord(event.payload);
+  const manualItem = fieldText(payload.changeItem);
+  if (manualItem !== "-") {
+    return manualItem;
   }
-  return [asset.assetNumber, asset.name].filter(Boolean).join(" / ") || asset.uuid || "-";
+  const fieldLabel = normalizeAutoRecordField(event.fieldName);
+  if (fieldLabel) {
+    return fieldLabel;
+  }
+  if (event.eventSource === "legacy_import") {
+    return "导入";
+  }
+  if (event.eventType === "manual_change") {
+    return "手动";
+  }
+  if (event.eventType === "bulk_updated") {
+    return "批量";
+  }
+  if (event.eventType === "observation_received") {
+    return "采集";
+  }
+  if (event.eventType === "issue_handled") {
+    return "盘点";
+  }
+  return optionLabel(EVENT_TYPE_OPTIONS, event.eventType);
+};
+
+const changeContentText = (event: AssetEvent) => {
+  const payload = getRecord(event.payload);
+  const changedFields = getArray(payload.changedFields)
+    .map((item) => getRecord(item))
+    .map((item) => fieldText(item.label || item.field || item.name))
+    .filter((item) => item !== "-");
+  if (changedFields.length) {
+    return `批量修改：${changedFields.join("、")}`;
+  }
+
+  if (event.oldValue || event.newValue) {
+    const type = changeTypeLabel(event);
+    return `${type}：${fieldText(event.oldValue)} -> ${fieldText(event.newValue)}`;
+  }
+
+  const issueMessage = fieldText(payload.issueMessage);
+  if (issueMessage !== "-") {
+    return issueMessage;
+  }
+
+  const messageText = fieldText(event.message);
+  if (messageText !== "-") {
+    return messageText
+      .replace("Asset created in admin.", "后台创建资产")
+      .replace("Asset created from first observation.", "首次采集创建资产")
+      .replace("Observation received from client.", "客户端采集数据已接收")
+      .replace("Legacy PC asset imported.", "旧版资产导入");
+  }
+  return "-";
+};
+
+const changeAssetLabelParts = (asset: AssetReference | undefined) => {
+  if (!asset) {
+    return { name: "-", suffix: "" };
+  }
+  const name = fieldText(asset.name);
+  const suffix = [asset.department, asset.assetNumber].filter((item) => fieldText(item) !== "-").join(" _ ");
+  return { name: name || "-", suffix };
 };
 
 interface AssetFormModalProps {
@@ -993,10 +1257,55 @@ interface AssetFormModalProps {
   onSubmit: (values: AssetInput) => Promise<void>;
 }
 
-type AssetFormValues = Omit<AssetInput, "metadata">;
+type AssetFormValues = Omit<AssetInput, "metadata"> & {
+  purpose?: string;
+  numbers?: number;
+  purchaser?: string;
+  shopName?: string;
+  link?: string;
+  order?: string;
+  orderTime?: string;
+  platform?: string;
+  payMethod?: string;
+};
+
+const assetFormValuesToInput = (values: AssetFormValues, asset: Asset | null): AssetInput => {
+  const metadata = getRecord(asset?.metadata);
+  const existingPurchase = getRecord(metadata.purchase);
+  return {
+    assetType: values.assetType,
+    assetNumber: values.assetNumber,
+    name: values.name,
+    ownerName: values.ownerName,
+    department: values.department,
+    status: values.status,
+    category: values.category,
+    purchasePrice: Number(values.purchasePrice || 0),
+    residualValue: Number(values.residualValue || 0),
+    metadata: {
+      ...metadata,
+      purpose: values.purpose || "",
+      purchase: {
+        ...existingPurchase,
+        title: values.name || "",
+        total: Number(values.purchasePrice || 0),
+        numbers: Number(values.numbers || 0),
+        purchaser: values.purchaser || "",
+        shop_name: values.shopName || "",
+        link: values.link || "",
+        order: values.order || "",
+        order_time: values.orderTime || "",
+        platform: values.platform || "",
+        pay_method: values.payMethod || "",
+      },
+    },
+  };
+};
 
 const AssetFormModal = ({ asset, open, onClose, onSubmit }: AssetFormModalProps) => {
   const [form] = Form.useForm<AssetFormValues>();
+  const customInfo = useMemo(() => (asset ? customAssetInfo(asset) : null), [asset]);
+  const showCustomFields = !asset || !isComputerAsset(asset);
 
   useEffect(() => {
     if (!open) {
@@ -1012,59 +1321,127 @@ const AssetFormModal = ({ asset, open, onClose, onSubmit }: AssetFormModalProps)
       status: asset?.status || "active",
       purchasePrice: asset?.purchasePrice || 0,
       residualValue: asset?.residualValue || 0,
+      purpose: customInfo?.purpose || "",
+      numbers: Number(customInfo?.quantity || 1) || 1,
+      purchaser: customInfo?.purchaser || "",
+      shopName: customInfo?.shopName || "",
+      link: customInfo?.link || "",
+      order: customInfo?.orderNo || "",
+      orderTime: customInfo?.orderTime || "",
+      platform: customInfo?.platform || "",
+      payMethod: customInfo?.payMethod || "",
     });
-  }, [asset, form, open]);
+  }, [asset, customInfo, form, open]);
 
   return (
     <Modal
-      title={asset ? "编辑资产" : "新增资产"}
+      title={asset ? "编辑资产" : "采购信息录入"}
       open={open}
       onCancel={onClose}
       onOk={() => form.submit()}
       destroyOnClose
-      width={640}
+      width={760}
     >
       <Form
         form={form}
         layout="vertical"
-        onFinish={(values) => onSubmit(values)}
+        onFinish={(values) => onSubmit(assetFormValuesToInput(values, asset))}
         preserve={false}
+        className="npcink-v3-asset-form"
       >
-        <Form.Item name="name" label="资产名称" rules={[{ required: true }]}>
-          <Input placeholder="例如：财务部工作站" />
-        </Form.Item>
-        <Space.Compact block>
-          <Form.Item name="assetNumber" label="资产编号" className="npcink-v3-half">
-            <Input placeholder="留空自动生成" />
-          </Form.Item>
-          <Form.Item name="assetType" label="资产类型" className="npcink-v3-half">
-            <Select options={ASSET_TYPES} />
-          </Form.Item>
-        </Space.Compact>
-        <Space.Compact block>
-          <Form.Item name="ownerName" label="使用人" className="npcink-v3-half">
+        {showCustomFields ? (
+          <Form.Item name="assetType" hidden>
             <Input />
           </Form.Item>
-          <Form.Item name="department" label="部门" className="npcink-v3-half">
-            <Input />
+        ) : null}
+        <div className="npcink-v3-asset-form-section">
+          <h4>设备信息</h4>
+          <Form.Item name="name" label="设备名称" rules={[{ required: true, message: "请输入设备名称" }]}>
+            <Input placeholder="例如：科沃顿 UPS C3K" />
           </Form.Item>
-        </Space.Compact>
-        <Space.Compact block>
-          <Form.Item name="category" label="分类" className="npcink-v3-half">
-            <Input />
-          </Form.Item>
-          <Form.Item name="status" label="状态" className="npcink-v3-half">
-            <Select options={STATUS_OPTIONS} />
-          </Form.Item>
-        </Space.Compact>
-        <Space.Compact block>
-          <Form.Item name="purchasePrice" label="购置价值" className="npcink-v3-half">
-            <InputNumber min={0} precision={2} className="npcink-v3-number" />
-          </Form.Item>
-          <Form.Item name="residualValue" label="残值" className="npcink-v3-half">
-            <InputNumber min={0} precision={2} className="npcink-v3-number" />
-          </Form.Item>
-        </Space.Compact>
+          {showCustomFields ? (
+            <Form.Item name="purpose" label="设备用途">
+              <Input placeholder="例如：机房备用电源" />
+            </Form.Item>
+          ) : null}
+          <div className="npcink-v3-asset-form-grid">
+            <Form.Item name="assetNumber" label="设备编号">
+              <Input placeholder="留空自动生成" />
+            </Form.Item>
+            {!showCustomFields ? (
+              <Form.Item name="assetType" label="资产类型">
+                <Select options={ASSET_TYPES} />
+              </Form.Item>
+            ) : null}
+            <Form.Item name="ownerName" label="使用人员">
+              <Input placeholder="人员、部门或位置" />
+            </Form.Item>
+            <Form.Item name="department" label="部门">
+              <Input placeholder="所属部门" />
+            </Form.Item>
+            <Form.Item name="category" label="分类">
+              <Input placeholder="例如：显卡、手机、机房设备" />
+            </Form.Item>
+            <Form.Item name="status" label="状态">
+              <Select options={STATUS_OPTIONS} />
+            </Form.Item>
+          </div>
+        </div>
+
+        {showCustomFields ? (
+          <>
+            <div className="npcink-v3-asset-form-section">
+              <h4>采购信息</h4>
+              <div className="npcink-v3-asset-form-grid">
+                <Form.Item name="numbers" label="数量">
+                  <InputNumber min={0} precision={0} className="npcink-v3-number" addonAfter="个" />
+                </Form.Item>
+                <Form.Item name="purchasePrice" label="总计">
+                  <InputNumber min={0} precision={2} className="npcink-v3-number" addonAfter="¥" />
+                </Form.Item>
+                <Form.Item name="purchaser" label="采购人员">
+                  <Input placeholder="负责购买此设备的人" />
+                </Form.Item>
+                <Form.Item name="residualValue" label="残值">
+                  <InputNumber min={0} precision={2} className="npcink-v3-number" addonAfter="¥" />
+                </Form.Item>
+              </div>
+            </div>
+
+            <div className="npcink-v3-asset-form-section">
+              <h4>订单信息</h4>
+              <Form.Item name="shopName" label="店铺名称">
+                <Input />
+              </Form.Item>
+              <Form.Item name="link" label="商品链接">
+                <Input />
+              </Form.Item>
+              <div className="npcink-v3-asset-form-grid">
+                <Form.Item name="order" label="单号">
+                  <Input />
+                </Form.Item>
+                <Form.Item name="orderTime" label="时间">
+                  <Input placeholder="例如：2026-06-26" />
+                </Form.Item>
+                <Form.Item name="platform" label="平台">
+                  <Input placeholder="例如：淘宝、京东、闲鱼" />
+                </Form.Item>
+                <Form.Item name="payMethod" label="支付">
+                  <Input placeholder="例如：支付宝、微信" />
+                </Form.Item>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="npcink-v3-asset-form-grid">
+            <Form.Item name="purchasePrice" label="购置价值">
+              <InputNumber min={0} precision={2} className="npcink-v3-number" />
+            </Form.Item>
+            <Form.Item name="residualValue" label="残值">
+              <InputNumber min={0} precision={2} className="npcink-v3-number" />
+            </Form.Item>
+          </div>
+        )}
       </Form>
     </Modal>
   );
@@ -1281,6 +1658,7 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
   });
 
   const tokens = settingsQuery.data?.clientTokens || [];
+  const uploadEndpoint = buildClientUploadEndpoint(settingsQuery.data?.clientUploadBaseUrl || RestUrl);
 
   const columns: ColumnsType<ClientToken> = [
     { title: "名称", dataIndex: "name" },
@@ -1325,13 +1703,32 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
 
   return (
     <Modal
-      title="采集客户端令牌"
+      title="客户端接入"
       open={open}
       onCancel={onClose}
       footer={null}
       width={820}
       destroyOnClose
     >
+      <Alert
+        className="npcink-v3-secret"
+        type="info"
+        showIcon
+        message="客户端上传地址"
+        description={
+          <Space direction="vertical" size={8} className="npcink-v3-client-snippet">
+            <div>
+              <Text type="secondary">上传地址</Text>
+              <Text copyable code>
+                {uploadEndpoint}
+              </Text>
+            </div>
+            <Text type="secondary">
+              上传地址不是密钥；客户端写入权限由令牌和 HMAC 签名控制。
+            </Text>
+          </Space>
+        }
+      />
       <Form
         form={form}
         layout="inline"
@@ -1354,9 +1751,9 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
           description={
             <Space direction="vertical" size={8} className="npcink-v3-client-snippet">
               <div>
-                <Text type="secondary">站点地址</Text>
+                <Text type="secondary">上传地址</Text>
                 <Text copyable code>
-                  {RestUrl}
+                  {uploadEndpoint}
                 </Text>
               </div>
               <div>
@@ -1368,7 +1765,7 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
               <div>
                 <Text type="secondary">命令行验收</Text>
                 <Text copyable code>
-                  {buildClientSubmitCommand(createdToken)}
+                  {buildClientSubmitCommand(createdToken, uploadEndpoint)}
                 </Text>
               </div>
             </Space>
@@ -1592,6 +1989,340 @@ const AssetSettingsPanel = ({ asset, departmentOptions = [], onUpdated, onArchiv
   );
 };
 
+interface CustomAssetSettingsValues {
+  name?: string;
+  assetNumber?: string;
+  category?: string;
+  status?: string;
+  ownerName?: string;
+  purpose?: string;
+  purchasePrice?: number;
+  residualValue?: number;
+  numbers?: number;
+  purchaser?: string;
+  platform?: string;
+  order?: string;
+  payMethod?: string;
+  orderTime?: string;
+  link?: string;
+}
+
+const CUSTOM_PLATFORM_EDIT_OPTIONS = ["京东", "淘宝", "闲鱼", "微信", "支付宝", "其他"].map((value) => ({
+  label: value,
+  value,
+}));
+
+const CustomAssetSettingsPanel = ({ asset, onUpdated, onArchive }: AssetSettingsPanelProps) => {
+  const [form] = Form.useForm<CustomAssetSettingsValues>();
+  const info = useMemo(() => customAssetInfo(asset), [asset]);
+  const watchedPurchasePrice = Form.useWatch("purchasePrice", form);
+  const watchedResidualValue = Form.useWatch("residualValue", form);
+  const purchasePrice = Number(watchedPurchasePrice ?? asset.purchasePrice ?? 0);
+  const residualValue = Number(watchedResidualValue ?? asset.residualValue ?? 0);
+  const residualRate = purchasePrice > 0 ? Math.round((residualValue / purchasePrice) * 100) : 0;
+  const depreciationRate = purchasePrice > 0 ? Math.max(0, 100 - residualRate) : 0;
+  const categoryOptions = useMemo(
+    () =>
+      Array.from(new Set([...DEFAULT_CUSTOM_CATEGORIES, asset.category].map((item) => String(item || "").trim()).filter(Boolean)))
+        .sort((a, b) => a.localeCompare(b, "zh-CN"))
+        .map((value) => ({ label: value, value })),
+    [asset.category]
+  );
+  const updateMutation = useMutation(
+    (values: CustomAssetSettingsValues) => {
+      const metadata = getRecord(asset.metadata);
+      const existingPurchase = getRecord(metadata.purchase);
+      return updateAsset(asset.uuid, {
+        name: values.name,
+        assetNumber: values.assetNumber,
+        ownerName: values.ownerName,
+        status: values.status,
+        category: values.category,
+        purchasePrice: Number(values.purchasePrice || 0),
+        residualValue: Number(values.residualValue || 0),
+        metadata: {
+          ...metadata,
+          purpose: values.purpose || "",
+          purchase: {
+            ...existingPurchase,
+            title: values.name || "",
+            total: Number(values.purchasePrice || 0),
+            numbers: Number(values.numbers || 0),
+            purchaser: values.purchaser || "",
+            platform: values.platform || "",
+            order: values.order || "",
+            pay_method: values.payMethod || "",
+            order_time: values.orderTime || "",
+            link: values.link || "",
+          },
+        },
+      });
+    },
+    {
+      onSuccess: (updated) => {
+        onUpdated(updated);
+        message.success("资产信息已保存");
+      },
+    }
+  );
+
+  useEffect(() => {
+    form.setFieldsValue({
+      name: info.title,
+      assetNumber: info.number,
+      category: info.category,
+      status: asset.status,
+      ownerName: info.usage,
+      purpose: info.purpose,
+      purchasePrice: Number(info.total || asset.purchasePrice || 0),
+      residualValue: asset.residualValue,
+      numbers: Number(info.quantity || 0) || undefined,
+      purchaser: info.purchaser,
+      platform: info.platform,
+      order: info.orderNo,
+      payMethod: info.payMethod,
+      orderTime: info.orderTime,
+      link: info.link,
+    });
+  }, [asset, form, info]);
+
+  return (
+    <div className="npcink-v3-custom-settings-panel">
+      <Form form={form} layout="vertical" onFinish={(values) => updateMutation.mutate(values)}>
+        <div className="npcink-v3-custom-settings-section">
+          <h4>基础信息</h4>
+          <div className="npcink-v3-custom-settings-grid">
+            <Form.Item name="name" label="资产名称">
+              <Input placeholder="例如：科沃顿UPS C3K" />
+            </Form.Item>
+            <Form.Item name="assetNumber" label="设备编号">
+              <Input placeholder="设备编号" />
+            </Form.Item>
+            <Form.Item name="category" label="设备分类">
+              <Select
+                showSearch
+                allowClear
+                options={categoryOptions}
+                placeholder="选择或输入分类"
+                popupMatchSelectWidth={false}
+                filterOption={(input, option) => String(option?.label || "").toLowerCase().includes(input.toLowerCase())}
+                onSearch={(value) => {
+                  if (value.trim()) {
+                    form.setFieldValue("category", value.trim());
+                  }
+                }}
+              />
+            </Form.Item>
+            <Form.Item name="status" label="当前状态">
+              <Select options={STATUS_OPTIONS} />
+            </Form.Item>
+            <Form.Item name="ownerName" label="使用人员">
+              <Input placeholder="使用人或使用位置" />
+            </Form.Item>
+            <Form.Item name="purpose" label="设备用途">
+              <Input placeholder="例如：机房备用电源" />
+            </Form.Item>
+          </div>
+        </div>
+
+        <div className="npcink-v3-custom-settings-section">
+          <h4>采购信息</h4>
+          <div className="npcink-v3-custom-settings-grid">
+            <Form.Item name="purchasePrice" label="采购总价">
+              <InputNumber min={0} precision={2} className="npcink-v3-number" addonAfter="¥" />
+            </Form.Item>
+            <Form.Item name="residualValue" label="二手价">
+              <InputNumber min={0} precision={2} className="npcink-v3-number" addonAfter="¥" />
+            </Form.Item>
+            <Form.Item name="numbers" label="采购数量">
+              <InputNumber min={0} precision={0} className="npcink-v3-number" />
+            </Form.Item>
+            <Form.Item name="purchaser" label="采购人员">
+              <Input placeholder="采购同事" />
+            </Form.Item>
+          </div>
+          <div className="npcink-v3-finance-summary">
+            <span>折旧率：{depreciationRate}%</span>
+            <span>残值：{formatMoney(residualValue)}</span>
+            <span>残值率：{residualRate}%</span>
+          </div>
+        </div>
+
+        <div className="npcink-v3-custom-settings-section">
+          <h4>订单信息</h4>
+          <div className="npcink-v3-custom-settings-grid">
+            <Form.Item name="order" label="采购单号">
+              <Input placeholder="订单号" />
+            </Form.Item>
+            <Form.Item name="platform" label="采购平台">
+              <Select
+                showSearch
+                allowClear
+                options={CUSTOM_PLATFORM_EDIT_OPTIONS}
+                placeholder="选择或输入平台"
+                popupMatchSelectWidth={false}
+                filterOption={(input, option) => String(option?.label || "").toLowerCase().includes(input.toLowerCase())}
+                onSearch={(value) => {
+                  if (value.trim()) {
+                    form.setFieldValue("platform", value.trim());
+                  }
+                }}
+              />
+            </Form.Item>
+            <Form.Item name="payMethod" label="支付方式">
+              <Input placeholder="例如：支付宝" />
+            </Form.Item>
+            <Form.Item name="orderTime" label="下单时间">
+              <Input placeholder="例如：2024-12-27" />
+            </Form.Item>
+            <Form.Item name="link" label="商品链接" className="npcink-v3-custom-settings-wide">
+              <Input placeholder="商品链接或备注" />
+            </Form.Item>
+          </div>
+        </div>
+
+        <div className="npcink-v3-settings-actions npcink-v3-custom-settings-actions">
+          <Button type="primary" htmlType="submit" loading={updateMutation.isLoading}>
+            保存信息
+          </Button>
+          <Button danger type="text" onClick={() => onArchive(asset)}>
+            移除设备
+          </Button>
+        </div>
+      </Form>
+    </div>
+  );
+};
+
+interface CustomAssetDetailProps {
+  asset: Asset;
+  autoRecordRows: AutoChangeRow[];
+  onUpdated: (asset: Asset) => void;
+  onArchive: (asset: Asset) => void;
+}
+
+const CustomAssetDetail = ({
+  asset,
+  autoRecordRows,
+  onUpdated,
+  onArchive,
+}: CustomAssetDetailProps) => {
+  const info = customAssetInfo(asset);
+  const productLink = /^https?:\/\//i.test(info.link) ? info.link : "";
+  const infoItem = (label: string, value: unknown) => (
+    <p>
+      <strong>{label}：</strong>
+      <span>{fieldText(value)}</span>
+    </p>
+  );
+
+  return (
+    <Tabs
+      defaultActiveKey="info"
+      items={[
+        {
+          key: "info",
+          label: "设备信息",
+          children: (
+            <div className="npcink-v3-custom-detail">
+              <div className="npcink-v3-custom-detail-head">
+                <h3>{info.title}</h3>
+                {productLink ? (
+                  <a href={productLink} target="_blank" rel="noreferrer">
+                    {info.shopName || info.title}
+                  </a>
+                ) : (
+                  <span>{info.shopName || "-"}</span>
+                )}
+              </div>
+              <div className="npcink-v3-custom-detail-body">
+                <div className="npcink-v3-custom-info-card">
+                  <h4>设备信息</h4>
+                  <div>
+                    {infoItem("采购数量", info.quantityText)}
+                    {infoItem("采购总价", info.priceText)}
+                    {infoItem("当前状态", info.status)}
+                    {infoItem("设备分类", info.category)}
+                  </div>
+                </div>
+                <div className="npcink-v3-custom-info-card">
+                  <h4>采购信息</h4>
+                  <div>
+                    {infoItem("采购人员", info.purchaser)}
+                    {infoItem("设备编号", info.number)}
+                    {infoItem("使用人员", info.usage)}
+                    {infoItem("设备用途", info.purpose)}
+                  </div>
+                </div>
+                <div className="npcink-v3-custom-info-card is-wide">
+                  <h4>订单信息</h4>
+                  <div className="npcink-v3-custom-order-grid">
+                    {infoItem("采购单号", info.orderNo)}
+                    {infoItem("下单时间", formatDate(info.orderTime))}
+                    {infoItem("采购平台", info.platform)}
+                    {infoItem("支付方式", info.payMethod)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ),
+        },
+        {
+          key: "records",
+          label: "自动记录",
+          children: (
+            <Table
+              rowKey="key"
+              size="small"
+              className="npcink-v3-auto-table"
+              columns={[
+                {
+                  title: "序号",
+                  width: 72,
+                  render: (_value, _row, index) => index + 1,
+                },
+                {
+                  title: "选项",
+                  dataIndex: "option",
+                  width: 160,
+                },
+                {
+                  title: "变更前",
+                  dataIndex: "oldValue",
+                },
+                {
+                  title: "变更后",
+                  dataIndex: "newValue",
+                },
+                {
+                  title: "时间",
+                  dataIndex: "time",
+                  width: 180,
+                  render: formatDate,
+                },
+              ]}
+              dataSource={autoRecordRows}
+              pagination={{ pageSize: 10, hideOnSinglePage: true }}
+              locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无自动变更记录" /> }}
+            />
+          ),
+        },
+        {
+          key: "settings",
+          label: "信息修改",
+          children: (
+            <CustomAssetSettingsPanel
+              asset={asset}
+              onUpdated={onUpdated}
+              onArchive={onArchive}
+            />
+          ),
+        },
+      ]}
+    />
+  );
+};
+
 interface DetailDrawerProps {
   uuid: string | null;
   open: boolean;
@@ -1750,16 +2481,23 @@ const DetailDrawer = ({ uuid, open, departmentOptions = [], onClose, onArchive }
 
   return (
     <Modal
-      title={asset?.assetType === "pc" || asset?.assetType === "computer" ? "电脑资产详情" : "资产详情"}
+      title={isComputerAsset(asset) ? "电脑资产详情" : "自定义资产详情"}
       open={open}
       onCancel={onClose}
       footer={null}
-      width="min(840px, calc(100vw - 40px))"
+      width={isComputerAsset(asset) ? "min(840px, calc(100vw - 40px))" : "min(860px, calc(100vw - 40px))"}
       className="npcink-v3-detail-modal"
       destroyOnClose
     >
       {assetQuery.isLoading ? (
         <Table loading pagination={false} showHeader={false} />
+      ) : asset && !isComputerAsset(asset) ? (
+        <CustomAssetDetail
+          asset={asset}
+          autoRecordRows={autoRecordRows}
+          onUpdated={handleAssetUpdated}
+          onArchive={onArchive}
+        />
       ) : asset ? (
         <Space direction="vertical" size={12} className="npcink-v3-detail-stack">
           <div className="npcink-v3-device-hero">
@@ -2110,72 +2848,93 @@ const ChangeWorkspace = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState("");
-  const [eventSource, setEventSource] = useState<string | undefined>();
-  const [eventType, setEventType] = useState<string | undefined>();
+  const [eventMode, setEventMode] = useState<"manual" | "auto">("auto");
+  const [hideNames, setHideNames] = useState(false);
   const queryParams = useMemo(
-    () => ({ page, pageSize, search, eventSource, eventType }),
-    [eventSource, eventType, page, pageSize, search]
+    () => ({ page, pageSize, search, eventMode }),
+    [eventMode, page, pageSize, search]
   );
   const eventsQuery = useQuery(["v3-events", queryParams], () => getEvents(queryParams), {
     keepPreviousData: true,
   });
   const events = eventsQuery.data?.data || [];
   const pagination = eventsQuery.data?.pagination;
+  const typeFilters = useMemo(
+    () =>
+      Array.from(new Set(events.map((event) => changeTypeLabel(event)).filter((value) => value && value !== "-")))
+        .sort((a, b) => a.localeCompare(b, "zh-CN"))
+        .map((value) => ({ text: value, value })),
+    [events]
+  );
 
   const columns: ColumnsType<AssetEvent> = [
-    { title: "时间", dataIndex: "createdAt", width: 180, render: formatDate },
     {
-      title: "资产",
+      title: "序号",
+      width: 96,
+      render: (_value, _event, index) => {
+        const total = pagination?.totalItems || 0;
+        return total ? total - ((page - 1) * pageSize + index) : index + 1;
+      },
+    },
+    {
+      title: "姓名",
+      width: 160,
       render: (_, event) => (
-        <Space direction="vertical" size={2}>
-          <Text strong>{assetReferenceLabel(event.asset)}</Text>
-          <Text type="secondary">{event.asset?.department || "-"}</Text>
-        </Space>
+        <span className={hideNames ? "npcink-v3-name-blur" : undefined}>{changeActorName(event)}</span>
       ),
     },
     {
-      title: "来源",
-      dataIndex: "eventSource",
-      width: 110,
-      render: (value: string) => <Tag>{optionLabel(EVENT_SOURCE_OPTIONS, value)}</Tag>,
-    },
-    {
       title: "类型",
-      dataIndex: "eventType",
-      width: 130,
-      render: (value: string) => optionLabel(EVENT_TYPE_OPTIONS, value),
+      width: 140,
+      filters: typeFilters,
+      onFilter: (value, event) => changeTypeLabel(event) === value,
+      render: (_, event) => changeTypeLabel(event),
     },
-    { title: "字段", dataIndex: "fieldName", width: 130, render: fieldText },
     {
-      title: "变更",
-      width: 220,
-      render: (_, event) =>
-        event.oldValue || event.newValue ? (
-          <Text type="secondary">
-            {fieldText(event.oldValue)} -&gt; {fieldText(event.newValue)}
-          </Text>
-        ) : (
-          "-"
-        ),
+      title: "内容",
+      render: (_, event) => <Text className="npcink-v3-change-content">{changeContentText(event)}</Text>,
     },
-    { title: "说明", dataIndex: "message", render: fieldText },
+    {
+      title: "设备",
+      width: 260,
+      render: (_, event) => {
+        const asset = changeAssetLabelParts(event.asset);
+        return (
+          <span>
+            <span className={hideNames && asset.name !== "-" ? "npcink-v3-name-blur" : undefined}>{asset.name}</span>
+            {asset.suffix ? ` _ ${asset.suffix}` : ""}
+          </span>
+        );
+      },
+    },
+    {
+      title: "日期",
+      dataIndex: "createdAt",
+      width: 190,
+      defaultSortOrder: "descend",
+      sorter: (a, b) =>
+        new Date(a.createdAt.replace(" ", "T")).getTime() - new Date(b.createdAt.replace(" ", "T")).getTime(),
+      render: formatDate,
+    },
   ];
 
   return (
     <div className="npcink-v3-section">
-      <div className="npcink-v3-section-header">
-        <div>
-          <Title level={3}>变更数据</Title>
-          <Text type="secondary">来自 v3 统一事件表，包含人工修改、导入、上传和系统记录。</Text>
+      <div className="npcink-v3-change-layout">
+        <div className="npcink-v3-change-actions">
+          <Button
+            onClick={() => {
+              setPage(1);
+              setEventMode((value) => (value === "manual" ? "auto" : "manual"));
+            }}
+          >
+            {eventMode === "manual" ? "手动变更数据" : "自动变更数据"}
+          </Button>
+          <Button onClick={() => setHideNames((value) => !value)}>
+            {hideNames ? "显示姓名" : "隐藏姓名"}
+          </Button>
         </div>
-        <Tag color="blue">{pagination?.totalItems ?? "-"} 条事件</Tag>
-      </div>
-      <div className="npcink-v3-toolbar-shell">
-        <div className="npcink-v3-toolbar-title">
-          <Text strong>事件列表</Text>
-          <Text type="secondary">按来源、类型和资产信息筛选</Text>
-        </div>
-        <div className="npcink-v3-toolbar">
+        <div className="npcink-v3-change-filters">
           <Input.Search
             allowClear
             placeholder="搜索资产、字段或说明"
@@ -2185,40 +2944,16 @@ const ChangeWorkspace = () => {
             }}
             className="npcink-v3-search"
           />
-          <Select
-            allowClear
-            placeholder="来源"
-            options={EVENT_SOURCE_OPTIONS}
-            value={eventSource}
-            onChange={(value) => {
-              setPage(1);
-              setEventSource(value);
-            }}
-            className="npcink-v3-filter"
-          />
-          <Select
-            allowClear
-            placeholder="类型"
-            options={EVENT_TYPE_OPTIONS}
-            value={eventType}
-            onChange={(value) => {
-              setPage(1);
-              setEventType(value);
-            }}
-            className="npcink-v3-filter"
-          />
         </div>
       </div>
       <Table
         rowKey="id"
         size="middle"
+        className="npcink-v3-change-table"
         columns={columns}
         dataSource={events}
         loading={eventsQuery.isLoading || eventsQuery.isFetching}
-        scroll={{ x: 1100 }}
-        expandable={{
-          expandedRowRender: (event) => renderJsonBlock(event.payload),
-        }}
+        scroll={{ x: 980 }}
         pagination={{
           current: page,
           pageSize,
@@ -2238,41 +2973,20 @@ const ChangeWorkspace = () => {
 
 const HardwareAuditWorkspace = () => {
   const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [search, setSearch] = useState("");
-  const [source, setSource] = useState<string | undefined>();
   const [selectedIssueGroup, setSelectedIssueGroup] = useState<string>("全部");
   const [selectedIssueType, setSelectedIssueType] = useState<string>();
+  const [hardwareRankType, setHardwareRankType] = useState<"cpu" | "disk" | "memory" | "board">("board");
+  const [departmentView, setDepartmentView] = useState<AnalysisViewMode>("chart");
+  const [hardwareRankView, setHardwareRankView] = useState<AnalysisViewMode>("chart");
   const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [showHandledIssues, setShowHandledIssues] = useState(false);
   const [handledIssueKeys, setHandledIssueKeys] = useState<Set<string>>(loadHandledIssueKeys);
-  const queryParams = useMemo(
-    () => ({ page, pageSize, search, source }),
-    [page, pageSize, search, source]
-  );
-  const observationsQuery = useQuery(
-    ["v3-observations", queryParams],
-    () => getObservations(queryParams),
-    { keepPreviousData: true }
-  );
   const auditAssetsQuery = useQuery(
     ["v3-hardware-audit-assets"],
-    async () => {
-      const first = await getAssets({ page: 1, pageSize: 100, assetScope: "computer" });
-      const assets = [...first.data];
-      const totalPages = first.pagination.totalPages || 1;
-      for (let nextPage = 2; nextPage <= totalPages; nextPage += 1) {
-        const next = await getAssets({ page: nextPage, pageSize: 100, assetScope: "computer" });
-        assets.push(...next.data);
-      }
-      return assets;
-    },
+    () => fetchAllAssets({ assetScope: "computer" }),
     { staleTime: 60_000 }
   );
-  const observations = observationsQuery.data?.data || [];
-  const pagination = observationsQuery.data?.pagination;
   const auditAssets = auditAssetsQuery.data || [];
   const auditTotal = auditAssets.length;
   const auditStatus = countBy(auditAssets, (asset) => statusLabel(asset.status));
@@ -2301,49 +3015,105 @@ const HardwareAuditWorkspace = () => {
     });
     return Array.from(rows.values()).sort((a, b) => Number(b.total) - Number(a.total)).slice(0, 8);
   }, [auditAssets]);
-  const hardwareBuckets = useMemo(() => {
-    const gib = 1024 ** 3;
+  const hardwareInventory = useMemo(() => {
+    let disk = 0;
+    let memory = 0;
+    auditAssets.forEach((asset) => {
+      const disks = hardwareArray(asset, "disks", "disk", "diskLayout");
+      const memoryItems = hardwareArray(asset, "memory", "mem", "memLayout");
+      disk += disks.length || (hardwareDiskBytes(asset) > 0 ? 1 : 0);
+      memory += memoryItems.length || (hardwareMemoryBytes(asset) > 0 ? 1 : 0);
+    });
     return {
-      memory: countBy(auditAssets, (asset) =>
-        bucketLabel(
-          hardwareMemoryBytes(asset),
-          [
-            { max: 8 * gib, label: "小于 8 GB" },
-            { max: 16 * gib, label: "8-15 GB" },
-            { max: 32 * gib, label: "16-31 GB" },
-            { max: 64 * gib, label: "32-63 GB" },
-            { max: Number.POSITIVE_INFINITY, label: "64 GB 以上" },
-          ],
-          "内存未知"
-        )
-      ),
-      disk: countBy(auditAssets, (asset) =>
-        bucketLabel(
-          hardwareDiskBytes(asset),
-          [
-            { max: 256 * gib, label: "小于 256 GB" },
-            { max: 512 * gib, label: "256-511 GB" },
-            { max: 1024 * gib, label: "512 GB-1 TB" },
-            { max: Number.POSITIVE_INFINITY, label: "1 TB 以上" },
-          ],
-          "硬盘未知"
-        )
-      ),
-      cpu: countBy(auditAssets, (asset) => {
-        const cpu = String(assetHardwareContext(asset).extracted.cpu || "");
-        if (/intel/i.test(cpu)) {
-          return "Intel";
-        }
-        if (/amd/i.test(cpu)) {
-          return "AMD";
-        }
-        if (/apple/i.test(cpu)) {
-          return "Apple";
-        }
-        return cpu ? "其他 CPU" : "CPU 未知";
-      }),
+      cpu: auditAssets.length,
+      disk,
+      memory,
+      board: auditAssets.length,
     };
   }, [auditAssets]);
+  const hardwareRankRows = useMemo(() => {
+    const rows = new Map<string, number>();
+    const add = (label: string, increment = 1) => {
+      rows.set(label, (rows.get(label) || 0) + increment);
+    };
+
+    auditAssets.forEach((asset) => {
+      const context = assetHardwareContext(asset);
+      if (hardwareRankType === "cpu") {
+        add(hardwareModelLabel(context.extracted.cpu, "CPU 未知"));
+      } else if (hardwareRankType === "board") {
+        add(hardwareModelLabel(context.extracted.baseboard, "主板未知"));
+      } else if (hardwareRankType === "disk") {
+        const disks = hardwareArray(asset, "disks", "disk", "diskLayout");
+        if (disks.length) {
+          disks.forEach((item) => {
+            add(hardwareModelLabel(firstText(item.name, item.model, item.device, item.serialNum), "硬盘未知"));
+          });
+        } else {
+          add(bucketLabel(
+            hardwareDiskBytes(asset),
+            [
+              { max: 256 * 1024 ** 3, label: "小于 256 GB" },
+              { max: 512 * 1024 ** 3, label: "256-511 GB" },
+              { max: 1024 * 1024 ** 3, label: "512 GB-1 TB" },
+              { max: Number.POSITIVE_INFINITY, label: "1 TB 以上" },
+            ],
+            "硬盘未知"
+          ));
+        }
+      } else {
+        const memoryItems = hardwareArray(asset, "memory", "mem", "memLayout");
+        if (memoryItems.length) {
+          memoryItems.forEach((item) => {
+            const label = firstText(
+              item.partNum,
+              item.partNumber,
+              item.model,
+              [item.manufacturer, item.size ? formatBytes(item.size) : "", item.clockSpeed || item.clock ? `${item.clockSpeed || item.clock} MHz` : ""]
+                .filter(Boolean)
+                .join(" ")
+            );
+            add(hardwareModelLabel(label, "内存未知"));
+          });
+        } else {
+          add(bucketLabel(
+            hardwareMemoryBytes(asset),
+            [
+              { max: 8 * 1024 ** 3, label: "小于 8 GB" },
+              { max: 16 * 1024 ** 3, label: "8-15 GB" },
+              { max: 32 * 1024 ** 3, label: "16-31 GB" },
+              { max: 64 * 1024 ** 3, label: "32-63 GB" },
+              { max: Number.POSITIVE_INFINITY, label: "64 GB 以上" },
+            ],
+            "内存未知"
+          ));
+        }
+      }
+    });
+
+    return sortedEntries(Object.fromEntries(rows)).slice(0, 12).map(([model, count]) => ({ model, count }));
+  }, [auditAssets, hardwareRankType]);
+  const departmentChartRows = useMemo<AnalysisBarDatum[]>(
+    () =>
+      departmentRows.map((row) => ({
+        key: String(row.department),
+        label: String(row.department),
+        value: Number(row.total || 0),
+        valueText: `${Number(row.total || 0)} 台 · ${percentText(Number(row.total || 0), auditTotal)}`,
+        caption: `在用 ${Number(row.active || 0)} / 维护 ${Number(row.maintenance || 0)} / 归档 ${Number(row.deleted || 0)}`,
+      })),
+    [auditTotal, departmentRows]
+  );
+  const hardwareRankChartRows = useMemo<AnalysisBarDatum[]>(
+    () =>
+      hardwareRankRows.map((row) => ({
+        key: row.model,
+        label: row.model,
+        value: row.count,
+        valueText: `${row.count} ${hardwareRankType === "disk" ? "块" : hardwareRankType === "memory" ? "条" : "台"} · ${percentText(row.count, Math.max(hardwareInventory[hardwareRankType], 1))}`,
+      })),
+    [hardwareInventory, hardwareRankRows, hardwareRankType]
+  );
   const hardwareIssues = useMemo(() => detectHardwareIssues(auditAssets), [auditAssets]);
   const filteredIssuePool = useMemo(
     () =>
@@ -2437,36 +3207,6 @@ const HardwareAuditWorkspace = () => {
     message.success("已恢复为未处理");
   };
 
-  const columns: ColumnsType<AssetObservation> = [
-    {
-      title: "资产",
-      render: (_, observation) => (
-        <Space direction="vertical" size={2}>
-          <Text strong>{assetReferenceLabel(observation.asset)}</Text>
-          <Text type="secondary">{observation.asset?.department || "-"}</Text>
-        </Space>
-      ),
-    },
-    {
-      title: "来源",
-      dataIndex: "source",
-      width: 120,
-      render: (value: string) => <Tag>{optionLabel(OBSERVATION_SOURCE_OPTIONS, value)}</Tag>,
-    },
-    { title: "采集时间", dataIndex: "observedAt", width: 180, render: formatDate },
-    { title: "接收时间", dataIndex: "receivedAt", width: 180, render: formatDate },
-    {
-      title: "设备摘要",
-      dataIndex: "summary",
-      render: (summary: JsonRecord) => (
-        <Space direction="vertical" size={2}>
-          <Text>{fieldText(summary.device_model || summary.hostname)}</Text>
-          <Text type="secondary">{compactJson(summary)}</Text>
-        </Space>
-      ),
-    },
-  ];
-
   return (
     <div className="npcink-v3-section">
       <div className="npcink-v3-section-header">
@@ -2474,29 +3214,25 @@ const HardwareAuditWorkspace = () => {
           <Title level={3}>硬件盘点</Title>
           <Text type="secondary">按采集快照查看 CPU、内存、硬盘、主板等硬件明细。</Text>
         </div>
-        <Tag color="blue">{pagination?.totalItems ?? "-"} 条采集</Tag>
+        <Tag color="blue">{auditAssetsQuery.isLoading ? "统计中" : `${auditTotal} 台资产`}</Tag>
       </div>
-      <div className="npcink-v3-audit-summary">
-        <div>
-          <Text type="secondary">电脑资产</Text>
-          <strong>{auditAssetsQuery.isLoading ? "-" : auditTotal}</strong>
-          <span>纳入盘点范围</span>
-        </div>
-        <div>
-          <Text type="secondary">在用</Text>
-          <strong>{auditStatus["在用"] || 0}</strong>
-          <span>{percentText(auditStatus["在用"] || 0, auditTotal)} 占比</span>
-        </div>
-        <div>
-          <Text type="secondary">维护</Text>
-          <strong>{auditStatus["维护"] || 0}</strong>
-          <span>需跟进设备</span>
-        </div>
-        <div>
-          <Text type="secondary">最近采集</Text>
-          <strong>{formatDate(observations[0]?.observedAt)}</strong>
-          <span>当前记录列表</span>
-        </div>
+      <div className="npcink-v3-hardware-overview">
+        {[
+          { key: "cpu", label: "CPU", unit: "个", value: hardwareInventory.cpu },
+          { key: "disk", label: "硬盘", unit: "块", value: hardwareInventory.disk },
+          { key: "memory", label: "内存", unit: "条", value: hardwareInventory.memory },
+          { key: "board", label: "主板", unit: "个", value: hardwareInventory.board },
+        ].map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            className={hardwareRankType === item.key ? "is-active" : ""}
+            onClick={() => setHardwareRankType(item.key as typeof hardwareRankType)}
+          >
+            <Text type="secondary">{item.label}（{item.unit}）</Text>
+            <strong>{auditAssetsQuery.isLoading ? "-" : item.value}</strong>
+          </button>
+        ))}
       </div>
       <div className="npcink-v3-audit-panel">
         <div className="npcink-v3-audit-block">
@@ -2518,47 +3254,85 @@ const HardwareAuditWorkspace = () => {
         </div>
         <div className="npcink-v3-audit-block">
           <div className="npcink-v3-audit-block-head">
-            <Text strong>部门状态</Text>
-            <Text type="secondary">显示资产最多的部门</Text>
+            <div>
+              <Text strong>部门状态</Text>
+              <Text type="secondary">显示资产最多的部门</Text>
+            </div>
+            <ViewModeToggle value={departmentView} onChange={setDepartmentView} />
           </div>
-          <Table
-            rowKey={(row) => String(row.department)}
-            size="small"
-            pagination={false}
-            dataSource={departmentRows}
-            loading={auditAssetsQuery.isLoading}
-            columns={[
-              { title: "部门", dataIndex: "department" },
-              { title: "总数", dataIndex: "total", width: 70 },
-              { title: "在用", dataIndex: "active", width: 70 },
-              { title: "维护", dataIndex: "maintenance", width: 70 },
-              { title: "归档", dataIndex: "deleted", width: 70 },
-            ]}
-            locale={{ emptyText: <Empty description="暂无部门数据" /> }}
-          />
+          {departmentView === "chart" ? (
+            <AnalysisBarChart
+              rows={departmentChartRows}
+              loading={auditAssetsQuery.isLoading}
+              emptyText="暂无部门数据"
+              valueFormatter={(value) => `${value} 台`}
+            />
+          ) : (
+            <Table
+              rowKey={(row) => String(row.department)}
+              size="small"
+              pagination={false}
+              dataSource={departmentRows}
+              loading={auditAssetsQuery.isLoading}
+              columns={[
+                { title: "部门", dataIndex: "department" },
+                { title: "总数", dataIndex: "total", width: 70 },
+                { title: "在用", dataIndex: "active", width: 70 },
+                { title: "维护", dataIndex: "maintenance", width: 70 },
+                { title: "归档", dataIndex: "deleted", width: 70 },
+              ]}
+              locale={{ emptyText: <Empty description="暂无部门数据" /> }}
+            />
+          )}
         </div>
         <div className="npcink-v3-audit-block is-wide">
           <div className="npcink-v3-audit-block-head">
-            <Text strong>硬件概览</Text>
-            <Text type="secondary">根据最新采集摘要分布</Text>
-          </div>
-          <div className="npcink-v3-hardware-buckets">
-            {[
-              { title: "内存", data: hardwareBuckets.memory },
-              { title: "硬盘", data: hardwareBuckets.disk },
-              { title: "CPU", data: hardwareBuckets.cpu },
-            ].map((group) => (
-              <div key={group.title}>
-                <Text strong>{group.title}</Text>
-                {sortedEntries(group.data).slice(0, 5).map(([label, count]) => (
-                  <p key={label}>
-                    <span>{label}</span>
-                    <strong>{count}</strong>
-                  </p>
+            <div>
+              <Text strong>型号分布</Text>
+              <Text type="secondary">按当前硬件类型统计 Top 12</Text>
+            </div>
+            <Space size={8} className="npcink-v3-analysis-controls">
+              <Space.Compact size="small">
+                {[
+                  { key: "cpu", label: "CPU" },
+                  { key: "disk", label: "硬盘" },
+                  { key: "memory", label: "内存" },
+                  { key: "board", label: "主板" },
+                ].map((item) => (
+                  <Button
+                    key={item.key}
+                    size="small"
+                    type={hardwareRankType === item.key ? "primary" : "default"}
+                    onClick={() => setHardwareRankType(item.key as typeof hardwareRankType)}
+                  >
+                    {item.label}
+                  </Button>
                 ))}
-              </div>
-            ))}
+              </Space.Compact>
+              <ViewModeToggle value={hardwareRankView} onChange={setHardwareRankView} />
+            </Space>
           </div>
+          {hardwareRankView === "chart" ? (
+            <AnalysisBarChart
+              rows={hardwareRankChartRows}
+              loading={auditAssetsQuery.isLoading}
+              emptyText="暂无型号数据"
+              valueFormatter={(value) => `${value}`}
+            />
+          ) : (
+            <Table
+              rowKey="model"
+              size="small"
+              pagination={false}
+              dataSource={hardwareRankRows}
+              loading={auditAssetsQuery.isLoading}
+              columns={[
+                { title: "型号", dataIndex: "model" },
+                { title: "数量", dataIndex: "count", width: 120 },
+              ]}
+              locale={{ emptyText: <Empty description="暂无型号数据" /> }}
+            />
+          )}
         </div>
       </div>
       <div className="npcink-v3-issue-panel">
@@ -2710,73 +3484,6 @@ const HardwareAuditWorkspace = () => {
           locale={{ emptyText: <Empty description="暂无异常发现" /> }}
         />
       </div>
-      <div className="npcink-v3-toolbar-shell">
-        <div className="npcink-v3-toolbar-title">
-          <Text strong>采集记录</Text>
-          <Text type="secondary">展开行可查看硬件和原始数据</Text>
-        </div>
-        <div className="npcink-v3-toolbar">
-          <Input.Search
-            allowClear
-            placeholder="搜索资产、部门或摘要"
-            onSearch={(value) => {
-              setPage(1);
-              setSearch(value);
-            }}
-            className="npcink-v3-search"
-          />
-          <Select
-            allowClear
-            placeholder="来源"
-            options={OBSERVATION_SOURCE_OPTIONS}
-            value={source}
-            onChange={(value) => {
-              setPage(1);
-              setSource(value);
-            }}
-            className="npcink-v3-filter"
-          />
-        </div>
-      </div>
-      <Table
-        rowKey="id"
-        size="middle"
-        columns={columns}
-        dataSource={observations}
-        loading={observationsQuery.isLoading || observationsQuery.isFetching}
-        scroll={{ x: 980 }}
-        expandable={{
-          expandedRowRender: (observation) => (
-            <Collapse
-              size="small"
-              items={[
-                {
-                  key: "hardware",
-                  label: "硬件明细",
-                  children: renderJsonBlock(observation.hardware),
-                },
-                {
-                  key: "raw",
-                  label: "原始数据",
-                  children: renderJsonBlock(observation.raw),
-                },
-              ]}
-            />
-          ),
-        }}
-        pagination={{
-          current: page,
-          pageSize,
-          total: pagination?.totalItems || 0,
-          showSizeChanger: true,
-          showTotal: (total) => `共 ${total} 条采集记录`,
-        }}
-        onChange={(nextPagination) => {
-          setPage(nextPagination.current || 1);
-          setPageSize(nextPagination.pageSize || 20);
-        }}
-        locale={{ emptyText: <Empty description="暂无硬件采集数据" /> }}
-      />
       <DetailDrawer
         uuid={selectedUuid}
         open={Boolean(selectedUuid)}
@@ -2802,15 +3509,296 @@ const HardwareAuditWorkspace = () => {
   );
 };
 
+interface AssetValueGroupRow {
+  key: string;
+  label: string;
+  count: number;
+  purchase: number;
+  current: number;
+  depreciation: number;
+  currentRate: number;
+}
+
+const moneyValue = (value: unknown) => {
+  const number = toNumber(value);
+  return Number.isFinite(number) && number > 0 ? number : 0;
+};
+
+const formatPercentValue = (value: number) =>
+  `${new Intl.NumberFormat("zh-CN", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+  }).format(Number.isFinite(value) ? value : 0)}%`;
+
+const AssetValueWorkspace = () => {
+  const [valueViews, setValueViews] = useState<Record<"department" | "category" | "status", AnalysisViewMode>>({
+    department: "chart",
+    category: "chart",
+    status: "chart",
+  });
+  const settingsQuery = useQuery(["v3-settings"], getSettings, { staleTime: 60_000 });
+  const assetsQuery = useQuery(
+    ["v3-asset-value-analysis"],
+    () => fetchAllAssets({ assetScope: "all" }),
+    { staleTime: 60_000 }
+  );
+  const assets = assetsQuery.data || [];
+  const valueAssets = assets.filter((asset) => asset.status !== "deleted");
+  const defaultResidualRate = settingsQuery.data?.defaultResidualRate ?? 5;
+  const currentValue = (asset: Asset) => {
+    const explicitCurrent = moneyValue(asset.residualValue);
+    const purchase = moneyValue(asset.purchasePrice);
+    if (explicitCurrent > 0 || purchase <= 0) {
+      return explicitCurrent;
+    }
+    return purchase * (defaultResidualRate / 100);
+  };
+  const totalPurchase = valueAssets.reduce((total, asset) => total + moneyValue(asset.purchasePrice), 0);
+  const totalCurrent = valueAssets.reduce((total, asset) => total + currentValue(asset), 0);
+  const totalDepreciation = Math.max(totalPurchase - totalCurrent, 0);
+  const currentRate = totalPurchase > 0 ? (totalCurrent / totalPurchase) * 100 : 0;
+  const depreciationRate = totalPurchase > 0 ? (totalDepreciation / totalPurchase) * 100 : 0;
+
+  const buildGroupRows = (getLabel: (asset: Asset) => string): AssetValueGroupRow[] => {
+    const grouped = valueAssets.reduce<Record<string, AssetValueGroupRow>>((result, asset) => {
+      const label = getLabel(asset) || "未填写";
+      if (!result[label]) {
+        result[label] = {
+          key: label,
+          label,
+          count: 0,
+          purchase: 0,
+          current: 0,
+          depreciation: 0,
+          currentRate: 0,
+        };
+      }
+      const purchase = moneyValue(asset.purchasePrice);
+      const current = currentValue(asset);
+      result[label].count += 1;
+      result[label].purchase += purchase;
+      result[label].current += current;
+      result[label].depreciation += Math.max(purchase - current, 0);
+      return result;
+    }, {});
+    return Object.values(grouped)
+      .map((row) => ({
+        ...row,
+        currentRate: row.purchase > 0 ? (row.current / row.purchase) * 100 : 0,
+      }))
+      .sort((a, b) => b.purchase - a.purchase);
+  };
+
+  const departmentRows = buildGroupRows((asset) => asset.department || "未填写").slice(0, 8);
+  const categoryRows = buildGroupRows((asset) => asset.category || assetTypeLabel(asset.assetType)).slice(0, 8);
+  const statusRows = buildGroupRows((asset) => statusLabel(asset.status));
+  const valueChartRows = (rows: AssetValueGroupRow[]): AnalysisBarDatum[] =>
+    rows.map((row) => ({
+      key: row.key,
+      label: row.label,
+      value: row.purchase,
+      caption: `${row.count} 条资产 / 当前估值 ${formatMoney(row.current)} / 估值率 ${formatPercentValue(row.currentRate)}`,
+    }));
+  const setValueView = (key: keyof typeof valueViews, mode: AnalysisViewMode) => {
+    setValueViews((previous) => ({ ...previous, [key]: mode }));
+  };
+  const valueColumns: ColumnsType<AssetValueGroupRow> = [
+    { title: "维度", dataIndex: "label" },
+    { title: "数量", dataIndex: "count", width: 90 },
+    { title: "采购价", dataIndex: "purchase", width: 150, render: formatMoney },
+    { title: "当前估值", dataIndex: "current", width: 150, render: formatMoney },
+    { title: "估值率", dataIndex: "currentRate", width: 110, render: formatPercentValue },
+  ];
+
+  return (
+    <div className="npcink-v3-section">
+      <div className="npcink-v3-section-header">
+        <div>
+          <Title level={3}>资产价值</Title>
+              <Text type="secondary">按采购价和当前估值查看资产规模、折价和部门分布。</Text>
+        </div>
+        <Tag color="blue">{assetsQuery.isLoading ? "统计中" : `纳入 ${valueAssets.length} 条资产`}</Tag>
+      </div>
+
+      <div className="npcink-v3-summary-strip">
+        {[
+          { label: "资产数量", value: String(valueAssets.length), note: "不含已归档" },
+          { label: "总采购价", value: formatMoney(totalPurchase), note: "采购价合计" },
+          { label: "当前估值", value: formatMoney(totalCurrent), note: "二手价/残值字段，缺失时按默认残值率估算", meter: currentRate },
+          { label: "已折价", value: formatMoney(totalDepreciation), note: "采购价 - 当前估值", meter: depreciationRate },
+          { label: "估值率", value: formatPercentValue(currentRate), note: "当前估值 / 采购价", meter: currentRate },
+          { label: "折价率", value: formatPercentValue(depreciationRate), note: "已折价 / 采购价", meter: depreciationRate },
+        ].map((item, index) => (
+          <div key={item.label} className={`npcink-v3-summary-item${index === 1 ? " is-primary" : ""}`}>
+            <Text type="secondary">{item.label}</Text>
+            <strong>{assetsQuery.isLoading ? "-" : item.value}</strong>
+            {"meter" in item ? (
+              <div className="npcink-v3-summary-mini-meter">
+                <i style={{ width: `${Math.min(Math.max(Number(item.meter || 0), 0), 100)}%` }} />
+              </div>
+            ) : null}
+            <span>{item.note}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="npcink-v3-audit-panel">
+        <div className="npcink-v3-audit-block">
+          <div className="npcink-v3-audit-block-head">
+            <div>
+              <Text strong>部门价值</Text>
+              <Text type="secondary">按采购价排序</Text>
+            </div>
+            <ViewModeToggle value={valueViews.department} onChange={(mode) => setValueView("department", mode)} />
+          </div>
+          {valueViews.department === "chart" ? (
+            <AnalysisBarChart
+              rows={valueChartRows(departmentRows)}
+              loading={assetsQuery.isLoading}
+              emptyText="暂无部门价值数据"
+              valueFormatter={formatMoney}
+            />
+          ) : (
+            <Table
+              rowKey="key"
+              size="small"
+              pagination={false}
+              dataSource={departmentRows}
+              loading={assetsQuery.isLoading}
+              columns={valueColumns}
+              scroll={{ x: 620 }}
+              locale={{ emptyText: <Empty description="暂无部门价值数据" /> }}
+            />
+          )}
+        </div>
+        <div className="npcink-v3-audit-block">
+          <div className="npcink-v3-audit-block-head">
+            <div>
+              <Text strong>分类价值</Text>
+              <Text type="secondary">按采购价排序</Text>
+            </div>
+            <ViewModeToggle value={valueViews.category} onChange={(mode) => setValueView("category", mode)} />
+          </div>
+          {valueViews.category === "chart" ? (
+            <AnalysisBarChart
+              rows={valueChartRows(categoryRows)}
+              loading={assetsQuery.isLoading}
+              emptyText="暂无分类价值数据"
+              valueFormatter={formatMoney}
+            />
+          ) : (
+            <Table
+              rowKey="key"
+              size="small"
+              pagination={false}
+              dataSource={categoryRows}
+              loading={assetsQuery.isLoading}
+              columns={valueColumns}
+              scroll={{ x: 620 }}
+              locale={{ emptyText: <Empty description="暂无分类价值数据" /> }}
+            />
+          )}
+        </div>
+        <div className="npcink-v3-audit-block is-wide">
+          <div className="npcink-v3-audit-block-head">
+            <div>
+              <Text strong>状态价值</Text>
+              <Text type="secondary">查看在用、停用、维护等状态的金额分布</Text>
+            </div>
+            <ViewModeToggle value={valueViews.status} onChange={(mode) => setValueView("status", mode)} />
+          </div>
+          {valueViews.status === "chart" ? (
+            <AnalysisBarChart
+              rows={valueChartRows(statusRows)}
+              loading={assetsQuery.isLoading}
+              emptyText="暂无状态价值数据"
+              valueFormatter={formatMoney}
+            />
+          ) : (
+            <Table
+              rowKey="key"
+              size="small"
+              pagination={false}
+              dataSource={statusRows}
+              loading={assetsQuery.isLoading}
+              columns={valueColumns}
+              scroll={{ x: 620 }}
+              locale={{ emptyText: <Empty description="暂无状态价值数据" /> }}
+            />
+          )}
+        </div>
+      </div>
+
+      <Collapse
+        className="npcink-v3-formula-collapse"
+        items={[
+          {
+            key: "formula",
+            label: "计算口径",
+            children: (
+              <div className="npcink-v3-formula-copy">
+                <p>当前估值 = 资产的二手价/残值字段合计；缺失时按设置中的默认残值率估算。</p>
+                <p>已折价 = 总采购价 - 当前估值。</p>
+                <p>估值率 = 当前估值 / 总采购价。</p>
+                <p>折价率 = 已折价 / 总采购价。</p>
+                <p>当前默认残值率：{formatPercentValue(defaultResidualRate)}。</p>
+                <p>已归档资产不纳入默认统计。</p>
+              </div>
+            ),
+          },
+        ]}
+      />
+    </div>
+  );
+};
+
+const AnalysisWorkspace = () => (
+  <Tabs
+    defaultActiveKey="hardware"
+    className="npcink-v3-analysis-tabs"
+    items={[
+      {
+        key: "hardware",
+        label: "硬件盘点",
+        children: <HardwareAuditWorkspace />,
+      },
+      {
+        key: "value",
+        label: "资产价值",
+        children: <AssetValueWorkspace />,
+      },
+    ]}
+  />
+);
+
 const SettingsWorkspace = () => {
   const [form] = Form.useForm<InventorySettings>();
   const [tokenModalOpen, setTokenModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const clientUploadBaseUrl = Form.useWatch("clientUploadBaseUrl", form);
+  const publicQueryPageSlug = Form.useWatch("publicQueryPageSlug", form);
   const queryClient = useQueryClient();
   const settingsQuery = useQuery(["v3-settings"], getSettings);
   const settingsMutation = useMutation(updateSettings, {
     onSuccess: (settings) => {
       queryClient.setQueryData(["v3-settings"], settings);
+      form.setFieldsValue({ publicQueryAccessCode: "" });
       message.success("设置已保存");
+    },
+  });
+  const publicPageMutation = useMutation(createPublicQueryPage, {
+    onSuccess: (page) => {
+      queryClient.setQueryData<InventorySettings | undefined>(["v3-settings"], (current) =>
+        current
+          ? {
+              ...current,
+              publicQueryPageSlug: page.slug,
+              publicQueryPage: page,
+            }
+          : current
+      );
+      form.setFieldsValue({ publicQueryPageSlug: page.slug });
+      message.success("公开查询页面已更新");
     },
   });
 
@@ -2820,6 +3808,23 @@ const SettingsWorkspace = () => {
     }
   }, [form, settingsQuery.data]);
 
+  const publicQueryPageUrl = useMemo(() => {
+    if (settingsQuery.data?.publicQueryPage?.url) {
+      return settingsQuery.data.publicQueryPage.url;
+    }
+    const slug = (publicQueryPageSlug || "public-search-page").trim();
+    if (!Site || !slug) {
+      return "";
+    }
+    return `${Site.replace(/\/$/, "")}/${slug.replace(/^\//, "")}/`;
+  }, [publicQueryPageSlug, settingsQuery.data?.publicQueryPage?.url]);
+  const publicQueryPage = settingsQuery.data?.publicQueryPage;
+  const hasPublicQueryPage = Boolean(publicQueryPage?.exists);
+  const clientUploadEndpoint = useMemo(
+    () => buildClientUploadEndpoint(clientUploadBaseUrl || RestUrl),
+    [clientUploadBaseUrl]
+  );
+
   return (
     <div className="npcink-v3-section">
       <div className="npcink-v3-section-header">
@@ -2827,42 +3832,186 @@ const SettingsWorkspace = () => {
           <Title level={3}>设置</Title>
           <Text type="secondary">管理公开查询、资产编号和采集客户端授权。</Text>
         </div>
-        <Button onClick={() => setTokenModalOpen(true)}>客户端令牌</Button>
+        <Button onClick={() => setTokenModalOpen(true)}>客户端接入</Button>
       </div>
       <div className="npcink-v3-settings-panel">
         <Form
           form={form}
+          className="npcink-v3-global-settings-form"
           layout="vertical"
           onFinish={(values) => settingsMutation.mutate(values)}
         >
-          <Form.Item
-            name="publicQueryEnabled"
-            label="公开查询"
-            valuePropName="checked"
-            extra="启用后，已授权的公开查询入口可以读取允许展示的设备信息。"
-          >
-            <Switch checkedChildren="启用" unCheckedChildren="关闭" />
-          </Form.Item>
-          <Form.Item
-            name="assetNumberPrefix"
-            label="资产编号前缀"
-            extra="仅允许字母、数字、下划线和短横线；新建资产自动编号时使用。"
-          >
-            <Input placeholder="例如：A" />
-          </Form.Item>
-          <Form.Item
-            name="observationRetentionDays"
-            label="采集记录保留天数"
-            extra="0 表示不按天数自动清理。"
-          >
-            <InputNumber min={0} precision={0} className="npcink-v3-number" />
-          </Form.Item>
-          <Button type="primary" htmlType="submit" loading={settingsMutation.isLoading}>
-            保存设置
-          </Button>
+          <div className="npcink-v3-settings-section">
+            <Title level={4}>客户端接入</Title>
+            <div className="npcink-v3-settings-grid">
+              <Form.Item
+                name="clientUploadBaseUrl"
+                label="外部访问地址"
+                extra="留空使用当前站点 REST 地址；反向代理、内网穿透或 HTTPS 域名不一致时再填写。"
+                className="npcink-v3-settings-wide"
+              >
+                <Input placeholder={RestUrl} />
+              </Form.Item>
+            </div>
+            <div className="npcink-v3-client-endpoint">
+              <Text type="secondary">客户端上传地址</Text>
+              <Text copyable code>
+                {clientUploadEndpoint}
+              </Text>
+            </div>
+          </div>
+          <div className="npcink-v3-settings-section">
+            <Title level={4}>公开查询与编号</Title>
+            <div className="npcink-v3-settings-grid">
+              <Form.Item
+                name="publicQueryEnabled"
+                label="公开查询"
+                valuePropName="checked"
+                extra="控制公开查询入口是否允许读取已开放的资产信息。"
+              >
+                <Switch checkedChildren="启用" unCheckedChildren="关闭" />
+              </Form.Item>
+              <Form.Item
+                name="assetNumberPrefix"
+                label="资产编号前缀"
+                extra="仅允许字母、数字、下划线和短横线。"
+              >
+                <Input placeholder="例如：A" />
+              </Form.Item>
+              <Form.Item
+                name="publicQueryPageSlug"
+                label="公共查询页面"
+                extra={publicQueryPageUrl || "保存页面别名后，可用于后续公开查询入口。"}
+                className="npcink-v3-settings-wide"
+              >
+                <Input placeholder="public-search-page" />
+              </Form.Item>
+              <Form.Item
+                name="publicQueryAccessCode"
+                label={
+                  <span>
+                    查询访问码{" "}
+                    <Tag color={settingsQuery.data?.publicQueryAccessCodeSet ? "green" : "default"}>
+                      {settingsQuery.data?.publicQueryAccessCodeSet ? "已设置" : "未设置"}
+                    </Tag>
+                  </span>
+                }
+                extra="留空不会修改当前访问码；设置后，公开查询页面必须输入访问码。"
+                className="npcink-v3-settings-wide"
+              >
+                <Input.Password placeholder="输入新的查询访问码" autoComplete="new-password" />
+              </Form.Item>
+            </div>
+            <div className="npcink-v3-client-endpoint">
+              <Text type="secondary">查询页面</Text>
+              <div className="npcink-v3-public-page-box">
+                <div className="npcink-v3-public-page-status">
+                  <Tag color={hasPublicQueryPage ? "green" : "default"}>
+                    {hasPublicQueryPage ? "已创建" : "未创建"}
+                  </Tag>
+                  <Text copyable={Boolean(publicQueryPageUrl)} code>
+                    {publicQueryPageUrl || "-"}
+                  </Text>
+                </div>
+                <div className="npcink-v3-public-page-actions">
+                  <Button
+                    onClick={() =>
+                      publicPageMutation.mutate({
+                        publicQueryPageSlug: form.getFieldValue("publicQueryPageSlug"),
+                      })
+                    }
+                    loading={publicPageMutation.isLoading}
+                  >
+                    {hasPublicQueryPage ? "更新页面" : "创建页面"}
+                  </Button>
+                  <Button
+                    href={publicQueryPage?.editUrl || undefined}
+                    target="_blank"
+                    disabled={!publicQueryPage?.editUrl}
+                  >
+                    编辑页面
+                  </Button>
+                  <Button
+                    href={publicQueryPage?.url || undefined}
+                    target="_blank"
+                    disabled={!publicQueryPage?.url}
+                  >
+                    打开页面
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="npcink-v3-settings-section">
+            <Title level={4}>资产估值</Title>
+            <div className="npcink-v3-settings-grid">
+              <Form.Item
+                name="depreciationPeriodMonths"
+                label="折旧年限"
+                extra="用于资产价值分析中的默认折旧周期。"
+              >
+                <InputNumber
+                  min={1}
+                  precision={0}
+                  className="npcink-v3-number"
+                  addonAfter="月"
+                />
+              </Form.Item>
+              <Form.Item
+                name="defaultResidualRate"
+                label="默认残值率"
+                extra="用于没有单独残值数据时的估算参考。"
+              >
+                <InputNumber
+                  min={0}
+                  max={100}
+                  precision={2}
+                  className="npcink-v3-number"
+                  addonAfter="%"
+                />
+              </Form.Item>
+            </div>
+          </div>
+          <div className="npcink-v3-settings-section">
+            <Title level={4}>维护</Title>
+            <div className="npcink-v3-settings-grid">
+              <Form.Item
+                name="observationRetentionDays"
+                label="采集记录保留天数"
+                extra="0 表示不按天数自动清理。"
+              >
+                <InputNumber min={0} precision={0} className="npcink-v3-number" addonAfter="天" />
+              </Form.Item>
+              <Form.Item
+                name="deleteDataOnUninstall"
+                label="卸载时删除数据"
+                valuePropName="checked"
+                extra="开启后，删除插件时会清理插件数据表和设置。"
+              >
+                <Switch checkedChildren="删除" unCheckedChildren="保留" />
+              </Form.Item>
+            </div>
+          </div>
+          <div className="npcink-v3-settings-actions">
+            <Button type="primary" htmlType="submit" loading={settingsMutation.isLoading}>
+              保存设置
+            </Button>
+          </div>
         </Form>
+        <div className="npcink-v3-settings-section npcink-v3-settings-utility">
+          <div>
+            <Title level={4}>数据迁移</Title>
+            <Text type="secondary">从旧版插件备份文件导入历史资产数据。</Text>
+          </div>
+          <Button onClick={() => setImportModalOpen(true)}>导入旧数据</Button>
+        </div>
       </div>
       <TokenModal open={tokenModalOpen} onClose={() => setTokenModalOpen(false)} />
+      <LegacyImportModal
+        open={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onImported={() => queryClient.invalidateQueries(["v3-assets"])}
+      />
     </div>
   );
 };
@@ -2886,7 +4035,8 @@ const AssetCard = ({
 }: AssetCardProps) => {
   const { summary, importedHardware, extracted } = assetHardwareContext(asset);
   const title = asset.ownerName || asset.name || "未命名资产";
-  const isPc = asset.assetType === "pc" || asset.assetType === "computer";
+  const isPc = isComputerAsset(asset);
+  const customInfo = !isPc ? customAssetInfo(asset) : null;
   const handleOpen = () => {
     if (selectable) {
       onSelect?.();
@@ -2913,47 +4063,77 @@ const AssetCard = ({
           <Checkbox checked={selected} onChange={() => onSelect?.()} />
         </div>
       ) : null}
-      <div className="npcink-v3-asset-card-brand">
-        {isPc ? (
+      {customInfo ? (
+        <div className="npcink-v3-asset-card-body npcink-v3-custom-card-body">
+          <h3>{customInfo.title}</h3>
+          <dl>
+            <div>
+              <dt>编号：</dt>
+              <dd>{customInfo.number || "-"}</dd>
+            </div>
+            <div>
+              <dt>分类：</dt>
+              <dd>{customInfo.category || "-"}</dd>
+            </div>
+            <div>
+              <dt>使用：</dt>
+              <dd>{customInfo.usage || "-"}</dd>
+            </div>
+            <div>
+              <dt>价格：</dt>
+              <dd>{customInfo.priceText}</dd>
+            </div>
+            <div>
+              <dt>状态：</dt>
+              <dd>{customInfo.status || "-"}</dd>
+            </div>
+            <div>
+              <dt>时间：</dt>
+              <dd>{formatDate(customInfo.createdAt)}</dd>
+            </div>
+          </dl>
+        </div>
+      ) : (
+        <>
+          <div className="npcink-v3-asset-card-brand">
           <div className="npcink-v3-card-os-mark" aria-hidden="true">
             <span />
             <span />
             <span />
             <span />
           </div>
-        ) : (
-          <div className="npcink-v3-card-type-mark">{assetTypeLabel(asset.assetType).slice(0, 1)}</div>
-        )}
-        <strong>{isPc ? extracted.platform || "Windows" : assetTypeLabel(asset.assetType)}</strong>
-      </div>
-      <div className="npcink-v3-asset-card-body">
-        <h3>{title}</h3>
-        <p>{fieldText(extracted.baseboard || extracted.deviceModel)}</p>
-        <p>{fieldText(extracted.cpu)}</p>
-        <p>{fieldText(extracted.graphics)}</p>
-        <dl>
-          <div>
-            <dt>配置：</dt>
-            <dd>{formatMemoryDiskText(summary, importedHardware)}</dd>
+            <strong>{extracted.platform || "Windows"}</strong>
           </div>
-          <div>
-            <dt>编号：</dt>
-            <dd>{asset.assetNumber || "-"}</dd>
+          <div className="npcink-v3-asset-card-body">
+            <h3>{title}</h3>
+            <p>{fieldText(extracted.baseboard || extracted.deviceModel)}</p>
+            <p>{fieldText(extracted.cpu)}</p>
+            <p>{fieldText(extracted.graphics)}</p>
+            <dl>
+              <div>
+                <dt>配置：</dt>
+                <dd>{formatMemoryDiskText(summary, importedHardware)}</dd>
+              </div>
+              <div>
+                <dt>编号：</dt>
+                <dd>{asset.assetNumber || "-"}</dd>
+              </div>
+              <div>
+                <dt>状态：</dt>
+                <dd>{statusLabel(asset.status)}</dd>
+              </div>
+              <div>
+                <dt>部门：</dt>
+                <dd>{asset.department || "-"}</dd>
+              </div>
+              <div>
+                <dt>IP：</dt>
+                <dd>{extracted.primaryIp || "-"}</dd>
+              </div>
+            </dl>
           </div>
-          <div>
-            <dt>状态：</dt>
-            <dd>{statusLabel(asset.status)}</dd>
-          </div>
-          <div>
-            <dt>部门：</dt>
-            <dd>{asset.department || "-"}</dd>
-          </div>
-          <div>
-            <dt>IP：</dt>
-            <dd>{extracted.primaryIp || "-"}</dd>
-          </div>
-        </dl>
-      </div>
+        </>
+      )}
     </div>
   );
 };
@@ -2968,14 +4148,15 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState("");
+  const [searchDraft, setSearchDraft] = useState("");
   const [assetScope, setAssetScope] = useState<AssetScope>(initialScope);
   const [assetType, setAssetType] = useState<string | undefined>();
   const [status, setStatus] = useState<string | undefined>();
+  const [category, setCategory] = useState<string | undefined>();
+  const [purchasePlatform, setPurchasePlatform] = useState<string | undefined>();
   const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
   const [assetModalOpen, setAssetModalOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
-  const [tokenModalOpen, setTokenModalOpen] = useState(false);
-  const [importModalOpen, setImportModalOpen] = useState(false);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [compactCards, setCompactCards] = useState(false);
@@ -2990,8 +4171,10 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
       assetScope,
       assetType: assetScope === "computer" ? undefined : assetType,
       status,
+      category: assetScope === "other" ? category : undefined,
+      purchasePlatform: assetScope === "other" ? purchasePlatform : undefined,
     }),
-    [assetScope, assetType, page, pageSize, search, status]
+    [assetScope, assetType, category, page, pageSize, purchasePlatform, search, status]
   );
   const assetsQuery = useQuery(["v3-assets", queryParams], () => getAssets(queryParams), {
     keepPreviousData: true,
@@ -2999,7 +4182,7 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
 
   useEffect(() => {
     setSelectedUuids(new Set());
-  }, [assetScope, assetType, page, pageSize, search, status]);
+  }, [assetScope, assetType, category, page, pageSize, purchasePlatform, search, status]);
 
   useEffect(() => {
     if (!batchMode) {
@@ -3105,6 +4288,13 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
   const maintenanceCount = countStatus(assets, "maintenance");
   const activeScopeLabel =
     title || ASSET_SCOPE_OPTIONS.find((item) => item.value === assetScope)?.label || "资产";
+  const categoryOptions = useMemo(
+    () =>
+      Array.from(new Set([...DEFAULT_CUSTOM_CATEGORIES, ...assets.map((asset) => asset.category).filter(Boolean)]))
+        .sort((a, b) => a.localeCompare(b, "zh-CN"))
+        .map((value) => ({ label: value, value })),
+    [assets]
+  );
 
   const toggleSelect = (uuid: string) => {
     setSelectedUuids((previous) => {
@@ -3136,7 +4326,10 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
     setAssetScope(filter.assetScope);
     setAssetType(filter.assetType);
     setStatus(filter.status);
+    setCategory(filter.category);
+    setPurchasePlatform(filter.purchasePlatform);
     setSearch(filter.search || "");
+    setSearchDraft(filter.search || "");
     setPage(1);
   };
 
@@ -3154,6 +4347,8 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
         assetType,
         status,
         search,
+        category,
+        purchasePlatform,
       },
     ];
     setSavedFilters(next);
@@ -3248,6 +4443,19 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
     setAssetModalOpen(true);
   };
 
+  const submitSearch = () => {
+    setPage(1);
+    setSearch(searchDraft.trim());
+  };
+
+  const updateSearchDraft = (value: string) => {
+    setSearchDraft(value);
+    if (!value && search) {
+      setPage(1);
+      setSearch("");
+    }
+  };
+
   const confirmArchive = (asset: Asset) => {
     Modal.confirm({
       title: "归档这台资产？",
@@ -3290,24 +4498,9 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
           </Text>
         </div>
         <div className="npcink-v3-toolbar">
-          {assetScope !== "computer" ? (
-            <Select
-              allowClear
-              placeholder="资产类型"
-              options={ASSET_TYPES.filter((item) =>
-                assetScope === "other" ? item.value !== "pc" && item.value !== "computer" : true
-              )}
-              value={assetType}
-              onChange={(value) => {
-                setPage(1);
-                setAssetType(value);
-              }}
-              className="npcink-v3-filter"
-            />
-          ) : null}
           <Select
             allowClear
-            placeholder="状态"
+            placeholder={assetScope === "other" ? "设备状态" : "状态"}
             options={STATUS_OPTIONS}
             value={status}
             onChange={(value) => {
@@ -3316,17 +4509,58 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
             }}
             className="npcink-v3-filter"
           />
-          <Input.Search
-            allowClear
-            value={search}
-            placeholder="搜索编号、名称、使用人、部门"
-            onChange={(event) => setSearch(event.target.value)}
-            onSearch={(value) => {
-              setPage(1);
-              setSearch(value);
-            }}
-            className="npcink-v3-search"
-          />
+          {assetScope === "other" ? (
+            <>
+              <Select
+                allowClear
+                placeholder="分类"
+                options={categoryOptions}
+                value={category}
+                onChange={(value) => {
+                  setPage(1);
+                  setCategory(value);
+                }}
+                className="npcink-v3-filter"
+              />
+              <Select
+                allowClear
+                placeholder="采购平台"
+                options={CUSTOM_PURCHASE_PLATFORM_OPTIONS}
+                value={purchasePlatform}
+                onChange={(value) => {
+                  setPage(1);
+                  setPurchasePlatform(value);
+                }}
+                className="npcink-v3-filter"
+              />
+            </>
+          ) : assetScope !== "computer" ? (
+            <Select
+              allowClear
+              placeholder="资产类型"
+              options={ASSET_TYPES}
+              value={assetType}
+              onChange={(value) => {
+                setPage(1);
+                setAssetType(value);
+              }}
+              className="npcink-v3-filter"
+            />
+          ) : null}
+          <div className="npcink-v3-toolbar-search">
+            <Input
+              allowClear
+              value={searchDraft}
+              placeholder={assetScope === "other" ? "搜索姓名、订单号、产品名称" : "搜索编号、名称、使用人、部门"}
+              onChange={(event) => updateSearchDraft(event.target.value)}
+              onPressEnter={submitSearch}
+            />
+            <Button
+              aria-label="搜索资产"
+              icon={<SearchOutlined />}
+              onClick={submitSearch}
+            />
+          </div>
           <Space.Compact>
             <Button
               type={viewMode === "card" ? "primary" : "default"}
@@ -3341,16 +4575,15 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
               列表
             </Button>
           </Space.Compact>
-          <Button onClick={() => queryClient.invalidateQueries(["v3-assets"])}>
-            刷新
-          </Button>
+          {assetScope === "other" ? (
+            <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
+              新增
+            </Button>
+          ) : null}
           <Dropdown
             menu={{
               items: [
-                { key: "create", label: "新增资产" },
-                { key: "import", label: "导入旧数据" },
                 { key: "export", label: "导出筛选" },
-                { key: "tokens", label: "客户端令牌" },
                 { key: "save-filter", label: "保存筛选" },
                 { key: "batch", label: batchMode ? "退出批量模式" : "批量模式" },
                 ...(viewMode === "card"
@@ -3362,14 +4595,8 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
                 })),
               ],
               onClick: ({ key }) => {
-                if (key === "create") {
-                  openCreateModal();
-                } else if (key === "import") {
-                  setImportModalOpen(true);
-                } else if (key === "export") {
+                if (key === "export") {
                   exportCurrentFilter();
-                } else if (key === "tokens") {
-                  setTokenModalOpen(true);
                 } else if (key === "save-filter") {
                   saveCurrentFilter();
                 } else if (key === "batch") {
@@ -3382,7 +4609,7 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
               },
             }}
           >
-            <Button>更多操作</Button>
+            <Button>更多</Button>
           </Dropdown>
         </div>
       </div>
@@ -3429,7 +4656,14 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
             </div>
           ) : (
             <div className="npcink-v3-empty-state">
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无资产，先导入旧数据或新增资产" />
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={
+                  assetScope === "other"
+                    ? "暂无自定义资产，可新增自定义资产或在设置中导入旧数据"
+                    : "暂无电脑资产，可在设置中导入旧数据或等待客户端采集"
+                }
+              />
             </div>
           )}
           <div className="npcink-v3-card-pagination">
@@ -3496,11 +4730,6 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
         onClose={() => setAssetModalOpen(false)}
         onSubmit={submitAsset}
       />
-      <LegacyImportModal
-        open={importModalOpen}
-        onClose={() => setImportModalOpen(false)}
-        onImported={() => queryClient.invalidateQueries(["v3-assets"])}
-      />
       <BulkEditModal
         open={bulkModalOpen}
         count={selectedCount}
@@ -3510,7 +4739,6 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
           await batchUpdateMutation.mutateAsync({ targets: selectedAssets, input });
         }}
       />
-      <TokenModal open={tokenModalOpen} onClose={() => setTokenModalOpen(false)} />
     </div>
   );
 };
@@ -3538,9 +4766,9 @@ const InventoryAdmin = () => {
             children: <ChangeWorkspace />,
           },
           {
-            key: "hardware",
-            label: "硬件盘点",
-            children: <HardwareAuditWorkspace />,
+            key: "analysis",
+            label: "分析",
+            children: <AnalysisWorkspace />,
           },
           {
             key: "settings",
