@@ -11,6 +11,25 @@ struct AgentConfig {
     site: String,
     name: String,
     token: String,
+    preset_locked: bool,
+    preset_label: String,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[serde(default)]
+struct AgentPreset {
+    #[serde(rename = "siteUrl")]
+    site_url: String,
+    #[serde(rename = "uploadEndpoint")]
+    upload_endpoint: String,
+    #[serde(rename = "tokenValue")]
+    token_value: String,
+    #[serde(rename = "tokenId")]
+    token_id: String,
+    #[serde(rename = "tokenSecret")]
+    token_secret: String,
+    #[serde(rename = "tokenName")]
+    token_name: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -26,7 +45,7 @@ fn get_saved_config() -> Result<AgentConfig, String> {
 
 #[tauri::command]
 fn save_config(config: AgentConfig) -> Result<(), String> {
-    write_config(&config).map_err(|error| error.to_string())
+    write_config(config).map_err(|error| error.to_string())
 }
 
 #[tauri::command]
@@ -40,7 +59,8 @@ fn collect_device_snapshot() -> Result<DeviceSnapshot, String> {
 }
 
 #[tauri::command]
-fn submit_device_data(config: AgentConfig) -> Result<Value, String> {
+fn submit_device_data(mut config: AgentConfig) -> Result<Value, String> {
+    apply_build_preset(&mut config);
     validate_config(&config)?;
     let data = collector::collect_static_data().map_err(|error| error.to_string())?;
     upload::submit_v3(&config.site, &config.name, &config.token, &data)
@@ -73,21 +93,55 @@ fn validate_config(config: &AgentConfig) -> Result<(), String> {
 fn read_config() -> Result<AgentConfig> {
     let path = config_path()?;
     if !path.exists() {
-        return Ok(AgentConfig::default());
+        let mut config = AgentConfig::default();
+        apply_build_preset(&mut config);
+        return Ok(config);
     }
     let raw = fs::read_to_string(&path)
         .with_context(|| format!("failed to read config {}", path.display()))?;
-    serde_json::from_str(&raw).context("failed to parse config")
+    let mut config: AgentConfig = serde_json::from_str(&raw).context("failed to parse config")?;
+    apply_build_preset(&mut config);
+    Ok(config)
 }
 
-fn write_config(config: &AgentConfig) -> Result<()> {
+fn write_config(mut config: AgentConfig) -> Result<()> {
+    apply_build_preset(&mut config);
     let path = config_path()?;
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)
             .with_context(|| format!("failed to create config dir {}", parent.display()))?;
     }
-    let raw = serde_json::to_string_pretty(config).context("failed to encode config")?;
+    let raw = serde_json::to_string_pretty(&config).context("failed to encode config")?;
     fs::write(&path, raw).with_context(|| format!("failed to write config {}", path.display()))
+}
+
+fn apply_build_preset(config: &mut AgentConfig) {
+    if let Some(preset) = build_preset() {
+        config.site = if preset.upload_endpoint.trim().is_empty() {
+            preset.site_url
+        } else {
+            preset.upload_endpoint
+        };
+        config.token = if preset.token_value.trim().is_empty() {
+            format!("mda_{}_{}", preset.token_id, preset.token_secret)
+        } else {
+            preset.token_value
+        };
+        config.preset_locked = true;
+        config.preset_label = if preset.token_name.trim().is_empty() {
+            preset.token_id
+        } else {
+            preset.token_name
+        };
+    }
+}
+
+fn build_preset() -> Option<AgentPreset> {
+    let raw = option_env!("NPCINK_AGENT_PRESET")?.trim();
+    if raw.is_empty() {
+        return None;
+    }
+    serde_json::from_str(raw).ok()
 }
 
 fn config_path() -> Result<PathBuf> {

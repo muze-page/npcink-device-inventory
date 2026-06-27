@@ -145,6 +145,19 @@ export interface CreatedClientToken extends ClientToken {
   secret: string;
 }
 
+export interface ClientTokenPackageConfig {
+  appName: string;
+  siteUrl: string;
+  uploadEndpoint: string;
+  tokenId: string;
+  tokenSecret: string;
+  tokenValue: string;
+  tokenName: string;
+  remarkOnly: boolean;
+  targets: string[];
+  generatedAt: string;
+}
+
 export interface PublicQueryPageState {
   exists: boolean;
   id: number;

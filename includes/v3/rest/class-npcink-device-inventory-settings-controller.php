@@ -39,8 +39,25 @@ class Npcink_Device_Inventory_Settings_Controller
 			'npcink/v1',
 			'/client-tokens/(?P<id>[a-z0-9]{12})',
 			array(
-				'methods' => WP_REST_Server::DELETABLE,
-				'callback' => array($this, 'delete_token'),
+				array(
+					'methods' => WP_REST_Server::EDITABLE,
+					'callback' => array($this, 'update_token'),
+					'permission_callback' => array($this, 'admin_permissions_check'),
+				),
+				array(
+					'methods' => WP_REST_Server::DELETABLE,
+					'callback' => array($this, 'delete_token'),
+					'permission_callback' => array($this, 'admin_permissions_check'),
+				),
+			)
+		);
+
+		register_rest_route(
+			'npcink/v1',
+			'/client-tokens/(?P<id>[a-z0-9]{12})/package-config',
+			array(
+				'methods' => WP_REST_Server::READABLE,
+				'callback' => array($this, 'get_token_package_config'),
 				'permission_callback' => array($this, 'admin_permissions_check'),
 			)
 		);
@@ -189,6 +206,73 @@ class Npcink_Device_Inventory_Settings_Controller
 		return rest_ensure_response(array('data' => array('success' => true)));
 	}
 
+	public function update_token($request)
+	{
+		$id = sanitize_key((string) $request['id']);
+		$params = $request->get_json_params();
+		if (!is_array($params) || !array_key_exists('enabled', $params)) {
+			return Npcink_Device_Inventory_V3_Response::error('invalid_token_update', 'Token enabled state is required.', 400);
+		}
+
+		$options = Npcink_Device_Inventory_V3_Tables::options();
+		$tokens = array();
+		$updated = null;
+		foreach ($options['client_tokens'] as $token) {
+			if (!is_array($token)) {
+				continue;
+			}
+			if (isset($token['id']) && $token['id'] === $id) {
+				$token['enabled'] = (bool) $params['enabled'];
+				$updated = $token;
+			}
+			$tokens[] = $token;
+		}
+
+		if (!$updated) {
+			return Npcink_Device_Inventory_V3_Response::error('token_not_found', 'Client token not found.', 404);
+		}
+
+		$options['client_tokens'] = $tokens;
+		update_option(Npcink_Device_Inventory_V3_Tables::OPTION, $options);
+		return rest_ensure_response(array('data' => $this->public_token($updated)));
+	}
+
+	public function get_token_package_config($request)
+	{
+		$id = sanitize_key((string) $request['id']);
+		$options = Npcink_Device_Inventory_V3_Tables::options();
+		$token = $this->find_token($options, $id);
+
+		if (!$token) {
+			return Npcink_Device_Inventory_V3_Response::error('token_not_found', 'Client token not found.', 404);
+		}
+
+		$secret = isset($token['secret']) ? (string) $token['secret'] : '';
+		if ($secret === '') {
+			return Npcink_Device_Inventory_V3_Response::error('token_secret_missing', 'Client token secret is missing.', 500);
+		}
+
+		$upload_endpoint = $this->build_client_upload_endpoint((string) $options['client_upload_base_url']);
+		$token_value = 'mda_' . (string) $token['id'] . '_' . $secret;
+
+		return rest_ensure_response(
+			array(
+				'data' => array(
+					'appName' => 'Npcink Device Agent',
+					'siteUrl' => home_url('/'),
+					'uploadEndpoint' => $upload_endpoint,
+					'tokenId' => (string) $token['id'],
+					'tokenSecret' => $secret,
+					'tokenValue' => $token_value,
+					'tokenName' => isset($token['name']) ? (string) $token['name'] : '',
+					'remarkOnly' => true,
+					'targets' => array('windows-exe', 'mac-dmg'),
+					'generatedAt' => current_time('mysql'),
+				),
+			)
+		);
+	}
+
 	private function public_options($options)
 	{
 		$tokens = array();
@@ -261,6 +345,41 @@ class Npcink_Device_Inventory_Settings_Controller
 			'enabled' => !empty($token['enabled']),
 			'createdAt' => isset($token['created_at']) ? (string) $token['created_at'] : '',
 		);
+	}
+
+	private function find_token($options, $id)
+	{
+		if (empty($options['client_tokens']) || !is_array($options['client_tokens'])) {
+			return null;
+		}
+
+		foreach ($options['client_tokens'] as $token) {
+			if (is_array($token) && isset($token['id']) && $token['id'] === $id) {
+				return $token;
+			}
+		}
+
+		return null;
+	}
+
+	private function build_client_upload_endpoint($input)
+	{
+		$base = trim((string) $input);
+		if ($base === '') {
+			$base = rest_url('npcink/v1');
+		}
+		$base = untrailingslashit($base);
+
+		if (substr($base, -20) === '/device-observations') {
+			return $base;
+		}
+		if (substr($base, -10) === '/npcink/v1') {
+			return $base . '/device-observations';
+		}
+		if (substr($base, -8) === '/wp-json') {
+			return $base . '/npcink/v1/device-observations';
+		}
+		return $base . '/wp-json/npcink/v1/device-observations';
 	}
 
 	private function random_secret()

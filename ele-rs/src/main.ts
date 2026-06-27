@@ -5,6 +5,8 @@ type AgentConfig = {
   site: string;
   name: string;
   token: string;
+  preset_locked?: boolean;
+  preset_label?: string;
 };
 
 type DeviceSnapshot = {
@@ -43,7 +45,12 @@ app.innerHTML = `
             <input id="name" name="name" placeholder="可选，例如：张三、财务电脑、前台备用机" />
           </label>
 
-          <details class="more-config">
+          <div class="preset-notice" id="presetNotice" hidden>
+            <strong>已预置上传配置</strong>
+            <span>只需填写备注即可提交设备信息。</span>
+          </div>
+
+          <details class="more-config" id="moreConfig">
             <summary>更多配置</summary>
             <label class="field">
               <span>完整授权码</span>
@@ -87,6 +94,8 @@ app.innerHTML = `
 const siteInput = document.querySelector<HTMLInputElement>("#site")!;
 const nameInput = document.querySelector<HTMLInputElement>("#name")!;
 const tokenInput = document.querySelector<HTMLInputElement>("#token")!;
+const presetNotice = document.querySelector<HTMLElement>("#presetNotice")!;
+const moreConfig = document.querySelector<HTMLDetailsElement>("#moreConfig")!;
 const configForm = document.querySelector<HTMLFormElement>("#configForm")!;
 const collectButton = document.querySelector<HTMLButtonElement>("#collectButton")!;
 const submitButton = document.querySelector<HTMLButtonElement>("#submitButton")!;
@@ -520,6 +529,15 @@ const renderConfig = (config: AgentConfig) => {
   siteInput.value = config.site || "";
   nameInput.value = config.name || "";
   tokenInput.value = config.token || "";
+  const hasPreset = Boolean(config.preset_locked);
+  presetNotice.hidden = !hasPreset;
+  if (hasPreset) {
+    const label = config.preset_label ? `当前预设：${config.preset_label}` : "已预置上传配置";
+    presetNotice.querySelector("strong")!.textContent = label;
+  }
+  moreConfig.hidden = hasPreset;
+  siteInput.disabled = hasPreset;
+  tokenInput.disabled = hasPreset;
   renderOverview();
 };
 

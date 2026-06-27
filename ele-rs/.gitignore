@@ -4,3 +4,4 @@
 /dist/
 /.env
 device-agent-config.json
+/src-tauri/agent-preset.local.json

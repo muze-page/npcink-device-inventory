@@ -36,8 +36,10 @@ import {
   getAssetIdentities,
   getAssetObservations,
   getAssets,
+  getClientTokenPackageConfig,
   getEvents,
   getSettings,
+  updateClientToken,
   updateSettings,
   updateAsset,
 } from "@/services/v3";
@@ -719,6 +721,22 @@ const buildClientUploadEndpoint = (input?: string) => {
 
 const buildClientSubmitCommand = (token: CreatedClientToken, uploadEndpoint: string) =>
   `npcink-device-agent submit --site "${uploadEndpoint}" --token "${buildClientTokenValue(token)}" --note "测试电脑"`;
+
+const writeClipboardText = async (text: string) => {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "true");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  document.body.removeChild(textarea);
+};
 
 const compactJson = (value: JsonRecord) => {
   const entries = Object.entries(value || {});
@@ -1656,6 +1674,27 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
       message.success("令牌已删除");
     },
   });
+  const tokenStatusMutation = useMutation(
+    ({ id, enabled }: { id: string; enabled: boolean }) => updateClientToken(id, enabled),
+    {
+      onSuccess: (token) => {
+        queryClient.invalidateQueries(["v3-settings"]);
+        message.success(token.enabled ? "令牌已启用" : "令牌已停用");
+      },
+    }
+  );
+  const packageConfigMutation = useMutation(
+    async (token: ClientToken) => {
+      const config = await getClientTokenPackageConfig(token.id);
+      await writeClipboardText(JSON.stringify(config, null, 2));
+      return token;
+    },
+    {
+      onSuccess: () => {
+        message.success("打包配置已复制");
+      },
+    }
+  );
 
   const tokens = settingsQuery.data?.clientTokens || [];
   const uploadEndpoint = buildClientUploadEndpoint(settingsQuery.data?.clientUploadBaseUrl || RestUrl);
@@ -1666,9 +1705,24 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
     {
       title: "状态",
       dataIndex: "enabled",
-      width: 88,
+      width: 120,
       render: (enabled: boolean) => (
         <Tag color={enabled ? "green" : "default"}>{enabled ? "启用" : "停用"}</Tag>
+      ),
+    },
+    {
+      title: "启停",
+      dataIndex: "enabled",
+      width: 110,
+      render: (enabled: boolean, token) => (
+        <Switch
+          size="small"
+          checked={enabled}
+          checkedChildren="启用"
+          unCheckedChildren="关闭"
+          loading={tokenStatusMutation.isLoading && tokenStatusMutation.variables?.id === token.id}
+          onChange={(checked) => tokenStatusMutation.mutate({ id: token.id, enabled: checked })}
+        />
       ),
     },
     {
@@ -1679,24 +1733,51 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
     },
     {
       title: "操作",
-      width: 88,
+      width: 190,
       render: (_, token) => (
-        <Button
-          size="small"
-          danger
-          onClick={() =>
-            Modal.confirm({
-              title: "删除客户端令牌？",
-              content: `Token ID: ${token.id}`,
-              okText: "删除",
-              okButtonProps: { danger: true },
-              cancelText: "取消",
-              onOk: () => deleteMutation.mutateAsync(token.id),
-            })
-          }
-        >
-          删除
-        </Button>
+        <Space size={8}>
+          <Button
+            size="small"
+            loading={packageConfigMutation.isLoading && packageConfigMutation.variables?.id === token.id}
+            onClick={() =>
+              Modal.confirm({
+                title: "复制打包配置？",
+                content: (
+                  <Space direction="vertical" size={4}>
+                    <Text>配置包含客户端令牌密钥，只用于生成安装包。</Text>
+                    <Text type="secondary">Token ID：{token.id}</Text>
+                  </Space>
+                ),
+                okText: "复制",
+                cancelText: "取消",
+                onOk: () => packageConfigMutation.mutateAsync(token),
+              })
+            }
+          >
+            复制打包配置
+          </Button>
+          <Button
+            size="small"
+            danger
+            onClick={() =>
+              Modal.confirm({
+                title: "确认删除这个客户端令牌？",
+                content: (
+                  <Space direction="vertical" size={4}>
+                    <Text>删除后，使用该令牌的客户端将无法继续上传数据。</Text>
+                    <Text type="secondary">Token ID：{token.id}</Text>
+                  </Space>
+                ),
+                okText: "确认删除",
+                okButtonProps: { danger: true },
+                cancelText: "取消",
+                onOk: () => deleteMutation.mutateAsync(token.id),
+              })
+            }
+          >
+            删除
+          </Button>
+        </Space>
       ),
     },
   ];
@@ -1707,64 +1788,53 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
       open={open}
       onCancel={onClose}
       footer={null}
-      width={820}
+      width={900}
       destroyOnClose
     >
-      <Alert
-        className="npcink-v3-secret"
-        type="info"
-        showIcon
-        message="客户端上传地址"
-        description={
-          <Space direction="vertical" size={8} className="npcink-v3-client-snippet">
-            <div>
-              <Text type="secondary">上传地址</Text>
-              <Text copyable code>
-                {uploadEndpoint}
-              </Text>
-            </div>
-            <Text type="secondary">
-              上传地址不是密钥；客户端写入权限由令牌和 HMAC 签名控制。
-            </Text>
-          </Space>
-        }
-      />
+      <div className="npcink-v3-token-endpoint">
+        <div>
+          <Text strong>客户端上传地址</Text>
+          <Text type="secondary">上传地址不是密钥；客户端写入权限由令牌和 HMAC 签名控制。</Text>
+        </div>
+        <Text copyable code>
+          {uploadEndpoint}
+        </Text>
+      </div>
       <Form
         form={form}
-        layout="inline"
         className="npcink-v3-token-form"
         onFinish={({ name }) => createMutation.mutate(name)}
       >
-        <Form.Item name="name" rules={[{ required: true, message: "请输入令牌名称" }]}>
-          <Input placeholder="例如：财务部采集客户端" />
-        </Form.Item>
-        <Button type="primary" htmlType="submit" loading={createMutation.isLoading}>
-          创建令牌
-        </Button>
+        <div className="npcink-v3-token-create-row">
+          <Form.Item
+            name="name"
+            label="令牌备注"
+            rules={[{ required: true, message: "请输入令牌备注" }]}
+          >
+            <Input placeholder="例如：财务部采集客户端" />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" loading={createMutation.isLoading}>
+            创建令牌
+          </Button>
+        </div>
       </Form>
       {createdToken ? (
         <Alert
           className="npcink-v3-secret"
           type="warning"
           showIcon
-          message="完整授权码只显示一次"
+          message="完整授权码包含上传权限"
           description={
             <Space direction="vertical" size={8} className="npcink-v3-client-snippet">
-              <div>
-                <Text type="secondary">上传地址</Text>
-                <Text copyable code>
-                  {uploadEndpoint}
-                </Text>
-              </div>
-              <div>
+              <div className="npcink-v3-client-snippet-item">
                 <Text type="secondary">完整授权码</Text>
-                <Text copyable code>
+                <Text copyable code className="npcink-v3-client-snippet-code">
                   {buildClientTokenValue(createdToken)}
                 </Text>
               </div>
-              <div>
+              <div className="npcink-v3-client-snippet-item">
                 <Text type="secondary">命令行验收</Text>
-                <Text copyable code>
+                <Text copyable code className="npcink-v3-client-snippet-code">
                   {buildClientSubmitCommand(createdToken, uploadEndpoint)}
                 </Text>
               </div>

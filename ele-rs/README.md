@@ -46,6 +46,23 @@ npm run tauri:dev
 npm run tauri:build
 ```
 
+预设打包：
+
+```bash
+cp src-tauri/agent-preset.example.json src-tauri/agent-preset.local.json
+# 将 WordPress 后台“复制打包配置”得到的 JSON 粘贴进 agent-preset.local.json
+npm run tauri:build
+```
+
+`src-tauri/agent-preset.local.json` 会在构建时嵌入安装包。安装后的客户端会隐藏站点地址和授权码，只保留“上传备注”给使用者填写。
+
+打包产物位置：
+
+```text
+src-tauri/target/release/bundle/nsis/*.exe
+src-tauri/target/release/bundle/dmg/*.dmg
+```
+
 命令行采集器：
 
 ```bash
@@ -68,7 +85,7 @@ ele-rs/
 
 桌面 UI 当前提供：
 
-- 站点地址、上传备注、完整授权码配置
+- 上传备注配置；预设打包时隐藏站点地址和完整授权码
 - 本机硬件采集预览
 - stable device id 展示
 - 提交到 v3 `/device-observations`

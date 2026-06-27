@@ -7,6 +7,8 @@ import type {
   AssetInput,
   AssetListParams,
   AssetObservation,
+  ClientToken,
+  ClientTokenPackageConfig,
   CreatedClientToken,
   CreatedPublicQueryPage,
   EventListParams,
@@ -175,6 +177,28 @@ export const createClientToken = async (
   const response = await restInstance.post<DataEnvelope<CreatedClientToken>>(
     "/client-tokens",
     { name },
+    { showSuccessMessage: false } as RequestConfig
+  );
+  return unwrapData(response.data);
+};
+
+export const updateClientToken = async (
+  id: string,
+  enabled: boolean
+): Promise<ClientToken> => {
+  const response = await restInstance.patch<DataEnvelope<ClientToken>>(
+    `/client-tokens/${id}`,
+    { enabled },
+    { showSuccessMessage: false } as RequestConfig
+  );
+  return unwrapData(response.data);
+};
+
+export const getClientTokenPackageConfig = async (
+  id: string
+): Promise<ClientTokenPackageConfig> => {
+  const response = await restInstance.get<DataEnvelope<ClientTokenPackageConfig>>(
+    `/client-tokens/${id}/package-config`,
     { showSuccessMessage: false } as RequestConfig
   );
   return unwrapData(response.data);

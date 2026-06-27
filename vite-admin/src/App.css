@@ -1664,24 +1664,102 @@
 }
 
 .npcink-v3-token-form {
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
-.npcink-v3-token-form .ant-form-item:first-child {
-  width: 320px;
+.npcink-v3-token-create-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.npcink-v3-token-create-row .ant-form-item {
+  flex: 1 1 360px;
+  max-width: 520px;
+  margin-bottom: 0;
+}
+
+.npcink-v3-token-create-row .ant-btn {
+  flex: 0 0 auto;
+  height: 40px;
+  margin-bottom: 0;
+}
+
+.npcink-v3-token-endpoint {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  background: #f4f8ff;
+  border: 1px solid #b9d5ff;
+  border-radius: 10px;
+}
+
+.npcink-v3-token-endpoint > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.npcink-v3-token-endpoint code {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  white-space: normal;
+  word-break: break-all;
+  background: #ffffff;
 }
 
 .npcink-v3-secret {
   margin-bottom: 14px;
 }
 
-.npcink-v3-secret code {
-  white-space: normal;
-  word-break: break-all;
+.npcink-v3-secret .ant-alert-content {
+  min-width: 0;
+}
+
+.npcink-v3-secret .ant-alert-description {
+  width: 100%;
 }
 
 .npcink-v3-client-snippet {
   width: 100%;
+  min-width: 0;
+}
+
+.npcink-v3-client-snippet .npcink-v3-client-snippet-item {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.npcink-v3-client-snippet-code.ant-typography {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 8px 10px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.npcink-v3-client-snippet-code.ant-typography code {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: inherit;
+  word-break: inherit;
+}
+
+.npcink-v3-client-snippet-code .ant-typography-copy {
+  flex: 0 0 auto;
+  margin-inline-start: 4px;
 }
 
 .npcink-v3-client-snippet > div {
@@ -1693,6 +1771,12 @@
 
 .npcink-v3-client-snippet code {
   line-height: 1.7;
+}
+
+.npcink-v3-client-snippet.ant-space > .ant-space-item {
+  display: block;
+  width: 100%;
+  min-width: 0;
 }
 
 .npcink-v3-client-endpoint {
@@ -2033,6 +2117,16 @@
   .npcink-v3-custom-settings-grid,
   .npcink-v3-finance-summary {
     grid-template-columns: 1fr;
+  }
+
+  .npcink-v3-token-endpoint > div,
+  .npcink-v3-token-create-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .npcink-v3-token-create-row .ant-form-item {
+    max-width: none;
   }
 
   .npcink-v3-settings-wide {

@@ -102,9 +102,14 @@ if (!class_exists('Npcink_Device_Inventory_Admin_Menu')) {
             }
 
 	            $plugin_url = plugin_dir_url(dirname(__DIR__));
+	            $plugin_path = dirname(dirname(__DIR__)) . '/';
+	            $app_css_path = $plugin_path . 'vite-admin/dist/index.css';
+	            $app_js_path = $plugin_path . 'vite-admin/dist/index.js';
+	            $app_css_ver = file_exists($app_css_path) ? (string) filemtime($app_css_path) : $ver;
+	            $app_js_ver = file_exists($app_js_path) ? (string) filemtime($app_js_path) : $ver;
 	            wp_enqueue_style($name, $plugin_url . 'admin/css/npcink-device-inventory-admin.css', array(), $ver, false);
-	            wp_enqueue_style($name . '-app', $plugin_url . 'vite-admin/dist/index.css', array(), $ver, false);
-	            wp_enqueue_script($name, $plugin_url . 'vite-admin/dist/index.js', array(), $ver, true);
+	            wp_enqueue_style($name . '-app', $plugin_url . 'vite-admin/dist/index.css', array(), $app_css_ver, false);
+	            wp_enqueue_script($name, $plugin_url . 'vite-admin/dist/index.js', array(), $app_js_ver, true);
 	            wp_localize_script(
 	                $name,
 	                'npcinkDeviceInventoryData',
