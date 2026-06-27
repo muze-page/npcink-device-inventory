@@ -33,3 +33,5 @@ release/
 
 # Local migration backups
 .local-backups/
+设备数据备份/
+device-inventory-current.png

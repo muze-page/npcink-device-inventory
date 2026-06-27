@@ -10,6 +10,7 @@ name = "npcink_device_agent_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
+serde_json = "1.0"
 tauri-build = { version = "2.6.2", features = [] }
 
 [dependencies]

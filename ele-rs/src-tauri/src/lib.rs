@@ -117,22 +117,7 @@ fn write_config(mut config: AgentConfig) -> Result<()> {
 
 fn apply_build_preset(config: &mut AgentConfig) {
     if let Some(preset) = build_preset() {
-        config.site = if preset.upload_endpoint.trim().is_empty() {
-            preset.site_url
-        } else {
-            preset.upload_endpoint
-        };
-        config.token = if preset.token_value.trim().is_empty() {
-            format!("mda_{}_{}", preset.token_id, preset.token_secret)
-        } else {
-            preset.token_value
-        };
-        config.preset_locked = true;
-        config.preset_label = if preset.token_name.trim().is_empty() {
-            preset.token_id
-        } else {
-            preset.token_name
-        };
+        apply_preset(config, preset);
     }
 }
 
@@ -144,7 +129,75 @@ fn build_preset() -> Option<AgentPreset> {
     serde_json::from_str(raw).ok()
 }
 
+fn apply_preset(config: &mut AgentConfig, preset: AgentPreset) {
+    config.site = if preset.upload_endpoint.trim().is_empty() {
+        preset.site_url
+    } else {
+        preset.upload_endpoint
+    };
+    config.token = if preset.token_value.trim().is_empty() {
+        format!("mda_{}_{}", preset.token_id, preset.token_secret)
+    } else {
+        preset.token_value
+    };
+    config.preset_locked = true;
+    config.preset_label = if preset.token_name.trim().is_empty() {
+        preset.token_id
+    } else {
+        preset.token_name
+    };
+}
+
 fn config_path() -> Result<PathBuf> {
     let base = dirs::config_dir().context("failed to resolve config dir")?;
     Ok(base.join("npcink-device-agent").join("config.json"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn preset_prefers_upload_endpoint_and_full_token_value() {
+        let mut config = AgentConfig::default();
+        apply_preset(
+            &mut config,
+            AgentPreset {
+                site_url: "https://example.com/".to_string(),
+                upload_endpoint: "https://example.com/wp-json/npcink/v1/device-observations"
+                    .to_string(),
+                token_value: "mda_abc123def456_secret".to_string(),
+                token_id: "abc123def456".to_string(),
+                token_secret: "ignored".to_string(),
+                token_name: "Finance batch".to_string(),
+            },
+        );
+
+        assert_eq!(
+            config.site,
+            "https://example.com/wp-json/npcink/v1/device-observations"
+        );
+        assert_eq!(config.token, "mda_abc123def456_secret");
+        assert!(config.preset_locked);
+        assert_eq!(config.preset_label, "Finance batch");
+    }
+
+    #[test]
+    fn preset_falls_back_to_site_url_and_token_parts() {
+        let mut config = AgentConfig::default();
+        apply_preset(
+            &mut config,
+            AgentPreset {
+                site_url: "https://example.com/".to_string(),
+                token_id: "abc123def456".to_string(),
+                token_secret: "secret".to_string(),
+                ..AgentPreset::default()
+            },
+        );
+
+        assert_eq!(config.site, "https://example.com/");
+        assert_eq!(config.token, "mda_abc123def456_secret");
+        assert!(config.preset_locked);
+        assert_eq!(config.preset_label, "abc123def456");
+    }
 }
