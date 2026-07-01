@@ -39,7 +39,7 @@ GitHub 上已确认的最新提交：
 
 项目现在只保留 v2 设备流程作为活跃路径：
 
-- 设备上传使用 `POST /wp-json/npcink-device-inventory/v1/device-post-data-v2`。
+- 设备上传使用 `POST /wp-json/npcink-device-inventory/v1/device-observations`。
 - 设备上传和公开查询都使用后台生成的客户端授权码，并通过 HMAC 签名请求。
 - 公开查询不再接受旧共享查询密码，也不再接受 `x-npcink-password` fallback。
 - 设备身份以 `stable_device_id_v2` 为准。

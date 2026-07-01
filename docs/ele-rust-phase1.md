@@ -13,14 +13,13 @@
 新版 Rust 客户端主路径使用：
 
 ```text
-POST /wp-json/npcink-device-inventory/v1/device-post-data-v2
-name: 上传备注，可选
-data: 设备 JSON 对象
+POST /wp-json/npcink-device-inventory/v1/device-observations
+body: 包含 `_npcink_device`、`asset`、`raw` 的 observation JSON 对象
 ```
 
 新版客户端不再把明文密码放进请求体。后台生成“上传授权码”后，客户端自动使用
 token + HMAC 请求头签名，普通用户只需要粘贴一次授权码。
-`name` 只作为后台查看时的上传备注，不参与设备身份判断，也不会覆盖资产归属。
+`asset.upload.note` 只作为后台查看时的上传备注，不参与设备身份判断，也不会覆盖资产名称。
 
 v2 服务端使用 `stable_device_id_v2` 作为数据库 `uuid`。同一台设备再次上传时
 直接更新原记录，上传备注只写入 `asset.upload`，不会覆盖资产名称。
@@ -63,7 +62,7 @@ cargo run -- inspect --pretty > sample.json
 
 ```bash
 cargo run -- submit \
-  --site "https://example.com/wp-json/npcink-device-inventory/v1/device-post-data-v2" \
+  --site "https://example.com/wp-json/npcink-device-inventory/v1/device-observations" \
   --token "后台生成的上传授权码" \
   --note "测试设备"
 ```

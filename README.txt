@@ -4,7 +4,7 @@ Tags: inventory, assets, device management, rest api, admin
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.6.1083
+Stable tag: 2.6.1084
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,12 +73,19 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 
 == Changelog ==
 
+= 2.6.1084 =
+* Store JSON-encoded custom table payloads as LONGTEXT for broader MySQL and MariaDB compatibility.
+* Updated active upload documentation to use the signed v3 device observations endpoint.
+
 = 2.6.1083 =
 * Rebuilt the plugin around the v3 asset registry.
 * Replaced legacy four-table admin screens with the v3 asset workspace.
 * Moved desktop uploads to signed v3 device observations.
 
 == Upgrade Notice ==
+
+= 2.6.1084 =
+This release normalizes JSON-like custom table columns to LONGTEXT while preserving the v3 asset model.
 
 = 2.6.1083 =
 This release replaces the legacy device tables and public search UI with the v3 asset model and admin workspace.

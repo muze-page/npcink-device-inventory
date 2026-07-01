@@ -32,7 +32,8 @@ Important fields:
 - `name`, `owner_name`, `department`, `status`, `category`: normal list and
   filter fields.
 - `purchase_price`, `residual_value`: financial summary fields.
-- `metadata_json`: asset-type-specific fields that do not justify new columns.
+- `metadata_json`: JSON-encoded asset-type-specific fields that do not justify
+  new columns. Stored as `LONGTEXT` for broad MySQL/MariaDB compatibility.
 
 ### `npcink_asset_identities`
 
@@ -64,7 +65,8 @@ Typical sources:
 
 `summary_json` keeps normalized display summaries, `hardware_json` keeps
 structured hardware detail, and `raw_json` preserves source payloads for
-debugging.
+debugging. These JSON-encoded fields are stored as `LONGTEXT` for broad
+MySQL/MariaDB compatibility.
 
 ### `npcink_asset_events`
 
@@ -78,7 +80,8 @@ records. Use:
   `merged`, `deleted`, or a narrower product event.
 - `field_name`, `old_value`, `new_value`: field-level change data when relevant.
 - `message`: human-readable note.
-- `payload_json`: structured event-specific detail.
+- `payload_json`: JSON-encoded structured event-specific detail, stored as
+  `LONGTEXT` for broad MySQL/MariaDB compatibility.
 
 ## Extension Rule
 

@@ -26,15 +26,16 @@ the WordPress plugin. New uploads and admin surfaces use this v2 shape only.
 New uploader path:
 
 ```text
-POST /wp-json/npcink-device-inventory/v1/device-post-data-v2
+POST /wp-json/npcink-device-inventory/v1/device-observations
 ```
 
 Request body:
 
 ```json
 {
-  "name": "上传备注，可选",
-  "data": {}
+  "_npcink_device": {},
+  "asset": {},
+  "raw": {}
 }
 ```
 
@@ -48,16 +49,17 @@ Authentication:
   `X-Npcink-Device-Nonce`, and `X-Npcink-Device-Signature`.
 - The signature covers `timestamp + nonce + sha256(raw JSON body)`.
 - The server rejects expired timestamps and repeated nonces.
-- `name` is an optional upload note. It can contain the current user, desk,
-  department, or other operator hint, but it is not used as the stable asset
-  owner and does not participate in device identity matching.
+- `asset.upload.note` is an optional upload note. It can contain the current
+  user, desk, department, or other operator hint, but it is not used as the
+  stable asset name and does not participate in device identity matching.
 
-The client sends the collector payload. The server is responsible for
-normalizing the payload before storing it.
+The client sends an observation payload containing `_npcink_device`, `asset`,
+and `raw`. The server stores normalized summaries, structured hardware details,
+and the raw payload in the v3 observation ledger.
 
 ## Stored Data Shape
 
-The stored `data` JSON contains three layers:
+The stored observation payload contains three layers:
 
 ```json
 {

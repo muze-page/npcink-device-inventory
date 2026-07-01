@@ -51,6 +51,7 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 		self::create_table_asset_identities();
 		self::create_table_asset_observations();
 		self::create_table_asset_events();
+		self::normalize_json_storage_columns();
 
 		self::create_default_v3_options();
 
@@ -126,7 +127,7 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 	        category VARCHAR(191) NOT NULL DEFAULT '' COMMENT '分类',
 	        purchase_price DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT '采购价',
 	        residual_value DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT '残值',
-	        metadata_json JSON COMMENT '扩展资产信息',
+	        metadata_json LONGTEXT COMMENT 'JSON encoded extended asset information',
 	        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 	        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 	        PRIMARY KEY  (id),
@@ -186,9 +187,9 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 	        schema_version SMALLINT UNSIGNED NOT NULL DEFAULT 1 COMMENT '采集结构版本',
 	        observed_at DATETIME NOT NULL COMMENT '采集时间',
 	        received_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '接收时间',
-	        summary_json JSON COMMENT '摘要数据',
-	        hardware_json JSON COMMENT '硬件明细',
-	        raw_json LONGTEXT COMMENT '原始数据',
+	        summary_json LONGTEXT COMMENT 'JSON encoded summary data',
+	        hardware_json LONGTEXT COMMENT 'JSON encoded hardware detail',
+	        raw_json LONGTEXT COMMENT 'JSON encoded raw source payload',
 	        PRIMARY KEY  (id),
 	        KEY idx_asset_observed (asset_id, observed_at),
 	        KEY idx_source_observed (source, observed_at),
@@ -219,7 +220,7 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 	        message TEXT COMMENT '事件说明',
 	        actor_user_id BIGINT UNSIGNED COMMENT '操作人用户ID',
 	        actor_name VARCHAR(191) NOT NULL DEFAULT '' COMMENT '操作人名称',
-	        payload_json JSON COMMENT '事件扩展数据',
+	        payload_json LONGTEXT COMMENT 'JSON encoded event payload',
 	        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 	        PRIMARY KEY  (id),
 	        KEY idx_asset_created (asset_id, created_at),
@@ -231,5 +232,32 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 
 		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 		dbDelta($sql);
+	}
+
+	/**
+	 * Keep JSON-like storage portable across MySQL and MariaDB variants.
+	 */
+	private static function normalize_json_storage_columns()
+	{
+		global $wpdb;
+		$columns = array(
+			array($wpdb->prefix . self::$table_assets_name, 'metadata_json', 'JSON encoded extended asset information'),
+			array($wpdb->prefix . self::$table_asset_observations_name, 'summary_json', 'JSON encoded summary data'),
+			array($wpdb->prefix . self::$table_asset_observations_name, 'hardware_json', 'JSON encoded hardware detail'),
+			array($wpdb->prefix . self::$table_asset_observations_name, 'raw_json', 'JSON encoded raw source payload'),
+			array($wpdb->prefix . self::$table_asset_events_name, 'payload_json', 'JSON encoded event payload'),
+		);
+
+		foreach ($columns as $column) {
+			list($table_name, $column_name, $comment) = $column;
+			$quoted_table = self::quote_internal_table_name($table_name);
+			if ($quoted_table === null || !preg_match('/^[A-Za-z0-9_]+$/', $column_name)) {
+				continue;
+			}
+
+			$wpdb->query(
+				"ALTER TABLE $quoted_table MODIFY `$column_name` LONGTEXT COMMENT '" . esc_sql($comment) . "'"
+			);
+		}
 	}
 }
