@@ -7,7 +7,7 @@
 - [x] zip 根目录为 `npcink-device-inventory/`。
 - [x] 主插件文件位于根目录：`npcink-device-inventory/npcink-device-inventory.php`。
 - [x] `README.txt` 存在且非空。
-- [x] `README.txt` Stable tag 与主插件版本一致：`2.6.1083`。
+- [x] `README.txt` Stable tag 与主插件版本一致：`2.7.0`。
 - [x] License 为 GPLv2 or later。
 - [x] 包内包含前端构建产物。
 - [x] 包内包含对应前端源码和构建配置。
@@ -36,5 +36,5 @@
 ## 提交后
 
 - WordPress.org 审核通过后，会分配 SVN 仓库。
-- 首次正式上线时，需要把插件文件提交到 SVN `trunk/`，并按版本创建 `tags/2.6.1083/`。
+- 首次正式上线时，需要把插件文件提交到 SVN `trunk/`，并按版本创建 `tags/2.7.0/`。
 - SVN 仓库不要提交 zip 文件；上传的是单个文件和目录。

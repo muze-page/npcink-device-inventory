@@ -2,7 +2,7 @@
   "plugin": {
     "name": "Npcink Device Inventory",
     "slug": "npcink-device-inventory",
-    "version": "2.6.1083",
+    "version": "2.7.0",
     "requires_at_least": "6.5",
     "tested_up_to": "7.0",
     "requires_php": "7.4",
@@ -12,10 +12,10 @@
     "upload_file": "sj/npcink-device-inventory.zip",
     "source_file": "release/npcink-device-inventory.zip",
     "zip_root": "npcink-device-inventory/",
-    "sha256": "8e83f8a53265f198ebd8762b3aa4616bbccefc6f5020e0ee3f3c52953590a419",
+    "sha256": "296d8677c4f5fad01fb1f18c9bef995b7e0ea3a54e34a834c01f50bbc45a130f",
     "file_count": 54,
-    "uncompressed_bytes": 1457816,
-    "compressed_bytes": 462095
+    "uncompressed_bytes": 1470109,
+    "compressed_bytes": 464889
   },
   "verification": {
     "plugin_check": {

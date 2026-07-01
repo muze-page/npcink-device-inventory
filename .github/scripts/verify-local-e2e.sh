@@ -5,17 +5,32 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WP_PATH="${WP_PATH:-}"
 SITE_URL="${SITE_URL:-}"
 DEVICE_NOTE="${DEVICE_NOTE:-HMAC验收}"
+WP_CLI_BIN="${WP_CLI_BIN:-}"
+WP_CLI_PHP="${WP_CLI_PHP:-}"
+WP_CLI_PHP_INI="${WP_CLI_PHP_INI:-}"
 TOKEN_ID=""
+
+run_wp() {
+  if [ -n "${WP_CLI_PHP}" ]; then
+    if [ -n "${WP_CLI_PHP_INI}" ]; then
+      "${WP_CLI_PHP}" -c "${WP_CLI_PHP_INI}" "${WP_CLI_BIN}" --path="${WP_PATH}" "$@"
+    else
+      "${WP_CLI_PHP}" "${WP_CLI_BIN}" --path="${WP_PATH}" "$@"
+    fi
+  else
+    "${WP_CLI_BIN}" --path="${WP_PATH}" "$@"
+  fi
+}
 
 cleanup() {
   if [ -n "${TOKEN_ID}" ]; then
-    WP_E2E_TOKEN_ID="${TOKEN_ID}" wp --path="${WP_PATH}" eval '
+    WP_E2E_TOKEN_ID="${TOKEN_ID}" run_wp eval '
       $admins = get_users(array("role" => "administrator", "number" => 1, "fields" => "ID"));
       if (!empty($admins)) {
           wp_set_current_user((int) $admins[0]);
       }
       rest_get_server();
-      $request = new WP_REST_Request("DELETE", "/npcink/v1/client-tokens/" . getenv("WP_E2E_TOKEN_ID"));
+      $request = new WP_REST_Request("DELETE", "/npcink-device-inventory/v1/client-tokens/" . getenv("WP_E2E_TOKEN_ID"));
       $request->set_param("id", getenv("WP_E2E_TOKEN_ID"));
       rest_do_request($request);
     ' >/dev/null 2>&1 || true
@@ -23,8 +38,17 @@ cleanup() {
 }
 trap cleanup EXIT
 
-if ! command -v wp >/dev/null 2>&1; then
+if [ -z "${WP_CLI_BIN}" ]; then
+  WP_CLI_BIN="$(command -v wp || true)"
+fi
+
+if [ -z "${WP_CLI_BIN}" ] || [ ! -x "${WP_CLI_BIN}" ]; then
   echo "WP-CLI is required for local e2e verification." >&2
+  exit 1
+fi
+
+if [ -n "${WP_CLI_PHP}" ] && [ ! -x "${WP_CLI_PHP}" ]; then
+  echo "Configured WP_CLI_PHP is not executable: ${WP_CLI_PHP}" >&2
   exit 1
 fi
 
@@ -46,7 +70,7 @@ fi
 
 echo "Generating a temporary local upload authorization code..."
 TOKEN="$(
-  wp --path="${WP_PATH}" eval '
+  run_wp eval '
     $admins = get_users(array("role" => "administrator", "number" => 1, "fields" => "ID"));
     if (empty($admins)) {
         fwrite(STDERR, "No administrator user found\n");
@@ -54,7 +78,7 @@ TOKEN="$(
     }
     wp_set_current_user((int) $admins[0]);
     rest_get_server();
-    $request = new WP_REST_Request("POST", "/npcink/v1/client-tokens");
+    $request = new WP_REST_Request("POST", "/npcink-device-inventory/v1/client-tokens");
     $request->set_header("content-type", "application/json");
     $request->set_body(wp_json_encode(array("name" => "Local E2E")));
     $response = rest_do_request($request);
@@ -88,7 +112,7 @@ popd >/dev/null
 echo "${SUBMIT_RESPONSE}"
 
 echo "Verifying stored v3 observation shape in WordPress..."
-WP_E2E_STABLE_ID="${STABLE_ID}" wp --path="${WP_PATH}" eval '
+WP_E2E_STABLE_ID="${STABLE_ID}" run_wp eval '
   global $wpdb;
   $stable_id = getenv("WP_E2E_STABLE_ID");
   $identities = $wpdb->prefix . "npcink_asset_identities";

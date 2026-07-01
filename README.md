@@ -87,14 +87,15 @@ bash .github/scripts/verify-local-e2e.sh
 ```bash
 cd /path/to/npcink-device-inventory
 npm ci --prefix vite-admin
-npm run build --prefix vite-admin
-bash .github/scripts/package-wordpress-plugin.sh
+npm run build:release
+cp release/npcink-device-inventory.zip sj/npcink-device-inventory.zip
+npm run check:release
 ```
 
 输出文件：
 
 ```text
-release/npcink-device-inventory-plugin.zip
+release/npcink-device-inventory.zip
 ```
 
 插件包只包含 WordPress 运行文件、语言文件、许可证/README 和 `vite-admin/dist` 构建产物；不会包含 `ele-rs/`、`node_modules`、Rust `target` 或本地发布缓存。

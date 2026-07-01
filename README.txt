@@ -4,7 +4,7 @@ Tags: inventory, assets, device management, rest api, admin
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.6.1084
+Stable tag: 2.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,7 +23,7 @@ The plugin provides:
 * Event timelines for asset creation, updates, observations, and notes.
 * A bundled React admin workspace for asset review and client token management.
 
-The WordPress plugin does not load JavaScript or CSS from third-party CDNs. Built React assets are bundled locally in the plugin package, with the corresponding React/TypeScript source and build configuration included under `vite-admin`.
+The WordPress plugin does not load JavaScript or CSS from third-party CDNs. Built React assets are bundled locally in the plugin package. The corresponding React/TypeScript source and build configuration are maintained in the project repository under `vite-admin`.
 
 == Installation ==
 
@@ -52,7 +52,7 @@ The plugin only deletes its custom tables and settings when the stored v3 uninst
 
 = Where is the source for bundled JavaScript? =
 
-The WordPress package includes the built files and the corresponding React/TypeScript source:
+The project repository includes the built files and the corresponding React/TypeScript source:
 
 * Admin app source: `vite-admin/src`
 * Build configuration: `vite-admin/package.json` and `vite-admin/vite.config.ts`
@@ -73,7 +73,7 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 
 == Changelog ==
 
-= 2.6.1084 =
+= 2.7.0 =
 * Store JSON-encoded custom table payloads as LONGTEXT for broader MySQL and MariaDB compatibility.
 * Updated active upload documentation to use the signed v3 device observations endpoint.
 
@@ -84,7 +84,7 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 
 == Upgrade Notice ==
 
-= 2.6.1084 =
+= 2.7.0 =
 This release normalizes JSON-like custom table columns to LONGTEXT while preserving the v3 asset model.
 
 = 2.6.1083 =

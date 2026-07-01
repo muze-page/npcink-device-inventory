@@ -29,7 +29,7 @@ sj/npcink-device-inventory.zip
 包信息：
 
 - 插件 slug：`npcink-device-inventory`
-- 插件版本：`2.6.1083`
+- 插件版本：`2.7.0`
 - zip 根目录：`npcink-device-inventory/`
 - SHA-256：`f94739d08938e1f1ee89dad0aaa36c25b652cc4a0b2493bdc8cfcae77bf527c8`
 
@@ -50,7 +50,9 @@ npm run build --prefix vite-admin
 npm run build --prefix vite-search
 composer phpcs
 composer phpstan
-bash .github/scripts/package-wordpress-plugin.sh
+npm run build:release
+cp release/npcink-device-inventory.zip sj/npcink-device-inventory.zip
+npm run check:release
 wp --path='/Users/muze/Local Sites/npcink-device-inventory/app/public' plugin check /Users/muze/gitee/npcink-device-inventory/release/npcink-device-inventory
 ```
 
@@ -216,7 +218,7 @@ sj/review-notes-for-plugin-team.md
 发布时：
 
 - 插件代码放到 `trunk/`。
-- 当前版本打 tag 到 `tags/2.6.1083/`。
+- 当前版本打 tag 到 `tags/2.7.0/`。
 - 展示图片放到 SVN 顶层 `assets/`。
 - 不要把 zip 文件提交到 SVN。
 - 不要把展示图片放进 `trunk/assets/`。

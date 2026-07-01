@@ -74,14 +74,15 @@ Build the WordPress plugin zip:
 ```bash
 cd /path/to/npcink-device-inventory
 npm ci --prefix vite-admin
-npm run build --prefix vite-admin
-bash .github/scripts/package-wordpress-plugin.sh
+npm run build:release
+cp release/npcink-device-inventory.zip sj/npcink-device-inventory.zip
+npm run check:release
 ```
 
 Output:
 
 ```text
-release/npcink-device-inventory-plugin.zip
+release/npcink-device-inventory.zip
 ```
 
 The plugin zip contains only WordPress runtime files, language files, licenses/readmes, and built `vite-admin/dist` assets. It excludes `ele-rs/`, `node_modules`, Rust `target`, and local release caches.

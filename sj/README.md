@@ -9,7 +9,7 @@
 - 上传包：`sj/npcink-device-inventory.zip`
 - 原始生成位置：`release/npcink-device-inventory.zip`
 - 插件 slug：`npcink-device-inventory`
-- 插件版本：`2.6.1083`
+- 插件版本：`2.7.0`
 - zip 根目录：`npcink-device-inventory/`
 
 ## 文件说明

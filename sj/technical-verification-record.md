@@ -35,7 +35,9 @@ composer phpstan
 通过：
 
 ```bash
-bash .github/scripts/package-wordpress-plugin.sh
+npm run build:release
+cp release/npcink-device-inventory.zip sj/npcink-device-inventory.zip
+npm run check:release
 ```
 
 输出：

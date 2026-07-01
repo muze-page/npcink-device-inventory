@@ -1,9 +1,10 @@
 import { execFileSync } from "node:child_process";
-import { cp, mkdir, rm } from "node:fs/promises";
+import { cp, mkdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const viteAdminDir = path.join(repoRoot, "vite-admin");
 const slug = "npcink-device-inventory";
 const releaseDir = path.join(repoRoot, "release");
 const stagingRoot = path.join(repoRoot, ".release-build");
@@ -32,6 +33,8 @@ await rm(stagingRoot, { recursive: true, force: true });
 await mkdir(stagingPlugin, { recursive: true });
 await mkdir(releaseDir, { recursive: true });
 
+execFileSync("npm", ["run", "build"], { cwd: viteAdminDir, stdio: "inherit" });
+
 for (const file of rootFiles) {
   await cp(path.join(repoRoot, file), path.join(stagingPlugin, file));
 }
@@ -39,6 +42,8 @@ for (const file of rootFiles) {
 for (const dir of runtimeDirs) {
   await cp(path.join(repoRoot, dir), path.join(stagingPlugin, dir), { recursive: true });
 }
+
+await assertVersionMatchesReadme();
 
 await rm(output, { force: true });
 execFileSync("zip", ["-qr", output, slug], { cwd: stagingRoot });
@@ -49,3 +54,17 @@ execFileSync("node", ["scripts/check-wordpress-org-review-rules.mjs", "release/n
 });
 
 console.log(`Built ${path.relative(repoRoot, output)}`);
+
+async function assertVersionMatchesReadme() {
+  const pluginFile = await readFile(path.join(stagingPlugin, "npcink-device-inventory.php"), "utf8");
+  const readmeFile = await readFile(path.join(stagingPlugin, "README.txt"), "utf8");
+  const pluginVersion = pluginFile.match(/^[ \t*]*Version:\s*([^\s]+)/m)?.[1] || "";
+  const stableTag = readmeFile.match(/^Stable tag:\s*([^\s]+)/m)?.[1] || "";
+
+  if (!pluginVersion || !stableTag || pluginVersion !== stableTag) {
+    console.error(
+      `Plugin Version and README.txt Stable tag must match. Version=${pluginVersion || "missing"}, Stable tag=${stableTag || "missing"}`
+    );
+    process.exit(1);
+  }
+}

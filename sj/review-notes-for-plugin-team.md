@@ -2,7 +2,7 @@
 
 Plugin: Npcink Device Inventory
 
-Version: 2.6.1083
+Version: 2.7.0
 
 Slug: npcink-device-inventory
 
@@ -95,7 +95,9 @@ npm run build --prefix vite-admin
 npm run build --prefix vite-search
 composer phpcs
 composer phpstan
-bash .github/scripts/package-wordpress-plugin.sh
+npm run build:release
+cp release/npcink-device-inventory.zip sj/npcink-device-inventory.zip
+npm run check:release
 wp --path='/Users/muze/Local Sites/npcink-device-inventory/app/public' plugin check /Users/muze/gitee/npcink-device-inventory/release/npcink-device-inventory --format=json
 ```
 

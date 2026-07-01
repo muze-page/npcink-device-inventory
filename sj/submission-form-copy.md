@@ -57,7 +57,7 @@ inventory, assets, device management, rest api, admin
 ## Version and Compatibility
 
 ```text
-Version: 2.6.1083
+Version: 2.7.0
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4

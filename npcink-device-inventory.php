@@ -16,7 +16,7 @@
  * Plugin Name:       Npcink Device Inventory
  * Plugin URI:        https://www.npc.ink/277900.html
  * Description:       设备资产管理插件，提供设备录入、客户端上报、后台台账、变更记录和授权查询。
- * Version:           2.6.1084
+ * Version:           2.7.0
  * Requires at least: 6.5
  * Tested up to:      7.0
  * Requires PHP:      7.4
@@ -38,7 +38,7 @@ if (!defined('WPINC')) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define('NPCINK_DEVICE_INVENTORY_VERSION', '2.6.1084');
+define('NPCINK_DEVICE_INVENTORY_VERSION', '2.7.0');
 
 /**
  * The code that runs during plugin activation.
