@@ -59,6 +59,28 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 			$this->events->record($asset_id, 'upload', 'created', 'Asset created from first observation.', array('identities' => $identities));
 		} else {
 			$this->identities->add_many(intval($asset['id']), $identities);
+			$uploaded_owner = $this->uploaded_owner_name($observation_payload);
+			if ($uploaded_owner !== '' && $uploaded_owner !== (string) $asset['owner_name']) {
+				$updated_asset = $this->assets->update(
+					$asset['uuid'],
+					array(
+						'owner_name' => $uploaded_owner,
+					)
+				);
+				if ($updated_asset) {
+					$this->events->record(
+						intval($asset['id']),
+						'upload',
+						'owner_updated',
+						'Asset owner updated from upload note.',
+						array(
+							'old_owner_name' => (string) $asset['owner_name'],
+							'new_owner_name' => $uploaded_owner,
+						)
+					);
+					$asset = $updated_asset;
+				}
+			}
 		}
 
 		$observation = $this->observations->create(intval($asset['id']), $this->build_observation_input($observation_payload));
@@ -88,10 +110,9 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 	{
 		$asset = isset($payload['asset']) && is_array($payload['asset']) ? $payload['asset'] : array();
 		$summary = isset($asset['summary']) && is_array($asset['summary']) ? $asset['summary'] : array();
-		$upload = isset($asset['upload']) && is_array($asset['upload']) ? $asset['upload'] : array();
 
 		$name = !empty($summary['device_model']) ? $summary['device_model'] : 'Unnamed asset';
-		$owner = !empty($upload['reported_user']) ? $upload['reported_user'] : '';
+		$owner = $this->uploaded_owner_name($payload);
 
 		return array(
 			'asset_type' => 'pc',
@@ -107,6 +128,13 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 				'summary' => $summary,
 			),
 		);
+	}
+
+	private function uploaded_owner_name($payload)
+	{
+		$asset = isset($payload['asset']) && is_array($payload['asset']) ? $payload['asset'] : array();
+		$upload = isset($asset['upload']) && is_array($asset['upload']) ? $asset['upload'] : array();
+		return !empty($upload['reported_user']) ? sanitize_text_field($upload['reported_user']) : '';
 	}
 
 	private function build_observation_input($payload)

@@ -29,7 +29,7 @@ class Npcink_Device_Inventory_Assets_Controller
 	public function register_routes()
 	{
 		register_rest_route(
-			'npcink/v1',
+			'npcink-device-inventory/v1',
 			'/assets',
 			array(
 				array(
@@ -46,7 +46,7 @@ class Npcink_Device_Inventory_Assets_Controller
 		);
 
 		register_rest_route(
-			'npcink/v1',
+			'npcink-device-inventory/v1',
 			'/assets/(?P<uuid>[A-Za-z0-9_-]+)',
 			array(
 				array(
@@ -68,7 +68,7 @@ class Npcink_Device_Inventory_Assets_Controller
 		);
 
 		register_rest_route(
-			'npcink/v1',
+			'npcink-device-inventory/v1',
 			'/assets/(?P<uuid>[A-Za-z0-9_-]+)/identities',
 			array(
 				array(
@@ -85,7 +85,7 @@ class Npcink_Device_Inventory_Assets_Controller
 		);
 
 		register_rest_route(
-			'npcink/v1',
+			'npcink-device-inventory/v1',
 			'/assets/(?P<uuid>[A-Za-z0-9_-]+)/observations',
 			array(
 				'methods' => WP_REST_Server::READABLE,
@@ -95,7 +95,7 @@ class Npcink_Device_Inventory_Assets_Controller
 		);
 
 		register_rest_route(
-			'npcink/v1',
+			'npcink-device-inventory/v1',
 			'/assets/(?P<uuid>[A-Za-z0-9_-]+)/events',
 			array(
 				array(
@@ -112,7 +112,7 @@ class Npcink_Device_Inventory_Assets_Controller
 		);
 
 		register_rest_route(
-			'npcink/v1',
+			'npcink-device-inventory/v1',
 			'/events',
 			array(
 				'methods' => WP_REST_Server::READABLE,
@@ -122,7 +122,7 @@ class Npcink_Device_Inventory_Assets_Controller
 		);
 
 		register_rest_route(
-			'npcink/v1',
+			'npcink-device-inventory/v1',
 			'/observations',
 			array(
 				'methods' => WP_REST_Server::READABLE,

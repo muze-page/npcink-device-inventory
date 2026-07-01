@@ -13,7 +13,7 @@
 新版 Rust 客户端主路径使用：
 
 ```text
-POST /wp-json/npcink/v1/device-post-data-v2
+POST /wp-json/npcink-device-inventory/v1/device-post-data-v2
 name: 上传备注，可选
 data: 设备 JSON 对象
 ```
@@ -63,7 +63,7 @@ cargo run -- inspect --pretty > sample.json
 
 ```bash
 cargo run -- submit \
-  --site "https://example.com/wp-json/npcink/v1/device-post-data-v2" \
+  --site "https://example.com/wp-json/npcink-device-inventory/v1/device-post-data-v2" \
   --token "后台生成的上传授权码" \
   --note "测试设备"
 ```

@@ -16,7 +16,7 @@ class Npcink_Device_Inventory_Public
 	public function register_routes()
 	{
 		register_rest_route(
-			'npcink/v1',
+			'npcink-device-inventory/v1',
 			'/public-query',
 			array(
 				'methods' => WP_REST_Server::CREATABLE,
@@ -41,7 +41,7 @@ class Npcink_Device_Inventory_Public
 	public function render_public_search()
 	{
 		$options = Npcink_Device_Inventory_V3_Tables::options();
-		$endpoint = rest_url('npcink/v1/public-query');
+		$endpoint = rest_url('npcink-device-inventory/v1/public-query');
 		$enabled = !empty($options['public_query_enabled']);
 		$requires_code = !empty($options['public_query_access_code_hash']);
 		$root_id = function_exists('wp_unique_id') ? wp_unique_id('npcink-public-query-') : 'npcink-public-query-' . wp_rand(1000, 999999);

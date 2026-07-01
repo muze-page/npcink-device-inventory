@@ -77,9 +77,9 @@ http://npcink-device-manage.local/wp-admin/plugins.php?page=npcink_device_invent
 未登录状态下确认：
 
 ```text
-GET  /wp-json/npcink/v1/assets                 -> 403
-GET  /wp-json/npcink/v1/settings               -> 403
-POST /wp-json/npcink/v1/device-observations    -> 401
+GET  /wp-json/npcink-device-inventory/v1/assets                 -> 403
+GET  /wp-json/npcink-device-inventory/v1/settings               -> 403
+POST /wp-json/npcink-device-inventory/v1/device-observations    -> 401
 ```
 
 ## 干净安装检查

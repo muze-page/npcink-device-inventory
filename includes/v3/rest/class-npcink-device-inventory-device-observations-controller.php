@@ -20,7 +20,7 @@ class Npcink_Device_Inventory_Device_Observations_Controller
 	public function register_routes()
 	{
 		register_rest_route(
-			'npcink/v1',
+			'npcink-device-inventory/v1',
 			'/device-observations',
 			array(
 				'methods' => WP_REST_Server::CREATABLE,

@@ -21,7 +21,7 @@ security, packaging, and admin experience.
 ## Main Decisions
 
 1. New uploads use one v2 endpoint only:
-   `POST /wp-json/npcink/v1/device-post-data-v2`.
+   `POST /wp-json/npcink-device-inventory/v1/device-post-data-v2`.
 2. Legacy compatibility is not a long-term runtime requirement. Old data is
    converted once into the new structure.
 3. The stored device JSON is normalized into `_npcink_device`, `asset`, and

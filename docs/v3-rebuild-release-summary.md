@@ -26,7 +26,7 @@ The new model is asset-centered:
 This keeps manual records, client uploads, matching identities, observations, and historical changes under one asset ledger instead of splitting product behavior by legacy table type.
 
 ## WordPress Plugin Changes
-The WordPress side now exposes v3 REST routes under `/wp-json/npcink/v1`:
+The WordPress side now exposes v3 REST routes under `/wp-json/npcink-device-inventory/v1`:
 
 - `/assets`
 - `/assets/{uuid}`
@@ -78,7 +78,7 @@ Current behavior:
 
 - collects static hardware data locally
 - computes `stable_device_id_v2`
-- submits to `/wp-json/npcink/v1/device-observations`
+- submits to `/wp-json/npcink-device-inventory/v1/device-observations`
 - uses full client token values in the form `mda_<token-id>_<token-secret>`
 - signs upload requests with HMAC SHA-256 headers
 - sends v3 observation payloads with identity, summary, hardware, and raw data

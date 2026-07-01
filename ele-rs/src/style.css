@@ -13,9 +13,13 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
-  min-width: 860px;
+  min-width: 980px;
   min-height: 100vh;
   background:
     radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 28rem),
@@ -23,7 +27,8 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 
@@ -126,8 +131,16 @@ button {
   display: block;
 }
 
+.settings-layout {
+  display: grid;
+  grid-template-columns: minmax(360px, 480px) minmax(360px, 1fr);
+  gap: 36px;
+  align-items: start;
+  padding-top: 10px;
+}
+
 .upload-form {
-  max-width: 560px;
+  max-width: none;
 }
 
 .field {
@@ -155,15 +168,49 @@ button {
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.26);
 }
 
-.more-config {
-  margin-top: 8px;
-  color: rgba(255, 255, 255, 0.82);
+.config-toolbar {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 2px;
 }
 
-.more-config summary {
-  width: max-content;
-  cursor: pointer;
-  user-select: none;
+.config-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.manual-config-panel {
+  display: grid;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.config-state {
+  display: grid;
+  gap: 5px;
+  margin: 10px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px 0;
+  background: transparent;
+}
+
+.config-state span,
+.settings-summary-head span,
+.settings-summary-row span,
+.runtime-row span {
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 13px;
+}
+
+.config-state strong {
+  min-width: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 15px;
+  font-weight: 750;
+  text-align: left;
+  overflow-wrap: anywhere;
 }
 
 .preset-notice {
@@ -176,8 +223,7 @@ button {
   background: rgba(255, 255, 255, 0.12);
 }
 
-.preset-notice[hidden],
-.more-config[hidden] {
+.preset-notice[hidden] {
   display: none;
 }
 
@@ -196,28 +242,158 @@ button {
   font-size: 13px;
 }
 
-.form-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 18px;
+.side-column {
+  display: grid;
+  gap: 14px;
 }
 
-.inline-state {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 13px;
+.device-summary,
+.runtime-card {
+  display: grid;
+  gap: 16px;
+  max-width: 640px;
+  border-radius: 8px;
+  padding: 18px 20px;
+  background: rgba(0, 0, 0, 0.12);
 }
 
-.inline-state span {
+.settings-summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.summary-actions {
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
-  padding: 0 10px;
+  gap: 8px;
+}
+
+.settings-summary-head strong,
+.summary-refresh {
+  min-width: 0;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.16);
+  padding: 4px 10px;
+  color: rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.collect-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.collect-spinner {
+  display: none;
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  border-top-color: rgba(255, 255, 255, 0.86);
+  border-radius: 999px;
+  animation: collect-spin 0.8s linear infinite;
+}
+
+.collect-state.is-collecting .collect-spinner {
+  display: inline-block;
+}
+
+.summary-refresh {
+  border: 0;
+  cursor: pointer;
+}
+
+.summary-refresh:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.settings-summary-list {
+  display: grid;
+  gap: 0;
+  transition: opacity 0.18s ease;
+}
+
+.settings-summary-list.is-collecting {
+  opacity: 0.56;
+}
+
+@keyframes collect-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.settings-summary-row,
+.runtime-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 14px;
+  padding: 11px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-summary-row strong,
+.runtime-row strong {
+  min-width: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.runtime-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.runtime-row {
+  grid-template-columns: 1fr;
+  gap: 5px;
+  border-top: 0;
+  border-radius: 7px;
+  padding: 9px 10px;
+  background: rgba(255, 255, 255, 0.065);
+}
+
+.runtime-page-card {
+  max-width: 980px;
+  margin: 20px auto 0;
+  padding: 24px;
+}
+
+.runtime-page-head {
+  align-items: flex-start;
+}
+
+.runtime-page-head p {
+  max-width: 58ch;
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.runtime-page-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.runtime-page-grid .runtime-row {
+  min-height: 116px;
+  justify-content: center;
+  padding: 18px 20px;
+}
+
+.runtime-page-grid .runtime-row span {
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 15px;
+}
+
+.runtime-page-grid .runtime-row strong {
+  font-size: 24px;
 }
 
 .button {
@@ -231,10 +407,150 @@ button {
   cursor: pointer;
 }
 
+.button.compact {
+  min-width: 0;
+  height: 34px;
+  padding: 0 13px;
+}
+
+.button.config-button {
+  min-width: 0;
+  width: 100%;
+  height: 42px;
+  font-weight: 750;
+}
+
+.button.submit-button {
+  width: 100%;
+  min-width: 0;
+  height: 46px;
+  margin-top: 18px;
+  font-size: 16px;
+}
+
+.submit-meta {
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+}
+
+.config-button-dark {
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.config-button-dark:hover {
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.config-button-light {
+  color: #2c3b22;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.config-button-light:hover {
+  background: #ffffff;
+}
+
 .button.primary {
   color: #2c3b22;
   background: rgba(255, 255, 255, 0.92);
   font-weight: 700;
+}
+
+.config-dialog {
+  width: min(620px, calc(100vw - 48px));
+  border: 0;
+  border-radius: 8px;
+  padding: 0;
+  color: #ffffff;
+  background: rgba(45, 59, 34, 0.98);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+}
+
+.config-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.config-dialog-box {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.config-dialog h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.help-dialog {
+  width: min(380px, calc(100vw - 48px));
+}
+
+.result-dialog {
+  width: min(420px, calc(100vw - 48px));
+}
+
+.result-dialog .config-dialog-box {
+  gap: 16px;
+}
+
+.result-dialog h2 {
+  font-size: 22px;
+}
+
+.result-dialog-success h2 {
+  color: #f6fff0;
+}
+
+.result-dialog-error h2 {
+  color: #ffd8d2;
+}
+
+.dialog-copy,
+.dialog-note {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.dialog-copy {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dialog-note {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 13px;
+}
+
+.config-dialog textarea {
+  width: 100%;
+  min-height: 220px;
+  resize: vertical;
+  border: 0;
+  border-radius: 6px;
+  padding: 11px;
+  color: #172033;
+  background: rgba(255, 255, 255, 0.92);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  outline: none;
+}
+
+.config-dialog textarea:focus {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.26);
+}
+
+.dialog-message {
+  min-height: 20px;
+  color: #ffd5cf;
+  font-size: 13px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .button.secondary {
@@ -268,9 +584,80 @@ button {
 
 .overview-grid {
   display: grid;
-  grid-template-columns: 100px 1fr 3fr 2fr;
-  grid-auto-rows: minmax(96px, auto);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(104px, auto);
   gap: 10px;
+}
+
+.diagnostics-layout {
+  display: grid;
+  grid-template-columns: minmax(420px, 1fr) minmax(280px, 0.55fr);
+  gap: 24px;
+  padding-top: 20px;
+}
+
+.diagnostics-panel,
+.diagnostics-note {
+  min-width: 0;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.12);
+  padding: 22px;
+}
+
+.panel-kicker {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.diagnostics-panel h2 {
+  margin: 8px 0 10px;
+  font-size: 24px;
+}
+
+.diagnostics-panel p,
+.diagnostics-note p {
+  max-width: 64ch;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.7;
+}
+
+.diagnostics-note strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.diagnostics-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.diagnostics-button {
+  min-width: 150px;
+}
+
+.diagnostics-result {
+  display: grid;
+  gap: 6px;
+  min-height: 24px;
+  margin-top: 18px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+}
+
+.diagnostics-result span {
+  overflow-wrap: anywhere;
+}
+
+.diagnostics-result.ok {
+  color: #d8ffd8;
+}
+
+.diagnostics-result.error {
+  color: #ffd5cf;
 }
 
 .summary-tile {
@@ -286,8 +673,8 @@ button {
   text-align: center;
 }
 
-.summary-tile:nth-child(3),
-.summary-tile:nth-child(8) {
+.summary-tile:nth-child(2),
+.summary-tile:nth-child(4) {
   grid-column: span 2;
 }
 
@@ -445,16 +832,28 @@ button {
 }
 
 @media (max-width: 900px) {
-  body {
-    min-width: 760px;
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .device-summary {
+    max-width: none;
+  }
+
+  .runtime-card {
+    max-width: none;
+  }
+
+  .diagnostics-layout {
+    grid-template-columns: 1fr;
   }
 
   .overview-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .summary-tile:nth-child(3),
-  .summary-tile:nth-child(8) {
+  .summary-tile:nth-child(2),
+  .summary-tile:nth-child(4) {
     grid-column: span 1;
   }
 }

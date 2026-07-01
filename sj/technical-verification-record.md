@@ -82,8 +82,8 @@ wp --path='/Users/muze/Local Sites/npcink-device-inventory/app/public' plugin ac
 REST 未签名请求检查：
 
 ```text
-GET /wp-json/npcink/v1/query?data=test -> 403
-POST /wp-json/npcink/v1/device-post-data-v2 -> 403
+GET /wp-json/npcink-device-inventory/v1/query?data=test -> 403
+POST /wp-json/npcink-device-inventory/v1/device-post-data-v2 -> 403
 ```
 
 ## 包内容扫描

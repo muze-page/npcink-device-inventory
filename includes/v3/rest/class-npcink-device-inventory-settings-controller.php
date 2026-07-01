@@ -9,7 +9,7 @@ class Npcink_Device_Inventory_Settings_Controller
 	public function register_routes()
 	{
 		register_rest_route(
-			'npcink/v1',
+			'npcink-device-inventory/v1',
 			'/settings',
 			array(
 				array(
@@ -26,7 +26,7 @@ class Npcink_Device_Inventory_Settings_Controller
 		);
 
 		register_rest_route(
-			'npcink/v1',
+			'npcink-device-inventory/v1',
 			'/client-tokens',
 			array(
 				'methods' => WP_REST_Server::CREATABLE,
@@ -36,7 +36,7 @@ class Npcink_Device_Inventory_Settings_Controller
 		);
 
 		register_rest_route(
-			'npcink/v1',
+			'npcink-device-inventory/v1',
 			'/client-tokens/(?P<id>[a-z0-9]{12})',
 			array(
 				array(
@@ -53,7 +53,7 @@ class Npcink_Device_Inventory_Settings_Controller
 		);
 
 		register_rest_route(
-			'npcink/v1',
+			'npcink-device-inventory/v1',
 			'/client-tokens/(?P<id>[a-z0-9]{12})/package-config',
 			array(
 				'methods' => WP_REST_Server::READABLE,
@@ -63,7 +63,7 @@ class Npcink_Device_Inventory_Settings_Controller
 		);
 
 		register_rest_route(
-			'npcink/v1',
+			'npcink-device-inventory/v1',
 			'/settings/public-query-page',
 			array(
 				'methods' => WP_REST_Server::CREATABLE,
@@ -366,20 +366,21 @@ class Npcink_Device_Inventory_Settings_Controller
 	{
 		$base = trim((string) $input);
 		if ($base === '') {
-			$base = rest_url('npcink/v1');
+			$base = rest_url('npcink-device-inventory/v1');
 		}
 		$base = untrailingslashit($base);
 
 		if (substr($base, -20) === '/device-observations') {
 			return $base;
 		}
-		if (substr($base, -10) === '/npcink/v1') {
+		$namespace_path = '/npcink-device-inventory/v1';
+		if (substr($base, -strlen($namespace_path)) === $namespace_path) {
 			return $base . '/device-observations';
 		}
 		if (substr($base, -8) === '/wp-json') {
-			return $base . '/npcink/v1/device-observations';
+			return $base . '/npcink-device-inventory/v1/device-observations';
 		}
-		return $base . '/wp-json/npcink/v1/device-observations';
+		return $base . '/wp-json/npcink-device-inventory/v1/device-observations';
 	}
 
 	private function random_secret()

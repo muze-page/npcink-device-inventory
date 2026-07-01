@@ -26,7 +26,7 @@ the WordPress plugin. New uploads and admin surfaces use this v2 shape only.
 New uploader path:
 
 ```text
-POST /wp-json/npcink/v1/device-post-data-v2
+POST /wp-json/npcink-device-inventory/v1/device-post-data-v2
 ```
 
 Request body:

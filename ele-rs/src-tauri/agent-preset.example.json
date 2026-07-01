@@ -1,7 +1,7 @@
 {
   "appName": "Npcink Device Agent",
   "siteUrl": "https://example.com/",
-  "uploadEndpoint": "https://example.com/wp-json/npcink/v1/device-observations",
+  "uploadEndpoint": "https://example.com/wp-json/npcink-device-inventory/v1/device-observations",
   "tokenId": "devtest00001",
   "tokenSecret": "replace-with-client-token-secret",
   "tokenValue": "mda_devtest00001_replace-with-client-token-secret",

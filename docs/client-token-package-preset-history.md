@@ -74,8 +74,8 @@ The original enqueue version was the plugin version, so browser caches could kee
 The backend now exposes:
 
 ```text
-GET /wp-json/npcink/v1/client-tokens/{id}/package-config
-PATCH /wp-json/npcink/v1/client-tokens/{id}
+GET /wp-json/npcink-device-inventory/v1/client-tokens/{id}/package-config
+PATCH /wp-json/npcink-device-inventory/v1/client-tokens/{id}
 ```
 
 The package-config response contains:

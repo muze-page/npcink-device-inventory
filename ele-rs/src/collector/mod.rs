@@ -5,7 +5,7 @@ use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::net::IpAddr;
-use sysinfo::{Disks, Networks, System};
+use sysinfo::{Components, Disks, Networks, System};
 
 mod platform;
 
@@ -49,6 +49,110 @@ pub fn collect_static_data() -> Result<Value> {
     platform::enrich(&mut root);
 
     Ok(Value::Object(root))
+}
+
+pub fn collect_runtime_status() -> Result<Value> {
+    let mut system = System::new_all();
+    system.refresh_all();
+
+    let disks = Disks::new_with_refreshed_list();
+    let networks = Networks::new_with_refreshed_list();
+    let network_ips = network_ip_map();
+    let components = Components::new_with_refreshed_list();
+
+    let cpu_usage = system.global_cpu_info().cpu_usage();
+    let total_memory = system.total_memory();
+    let available_memory = system.available_memory();
+    let used_memory = match system.used_memory() {
+        used if used > 0 => used.min(total_memory),
+        _ if available_memory > 0 => total_memory.saturating_sub(available_memory),
+        _ => 0,
+    };
+    let (total_disk, available_disk, disk_mount) = runtime_disk_usage(&disks);
+    let used_disk = total_disk.saturating_sub(available_disk);
+    let default_net = collect_networks(&networks, &network_ips)
+        .as_array()
+        .and_then(|items| {
+            items
+                .iter()
+                .find(|item| {
+                    item.get("default")
+                        .and_then(Value::as_bool)
+                        .unwrap_or(false)
+                })
+                .or_else(|| items.first())
+        })
+        .cloned()
+        .unwrap_or_else(|| json!({}));
+
+    let temperatures = components
+        .iter()
+        .filter_map(|component| {
+            let temperature = component.temperature();
+            if !temperature.is_finite() || !(0.0..=130.0).contains(&temperature) {
+                return None;
+            }
+            Some(json!({
+                "label": component.label(),
+                "temperature_c": temperature,
+                "critical_c": component.critical(),
+            }))
+        })
+        .collect::<Vec<_>>();
+
+    Ok(json!({
+        "collected_at": Utc::now().to_rfc3339(),
+        "cpu": {
+            "usage_percent": cpu_usage,
+            "cores": system.cpus().len(),
+        },
+        "memory": {
+            "total": total_memory,
+            "used": used_memory,
+            "available": available_memory,
+        },
+        "disk": {
+            "total": total_disk,
+            "used": used_disk,
+            "available": available_disk,
+            "mount": disk_mount,
+        },
+        "network": default_net,
+        "temperatures": temperatures,
+    }))
+}
+
+fn runtime_disk_usage(disks: &Disks) -> (u64, u64, String) {
+    if cfg!(target_os = "macos") {
+        for mount in ["/", "/System/Volumes/Data"] {
+            if let Some(disk) = disks
+                .list()
+                .iter()
+                .find(|disk| disk.mount_point().to_string_lossy() == mount)
+            {
+                return (
+                    disk.total_space(),
+                    disk.available_space(),
+                    mount.to_string(),
+                );
+            }
+        }
+    }
+
+    let total = disks
+        .list()
+        .iter()
+        .filter(|disk| !disk.mount_point().as_os_str().is_empty())
+        .map(|disk| disk.total_space())
+        .sum::<u64>();
+    let available = disks
+        .list()
+        .iter()
+        .filter(|disk| !disk.mount_point().as_os_str().is_empty())
+        .map(|disk| disk.available_space())
+        .sum::<u64>();
+
+    (total, available, "all".to_string())
 }
 
 pub fn stable_device_id_v2(data: &Value) -> Option<String> {

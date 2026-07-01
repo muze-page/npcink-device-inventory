@@ -167,13 +167,13 @@ fn resolve_observation_endpoint(site: &str) -> String {
     if site.ends_with("/device-observations") {
         return site.to_string();
     }
-    if site.ends_with("/npcink/v1") {
+    if site.ends_with("/npcink-device-inventory/v1") {
         return format!("{site}/device-observations");
     }
     if site.ends_with("/wp-json") {
-        return format!("{site}/npcink/v1/device-observations");
+        return format!("{site}/npcink-device-inventory/v1/device-observations");
     }
-    format!("{site}/wp-json/npcink/v1/device-observations")
+    format!("{site}/wp-json/npcink-device-inventory/v1/device-observations")
 }
 
 fn value_at(data: &Value, pointer: &str) -> Value {
@@ -383,11 +383,11 @@ mod tests {
     fn resolves_common_site_inputs_to_v3_observation_endpoint() {
         assert_eq!(
             resolve_observation_endpoint("https://example.com"),
-            "https://example.com/wp-json/npcink/v1/device-observations"
+            "https://example.com/wp-json/npcink-device-inventory/v1/device-observations"
         );
         assert_eq!(
-            resolve_observation_endpoint("https://example.com/wp-json/npcink/v1"),
-            "https://example.com/wp-json/npcink/v1/device-observations"
+            resolve_observation_endpoint("https://example.com/wp-json/npcink-device-inventory/v1"),
+            "https://example.com/wp-json/npcink-device-inventory/v1/device-observations"
         );
     }
 

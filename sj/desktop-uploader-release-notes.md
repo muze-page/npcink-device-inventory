@@ -13,7 +13,7 @@
 - 采集本机硬件摘要和设备身份信号。
 - 生成 `stable_device_id_v2`，帮助服务端识别同一台设备。
 - 使用管理员在 WordPress 后台生成的上传授权码发送 HMAC 签名请求。
-- 将采集结果提交到 `/wp-json/npcink/v1/device-post-data-v2`。
+- 将采集结果提交到 `/wp-json/npcink-device-inventory/v1/device-post-data-v2`。
 
 桌面软件不负责：
 
@@ -26,7 +26,7 @@
 
 - 客户端目录：`ele-rs/`
 - 技术栈：Rust + Tauri
-- 上传接口：`/wp-json/npcink/v1/device-post-data-v2`
+- 上传接口：`/wp-json/npcink-device-inventory/v1/device-post-data-v2`
 - 授权方式：WordPress 后台生成的客户端授权码 + HMAC 请求签名
 - 数据契约：`docs/device-data-v2-contract.md`
 
@@ -52,7 +52,7 @@
 上传地址格式：
 
 ```text
-https://example.com/wp-json/npcink/v1/device-post-data-v2
+https://example.com/wp-json/npcink-device-inventory/v1/device-post-data-v2
 ```
 
 ### 用户使用流程
@@ -89,7 +89,7 @@ CLI 验证：
 cd ele-rs
 cargo run -- inspect --pretty
 cargo run -- stable-id
-cargo run -- submit --site "https://example.com/wp-json/npcink/v1/device-post-data-v2" --token "后台生成的上传授权码" --note "张三"
+cargo run -- submit --site "https://example.com/wp-json/npcink-device-inventory/v1/device-post-data-v2" --token "后台生成的上传授权码" --note "张三"
 ```
 
 ## 发布前检查

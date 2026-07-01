@@ -1,5 +1,5 @@
 === Npcink Device Inventory ===
-Contributors: npcink
+Contributors: muze233
 Tags: inventory, assets, device management, rest api, admin
 Requires at least: 6.5
 Tested up to: 7.0

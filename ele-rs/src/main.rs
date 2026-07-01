@@ -69,6 +69,6 @@ fn print_help() {
 Commands:\n\
   inspect [--pretty]    Print compatible hardware JSON\n\
   stable-id             Print v2 stable device id\n\
-  submit --site URL --token TOKEN [--note NOTE]            Submit to v3 observation endpoint\n"
+  submit --site URL --token TOKEN [--note NOTE]            Submit to device observation endpoint\n"
     );
 }

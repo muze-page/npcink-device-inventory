@@ -705,18 +705,18 @@ const buildClientTokenValue = (token: CreatedClientToken) =>
 const buildClientUploadEndpoint = (input?: string) => {
   const base = (input || RestUrl).trim().replace(/\/+$/, "");
   if (!base) {
-    return "/wp-json/npcink/v1/device-observations";
+    return "/wp-json/npcink-device-inventory/v1/device-observations";
   }
   if (base.endsWith("/device-observations")) {
     return base;
   }
-  if (base.endsWith("/npcink/v1")) {
+  if (base.endsWith("/npcink-device-inventory/v1")) {
     return `${base}/device-observations`;
   }
   if (base.endsWith("/wp-json")) {
-    return `${base}/npcink/v1/device-observations`;
+    return `${base}/npcink-device-inventory/v1/device-observations`;
   }
-  return `${base}/wp-json/npcink/v1/device-observations`;
+  return `${base}/wp-json/npcink-device-inventory/v1/device-observations`;
 };
 
 const buildClientSubmitCommand = (token: CreatedClientToken, uploadEndpoint: string) =>
@@ -1691,7 +1691,7 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
     },
     {
       onSuccess: () => {
-        message.success("打包配置已复制");
+        message.success("上传配置已复制");
       },
     }
   );
@@ -1741,10 +1741,10 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
             loading={packageConfigMutation.isLoading && packageConfigMutation.variables?.id === token.id}
             onClick={() =>
               Modal.confirm({
-                title: "复制打包配置？",
+                title: "复制上传配置？",
                 content: (
                   <Space direction="vertical" size={4}>
-                    <Text>配置包含客户端令牌密钥，只用于生成安装包。</Text>
+                    <Text>配置包含客户端令牌密钥，可用于客户端导入或生成安装包。</Text>
                     <Text type="secondary">Token ID：{token.id}</Text>
                   </Space>
                 ),
@@ -1754,7 +1754,7 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
               })
             }
           >
-            复制打包配置
+            复制上传配置
           </Button>
           <Button
             size="small"

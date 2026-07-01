@@ -51,7 +51,7 @@
 2. v2 上传接口地址：
 
 ```text
-https://example.com/wp-json/npcink/v1/device-post-data-v2
+https://example.com/wp-json/npcink-device-inventory/v1/device-post-data-v2
 ```
 
 3. 后台生成的客户端授权码。

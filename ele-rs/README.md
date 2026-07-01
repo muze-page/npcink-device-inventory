@@ -5,7 +5,7 @@ Rust/Tauri 设备采集与上传客户端，负责采集本机硬件事实并提
 客户端上传到：
 
 ```text
-POST /wp-json/npcink/v1/device-observations
+POST /wp-json/npcink-device-inventory/v1/device-observations
 ```
 
 上传 body 使用 v3 observation 合同：
@@ -46,11 +46,19 @@ npm run tauri:dev
 npm run tauri:build
 ```
 
+运行时导入：
+
+1. 在 WordPress 后台客户端接入弹窗中点击“复制上传配置”。
+2. 打开桌面客户端，点击“导入上传配置”。
+3. 粘贴复制到的 JSON 并导入。
+
+导入后会预填站点地址和完整授权码，用户仍可填写本次上传备注。
+
 预设打包：
 
 ```bash
 cp src-tauri/agent-preset.example.json src-tauri/agent-preset.local.json
-# 将 WordPress 后台“复制打包配置”得到的 JSON 粘贴进 agent-preset.local.json
+# 将 WordPress 后台“复制上传配置”得到的 JSON 粘贴进 agent-preset.local.json
 npm run tauri:build
 ```
 
@@ -71,7 +79,7 @@ cargo run -- stable-id
 cargo run -- submit --site "https://example.com" --token "后台生成的完整授权码" --note "张三"
 ```
 
-`--site` 可以填写站点首页、`/wp-json`、`/wp-json/npcink/v1` 或完整 `/device-observations` endpoint；客户端会自动归一化到 v3 上传接口。
+`--site` 可以填写站点首页、`/wp-json`、`/wp-json/npcink-device-inventory/v1` 或完整 `/device-observations` endpoint；客户端会自动归一化到设备上传接口。
 
 ## 桌面客户端结构
 
@@ -88,7 +96,7 @@ ele-rs/
 - 上传备注配置；预设打包时隐藏站点地址和完整授权码
 - 本机硬件采集预览
 - stable device id 展示
-- 提交到 v3 `/device-observations`
+- 提交到 `/device-observations`
 
 ## 本地环境
 

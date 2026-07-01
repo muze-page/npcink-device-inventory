@@ -25,11 +25,11 @@ Plugin settings are stored in `npcink_device_inventory_v3_options`. During unins
 
 ## API And Auth
 
-The REST namespace is `npcink/v1`.
+The REST namespace is `npcink-device-inventory/v1`.
 
 - Admin endpoints require `manage_options` plus a valid WordPress REST nonce.
-- Device upload uses `/wp-json/npcink/v1/device-observations` and requires a full authorization code generated in the admin UI. The client signs requests with timestamp, nonce, body hash, and HMAC.
-- The desktop client may receive the site home URL, `/wp-json`, `/wp-json/npcink/v1`, or the full upload endpoint. It normalizes these inputs to the v3 observation endpoint.
+- Device upload uses `/wp-json/npcink-device-inventory/v1/device-observations` and requires a full authorization code generated in the admin UI. The client signs requests with timestamp, nonce, body hash, and HMAC.
+- The desktop client may receive the site home URL, `/wp-json`, `/wp-json/npcink-device-inventory/v1`, or the full upload endpoint. It normalizes these inputs to the v3 observation endpoint.
 
 ## Local Verification
 

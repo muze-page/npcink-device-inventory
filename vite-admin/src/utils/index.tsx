@@ -22,7 +22,7 @@ const getLocalizedData = (): DataLocal => {
 const localizedData = getLocalizedData();
 
 export const Site = localizedData.site || "";
-export const RestUrl = localizedData.rest_url || (Site ? `${Site}/wp-json/npcink/v1` : "/wp-json/npcink/v1");
+export const RestUrl = localizedData.rest_url || (Site ? `${Site}/wp-json/npcink-device-inventory/v1` : "/wp-json/npcink-device-inventory/v1");
 export const RestNonce = localizedData.rest_nonce || "";
 export const Locale = localizedData.locale || "zh_CN";
 

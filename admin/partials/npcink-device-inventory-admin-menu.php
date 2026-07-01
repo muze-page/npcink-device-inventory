@@ -115,7 +115,7 @@ if (!class_exists('Npcink_Device_Inventory_Admin_Menu')) {
 	                'npcinkDeviceInventoryData',
 	                array(
 	                    'site' => home_url(),
-	                    'rest_url' => esc_url_raw(rest_url('npcink/v1')),
+	                    'rest_url' => esc_url_raw(rest_url('npcink-device-inventory/v1')),
 	                    'rest_nonce' => wp_create_nonce('wp_rest'),
 	                    'locale' => function_exists('determine_locale') ? determine_locale() : get_locale(),
 	                    'labels' => self::admin_labels(),
