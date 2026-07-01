@@ -610,6 +610,123 @@ interface AnalysisBarDatum {
   accent?: string;
 }
 
+interface HardwareQueryState {
+  memoryGb?: string;
+  graphics?: string;
+  board?: string;
+  diskMinGb?: string;
+  department?: string;
+  status?: string;
+}
+
+interface HardwareQueryDepartmentRow {
+  department: string;
+  matched: number;
+  total: number;
+  resultRate: number;
+  departmentRate: number;
+}
+
+const DISK_QUERY_OPTIONS = [
+  { label: "至少 256 GB", value: "256" },
+  { label: "至少 512 GB", value: "512" },
+  { label: "至少 1 TB", value: "1024" },
+  { label: "至少 2 TB", value: "2048" },
+  { label: "至少 4 TB", value: "4096" },
+];
+
+const BYTES_PER_GB = 1024 ** 3;
+
+const formatHardwareGb = (bytes: number) => (bytes > 0 ? formatBytes(bytes) : "-");
+
+const memoryLabel = (asset: Asset) => formatHardwareGb(hardwareMemoryBytes(asset));
+
+const memoryMatches = (asset: Asset, targetGb?: string) => {
+  if (!targetGb) {
+    return true;
+  }
+  return memoryLabel(asset) === targetGb;
+};
+
+const diskMatches = (asset: Asset, minGb?: string) => {
+  if (!minGb) {
+    return true;
+  }
+  const totalGb = hardwareDiskBytes(asset) / BYTES_PER_GB;
+  return totalGb >= Number(minGb) * 0.88;
+};
+
+const graphicsLabel = (asset: Asset) =>
+  hardwareModelLabel(assetHardwareContext(asset).extracted.graphics, "显卡未知");
+
+const boardLabel = (asset: Asset) => {
+  const context = assetHardwareContext(asset);
+  const baseboard = getRecord(context.hardware.baseboard);
+  const system = getRecord(context.hardware.system);
+  return hardwareModelLabel(
+    firstText(baseboard.model, baseboard.name, baseboard.product, system.model, context.extracted.baseboard),
+    "主板未知"
+  );
+};
+
+const hardwareQueryActive = (query: HardwareQueryState) =>
+  Boolean(query.memoryGb || query.graphics || query.board || query.diskMinGb || query.department || query.status);
+
+const hardwareQueryAssetMatches = (
+  asset: Asset,
+  query: HardwareQueryState,
+  ignoredField?: keyof HardwareQueryState
+) => {
+  if (ignoredField !== "department" && query.department && (asset.department || "未分配") !== query.department) {
+    return false;
+  }
+  if (ignoredField !== "status" && query.status && asset.status !== query.status) {
+    return false;
+  }
+  if (ignoredField !== "memoryGb" && !memoryMatches(asset, query.memoryGb)) {
+    return false;
+  }
+  if (ignoredField !== "diskMinGb" && !diskMatches(asset, query.diskMinGb)) {
+    return false;
+  }
+  if (ignoredField !== "graphics" && query.graphics && graphicsLabel(asset) !== query.graphics) {
+    return false;
+  }
+  if (ignoredField !== "board" && query.board && boardLabel(asset) !== query.board) {
+    return false;
+  }
+  return true;
+};
+
+const hardwareFacetOptions = (
+  assets: Asset[],
+  query: HardwareQueryState,
+  ignoredField: keyof HardwareQueryState,
+  getValue: (asset: Asset) => string,
+  compare?: (a: string, b: string) => number
+) => {
+  const counts = countBy(
+    assets.filter((asset) => hardwareQueryAssetMatches(asset, query, ignoredField)),
+    getValue
+  );
+  return Object.entries(counts)
+    .filter(([value]) => value && !value.endsWith("未知") && value !== "-")
+    .sort(([a], [b]) => (compare ? compare(a, b) : a.localeCompare(b, "zh-CN")))
+    .map(([value, count]) => ({
+      label: `${value}（${count}）`,
+      value,
+    }));
+};
+
+const memoryOptionCompare = (a: string, b: string) => {
+  const first = Number.parseFloat(a);
+  const second = Number.parseFloat(b);
+  if (Number.isFinite(first) && Number.isFinite(second)) {
+    return first - second;
+  }
+  return a.localeCompare(b, "zh-CN");
+};
+
 const ViewModeToggle = ({
   value,
   onChange,
@@ -3048,6 +3165,8 @@ const HardwareAuditWorkspace = () => {
   const [hardwareRankType, setHardwareRankType] = useState<"cpu" | "disk" | "memory" | "board">("board");
   const [departmentView, setDepartmentView] = useState<AnalysisViewMode>("chart");
   const [hardwareRankView, setHardwareRankView] = useState<AnalysisViewMode>("chart");
+  const [hardwareQueryView, setHardwareQueryView] = useState<AnalysisViewMode>("table");
+  const [hardwareQuery, setHardwareQuery] = useState<HardwareQueryState>({ memoryGb: "32 GB" });
   const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [showHandledIssues, setShowHandledIssues] = useState(false);
@@ -3066,6 +3185,92 @@ const HardwareAuditWorkspace = () => {
         .sort((a, b) => a.localeCompare(b, "zh-CN")),
     [auditAssets]
   );
+  const hardwareMemoryOptions = useMemo(
+    () => hardwareFacetOptions(auditAssets, hardwareQuery, "memoryGb", memoryLabel, memoryOptionCompare),
+    [auditAssets, hardwareQuery]
+  );
+  const graphicsOptions = useMemo(
+    () => hardwareFacetOptions(auditAssets, hardwareQuery, "graphics", graphicsLabel),
+    [auditAssets, hardwareQuery]
+  );
+  const boardOptions = useMemo(
+    () => hardwareFacetOptions(auditAssets, hardwareQuery, "board", boardLabel),
+    [auditAssets, hardwareQuery]
+  );
+  const hardwareDepartmentOptions = useMemo(
+    () => hardwareFacetOptions(auditAssets, hardwareQuery, "department", (asset) => asset.department || "未分配"),
+    [auditAssets, hardwareQuery]
+  );
+  const hardwareStatusOptions = useMemo(
+    () =>
+      hardwareFacetOptions(auditAssets, hardwareQuery, "status", (asset) => asset.status)
+        .map((option) => ({
+          ...option,
+          label: `${statusLabel(option.value)}${option.label.replace(option.value, "")}`,
+        })),
+    [auditAssets, hardwareQuery]
+  );
+  const hardwareBaseAssets = useMemo(
+    () =>
+      auditAssets.filter((asset) => {
+        if (hardwareQuery.department && (asset.department || "未分配") !== hardwareQuery.department) {
+          return false;
+        }
+        if (hardwareQuery.status && asset.status !== hardwareQuery.status) {
+          return false;
+        }
+        return true;
+      }),
+    [auditAssets, hardwareQuery.department, hardwareQuery.status]
+  );
+  const hardwareQueryAssets = useMemo(
+    () => auditAssets.filter((asset) => hardwareQueryAssetMatches(asset, hardwareQuery)),
+    [auditAssets, hardwareQuery]
+  );
+  const hardwareQueryRows = useMemo<HardwareQueryDepartmentRow[]>(() => {
+    const totals = countBy(hardwareBaseAssets, (asset) => asset.department || "未分配");
+    const matched = countBy(hardwareQueryAssets, (asset) => asset.department || "未分配");
+    return sortedEntries(matched).map(([department, count]) => ({
+      department,
+      matched: count,
+      total: totals[department] || count,
+      resultRate: hardwareQueryAssets.length > 0 ? (count / hardwareQueryAssets.length) * 100 : 0,
+      departmentRate: (totals[department] || 0) > 0 ? (count / totals[department]) * 100 : 0,
+    }));
+  }, [hardwareBaseAssets, hardwareQueryAssets]);
+  const hardwareQueryChartRows = useMemo<AnalysisBarDatum[]>(
+    () =>
+      hardwareQueryRows.map((row) => ({
+        key: row.department,
+        label: row.department,
+        value: row.matched,
+        valueText: `${row.matched} 台 · ${formatPercentValue(row.resultRate)}`,
+        caption: `占该部门 ${formatPercentValue(row.departmentRate)}，部门电脑 ${row.total} 台`,
+      })),
+    [hardwareQueryRows]
+  );
+  const updateHardwareQuery = <K extends keyof HardwareQueryState>(key: K, value: HardwareQueryState[K]) => {
+    setHardwareQuery((previous) => ({ ...previous, [key]: value }));
+  };
+  useEffect(() => {
+    setHardwareQuery((previous) => {
+      const next = { ...previous };
+      const optionMap: Record<keyof HardwareQueryState, string[]> = {
+        memoryGb: hardwareMemoryOptions.map((option) => option.value),
+        graphics: graphicsOptions.map((option) => option.value),
+        board: boardOptions.map((option) => option.value),
+        diskMinGb: DISK_QUERY_OPTIONS.map((option) => option.value),
+        department: hardwareDepartmentOptions.map((option) => option.value),
+        status: hardwareStatusOptions.map((option) => option.value),
+      };
+      (Object.keys(optionMap) as Array<keyof HardwareQueryState>).forEach((key) => {
+        if (next[key] && !optionMap[key].includes(String(next[key]))) {
+          delete next[key];
+        }
+      });
+      return JSON.stringify(previous) === JSON.stringify(next) ? previous : next;
+    });
+  }, [boardOptions, graphicsOptions, hardwareDepartmentOptions, hardwareMemoryOptions, hardwareStatusOptions]);
   const departmentRows = useMemo(() => {
     const rows = new Map<string, Record<string, number | string>>();
     auditAssets.forEach((asset) => {
@@ -3303,6 +3508,181 @@ const HardwareAuditWorkspace = () => {
             <strong>{auditAssetsQuery.isLoading ? "-" : item.value}</strong>
           </button>
         ))}
+      </div>
+      <div className="npcink-v3-hardware-query">
+        <div className="npcink-v3-hardware-query-head">
+          <div>
+            <Text strong>组合筛选分析</Text>
+            <Text type="secondary">按内存、显卡、主板、硬盘、部门和状态筛出机器，并查看部门数量与占比。</Text>
+          </div>
+          <Space wrap>
+            <Tag color={hardwareQueryActive(hardwareQuery) ? "blue" : "default"}>
+              命中 {auditAssetsQuery.isLoading ? "-" : hardwareQueryAssets.length} / {hardwareBaseAssets.length} 台
+            </Tag>
+            <Button
+              size="small"
+              disabled={!hardwareQueryActive(hardwareQuery)}
+              onClick={() => setHardwareQuery({})}
+            >
+              重置
+            </Button>
+          </Space>
+        </div>
+        <div className="npcink-v3-hardware-query-controls">
+          <Select
+            allowClear
+            showSearch
+            placeholder="内存容量"
+            options={hardwareMemoryOptions}
+            value={hardwareQuery.memoryGb}
+            onChange={(value) => updateHardwareQuery("memoryGb", value)}
+            popupMatchSelectWidth={false}
+            filterOption={(input, option) => String(option?.label || "").toLowerCase().includes(input.toLowerCase())}
+          />
+          <Select
+            allowClear
+            showSearch
+            placeholder="显卡型号"
+            options={graphicsOptions}
+            value={hardwareQuery.graphics}
+            onChange={(value) => updateHardwareQuery("graphics", value)}
+            popupMatchSelectWidth={false}
+            filterOption={(input, option) => String(option?.label || "").toLowerCase().includes(input.toLowerCase())}
+          />
+          <Select
+            allowClear
+            showSearch
+            placeholder="主板型号"
+            options={boardOptions}
+            value={hardwareQuery.board}
+            onChange={(value) => updateHardwareQuery("board", value)}
+            popupMatchSelectWidth={false}
+            filterOption={(input, option) => String(option?.label || "").toLowerCase().includes(input.toLowerCase())}
+          />
+          <Select
+            allowClear
+            placeholder="硬盘容量"
+            options={DISK_QUERY_OPTIONS}
+            value={hardwareQuery.diskMinGb}
+            onChange={(value) => updateHardwareQuery("diskMinGb", value)}
+          />
+          <Select
+            allowClear
+            showSearch
+            placeholder="部门"
+            options={hardwareDepartmentOptions}
+            value={hardwareQuery.department}
+            onChange={(value) => updateHardwareQuery("department", value)}
+            popupMatchSelectWidth={false}
+            filterOption={(input, option) => String(option?.label || "").toLowerCase().includes(input.toLowerCase())}
+          />
+          <Select
+            allowClear
+            placeholder="状态"
+            options={hardwareStatusOptions}
+            value={hardwareQuery.status}
+            onChange={(value) => updateHardwareQuery("status", value)}
+          />
+        </div>
+        <div className="npcink-v3-hardware-query-summary">
+          <div>
+            <Text type="secondary">筛选范围</Text>
+            <strong>{hardwareBaseAssets.length}</strong>
+            <span>台电脑</span>
+          </div>
+          <div className="is-primary">
+            <Text type="secondary">命中数量</Text>
+            <strong>{hardwareQueryAssets.length}</strong>
+            <span>占范围 {formatPercentValue(hardwareBaseAssets.length ? (hardwareQueryAssets.length / hardwareBaseAssets.length) * 100 : 0)}</span>
+          </div>
+          <div>
+            <Text type="secondary">涉及部门</Text>
+            <strong>{hardwareQueryRows.length}</strong>
+            <span>个部门</span>
+          </div>
+        </div>
+        <div className="npcink-v3-hardware-query-results">
+          <div className="npcink-v3-audit-block">
+            <div className="npcink-v3-audit-block-head">
+              <div>
+                <Text strong>部门分布</Text>
+                <Text type="secondary">占结果 = 该部门命中 / 全部命中；部门占比 = 该部门命中 / 该部门电脑</Text>
+              </div>
+              <ViewModeToggle value={hardwareQueryView} onChange={setHardwareQueryView} />
+            </div>
+            {hardwareQueryView === "chart" ? (
+              <AnalysisBarChart
+                rows={hardwareQueryChartRows}
+                loading={auditAssetsQuery.isLoading}
+                emptyText="暂无匹配部门"
+                valueFormatter={(value) => `${value} 台`}
+              />
+            ) : (
+              <Table
+                rowKey="department"
+                size="small"
+                pagination={false}
+                dataSource={hardwareQueryRows}
+                loading={auditAssetsQuery.isLoading}
+                columns={[
+                  { title: "部门", dataIndex: "department" },
+                  { title: "命中", dataIndex: "matched", width: 80 },
+                  { title: "部门电脑", dataIndex: "total", width: 100 },
+                  { title: "占结果", dataIndex: "resultRate", width: 100, render: formatPercentValue },
+                  { title: "部门占比", dataIndex: "departmentRate", width: 110, render: formatPercentValue },
+                ]}
+                locale={{ emptyText: <Empty description="暂无匹配部门" /> }}
+              />
+            )}
+          </div>
+          <div className="npcink-v3-audit-block">
+            <div className="npcink-v3-audit-block-head">
+              <div>
+                <Text strong>命中机器</Text>
+                <Text type="secondary">可直接打开资产详情核对采集字段。</Text>
+              </div>
+            </div>
+            <Table
+              rowKey="uuid"
+              size="small"
+              pagination={{ pageSize: 6, showSizeChanger: false }}
+              dataSource={hardwareQueryAssets}
+              loading={auditAssetsQuery.isLoading}
+              columns={[
+                {
+                  title: "资产",
+                  width: 180,
+                  render: (_, asset) => (
+                    <Space direction="vertical" size={2}>
+                      <Text strong>{asset.assetNumber || asset.name || asset.uuid}</Text>
+                      <Text type="secondary">{[asset.ownerName, asset.department].filter(Boolean).join(" / ") || "-"}</Text>
+                    </Space>
+                  ),
+                },
+                { title: "内存", width: 90, render: (_, asset) => formatHardwareGb(hardwareMemoryBytes(asset)) },
+                { title: "硬盘", width: 90, render: (_, asset) => formatHardwareGb(hardwareDiskBytes(asset)) },
+                { title: "显卡", render: (_, asset) => graphicsLabel(asset) },
+                { title: "主板", render: (_, asset) => boardLabel(asset) },
+                {
+                  title: "操作",
+                  width: 88,
+                  render: (_, asset) => (
+                    <Button
+                      size="small"
+                      type="link"
+                      className="npcink-v3-link"
+                      onClick={() => setSelectedUuid(asset.uuid)}
+                    >
+                      查看
+                    </Button>
+                  ),
+                },
+              ]}
+              scroll={{ x: 940 }}
+              locale={{ emptyText: <Empty description="暂无匹配机器" /> }}
+            />
+          </div>
+        </div>
       </div>
       <div className="npcink-v3-audit-panel">
         <div className="npcink-v3-audit-block">
