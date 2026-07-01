@@ -11,7 +11,8 @@
     "tauri:build": "tauri build"
   },
   "dependencies": {
-    "@tauri-apps/api": "2.11.1"
+    "@tauri-apps/api": "2.11.1",
+    "uplot": "^1.6.32"
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.11.2",

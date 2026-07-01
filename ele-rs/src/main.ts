@@ -1,4 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
+import uPlot from "uplot";
+import "uplot/dist/uPlot.min.css";
 import "./style.css";
 
 type AgentConfig = {
@@ -46,6 +48,94 @@ type RuntimeStatus = {
     temperature_c?: number;
     critical_c?: number | null;
   }>;
+  advanced?: {
+    available?: boolean;
+    source?: string;
+    reason?: string;
+    cpu_temperature_c?: number;
+    gpu_temperature_c?: number;
+    cpu_power_w?: number;
+    gpu_power_w?: number;
+    system_power_w?: number;
+    performance_cpu_usage_percent?: number;
+    efficiency_cpu_usage_percent?: number;
+    gpu_usage_percent?: number;
+    memory_used?: number;
+    memory_total?: number;
+    swap_used?: number;
+    swap_total?: number;
+  };
+};
+
+type RuntimeHistorySummary = {
+  sample_count?: number;
+  started_at?: string | null;
+  ended_at?: string | null;
+  advanced_available?: boolean;
+  cpu?: {
+    latest_percent?: number | null;
+    average_percent?: number | null;
+    max_percent?: number | null;
+  };
+  memory?: {
+    latest_used_bytes?: number | null;
+    latest_total_bytes?: number | null;
+    max_used_bytes?: number | null;
+    max_used_percent?: number | null;
+  };
+  disk?: {
+    latest_used_bytes?: number | null;
+    latest_available_bytes?: number | null;
+    latest_total_bytes?: number | null;
+    mount?: string | null;
+  };
+  temperature?: {
+    latest_c?: number | null;
+    max_c?: number | null;
+  };
+  power?: {
+    latest_system_w?: number | null;
+    average_system_w?: number | null;
+    max_system_w?: number | null;
+  };
+  gpu?: {
+    latest_usage_percent?: number | null;
+    max_usage_percent?: number | null;
+  };
+  swap?: {
+    latest_used_bytes?: number | null;
+    latest_total_bytes?: number | null;
+    max_used_bytes?: number | null;
+  };
+};
+
+type RuntimeHistoryResponse = {
+  summary?: RuntimeHistorySummary;
+  chart?: RuntimeChart;
+};
+
+type RuntimeRange = "current" | "15" | "60" | "all";
+type TrendMetric = {
+  key: string;
+  label: string;
+  unit: string;
+  values: Array<number | null>;
+  current?: number | null;
+  peak?: number | null;
+  kind?: "percent" | "temperature" | "watts" | "bytes";
+};
+
+type RuntimeChart = {
+  sample_count?: number;
+  point_count?: number;
+  points?: {
+    time?: number[];
+    cpu?: Array<number | null>;
+    memory?: Array<number | null>;
+    temperature?: Array<number | null>;
+    power?: Array<number | null>;
+    gpu?: Array<number | null>;
+  };
 };
 
 type DiagnosticsPackage = {
@@ -123,14 +213,14 @@ app.innerHTML = `
           <div class="side-column">
             <aside class="device-summary" aria-label="本机信息摘要">
               <div class="settings-summary-head">
-                <span>本机信息</span>
-                <div class="summary-actions">
-                  <strong class="collect-state" id="collectState">
+                <div class="summary-title">
+                  <span>本机信息</span>
+                  <span class="collect-state" id="collectState">
                     <span class="collect-spinner" aria-hidden="true"></span>
                     <span id="collectStateText">准备采集</span>
-                  </strong>
-                  <button class="summary-refresh" id="collectButton" type="button">重新采集</button>
+                  </span>
                 </div>
+                <button class="summary-refresh" id="collectButton" type="button">重新采集</button>
               </div>
               <div class="settings-summary-list" id="settingsSummaryList"></div>
             </aside>
@@ -152,6 +242,18 @@ app.innerHTML = `
             <strong id="runtimeCollectedAt">等待监控</strong>
           </div>
           <div class="runtime-grid runtime-page-grid" id="runtimeGrid"></div>
+          <section class="runtime-history" aria-label="监控历史">
+            <div class="runtime-history-head">
+              <span>会话监控</span>
+              <div class="runtime-range-controls" id="runtimeRangeControls">
+                <button class="runtime-range-button active" data-runtime-range="current" type="button">当前</button>
+                <button class="runtime-range-button" data-runtime-range="15" type="button">15 分钟</button>
+                <button class="runtime-range-button" data-runtime-range="60" type="button">1 小时</button>
+                <button class="runtime-range-button" data-runtime-range="all" type="button">全部</button>
+              </div>
+            </div>
+            <div class="runtime-history-summary" id="runtimeHistorySummary"></div>
+          </section>
         </section>
       </section>
 
@@ -248,6 +350,8 @@ const overviewGrid = document.querySelector<HTMLElement>("#overviewGrid")!;
 const settingsSummaryList = document.querySelector<HTMLElement>("#settingsSummaryList")!;
 const runtimeCollectedAt = document.querySelector<HTMLElement>("#runtimeCollectedAt")!;
 const runtimeGrid = document.querySelector<HTMLElement>("#runtimeGrid")!;
+const runtimeHistorySummary = document.querySelector<HTMLElement>("#runtimeHistorySummary")!;
+const runtimeRangeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>(".runtime-range-button"));
 const generateDiagnosticsButton = document.querySelector<HTMLButtonElement>("#generateDiagnosticsButton")!;
 const openDiagnosticsFolderButton = document.querySelector<HTMLButtonElement>("#openDiagnosticsFolderButton")!;
 const diagnosticsResult = document.querySelector<HTMLElement>("#diagnosticsResult")!;
@@ -262,6 +366,15 @@ let activeConfig: AgentConfig = { site: "", name: "", token: "" };
 let isCollecting = false;
 let isSubmitting = false;
 let isGeneratingDiagnostics = false;
+let isRuntimeRefreshing = false;
+let isRuntimeHistoryRefreshing = false;
+let activeRuntimeRange: RuntimeRange = "current";
+let runtimeCharts: uPlot[] = [];
+let runtimeHistoryRequestId = 0;
+let lastRuntimeHistoryKey = "";
+let lastRuntimeHistoryRefreshAt = 0;
+let lastRuntimeChart: RuntimeChart | null = null;
+let lastTrendMetrics: TrendMetric[] = [];
 let lastSubmittedAt: Date | null = null;
 let lastSubmittedConfigLabel = "";
 let diagnosticsDirectoryPath = "";
@@ -323,6 +436,22 @@ const formatPercent = (value: unknown) => {
   }
   return `${Math.max(0, value).toFixed(0)}%`;
 };
+
+const formatTemperature = (value: unknown) => {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return "未采集";
+  }
+  return `${value.toFixed(1)} C`;
+};
+
+const formatWatts = (value: unknown) => {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return "未采集";
+  }
+  return `${value.toFixed(1)} W`;
+};
+
+const finiteNumber = (value: unknown) => (typeof value === "number" && Number.isFinite(value) ? value : null);
 
 const sumSizes = (items: unknown) =>
   asArray(items).reduce<number>((sum, item) => {
@@ -709,6 +838,74 @@ const formatClock = (date: Date) => {
   return `${hours}:${minutes}`;
 };
 
+const formatClockWithSeconds = (date: Date) => {
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+  return `${hours}:${minutes}:${seconds}`;
+};
+
+const formatHistoryTime = (value: string | null | undefined) => {
+  if (!value) {
+    return "等待记录";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "等待记录";
+  }
+  return formatClock(date);
+};
+
+const runtimeRangeMinutes = (range: RuntimeRange) => {
+  if (range === "15") {
+    return 15;
+  }
+  if (range === "60") {
+    return 60;
+  }
+  return null;
+};
+
+const runtimeRangeLabel = (range: RuntimeRange) => {
+  if (range === "15") {
+    return "近 15 分钟";
+  }
+  if (range === "60") {
+    return "近 1 小时";
+  }
+  if (range === "all") {
+    return "本次打开后";
+  }
+  return "当前";
+};
+
+const historyDate = (value: string | null | undefined) => {
+  if (!value) {
+    return null;
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatDuration = (startedAt: string | null | undefined, endedAt: string | null | undefined) => {
+  const started = historyDate(startedAt);
+  const ended = historyDate(endedAt);
+  if (!started || !ended) {
+    return "等待记录";
+  }
+  const seconds = Math.max(0, Math.round((ended.getTime() - started.getTime()) / 1000));
+  if (seconds < 60) {
+    return `${Math.max(1, seconds)} 秒`;
+  }
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) {
+    return `${minutes} 分钟`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const restMinutes = minutes % 60;
+  return restMinutes ? `${hours} 小时 ${restMinutes} 分钟` : `${hours} 小时`;
+};
+
 const configLabel = (config: AgentConfig = getConfig()) => {
   if (config.preset_label) {
     return config.preset_label;
@@ -858,6 +1055,28 @@ const runtimeRows = (status: RuntimeStatus | null) => {
   const diskUsed = status?.disk?.used ?? 0;
   const diskTotal = status?.disk?.total ?? 0;
   const diskMount = status?.disk?.mount && status.disk.mount !== "all" ? ` (${status.disk.mount})` : "";
+  const advanced = status?.advanced;
+  const advancedRows = advanced?.available
+    ? [
+        { label: "CPU 温度", value: formatTemperature(advanced.cpu_temperature_c) },
+        { label: "GPU 温度", value: formatTemperature(advanced.gpu_temperature_c) },
+        { label: "系统功耗", value: formatWatts(advanced.system_power_w) },
+        { label: "GPU", value: formatPercent(advanced.gpu_usage_percent) },
+        {
+          label: "Swap",
+          value: `${formatBytes(advanced.swap_used ?? 0)} / ${formatBytes(advanced.swap_total ?? 0)}`,
+        },
+        {
+          label: "高级监控",
+          value: advanced.source === "macmon" ? "已启用 macmon" : "已启用",
+        },
+      ]
+    : [
+        {
+          label: "高级监控",
+          value: advanced?.reason || "未启用",
+        },
+      ];
 
   return [
     { label: "CPU", value: status ? formatPercent(status.cpu?.usage_percent) : "等待监控" },
@@ -875,6 +1094,7 @@ const runtimeRows = (status: RuntimeStatus | null) => {
         ? `${primaryTemperature.label || "传感器"} ${primaryTemperature.temperature_c?.toFixed(1)} C`
         : "未开放",
     },
+    ...advancedRows,
   ];
 };
 
@@ -890,6 +1110,331 @@ const renderRuntimeStatus = (status: RuntimeStatus | null) => {
       `,
     )
     .join("");
+};
+
+const historyItem = (label: string, value: string) => `
+  <div class="runtime-history-item">
+    <span>${escapeHtml(label)}</span>
+    <strong>${escapeHtml(value)}</strong>
+  </div>
+`;
+
+const metricValue = (metric: TrendMetric, value: unknown) => {
+  if (metric.kind === "bytes") {
+    return formatBytes(value);
+  }
+  if (metric.kind === "temperature") {
+    return formatTemperature(value);
+  }
+  if (metric.kind === "watts") {
+    return formatWatts(value);
+  }
+  if (metric.kind === "percent") {
+    return formatPercent(value);
+  }
+  return typeof value === "number" && Number.isFinite(value) ? `${value.toFixed(1)}${metric.unit}` : "未采集";
+};
+
+const chartMetricValues = (chart: RuntimeChart | null, key: keyof NonNullable<RuntimeChart["points"]>) =>
+  (chart?.points?.[key] ?? []).map((value) => finiteNumber(value));
+
+const presentValues = (values: Array<number | null>) =>
+  values.filter((value): value is number => value !== null && Number.isFinite(value));
+
+const trendMetrics = (chart: RuntimeChart | null, summary: RuntimeHistorySummary): TrendMetric[] => {
+  const metrics: TrendMetric[] = [
+    {
+      key: "cpu",
+      label: "CPU",
+      unit: "%",
+      kind: "percent",
+      values: chartMetricValues(chart, "cpu"),
+      current: summary.cpu?.latest_percent,
+      peak: summary.cpu?.max_percent,
+    },
+    {
+      key: "memory",
+      label: "内存",
+      unit: "%",
+      kind: "percent",
+      values: chartMetricValues(chart, "memory"),
+      current: summary.memory?.max_used_percent,
+      peak: summary.memory?.max_used_percent,
+    },
+    {
+      key: "temperature",
+      label: "温度",
+      unit: " C",
+      kind: "temperature",
+      values: chartMetricValues(chart, "temperature"),
+      current: summary.temperature?.latest_c,
+      peak: summary.temperature?.max_c,
+    },
+    {
+      key: "power",
+      label: "功耗",
+      unit: " W",
+      kind: "watts",
+      values: chartMetricValues(chart, "power"),
+      current: summary.power?.latest_system_w,
+      peak: summary.power?.max_system_w,
+    },
+    {
+      key: "gpu",
+      label: "GPU",
+      unit: "%",
+      kind: "percent",
+      values: chartMetricValues(chart, "gpu"),
+      current: summary.gpu?.latest_usage_percent,
+      peak: summary.gpu?.max_usage_percent,
+    },
+  ];
+  return metrics
+    .map((metric) => {
+      const values = presentValues(metric.values);
+      return {
+        ...metric,
+        current: values.length ? values[values.length - 1] : metric.current,
+        peak: values.length ? Math.max(...values) : metric.peak,
+      };
+    })
+    .filter((metric) => presentValues(metric.values).length || metric.current != null || metric.peak != null);
+};
+
+const currentDotTop = (metric: TrendMetric) => {
+  const values = presentValues(metric.values);
+  if (values.length < 2) {
+    return null;
+  }
+  const current = values[values.length - 1];
+  const minValue = Math.min(...values, 0);
+  const maxValue = Math.max(...values, metric.kind === "percent" ? 100 : 0);
+  const span = Math.max(maxValue - minValue, 1);
+  return Math.min(94, Math.max(6, 100 - ((current - minValue) / span) * 100));
+};
+
+const currentDot = (metric: TrendMetric) => {
+  const top = currentDotTop(metric);
+  if (top === null) {
+    return "";
+  }
+  return `<span class="trend-current-dot" style="top: ${top.toFixed(1)}%"></span>`;
+};
+
+const trendRow = (metric: TrendMetric, startLabel: string, endLabel: string) => `
+  <div class="runtime-trend-row">
+    <div class="trend-label">
+      <span>${escapeHtml(metric.label)}</span>
+      <strong>${escapeHtml(metricValue(metric, metric.current))}</strong>
+    </div>
+    <div class="trend-chart-shell">
+      <div class="trend-grid" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="trend-chart" data-metric="${escapeHtml(metric.key)}" aria-label="${escapeHtml(metric.label)}趋势"></div>
+      <span class="trend-hover-line" aria-hidden="true"></span>
+      ${currentDot(metric)}
+      <div class="trend-time-row">
+        <span>${escapeHtml(startLabel)}</span>
+        <span>${escapeHtml(endLabel)}</span>
+      </div>
+    </div>
+    <div class="trend-peak">
+      <span>峰值</span>
+      <strong>${escapeHtml(metricValue(metric, metric.peak))}</strong>
+    </div>
+  </div>
+`;
+
+const destroyRuntimeCharts = () => {
+  runtimeCharts.forEach((chart) => chart.destroy());
+  runtimeCharts = [];
+};
+
+const renderRuntimeCharts = (chart: RuntimeChart | null, metrics: TrendMetric[]) => {
+  destroyRuntimeCharts();
+  const time = chart?.points?.time ?? [];
+  if (time.length < 2) {
+    runtimeHistorySummary.querySelectorAll<HTMLElement>(".trend-chart").forEach((container) => {
+      container.innerHTML = `<div class="trend-empty">样本不足</div>`;
+    });
+    return;
+  }
+
+  runtimeHistorySummary.querySelectorAll<HTMLElement>(".trend-chart").forEach((container) => {
+    const metric = metrics.find((item) => item.key === container.dataset.metric);
+    if (!metric || presentValues(metric.values).length < 2) {
+      container.innerHTML = `<div class="trend-empty">样本不足</div>`;
+      return;
+    }
+
+    const width = Math.max(120, Math.floor(container.clientWidth || 160));
+    const options: uPlot.Options = {
+      width,
+      height: 38,
+      padding: [0, 0, 0, 0],
+      cursor: { show: false },
+      legend: { show: false },
+      scales: {
+        x: { time: false },
+      },
+      axes: [
+        { show: false },
+        { show: false },
+      ],
+      series: [
+        {},
+        {
+          stroke: "rgba(255,255,255,0.88)",
+          width: 2,
+          spanGaps: true,
+          points: { show: false },
+        },
+      ],
+    };
+    const data = [time, metric.values] as uPlot.AlignedData;
+    runtimeCharts.push(new uPlot(options, data, container));
+  });
+};
+
+const chartTimeLabel = (seconds: unknown) => {
+  if (typeof seconds !== "number" || !Number.isFinite(seconds)) {
+    return "未知时间";
+  }
+  return formatClockWithSeconds(new Date(seconds * 1000));
+};
+
+const hideRuntimeHover = () => {
+  runtimeHistorySummary.querySelectorAll<HTMLElement>(".trend-hover-line").forEach((line) => {
+    line.style.opacity = "0";
+  });
+  const tooltip = runtimeHistorySummary.querySelector<HTMLElement>(".runtime-hover-tooltip");
+  if (tooltip) {
+    tooltip.hidden = true;
+  }
+};
+
+const showRuntimeHoverAt = (index: number) => {
+  const time = lastRuntimeChart?.points?.time ?? [];
+  if (time.length < 2) {
+    hideRuntimeHover();
+    return;
+  }
+  const safeIndex = Math.min(time.length - 1, Math.max(0, index));
+  const left = time.length <= 1 ? 100 : (safeIndex / (time.length - 1)) * 100;
+  runtimeHistorySummary.querySelectorAll<HTMLElement>(".trend-hover-line").forEach((line) => {
+    line.style.left = `${left.toFixed(2)}%`;
+    line.style.opacity = "1";
+  });
+
+  const rows = lastTrendMetrics
+    .map((metric) => {
+      const value = metric.values[safeIndex];
+      if (value === null || value === undefined || !Number.isFinite(value)) {
+        return "";
+      }
+      return `
+        <div class="runtime-hover-row">
+          <span>${escapeHtml(metric.label)}</span>
+          <strong>${escapeHtml(metricValue(metric, value))}</strong>
+        </div>
+      `;
+    })
+    .filter(Boolean)
+    .join("");
+
+  const tooltip = runtimeHistorySummary.querySelector<HTMLElement>(".runtime-hover-tooltip");
+  if (!tooltip || !rows) {
+    hideRuntimeHover();
+    return;
+  }
+  tooltip.hidden = false;
+  tooltip.innerHTML = `
+    <strong>${escapeHtml(chartTimeLabel(time[safeIndex]))}</strong>
+    <div class="runtime-hover-list">${rows}</div>
+  `;
+};
+
+const handleRuntimeHover = (event: MouseEvent) => {
+  const shell = (event.target as HTMLElement | null)?.closest<HTMLElement>(".trend-chart-shell");
+  const time = lastRuntimeChart?.points?.time ?? [];
+  if (!shell || time.length < 2) {
+    return;
+  }
+  const rect = shell.getBoundingClientRect();
+  const x = Math.min(rect.width, Math.max(0, event.clientX - rect.left));
+  const index = Math.round((x / Math.max(rect.width, 1)) * (time.length - 1));
+  showRuntimeHoverAt(index);
+};
+
+const capacityBar = (label: string, used: unknown, total: unknown, detail: string) => {
+  const usedValue = finiteNumber(used);
+  const totalValue = finiteNumber(total);
+  const percent = usedValue !== null && totalValue !== null && totalValue > 0 ? Math.min(100, Math.max(0, (usedValue / totalValue) * 100)) : 0;
+  return `
+    <div class="runtime-capacity-row">
+      <div class="capacity-head">
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(detail)}</strong>
+      </div>
+      <div class="capacity-track" aria-hidden="true">
+        <span style="width: ${percent.toFixed(1)}%"></span>
+      </div>
+    </div>
+  `;
+};
+
+const renderRuntimeHistory = (
+  summary: RuntimeHistorySummary | null,
+  chart: RuntimeChart | null = null,
+  range: RuntimeRange = activeRuntimeRange,
+) => {
+  runtimeRangeButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.runtimeRange === range);
+  });
+
+  if (!summary || !summary.sample_count) {
+    destroyRuntimeCharts();
+    runtimeHistorySummary.innerHTML = `
+      <p class="runtime-history-empty">打开软件后会自动记录运行状态，稍后可查看本次会话的摘要。</p>
+    `;
+    return;
+  }
+
+  const historyKey = JSON.stringify({
+    range,
+    sampleCount: summary.sample_count,
+    endedAt: summary.ended_at,
+    pointCount: chart?.point_count,
+  });
+  if (historyKey === lastRuntimeHistoryKey) {
+    return;
+  }
+  lastRuntimeHistoryKey = historyKey;
+
+  destroyRuntimeCharts();
+  const sampleCount = summary.sample_count;
+  const timeRange = `${formatHistoryTime(summary.started_at)} - ${formatHistoryTime(summary.ended_at)}`;
+  const duration = formatDuration(summary.started_at, summary.ended_at);
+  const rows = [
+    historyItem("记录样本", `${sampleCount} 个`),
+    historyItem("实际时长", duration),
+    historyItem("高级监控", summary.advanced_available ? "已启用" : "基础监控"),
+  ];
+  const metrics = trendMetrics(chart, summary);
+  lastRuntimeChart = chart;
+  lastTrendMetrics = metrics;
+  const diskDetail = `${formatBytes(summary.disk?.latest_available_bytes ?? 0)} 可用 / ${formatBytes(summary.disk?.latest_total_bytes ?? 0)}`;
+
+  runtimeHistorySummary.innerHTML = `
+    <div class="runtime-hover-tooltip" hidden></div>
+    <div class="runtime-history-meta">${escapeHtml(runtimeRangeLabel(range))} · 实际记录 ${escapeHtml(duration)} · ${escapeHtml(timeRange)}</div>
+    <div class="runtime-history-grid">${rows.join("")}</div>
+    <div class="runtime-trends">
+      ${metrics.map((metric) => trendRow(metric, formatHistoryTime(summary.started_at), formatHistoryTime(summary.ended_at))).join("")}
+      ${capacityBar("磁盘", summary.disk?.latest_used_bytes ?? 0, summary.disk?.latest_total_bytes ?? 0, diskDetail)}
+      ${summary.swap?.latest_total_bytes ? capacityBar("Swap", summary.swap.latest_used_bytes ?? 0, summary.swap.latest_total_bytes, `${formatBytes(summary.swap.latest_used_bytes ?? 0)} / ${formatBytes(summary.swap.latest_total_bytes)}`) : ""}
+    </div>
+  `;
+  window.requestAnimationFrame(() => renderRuntimeCharts(chart, metrics));
 };
 
 const renderOverview = () => {
@@ -1050,9 +1595,18 @@ const collect = async (options: { submitContext?: boolean; preserveToast?: boole
 };
 
 const refreshRuntimeStatus = async () => {
+  if (isRuntimeRefreshing) {
+    return;
+  }
+  isRuntimeRefreshing = true;
   try {
     const status = await invoke<RuntimeStatus>("collect_runtime_status");
     renderRuntimeStatus(status);
+    const now = Date.now();
+    if (now - lastRuntimeHistoryRefreshAt > 15000) {
+      lastRuntimeHistoryRefreshAt = now;
+      void refreshRuntimeHistory();
+    }
   } catch (error) {
     runtimeCollectedAt.textContent = "监控失败";
     runtimeGrid.innerHTML = `
@@ -1061,6 +1615,38 @@ const refreshRuntimeStatus = async () => {
         <strong>${escapeHtml(errorMessage(error))}</strong>
       </div>
     `;
+  } finally {
+    isRuntimeRefreshing = false;
+  }
+};
+
+const refreshRuntimeHistory = async () => {
+  const requestId = ++runtimeHistoryRequestId;
+  isRuntimeHistoryRefreshing = true;
+  runtimeRangeButtons.forEach((button) => {
+    button.disabled = true;
+  });
+  try {
+    const rangeMinutes = runtimeRangeMinutes(activeRuntimeRange);
+    const history = await invoke<RuntimeHistoryResponse>("get_runtime_history", { rangeMinutes });
+    if (requestId !== runtimeHistoryRequestId) {
+      return;
+    }
+    renderRuntimeHistory(history.summary ?? null, history.chart ?? null);
+  } catch (error) {
+    if (requestId !== runtimeHistoryRequestId) {
+      return;
+    }
+    runtimeHistorySummary.innerHTML = `
+      <p class="runtime-history-empty">监控历史读取失败：${escapeHtml(errorMessage(error))}</p>
+    `;
+  } finally {
+    if (requestId === runtimeHistoryRequestId) {
+      isRuntimeHistoryRefreshing = false;
+      runtimeRangeButtons.forEach((button) => {
+        button.disabled = false;
+      });
+    }
   }
 };
 
@@ -1154,6 +1740,23 @@ tabs.forEach((button) => {
   button.addEventListener("click", () => switchTab((button.dataset.tab ?? "settings") as TabId));
 });
 
+runtimeRangeButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const nextRange = (button.dataset.runtimeRange ?? "current") as RuntimeRange;
+    if (nextRange === activeRuntimeRange || isRuntimeHistoryRefreshing) {
+      return;
+    }
+    activeRuntimeRange = nextRange;
+    runtimeRangeButtons.forEach((item) => {
+      item.classList.toggle("active", item.dataset.runtimeRange === activeRuntimeRange);
+    });
+    void refreshRuntimeHistory();
+  });
+});
+
+runtimeHistorySummary.addEventListener("mousemove", handleRuntimeHover);
+runtimeHistorySummary.addEventListener("mouseleave", hideRuntimeHover);
+
 nameInput.addEventListener("input", () => {
   resetSubmittedState();
   renderAll();
@@ -1167,6 +1770,7 @@ tokenInput.addEventListener("input", () => {
 
 renderAll();
 renderRuntimeStatus(null);
+renderRuntimeHistory(null);
 
 const bootstrap = async () => {
   let loadConfigError = "";

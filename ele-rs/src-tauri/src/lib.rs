@@ -131,6 +131,14 @@ fn collect_runtime_status() -> Result<Value, String> {
 }
 
 #[tauri::command]
+fn get_runtime_history(range_minutes: Option<u64>) -> Value {
+    json!({
+        "summary": collector::runtime_history_summary(range_minutes),
+        "chart": collector::runtime_chart(range_minutes, 60),
+    })
+}
+
+#[tauri::command]
 fn submit_device_data(mut config: AgentConfig) -> Result<Value, String> {
     apply_build_preset(&mut config);
     if let Err(error) = validate_config(&config) {
@@ -213,6 +221,7 @@ pub fn run() {
             save_config,
             collect_device_snapshot,
             collect_runtime_status,
+            get_runtime_history,
             submit_device_data,
             generate_diagnostics_package,
             open_path,
@@ -429,15 +438,27 @@ fn create_diagnostics_package() -> Result<DiagnosticsPackage> {
             "error": error.to_string(),
         })
     });
+    let runtime_history = collector::runtime_history(None);
+    let runtime_history_summary = collector::runtime_history_summary(None);
     write_json(
         &directory_path.join("device-static-data.json"),
         &static_data,
     )?;
     write_json(&directory_path.join("runtime-status.json"), &runtime_status)?;
+    write_json(&directory_path.join("runtime-history.json"), &runtime_history)?;
+    write_json(
+        &directory_path.join("runtime-history-summary.json"),
+        &runtime_history_summary,
+    )?;
     write_config_snapshot(&directory_path)?;
     collect_platform_diagnostics(&directory_path)?;
     write_app_log_snapshot(&directory_path)?;
-    write_diagnostics_summary(&directory_path, &static_data, &runtime_status)?;
+    write_diagnostics_summary(
+        &directory_path,
+        &static_data,
+        &runtime_status,
+        &runtime_history_summary,
+    )?;
 
     let zip_path = directory_path.with_extension("zip");
     zip_directory(&directory_path, &zip_path)
@@ -477,6 +498,7 @@ fn write_diagnostics_summary(
     out: &Path,
     static_data: &Value,
     runtime_status: &Value,
+    runtime_history_summary: &Value,
 ) -> Result<()> {
     let config = read_config().unwrap_or_default();
     let recent_error_lines = count_log_payload_lines(&out.join("recent-errors.log"));
@@ -534,6 +556,8 @@ fn write_diagnostics_summary(
                 "disk_used_bytes": value_u64(runtime_status, "/disk/used"),
                 "disk_total_bytes": value_u64(runtime_status, "/disk/total"),
                 "primary_temperature": primary_temperature_summary(runtime_status),
+                "advanced": runtime_status.get("advanced").cloned().unwrap_or(Value::Null),
+                "history_summary": runtime_history_summary,
             },
             "signals": {
                 "recent_error_lines": recent_error_lines,
@@ -1265,8 +1289,13 @@ mod tests {
             "disk": { "used": 400_u64, "total": 500_u64, "available": 100_u64, "mount": "/" },
             "temperatures": [{ "label": "sensor", "temperature_c": 55.0 }]
         });
+        let runtime_history_summary = json!({
+            "sample_count": 1,
+            "cpu": { "average_percent": 12.5, "max_percent": 12.5 },
+        });
 
-        write_diagnostics_summary(&out, &static_data, &runtime_status).unwrap();
+        write_diagnostics_summary(&out, &static_data, &runtime_status, &runtime_history_summary)
+            .unwrap();
         let summary: Value = serde_json::from_str(
             &fs::read_to_string(out.join("diagnostics-summary.json")).unwrap(),
         )
