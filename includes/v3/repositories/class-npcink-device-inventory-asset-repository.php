@@ -18,15 +18,18 @@ class Npcink_Device_Inventory_Asset_Repository
 					lo.hardware_json AS latest_hardware_json,
 					lo.observed_at AS latest_observed_at,
 					lo.source AS latest_observation_source
-				FROM $assets_table a
-				LEFT JOIN $observations_table lo ON lo.id = (
+				FROM %i a
+				LEFT JOIN %i lo ON lo.id = (
 					SELECT o.id
-					FROM $observations_table o
+					FROM %i o
 					WHERE o.asset_id = a.id
 					ORDER BY o.observed_at DESC, o.id DESC
 					LIMIT 1
 				)
 				WHERE a.uuid = %s",
+				$assets_table,
+				$observations_table,
+				$observations_table,
 				$uuid
 			),
 			ARRAY_A
@@ -45,15 +48,18 @@ class Npcink_Device_Inventory_Asset_Repository
 					lo.hardware_json AS latest_hardware_json,
 					lo.observed_at AS latest_observed_at,
 					lo.source AS latest_observation_source
-				FROM $assets_table a
-				LEFT JOIN $observations_table lo ON lo.id = (
+				FROM %i a
+				LEFT JOIN %i lo ON lo.id = (
 					SELECT o.id
-					FROM $observations_table o
+					FROM %i o
 					WHERE o.asset_id = a.id
 					ORDER BY o.observed_at DESC, o.id DESC
 					LIMIT 1
 				)
 				WHERE a.id = %d",
+				$assets_table,
+				$observations_table,
+				$observations_table,
 				$id
 			),
 			ARRAY_A
@@ -107,28 +113,37 @@ class Npcink_Device_Inventory_Asset_Repository
 
 		$where_sql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 		$table = Npcink_Device_Inventory_V3_Tables::assets();
-		$total_sql = "SELECT COUNT(*) FROM $table $where_sql";
-		$total = $params ? $wpdb->get_var($wpdb->prepare($total_sql, $params)) : $wpdb->get_var($total_sql);
+		$total = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM %i $where_sql",
+				array_merge(array($table), $params)
+			)
+		);
 
 		$observations_table = Npcink_Device_Inventory_V3_Tables::observations();
-		$query_sql = "SELECT a.*,
+		$query_params = array_merge(array($table, $observations_table, $observations_table), $params, array($page_size, $offset));
+		$items = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT a.*,
 				lo.summary_json AS latest_summary_json,
 				lo.hardware_json AS latest_hardware_json,
 				lo.observed_at AS latest_observed_at,
 				lo.source AS latest_observation_source
-			FROM $table a
-			LEFT JOIN $observations_table lo ON lo.id = (
+			FROM %i a
+			LEFT JOIN %i lo ON lo.id = (
 				SELECT o.id
-				FROM $observations_table o
+				FROM %i o
 				WHERE o.asset_id = a.id
 				ORDER BY o.observed_at DESC, o.id DESC
 				LIMIT 1
 			)
 			$where_sql
 			ORDER BY a.updated_at DESC, a.id DESC
-			LIMIT %d OFFSET %d";
-		$query_params = array_merge($params, array($page_size, $offset));
-		$items = $wpdb->get_results($wpdb->prepare($query_sql, $query_params), ARRAY_A);
+			LIMIT %d OFFSET %d",
+				$query_params
+			),
+			ARRAY_A
+		);
 
 		return array(
 			'items' => $items ?: array(),

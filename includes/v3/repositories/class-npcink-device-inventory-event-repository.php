@@ -36,9 +36,15 @@ class Npcink_Device_Inventory_Event_Repository
 		$page_size = max(1, min(100, intval($page_size)));
 		$offset = ($page - 1) * $page_size;
 		$table = Npcink_Device_Inventory_V3_Tables::events();
-		$total = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE asset_id = %d", $asset_id));
+		$total = $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i WHERE asset_id = %d', $table, $asset_id));
 		$items = $wpdb->get_results(
-			$wpdb->prepare("SELECT * FROM $table WHERE asset_id = %d ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d", $asset_id, $page_size, $offset),
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE asset_id = %d ORDER BY created_at DESC, id DESC LIMIT %d OFFSET %d',
+				$table,
+				$asset_id,
+				$page_size,
+				$offset
+			),
 			ARRAY_A
 		);
 		return array('items' => $items ?: array(), 'total' => intval($total), 'page' => $page, 'pageSize' => $page_size);
@@ -81,16 +87,25 @@ class Npcink_Device_Inventory_Event_Repository
 		}
 
 		$where_sql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
-		$count_sql = "SELECT COUNT(*) FROM $events_table e LEFT JOIN $assets_table a ON a.id = e.asset_id $where_sql";
-		$total = $params ? $wpdb->get_var($wpdb->prepare($count_sql, $params)) : $wpdb->get_var($count_sql);
-		$query_sql = "SELECT e.*, a.uuid AS asset_uuid, a.asset_number, a.name AS asset_name, a.asset_type, a.status, a.department, a.owner_name
-			FROM $events_table e
-			LEFT JOIN $assets_table a ON a.id = e.asset_id
+		$total = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM %i e LEFT JOIN %i a ON a.id = e.asset_id $where_sql",
+				array_merge(array($events_table, $assets_table), $params)
+			)
+		);
+		$query_params = array_merge(array($events_table, $assets_table), $params, array($page_size, $offset));
+		$items = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT e.*, a.uuid AS asset_uuid, a.asset_number, a.name AS asset_name, a.asset_type, a.status, a.department, a.owner_name
+			FROM %i e
+			LEFT JOIN %i a ON a.id = e.asset_id
 			$where_sql
 			ORDER BY e.created_at DESC, e.id DESC
-			LIMIT %d OFFSET %d";
-		$query_params = array_merge($params, array($page_size, $offset));
-		$items = $wpdb->get_results($wpdb->prepare($query_sql, $query_params), ARRAY_A);
+			LIMIT %d OFFSET %d",
+				$query_params
+			),
+			ARRAY_A
+		);
 
 		return array('items' => $items ?: array(), 'total' => intval($total), 'page' => $page, 'pageSize' => $page_size);
 	}

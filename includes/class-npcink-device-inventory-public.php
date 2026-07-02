@@ -602,10 +602,10 @@ class Npcink_Device_Inventory_Public
 					a.metadata_json,
 					lo.summary_json AS latest_summary_json,
 					lo.hardware_json AS latest_hardware_json
-				FROM $table a
-				LEFT JOIN $observations_table lo ON lo.id = (
+				FROM %i a
+				LEFT JOIN %i lo ON lo.id = (
 					SELECT o.id
-					FROM $observations_table o
+					FROM %i o
 					WHERE o.asset_id = a.id
 					ORDER BY o.observed_at DESC, o.id DESC
 					LIMIT 1
@@ -614,6 +614,9 @@ class Npcink_Device_Inventory_Public
 				AND (a.asset_number = %s OR a.name LIKE %s)
 				ORDER BY a.updated_at DESC, a.id DESC
 				LIMIT 10",
+				$table,
+				$observations_table,
+				$observations_table,
 				$keyword,
 				$like
 			),

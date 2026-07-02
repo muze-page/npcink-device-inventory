@@ -17,7 +17,6 @@ const rootFiles = [
   "uninstall.php",
   "README.txt",
   "README.md",
-  "README.en.md",
   "LICENSE",
   "LICENSE.txt",
 ];

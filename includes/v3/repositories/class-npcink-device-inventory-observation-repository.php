@@ -34,7 +34,11 @@ class Npcink_Device_Inventory_Observation_Repository
 	{
 		global $wpdb;
 		return $wpdb->get_row(
-			$wpdb->prepare('SELECT * FROM ' . Npcink_Device_Inventory_V3_Tables::observations() . ' WHERE id = %d', $id),
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE id = %d',
+				Npcink_Device_Inventory_V3_Tables::observations(),
+				$id
+			),
 			ARRAY_A
 		);
 	}
@@ -46,9 +50,15 @@ class Npcink_Device_Inventory_Observation_Repository
 		$page_size = max(1, min(100, intval($page_size)));
 		$offset = ($page - 1) * $page_size;
 		$table = Npcink_Device_Inventory_V3_Tables::observations();
-		$total = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE asset_id = %d", $asset_id));
+		$total = $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i WHERE asset_id = %d', $table, $asset_id));
 		$items = $wpdb->get_results(
-			$wpdb->prepare("SELECT * FROM $table WHERE asset_id = %d ORDER BY observed_at DESC, id DESC LIMIT %d OFFSET %d", $asset_id, $page_size, $offset),
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE asset_id = %d ORDER BY observed_at DESC, id DESC LIMIT %d OFFSET %d',
+				$table,
+				$asset_id,
+				$page_size,
+				$offset
+			),
 			ARRAY_A
 		);
 		return array('items' => $items ?: array(), 'total' => intval($total), 'page' => $page, 'pageSize' => $page_size);
@@ -77,16 +87,25 @@ class Npcink_Device_Inventory_Observation_Repository
 		}
 
 		$where_sql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
-		$count_sql = "SELECT COUNT(*) FROM $observations_table o LEFT JOIN $assets_table a ON a.id = o.asset_id $where_sql";
-		$total = $params ? $wpdb->get_var($wpdb->prepare($count_sql, $params)) : $wpdb->get_var($count_sql);
-		$query_sql = "SELECT o.*, a.uuid AS asset_uuid, a.asset_number, a.name AS asset_name, a.asset_type, a.status, a.department, a.owner_name
-			FROM $observations_table o
-			LEFT JOIN $assets_table a ON a.id = o.asset_id
+		$total = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM %i o LEFT JOIN %i a ON a.id = o.asset_id $where_sql",
+				array_merge(array($observations_table, $assets_table), $params)
+			)
+		);
+		$query_params = array_merge(array($observations_table, $assets_table), $params, array($page_size, $offset));
+		$items = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT o.*, a.uuid AS asset_uuid, a.asset_number, a.name AS asset_name, a.asset_type, a.status, a.department, a.owner_name
+			FROM %i o
+			LEFT JOIN %i a ON a.id = o.asset_id
 			$where_sql
 			ORDER BY o.observed_at DESC, o.id DESC
-			LIMIT %d OFFSET %d";
-		$query_params = array_merge($params, array($page_size, $offset));
-		$items = $wpdb->get_results($wpdb->prepare($query_sql, $query_params), ARRAY_A);
+			LIMIT %d OFFSET %d",
+				$query_params
+			),
+			ARRAY_A
+		);
 
 		return array('items' => $items ?: array(), 'total' => intval($total), 'page' => $page, 'pageSize' => $page_size);
 	}

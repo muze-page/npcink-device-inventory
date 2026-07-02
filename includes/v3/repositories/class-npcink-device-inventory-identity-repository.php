@@ -9,6 +9,7 @@ class Npcink_Device_Inventory_Identity_Repository
 	public function find_asset_id_by_identities($identities)
 	{
 		global $wpdb;
+		$identities_table = Npcink_Device_Inventory_V3_Tables::identities();
 		if (empty($identities)) {
 			return null;
 		}
@@ -19,7 +20,8 @@ class Npcink_Device_Inventory_Identity_Repository
 			}
 			$asset_id = $wpdb->get_var(
 				$wpdb->prepare(
-					'SELECT asset_id FROM ' . Npcink_Device_Inventory_V3_Tables::identities() . ' WHERE identity_type = %s AND identity_value = %s LIMIT 1',
+					'SELECT asset_id FROM %i WHERE identity_type = %s AND identity_value = %s LIMIT 1',
+					$identities_table,
 					$identity['type'],
 					$identity['value']
 				)
@@ -35,9 +37,11 @@ class Npcink_Device_Inventory_Identity_Repository
 	public function list_for_asset($asset_id)
 	{
 		global $wpdb;
+		$identities_table = Npcink_Device_Inventory_V3_Tables::identities();
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT * FROM ' . Npcink_Device_Inventory_V3_Tables::identities() . ' WHERE asset_id = %d ORDER BY is_primary DESC, id ASC',
+				'SELECT * FROM %i WHERE asset_id = %d ORDER BY is_primary DESC, id ASC',
+				$identities_table,
 				$asset_id
 			),
 			ARRAY_A
@@ -55,9 +59,10 @@ class Npcink_Device_Inventory_Identity_Repository
 
 		$result = $wpdb->query(
 			$wpdb->prepare(
-				'INSERT IGNORE INTO ' . Npcink_Device_Inventory_V3_Tables::identities() . '
+				'INSERT IGNORE INTO %i
 				(asset_id, identity_type, identity_value, confidence, is_primary, source)
 				VALUES (%d, %s, %s, %f, %d, %s)',
+				Npcink_Device_Inventory_V3_Tables::identities(),
 				$asset_id,
 				$type,
 				$value,
