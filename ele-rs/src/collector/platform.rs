@@ -402,8 +402,9 @@ fn new_command(program: &str) -> Command {
 #[cfg(target_os = "windows")]
 fn configure_command_window(command: &mut Command) {
     use std::os::windows::process::CommandExt;
+    const BELOW_NORMAL_PRIORITY_CLASS: u32 = 0x00004000;
     const CREATE_NO_WINDOW: u32 = 0x08000000;
-    command.creation_flags(CREATE_NO_WINDOW);
+    command.creation_flags(CREATE_NO_WINDOW | BELOW_NORMAL_PRIORITY_CLASS);
 }
 
 #[cfg(not(target_os = "windows"))]

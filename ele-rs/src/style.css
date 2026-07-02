@@ -67,6 +67,8 @@ button {
   align-items: center;
   gap: 9px;
   color: rgba(255, 255, 255, 0.92);
+  cursor: move;
+  user-select: none;
 }
 
 .brand-line strong {

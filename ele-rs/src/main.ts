@@ -169,9 +169,9 @@ app.innerHTML = `
   <main class="app-shell">
     <section class="card">
       <header class="app-head">
-        <div class="brand-line">
-          <span class="brand-mark"></span>
-          <strong>设备信息上传</strong>
+        <div class="brand-line" data-tauri-drag-region>
+          <span class="brand-mark" data-tauri-drag-region></span>
+          <strong data-tauri-drag-region>设备信息上传</strong>
         </div>
         <nav class="tabs" aria-label="页面">
           <button class="tab active" data-tab="settings" type="button">设置</button>

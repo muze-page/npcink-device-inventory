@@ -768,6 +768,7 @@ fn collect_platform_diagnostics(
         ),
     ];
     run_command_group(out, &event_commands)?;
+    diagnostics_group_pause();
 
     progress.step("收集硬件明细", "读取 BIOS、主板、内存、显卡和整机信息");
     let hardware_commands = [
@@ -778,6 +779,7 @@ fn collect_platform_diagnostics(
         ),
     ];
     run_command_group(out, &hardware_commands)?;
+    diagnostics_group_pause();
 
     progress.step("收集驱动信息", "读取已签名驱动、PnP 驱动和异常设备");
     let driver_commands = [
@@ -799,6 +801,7 @@ fn collect_platform_diagnostics(
         ),
     ];
     run_command_group(out, &driver_commands)?;
+    diagnostics_group_pause();
 
     progress.step("收集磁盘与电源", "读取磁盘、分区、SMART、卷和电源状态");
     let storage_commands = [
@@ -826,6 +829,7 @@ fn collect_platform_diagnostics(
         ),
     ];
     run_command_group(out, &storage_commands)?;
+    diagnostics_group_pause();
 
     progress.step("收集网络信息", "读取网卡、IP、DNS、路由、代理和连接状态");
     let network_commands = [
@@ -841,6 +845,7 @@ fn collect_platform_diagnostics(
         ),
     ];
     run_command_group(out, &network_commands)?;
+    diagnostics_group_pause();
 
     progress.step("收集进程快照", "读取 CPU 和内存占用最高的进程");
     let process_commands = [
@@ -854,6 +859,7 @@ fn collect_platform_diagnostics(
         ),
     ];
     run_command_group(out, &process_commands)?;
+    diagnostics_group_pause();
 
     progress.step("收集更新与启动项", "读取补丁、启动项和服务状态");
     let system_commands = [
@@ -869,6 +875,7 @@ fn collect_platform_diagnostics(
         ),
     ];
     run_command_group(out, &system_commands)?;
+    diagnostics_group_pause();
 
     progress.step("收集 dump 信息", "复制 Minidump 并尝试自动分析");
     let minidump_dir = out.join("Minidump");
@@ -881,6 +888,7 @@ fn collect_platform_diagnostics(
             minidump_dir.to_string_lossy(),
         ),
     )?;
+    diagnostics_group_pause();
 
     let dump_analysis_dir = out.join("DumpAnalysis");
     fs::create_dir_all(&dump_analysis_dir)?;
@@ -890,6 +898,11 @@ fn collect_platform_diagnostics(
     )?;
 
     Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn diagnostics_group_pause() {
+    thread::sleep(Duration::from_millis(80));
 }
 
 #[cfg(target_os = "windows")]
@@ -1422,8 +1435,9 @@ fn new_command(program: &str) -> Command {
 #[cfg(target_os = "windows")]
 fn configure_command_window(command: &mut Command) {
     use std::os::windows::process::CommandExt;
+    const BELOW_NORMAL_PRIORITY_CLASS: u32 = 0x00004000;
     const CREATE_NO_WINDOW: u32 = 0x08000000;
-    command.creation_flags(CREATE_NO_WINDOW);
+    command.creation_flags(CREATE_NO_WINDOW | BELOW_NORMAL_PRIORITY_CLASS);
 }
 
 #[cfg(not(target_os = "windows"))]
