@@ -6,7 +6,9 @@ use serde_json::{json, Value};
 use std::fs;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
+use std::thread;
+use std::time::{Duration, Instant};
 use tauri::menu::{AboutMetadata, MenuBuilder, SubmenuBuilder};
 use tauri_plugin_opener::OpenerExt;
 use zip::write::SimpleFileOptions;
@@ -16,6 +18,7 @@ const APP_DIR_NAME: &str = "npcink-device-agent";
 const APP_LOG_FILE: &str = "app.log";
 const APP_LOG_MAX_BYTES: u64 = 1024 * 1024;
 const DIAGNOSTICS_LOG_TAIL_BYTES: u64 = 256 * 1024;
+const DIAGNOSTICS_COMMAND_TIMEOUT: Duration = Duration::from_secs(12);
 const PROJECT_URL: &str = "https://github.com/muze-page/npcink-device-inventory";
 const MENU_OPEN_PROJECT: &str = "open_project_url";
 
@@ -180,12 +183,18 @@ fn submit_device_data(mut config: AgentConfig) -> Result<Value, String> {
 }
 
 #[tauri::command]
-fn generate_diagnostics_package() -> Result<DiagnosticsPackage, String> {
+async fn generate_diagnostics_package() -> Result<DiagnosticsPackage, String> {
     write_app_log("info", "diagnostics.generate_started", "");
-    match create_diagnostics_package() {
-        Ok(package) => {
+    let result = tauri::async_runtime::spawn_blocking(create_diagnostics_package).await;
+    match result {
+        Ok(Ok(package)) => {
             write_app_log("info", "diagnostics.generated", &package.zip_path);
             Ok(package)
+        }
+        Ok(Err(error)) => {
+            let message = error.to_string();
+            write_app_log("error", "diagnostics.generate_failed", &message);
+            Err(message)
         }
         Err(error) => {
             let message = error.to_string();
@@ -653,26 +662,14 @@ fn collect_platform_diagnostics(out: &Path) -> Result<()> {
             "wmic-diskdrive-status.txt",
             "$wmic=Get-Command wmic.exe -ErrorAction SilentlyContinue; if ($wmic) { & $wmic.Source diskdrive get model,serialnumber,status,size,interfacetype /format:list } else { 'wmic.exe is not available on this Windows installation. Disk data was collected via Get-PhysicalDisk and Win32_DiskDrive instead.' }",
         ),
-        (
-            "storage-reliability.txt",
-            "Get-PhysicalDisk -ErrorAction SilentlyContinue | Format-List *; Get-PhysicalDisk -ErrorAction SilentlyContinue | Get-StorageReliabilityCounter -ErrorAction SilentlyContinue | Format-List *; Get-CimInstance -Namespace root\\wmi -ClassName MSStorageDriver_FailurePredictStatus -ErrorAction SilentlyContinue | Format-List *",
-        ),
         ("volumes.txt", "Get-Volume -ErrorAction SilentlyContinue | Format-Table -AutoSize"),
         ("partitions.txt", "Get-Partition -ErrorAction SilentlyContinue | Format-Table -AutoSize"),
-        (
-            "volumes-partitions.txt",
-            "Get-Volume -ErrorAction SilentlyContinue | Format-Table -AutoSize; Get-Partition -ErrorAction SilentlyContinue | Format-Table -AutoSize",
-        ),
         ("hotfixes.txt", "Get-HotFix -ErrorAction SilentlyContinue | Sort-Object InstalledOn -Descending | Format-Table -AutoSize"),
         (
             "startup-commands.csv",
             "Get-CimInstance Win32_StartupCommand -ErrorAction SilentlyContinue | Select-Object Name,Command,Location,User | ConvertTo-Csv -NoTypeInformation",
         ),
         ("services.txt", "Get-Service | Sort-Object Status,Name | Format-Table -AutoSize"),
-        (
-            "updates-services-startup.txt",
-            "Get-HotFix -ErrorAction SilentlyContinue | Sort-Object InstalledOn -Descending | Format-Table -AutoSize; Get-CimInstance Win32_StartupCommand -ErrorAction SilentlyContinue | Select-Object Name,Command,Location,User | Format-Table -AutoSize; Get-Service | Sort-Object Status,Name | Format-Table -AutoSize",
-        ),
         (
             "powercfg.txt",
             "powercfg /a; powercfg /lastwake; powercfg /waketimers",
@@ -1121,12 +1118,19 @@ fn primary_temperature_summary(runtime_status: &Value) -> Value {
 }
 
 fn write_command_output(path: &Path, program: &str, args: &[&str]) -> Result<()> {
-    let output = Command::new(program).args(args).output();
+    let output = command_output_with_timeout(program, args, DIAGNOSTICS_COMMAND_TIMEOUT);
     let content = match output {
         Ok(output) => {
             let mut text = String::new();
             text.push_str(&format!("command: {} {}\n", program, args.join(" ")));
-            text.push_str(&format!("status: {}\n\n", output.status));
+            text.push_str(&format!("status: {}\n", output.status));
+            if output.timed_out {
+                text.push_str(&format!(
+                    "timed_out: true after {} seconds\n",
+                    DIAGNOSTICS_COMMAND_TIMEOUT.as_secs()
+                ));
+            }
+            text.push('\n');
             text.push_str("--- stdout ---\n");
             text.push_str(&String::from_utf8_lossy(&output.stdout));
             text.push_str("\n--- stderr ---\n");
@@ -1137,6 +1141,63 @@ fn write_command_output(path: &Path, program: &str, args: &[&str]) -> Result<()>
     };
     write_text(path, &redact_diagnostics_text(&content))
 }
+
+struct TimedCommandOutput {
+    status: std::process::ExitStatus,
+    timed_out: bool,
+    stdout: Vec<u8>,
+    stderr: Vec<u8>,
+}
+
+fn command_output_with_timeout(
+    program: &str,
+    args: &[&str],
+    timeout: Duration,
+) -> std::io::Result<TimedCommandOutput> {
+    let mut child = new_command(program)
+        .args(args)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
+
+    let start = Instant::now();
+    let mut timed_out = false;
+    loop {
+        if child.try_wait()?.is_some() {
+            break;
+        }
+        if start.elapsed() >= timeout {
+            timed_out = true;
+            let _ = child.kill();
+            break;
+        }
+        thread::sleep(Duration::from_millis(100));
+    }
+
+    let output = child.wait_with_output()?;
+    Ok(TimedCommandOutput {
+        status: output.status,
+        timed_out,
+        stdout: output.stdout,
+        stderr: output.stderr,
+    })
+}
+
+fn new_command(program: &str) -> Command {
+    let mut command = Command::new(program);
+    configure_command_window(&mut command);
+    command
+}
+
+#[cfg(target_os = "windows")]
+fn configure_command_window(command: &mut Command) {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    command.creation_flags(CREATE_NO_WINDOW);
+}
+
+#[cfg(not(target_os = "windows"))]
+fn configure_command_window(_command: &mut Command) {}
 
 fn redact_sensitive_json(mut value: Value) -> Value {
     redact_sensitive_json_in_place(&mut value, None);

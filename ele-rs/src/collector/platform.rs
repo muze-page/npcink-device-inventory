@@ -13,19 +13,28 @@ pub(crate) fn hardware_uuid() -> Option<String> {
 
 #[cfg(target_os = "windows")]
 fn enrich_impl(root: &mut Map<String, Value>) {
-    if let Some(value) = powershell_json("Get-CimInstance Win32_BIOS | Select-Object Manufacturer,SMBIOSBIOSVersion,SerialNumber,ReleaseDate") {
-        root.insert("bios".to_string(), value);
+    if let Some(value) = powershell_json("Get-CimInstance Win32_BIOS | Select-Object Manufacturer,SMBIOSBIOSVersion,SerialNumber,ReleaseDate,Version") {
+        root.insert("bios".to_string(), normalize_windows_bios(&value));
     }
     if let Some(value) = powershell_json(
         "Get-CimInstance Win32_BaseBoard | Select-Object Manufacturer,Product,SerialNumber,Version",
     ) {
-        root.insert("baseboard".to_string(), value);
+        root.insert("baseboard".to_string(), normalize_windows_baseboard(&value));
     }
     if let Some(value) = powershell_json("Get-CimInstance Win32_SystemEnclosure | Select-Object Manufacturer,SerialNumber,ChassisTypes") {
         root.insert("chassis".to_string(), value);
     }
+    if let Some(value) = powershell_json("Get-CimInstance Win32_ComputerSystem | Select-Object Manufacturer,Model,SystemType,SystemFamily,SystemSKUNumber") {
+        root.insert(
+            "system".to_string(),
+            normalize_windows_system(&value, root.get("system")),
+        );
+    }
     if let Some(value) = powershell_json("Get-CimInstance Win32_VideoController | Select-Object Name,AdapterRAM,VideoProcessor,DriverVersion") {
-        root.insert("graphics".to_string(), json!({ "controllers": value }));
+        root.insert(
+            "graphics".to_string(),
+            json!({ "controllers": normalize_windows_graphics_controllers(&value) }),
+        );
     }
     insert_empty_if_missing(root, "bios");
     insert_empty_if_missing(root, "baseboard");
@@ -192,18 +201,114 @@ fn powershell_scalar(command: &str) -> Option<String> {
     command_text("powershell", &["-NoProfile", "-Command", command])
 }
 
+#[cfg(target_os = "windows")]
+fn normalize_windows_bios(value: &Value) -> Value {
+    json!({
+        "vendor": value_text(value, "Manufacturer"),
+        "version": first_non_empty(&[
+            value_text(value, "SMBIOSBIOSVersion"),
+            value_text(value, "Version"),
+        ]),
+        "serial": value_text(value, "SerialNumber"),
+        "releaseDate": value_text(value, "ReleaseDate"),
+    })
+}
+
+#[cfg(target_os = "windows")]
+fn normalize_windows_baseboard(value: &Value) -> Value {
+    json!({
+        "manufacturer": value_text(value, "Manufacturer"),
+        "product": value_text(value, "Product"),
+        "model": value_text(value, "Product"),
+        "version": value_text(value, "Version"),
+        "serial": value_text(value, "SerialNumber"),
+    })
+}
+
+#[cfg(target_os = "windows")]
+fn normalize_windows_system(value: &Value, current: Option<&Value>) -> Value {
+    json!({
+        "manufacturer": value_text(value, "Manufacturer"),
+        "model": value_text(value, "Model"),
+        "version": value_text(value, "SystemFamily"),
+        "serial": value_text(current.unwrap_or(&Value::Null), "serial"),
+        "uuid": value_text(current.unwrap_or(&Value::Null), "uuid"),
+        "sku": value_text(value, "SystemSKUNumber"),
+        "type": value_text(value, "SystemType"),
+    })
+}
+
+#[cfg(target_os = "windows")]
+fn normalize_windows_graphics_controllers(value: &Value) -> Value {
+    Value::Array(
+        value_items(value)
+            .into_iter()
+            .map(|item| {
+                json!({
+                    "model": value_text(item, "Name"),
+                    "vendor": graphics_vendor(item),
+                    "vram": item.get("AdapterRAM").and_then(Value::as_u64),
+                    "videoProcessor": value_text(item, "VideoProcessor"),
+                    "driverVersion": value_text(item, "DriverVersion"),
+                })
+            })
+            .collect(),
+    )
+}
+
+#[cfg(target_os = "windows")]
+fn graphics_vendor(value: &Value) -> String {
+    let text = first_non_empty(&[value_text(value, "VideoProcessor"), value_text(value, "Name")]);
+    text.split_whitespace().next().unwrap_or_default().to_string()
+}
+
+#[cfg(target_os = "windows")]
+fn value_items(value: &Value) -> Vec<&Value> {
+    value
+        .as_array()
+        .map(|items| items.iter().collect())
+        .unwrap_or_else(|| vec![value])
+}
+
+#[cfg(target_os = "windows")]
+fn value_text(value: &Value, key: &str) -> String {
+    value
+        .get(key)
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|text| !text.is_empty())
+        .unwrap_or_default()
+        .to_string()
+}
+
 fn command_json(program: &str, args: &[&str]) -> Option<Value> {
     let text = command_text(program, args)?;
     serde_json::from_str(&text).ok()
 }
 
 fn command_text(program: &str, args: &[&str]) -> Option<String> {
-    let output = Command::new(program).args(args).output().ok()?;
+    let output = new_command(program).args(args).output().ok()?;
     if !output.status.success() {
         return None;
     }
     String::from_utf8(output.stdout).ok()
 }
+
+fn new_command(program: &str) -> Command {
+    let mut command = Command::new(program);
+    configure_command_window(&mut command);
+    command
+}
+
+#[cfg(target_os = "windows")]
+fn configure_command_window(command: &mut Command) {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    command.creation_flags(CREATE_NO_WINDOW);
+}
+
+#[cfg(not(target_os = "windows"))]
+fn configure_command_window(_command: &mut Command) {}
 
 fn insert_empty_if_missing(root: &mut Map<String, Value>, key: &str) {
     if !root.contains_key(key) {
@@ -228,7 +333,6 @@ fn string_value(value: &Value, key: &str) -> String {
         .to_string()
 }
 
-#[cfg(target_os = "macos")]
 fn first_non_empty(values: &[String]) -> String {
     values
         .iter()

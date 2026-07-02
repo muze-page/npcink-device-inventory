@@ -466,7 +466,7 @@ fn command_output_with_timeout(
     args: &[&str],
     timeout: Duration,
 ) -> std::io::Result<CommandOutput> {
-    let mut child = Command::new(program)
+    let mut child = new_command(program)
         .args(args)
         .env("PATH", command_search_path())
         .stdout(Stdio::piped())
@@ -495,6 +495,22 @@ fn command_output_with_timeout(
         stderr: String::from_utf8_lossy(&output.stderr).trim().to_string(),
     })
 }
+
+fn new_command(program: &str) -> Command {
+    let mut command = Command::new(program);
+    configure_command_window(&mut command);
+    command
+}
+
+#[cfg(target_os = "windows")]
+fn configure_command_window(command: &mut Command) {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    command.creation_flags(CREATE_NO_WINDOW);
+}
+
+#[cfg(not(target_os = "windows"))]
+fn configure_command_window(_command: &mut Command) {}
 
 fn usage_percent(value: Option<&Value>) -> Option<f64> {
     value

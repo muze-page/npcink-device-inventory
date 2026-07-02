@@ -401,6 +401,9 @@ const asRecord = (value: unknown): Record<string, unknown> =>
 
 const asArray = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 
+const listItems = (value: unknown): unknown[] =>
+  Array.isArray(value) ? value : Object.keys(asRecord(value)).length ? [value] : [];
+
 const readPath = (source: unknown, path: string): unknown =>
   path.split(".").reduce<unknown>((current, key) => {
     if (Array.isArray(current)) {
@@ -485,6 +488,32 @@ const displayValue = (value: unknown, fallback = "未采集") => {
 const isMissingValue = (value: unknown) =>
   value === null || value === undefined || value === "" || value === "未采集";
 
+const firstPresent = (source: unknown, keys: string[]) => {
+  const record = asRecord(source);
+  for (const key of keys) {
+    const value = record[key];
+    if (!isMissingValue(displayValue(value, ""))) {
+      return value;
+    }
+  }
+  return "";
+};
+
+const formatDateValue = (value: unknown) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+  const match = value.match(/^\/Date\((\d+)\)\/$/);
+  if (!match) {
+    return value;
+  }
+  const timestamp = Number(match[1]);
+  if (!Number.isFinite(timestamp)) {
+    return value;
+  }
+  return new Date(timestamp).toLocaleDateString("zh-CN");
+};
+
 const row = (label: string, value: unknown, unit = "") => {
   const display = displayValue(value);
   if (isMissingValue(display)) {
@@ -561,7 +590,7 @@ const listSections = (
   items: unknown,
   render: (item: Record<string, unknown>, index: number) => string[],
 ) => {
-  const list = asArray(items);
+  const list = listItems(items);
   if (!list.length) {
     return emptyDetail();
   }
@@ -626,12 +655,16 @@ const renderHumanDetail = (key: string, data: Record<string, unknown>) => {
       ]);
     case "graphics": {
       const graphics = asRecord(data.graphics);
-      const controllers = listSections("显卡", graphics.controllers, (item) => [
-        row("型号", [item.vendor, item.model].filter(Boolean).join(" ")),
-        row("显存", formatBytes(item.vram)),
-        row("总线", item.bus),
-      ]);
-      const displays = listSections("显示器", graphics.displays, (item) => [
+      const hasControllers = listItems(graphics.controllers).length > 0;
+      const hasDisplays = listItems(graphics.displays).length > 0;
+      const controllers = hasControllers ? listSections("显卡", graphics.controllers, (item) => [
+        row("型号", joinUnique([firstPresent(item, ["vendor", "Vendor"]), firstPresent(item, ["model", "Name"])])),
+        row("显存", formatBytes(firstPresent(item, ["vram", "AdapterRAM"]))),
+        row("视频处理器", firstPresent(item, ["videoProcessor", "VideoProcessor"])),
+        row("驱动版本", firstPresent(item, ["driverVersion", "DriverVersion"])),
+        row("总线", firstPresent(item, ["bus", "Bus"])),
+      ]) : "";
+      const displays = hasDisplays ? listSections("显示器", graphics.displays, (item) => [
         row("型号", item.model),
         row(
           "分辨率",
@@ -642,30 +675,30 @@ const renderHumanDetail = (key: string, data: Record<string, unknown>) => {
         row("尺寸", item.sizeX && item.sizeY ? `${item.sizeX} x ${item.sizeY}` : ""),
         row("类型", item.type),
         row("生产年份", item.productionYear),
-      ]);
-      return `${controllers}${displays}`;
+      ]) : "";
+      return controllers || displays || emptyDetail();
     }
     case "baseboard": {
       const baseboard = asRecord(data.baseboard);
       return section("主板信息", [
-        row("厂商", baseboard.manufacturer),
-        row("型号", baseboard.product || baseboard.model),
-        row("硬件标识", baseboard.model),
-        row("芯片", baseboard.chip),
-        row("版本", baseboard.version),
-        row("序列号", baseboard.serial),
-        row("最大内存", formatBytes(baseboard.memMax)),
-        row("内存插槽", baseboard.memSlots),
+        row("厂商", firstPresent(baseboard, ["manufacturer", "Manufacturer"])),
+        row("型号", firstPresent(baseboard, ["product", "Product", "model", "Model"])),
+        row("硬件标识", firstPresent(baseboard, ["model", "Model"])),
+        row("芯片", firstPresent(baseboard, ["chip", "Chip"])),
+        row("版本", firstPresent(baseboard, ["version", "Version"])),
+        row("序列号", firstPresent(baseboard, ["serial", "SerialNumber"])),
+        row("最大内存", formatBytes(firstPresent(baseboard, ["memMax", "MemMax"]))),
+        row("内存插槽", firstPresent(baseboard, ["memSlots", "MemSlots"])),
       ]);
     }
     case "bios": {
       const bios = asRecord(data.bios);
       return section("BIOS 信息", [
-        row("厂商", bios.vendor),
-        row("版本", bios.version),
-        row("序列号", bios.serial),
-        row("发布日期", bios.releaseDate),
-        row("修订版本", bios.revision),
+        row("厂商", firstPresent(bios, ["vendor", "Manufacturer"])),
+        row("版本", firstPresent(bios, ["version", "SMBIOSBIOSVersion", "Version", "Name"])),
+        row("序列号", firstPresent(bios, ["serial", "SerialNumber"])),
+        row("发布日期", formatDateValue(firstPresent(bios, ["releaseDate", "ReleaseDate"]))),
+        row("修订版本", firstPresent(bios, ["revision", "Revision"])),
       ]);
     }
     case "os": {
@@ -970,6 +1003,7 @@ const overviewRows = () => {
   const data = snapshot?.data ?? {};
   const cpu = asRecord(data.cpu);
   const baseboard = asRecord(data.baseboard);
+  const system = asRecord(data.system);
   const os = asRecord(data.os);
   const firstNet = primaryNetwork(data.net);
   const memoryType = firstText(data, ["memory.0.type", "memLayout.0.type"], "");
@@ -989,7 +1023,12 @@ const overviewRows = () => {
     { label: "硬盘", value: formatBytes(sumSizes(data.diskLayout)) },
     {
       label: "主板型号",
-      value: joinUnique([baseboard.product, baseboard.model, asRecord(data.system).model]) || "未采集",
+      value:
+        joinUnique([
+          firstPresent(baseboard, ["product", "Product"]),
+          firstPresent(baseboard, ["model", "Model"]),
+          firstPresent(system, ["model", "Model"]),
+        ]) || "未采集",
     },
     {
       label: "当前 IP",
@@ -1018,7 +1057,12 @@ const settingsSummaryRows = () => {
     { label: "硬盘", value: formatBytes(sumSizes(data.diskLayout)) },
     {
       label: "主板型号",
-      value: joinUnique([baseboard.product, baseboard.model, system.model]) || "未采集",
+      value:
+        joinUnique([
+          firstPresent(baseboard, ["product", "Product"]),
+          firstPresent(baseboard, ["model", "Model"]),
+          firstPresent(system, ["model", "Model"]),
+        ]) || "未采集",
     },
     { label: "当前 IP", value: iface ? `${ip} (${iface})` : ip },
   ];
@@ -1668,7 +1712,7 @@ const generateDiagnostics = async () => {
   diagnosticsResult.className = "diagnostics-result";
   diagnosticsResult.innerHTML = `
     <strong>正在生成排障包...</strong>
-    <span>请稍候，完成后发送给管理员。</span>
+    <span>后台正在收集系统信息，完成后发送给管理员。</span>
   `;
   openDiagnosticsFolderButton.hidden = true;
   copyDiagnosticsPathButton.hidden = true;
