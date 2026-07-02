@@ -30,6 +30,12 @@ fn enrich_impl(root: &mut Map<String, Value>) {
             normalize_windows_system(&value, root.get("system")),
         );
     }
+    if let Some(value) = powershell_json("Get-CimInstance Win32_PhysicalMemory | Select-Object Manufacturer,PartNumber,SerialNumber,Capacity,Speed,ConfiguredClockSpeed,SMBIOSMemoryType,FormFactor,DeviceLocator,BankLabel") {
+        let modules = normalize_windows_memory_modules(&value);
+        if modules.as_array().is_some_and(|items| !items.is_empty()) {
+            root.insert("memLayout".to_string(), modules);
+        }
+    }
     if let Some(value) = powershell_json("Get-CimInstance Win32_VideoController | Select-Object Name,AdapterRAM,VideoProcessor,DriverVersion") {
         root.insert(
             "graphics".to_string(),
@@ -257,6 +263,87 @@ fn normalize_windows_graphics_controllers(value: &Value) -> Value {
 }
 
 #[cfg(target_os = "windows")]
+fn normalize_windows_memory_modules(value: &Value) -> Value {
+    Value::Array(
+        value_items(value)
+            .into_iter()
+            .filter_map(|item| {
+                let size = value_u64_at(item, "Capacity")?;
+                let clock_speed =
+                    value_u64_at(item, "ConfiguredClockSpeed").or_else(|| value_u64_at(item, "Speed"));
+                let smbios_type = value_u64_at(item, "SMBIOSMemoryType");
+                let form_factor = value_u64_at(item, "FormFactor");
+                Some(json!({
+                    "bank": first_non_empty(&[
+                        value_text(item, "BankLabel"),
+                        value_text(item, "DeviceLocator"),
+                    ]),
+                    "size": size,
+                    "type": smbios_type
+                        .map(memory_type_label)
+                        .filter(|label| !label.is_empty())
+                        .unwrap_or_default(),
+                    "clockSpeed": clock_speed.unwrap_or_default(),
+                    "formFactor": form_factor
+                        .map(memory_form_factor_label)
+                        .filter(|label| !label.is_empty())
+                        .unwrap_or_default(),
+                    "manufacturer": value_text(item, "Manufacturer"),
+                    "serialNum": value_text(item, "SerialNumber"),
+                    "partNum": value_text(item, "PartNumber"),
+                }))
+            })
+            .collect(),
+    )
+}
+
+#[cfg(target_os = "windows")]
+fn memory_type_label(code: u64) -> String {
+    match code {
+        20 => "DDR",
+        21 => "DDR2",
+        24 => "DDR3",
+        26 => "DDR4",
+        34 => "DDR5",
+        35 => "LPDDR",
+        36 => "LPDDR2",
+        37 => "LPDDR3",
+        38 => "LPDDR4",
+        39 => "Logical non-volatile device",
+        40 => "HBM",
+        41 => "HBM2",
+        42 => "DDR5",
+        43 => "LPDDR5",
+        _ => "",
+    }
+    .to_string()
+}
+
+#[cfg(target_os = "windows")]
+fn memory_form_factor_label(code: u64) -> String {
+    match code {
+        8 => "DIMM",
+        9 => "TSOP",
+        10 => "PGA",
+        11 => "RIMM",
+        12 => "SODIMM",
+        13 => "SRIMM",
+        14 => "SMD",
+        15 => "SSMP",
+        16 => "QFP",
+        17 => "TQFP",
+        18 => "SOIC",
+        19 => "LCC",
+        20 => "PLCC",
+        21 => "BGA",
+        22 => "FPBGA",
+        23 => "LGA",
+        _ => "",
+    }
+    .to_string()
+}
+
+#[cfg(target_os = "windows")]
 fn graphics_vendor(value: &Value) -> String {
     let text = first_non_empty(&[value_text(value, "VideoProcessor"), value_text(value, "Name")]);
     text.split_whitespace().next().unwrap_or_default().to_string()
@@ -279,6 +366,18 @@ fn value_text(value: &Value, key: &str) -> String {
         .filter(|text| !text.is_empty())
         .unwrap_or_default()
         .to_string()
+}
+
+#[cfg(target_os = "windows")]
+fn value_u64_at(value: &Value, key: &str) -> Option<u64> {
+    let value = value.get(key)?;
+    if let Some(number) = value.as_u64() {
+        return Some(number);
+    }
+    value
+        .as_str()
+        .map(str::trim)
+        .and_then(|text| text.parse::<u64>().ok())
 }
 
 fn command_json(program: &str, args: &[&str]) -> Option<Value> {

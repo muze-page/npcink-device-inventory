@@ -970,6 +970,26 @@ button {
   overflow-wrap: anywhere;
 }
 
+.diagnostics-progress {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.diagnostics-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #f4f6e8;
+  transition: width 160ms ease;
+}
+
+.diagnostics-progress-meta {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+}
+
 .diagnostics-result.ok {
   color: #d8ffd8;
 }

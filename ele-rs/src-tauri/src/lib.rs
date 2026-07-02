@@ -10,6 +10,7 @@ use std::process::{Command, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
 use tauri::menu::{AboutMetadata, MenuBuilder, SubmenuBuilder};
+use tauri::Emitter;
 use tauri_plugin_opener::OpenerExt;
 use zip::write::SimpleFileOptions;
 
@@ -19,6 +20,7 @@ const APP_LOG_FILE: &str = "app.log";
 const APP_LOG_MAX_BYTES: u64 = 1024 * 1024;
 const DIAGNOSTICS_LOG_TAIL_BYTES: u64 = 256 * 1024;
 const DIAGNOSTICS_COMMAND_TIMEOUT: Duration = Duration::from_secs(12);
+const DIAGNOSTICS_PROGRESS_EVENT: &str = "diagnostics-progress";
 const PROJECT_URL: &str = "https://github.com/muze-page/npcink-device-inventory";
 const MENU_OPEN_PROJECT: &str = "open_project_url";
 
@@ -66,6 +68,20 @@ struct AppLogInput {
 struct DiagnosticsPackage {
     directory_path: String,
     zip_path: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct DiagnosticsProgress {
+    current: usize,
+    total: usize,
+    stage: String,
+    detail: String,
+}
+
+struct DiagnosticsProgressEmitter {
+    app: tauri::AppHandle,
+    current: usize,
+    total: usize,
 }
 
 #[tauri::command]
@@ -183,9 +199,10 @@ fn submit_device_data(mut config: AgentConfig) -> Result<Value, String> {
 }
 
 #[tauri::command]
-async fn generate_diagnostics_package() -> Result<DiagnosticsPackage, String> {
+async fn generate_diagnostics_package(app: tauri::AppHandle) -> Result<DiagnosticsPackage, String> {
     write_app_log("info", "diagnostics.generate_started", "");
-    let result = tauri::async_runtime::spawn_blocking(create_diagnostics_package).await;
+    let result =
+        tauri::async_runtime::spawn_blocking(move || create_diagnostics_package(app)).await;
     match result {
         Ok(Ok(package)) => {
             write_app_log("info", "diagnostics.generated", &package.zip_path);
@@ -418,7 +435,9 @@ fn diagnostics_base_dir() -> Result<PathBuf> {
         .context("failed to resolve diagnostics output dir")
 }
 
-fn create_diagnostics_package() -> Result<DiagnosticsPackage> {
+fn create_diagnostics_package(app: tauri::AppHandle) -> Result<DiagnosticsPackage> {
+    let mut progress = DiagnosticsProgressEmitter::new(app, diagnostics_progress_total());
+    progress.step("准备排障包", "创建本地排障目录");
     let stamp = Local::now().format("%Y%m%d-%H%M%S").to_string();
     let directory_path = diagnostics_base_dir()?.join(format!("NpcinkDiagnostics-{stamp}"));
     fs::create_dir_all(&directory_path).with_context(|| {
@@ -436,12 +455,14 @@ fn create_diagnostics_package() -> Result<DiagnosticsPackage> {
             std::env::consts::OS,
         ),
     )?;
+    progress.step("采集硬件信息", "读取本机静态硬件、系统和设备标识");
     let static_data =
         redact_sensitive_json(collector::collect_static_data().unwrap_or_else(|error| {
             json!({
                 "error": error.to_string(),
             })
         }));
+    progress.step("采集运行状态", "记录 CPU、内存、磁盘和本次会话监控");
     let runtime_status = collector::collect_runtime_status().unwrap_or_else(|error| {
         json!({
             "error": error.to_string(),
@@ -449,6 +470,7 @@ fn create_diagnostics_package() -> Result<DiagnosticsPackage> {
     });
     let runtime_history = collector::runtime_history(None);
     let runtime_history_summary = collector::runtime_history_summary(None);
+    progress.step("写入基础快照", "保存配置、硬件、运行状态和监控历史");
     write_json(
         &directory_path.join("device-static-data.json"),
         &static_data,
@@ -463,8 +485,10 @@ fn create_diagnostics_package() -> Result<DiagnosticsPackage> {
         &runtime_history_summary,
     )?;
     write_config_snapshot(&directory_path)?;
-    collect_platform_diagnostics(&directory_path)?;
+    collect_platform_diagnostics(&directory_path, &mut progress)?;
+    progress.step("收集应用日志", "保存软件本地日志尾部");
     write_app_log_snapshot(&directory_path)?;
+    progress.step("生成摘要", "汇总排障包内容和关键状态");
     write_diagnostics_summary(
         &directory_path,
         &static_data,
@@ -472,6 +496,7 @@ fn create_diagnostics_package() -> Result<DiagnosticsPackage> {
         &runtime_history_summary,
     )?;
 
+    progress.step("压缩排障包", "生成可发送的 zip 文件");
     let zip_path = directory_path.with_extension("zip");
     zip_directory(&directory_path, &zip_path)
         .with_context(|| format!("failed to create zip {}", zip_path.display()))?;
@@ -480,6 +505,48 @@ fn create_diagnostics_package() -> Result<DiagnosticsPackage> {
         directory_path: directory_path.to_string_lossy().to_string(),
         zip_path: zip_path.to_string_lossy().to_string(),
     })
+}
+
+impl DiagnosticsProgressEmitter {
+    fn new(app: tauri::AppHandle, total: usize) -> Self {
+        Self {
+            app,
+            current: 0,
+            total,
+        }
+    }
+
+    fn step(&mut self, stage: &str, detail: &str) {
+        self.current = (self.current + 1).min(self.total);
+        let _ = self.app.emit(
+            DIAGNOSTICS_PROGRESS_EVENT,
+            DiagnosticsProgress {
+                current: self.current,
+                total: self.total,
+                stage: stage.to_string(),
+                detail: detail.to_string(),
+            },
+        );
+    }
+}
+
+fn diagnostics_progress_total() -> usize {
+    7 + platform_diagnostics_step_count()
+}
+
+#[cfg(target_os = "windows")]
+fn platform_diagnostics_step_count() -> usize {
+    8
+}
+
+#[cfg(target_os = "macos")]
+fn platform_diagnostics_step_count() -> usize {
+    3
+}
+
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
+fn platform_diagnostics_step_count() -> usize {
+    3
 }
 
 fn write_config_snapshot(out: &Path) -> Result<()> {
@@ -587,8 +654,15 @@ fn write_diagnostics_summary(
 }
 
 #[cfg(target_os = "windows")]
-fn collect_platform_diagnostics(out: &Path) -> Result<()> {
-    let commands = [
+fn collect_platform_diagnostics(
+    out: &Path,
+    progress: &mut DiagnosticsProgressEmitter,
+) -> Result<()> {
+    progress.step(
+        "收集 Windows 事件",
+        "读取系统、应用、安装、更新和可靠性记录",
+    );
+    let event_commands = [
         (
             "system-relevant-events.txt",
             "Get-WinEvent -FilterHashtable @{LogName='System'; StartTime=(Get-Date).AddDays(-14); Id=41,1001,6008,6005,6006,1074,7,11,15,51,55,57,129,153,157,161,17,18,19,219,7000,7001,7009,7011,7022,7023,7024,7031,7034} -ErrorAction SilentlyContinue | Sort-Object TimeCreated -Descending | Select-Object TimeCreated,Id,ProviderName,LevelDisplayName,MachineName,Message | Format-List",
@@ -621,11 +695,21 @@ fn collect_platform_diagnostics(out: &Path) -> Result<()> {
             "reliability-records.csv",
             "Get-CimInstance -ClassName Win32_ReliabilityRecords -ErrorAction SilentlyContinue | Where-Object { $_.TimeGenerated -ge (Get-Date).AddDays(-14) } | Select-Object TimeGenerated,SourceName,EventIdentifier,ProductName,Message | ConvertTo-Csv -NoTypeInformation",
         ),
+    ];
+    run_command_group(out, &event_commands)?;
+
+    progress.step("收集硬件明细", "读取 BIOS、主板、内存、显卡和整机信息");
+    let hardware_commands = [
         ("computer-info.txt", "Get-ComputerInfo | Format-List"),
         (
             "hardware-info.txt",
             "$classes='Win32_BIOS','Win32_BaseBoard','Win32_Processor','Win32_PhysicalMemory','Win32_VideoController','Win32_DiskDrive'; foreach ($class in $classes) { \"===== $class =====\"; Get-CimInstance -ClassName $class -ErrorAction SilentlyContinue | Format-List * }",
         ),
+    ];
+    run_command_group(out, &hardware_commands)?;
+
+    progress.step("收集驱动信息", "读取已签名驱动、PnP 驱动和异常设备");
+    let driver_commands = [
         (
             "signed-drivers.txt",
             "Get-CimInstance Win32_PnPSignedDriver -ErrorAction SilentlyContinue | Select-Object DeviceName,Manufacturer,DriverVersion,DriverDate,InfName,IsSigned | Sort-Object DeviceName | Format-Table -AutoSize",
@@ -635,10 +719,6 @@ fn collect_platform_diagnostics(out: &Path) -> Result<()> {
             "Get-CimInstance Win32_PnPSignedDriver -ErrorAction SilentlyContinue | Select-Object DeviceName,Manufacturer,DriverVersion,DriverDate,InfName,IsSigned | Sort-Object DeviceName | ConvertTo-Csv -NoTypeInformation",
         ),
         (
-            "driverquery.csv",
-            "driverquery /v /fo csv",
-        ),
-        (
             "pnputil-enum-drivers.txt",
             "pnputil /enum-drivers",
         ),
@@ -646,6 +726,11 @@ fn collect_platform_diagnostics(out: &Path) -> Result<()> {
             "problem-devices.txt",
             "Get-CimInstance Win32_PnPEntity -ErrorAction SilentlyContinue | Where-Object { $_.Status -ne 'OK' -or $_.ConfigManagerErrorCode -ne 0 } | Format-List *",
         ),
+    ];
+    run_command_group(out, &driver_commands)?;
+
+    progress.step("收集磁盘与电源", "读取磁盘、分区、SMART、卷和电源状态");
+    let storage_commands = [
         (
             "physical-disk.txt",
             "Get-PhysicalDisk -ErrorAction SilentlyContinue | Format-List *",
@@ -664,6 +749,43 @@ fn collect_platform_diagnostics(out: &Path) -> Result<()> {
         ),
         ("volumes.txt", "Get-Volume -ErrorAction SilentlyContinue | Format-Table -AutoSize"),
         ("partitions.txt", "Get-Partition -ErrorAction SilentlyContinue | Format-Table -AutoSize"),
+        (
+            "powercfg.txt",
+            "powercfg /a; powercfg /lastwake; powercfg /waketimers",
+        ),
+    ];
+    run_command_group(out, &storage_commands)?;
+
+    progress.step("收集网络信息", "读取网卡、IP、DNS、路由、代理和连接状态");
+    let network_commands = [
+        ("ipconfig-all.txt", "ipconfig /all"),
+        ("network-routes.txt", "route print"),
+        (
+            "network-configuration.txt",
+            "Get-NetIPConfiguration -ErrorAction SilentlyContinue | Format-List *; Get-DnsClientServerAddress -ErrorAction SilentlyContinue | Format-Table -AutoSize; Get-NetAdapter -ErrorAction SilentlyContinue | Select-Object Name,InterfaceDescription,Status,LinkSpeed,MacAddress | Format-Table -AutoSize; netsh winhttp show proxy",
+        ),
+        (
+            "network-connections.txt",
+            "Get-NetTCPConnection -ErrorAction SilentlyContinue | Select-Object LocalAddress,LocalPort,RemoteAddress,RemotePort,State,OwningProcess | Sort-Object State,LocalPort | Format-Table -AutoSize",
+        ),
+    ];
+    run_command_group(out, &network_commands)?;
+
+    progress.step("收集进程快照", "读取 CPU 和内存占用最高的进程");
+    let process_commands = [
+        (
+            "process-top-cpu.txt",
+            "Get-Process -ErrorAction SilentlyContinue | Sort-Object CPU -Descending | Select-Object -First 40 Name,Id,CPU,WorkingSet64,StartTime,Path | Format-Table -AutoSize",
+        ),
+        (
+            "process-top-memory.txt",
+            "Get-Process -ErrorAction SilentlyContinue | Sort-Object WorkingSet64 -Descending | Select-Object -First 40 Name,Id,CPU,WorkingSet64,StartTime,Path | Format-Table -AutoSize",
+        ),
+    ];
+    run_command_group(out, &process_commands)?;
+
+    progress.step("收集更新与启动项", "读取补丁、启动项和服务状态");
+    let system_commands = [
         ("hotfixes.txt", "Get-HotFix -ErrorAction SilentlyContinue | Sort-Object InstalledOn -Descending | Format-Table -AutoSize"),
         (
             "startup-commands.csv",
@@ -671,29 +793,13 @@ fn collect_platform_diagnostics(out: &Path) -> Result<()> {
         ),
         ("services.txt", "Get-Service | Sort-Object Status,Name | Format-Table -AutoSize"),
         (
-            "powercfg.txt",
-            "powercfg /a; powercfg /lastwake; powercfg /waketimers",
-        ),
-        (
             "memory-dump-info.txt",
             "Get-Item C:\\Windows\\MEMORY.DMP -ErrorAction SilentlyContinue | Select-Object FullName,Length,LastWriteTime | Format-List",
         ),
     ];
+    run_command_group(out, &system_commands)?;
 
-    for (file_name, command) in commands {
-        write_command_output(
-            &out.join(file_name),
-            "powershell",
-            &[
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-Command",
-                command,
-            ],
-        )?;
-    }
-
+    progress.step("收集 dump 信息", "复制 Minidump 并尝试自动分析");
     let minidump_dir = out.join("Minidump");
     fs::create_dir_all(&minidump_dir)?;
     write_command_output(
@@ -726,6 +832,24 @@ fn collect_platform_diagnostics(out: &Path) -> Result<()> {
         ],
     )?;
 
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn run_command_group(out: &Path, commands: &[(&str, &str)]) -> Result<()> {
+    for (file_name, command) in commands {
+        write_command_output(
+            &out.join(file_name),
+            "powershell",
+            &[
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                command,
+            ],
+        )?;
+    }
     Ok(())
 }
 
@@ -830,22 +954,45 @@ fn powershell_single_quoted_path(path: &Path) -> String {
 }
 
 #[cfg(target_os = "macos")]
-fn collect_platform_diagnostics(out: &Path) -> Result<()> {
+fn collect_platform_diagnostics(
+    out: &Path,
+    progress: &mut DiagnosticsProgressEmitter,
+) -> Result<()> {
+    progress.step(
+        "收集系统概况",
+        "读取 macOS 硬件、软件、电源、存储和显示信息",
+    );
+    let commands = [(
+        "system-profiler.txt",
+        "system_profiler",
+        vec![
+            "SPHardwareDataType",
+            "SPSoftwareDataType",
+            "SPPowerDataType",
+            "SPStorageDataType",
+            "SPDisplaysDataType",
+        ],
+    )];
+    for (file_name, program, args) in commands {
+        write_command_output(&out.join(file_name), program, &args)?;
+    }
+
+    progress.step("收集磁盘与电源", "读取磁盘和电源状态");
     let commands = [
-        (
-            "system-profiler.txt",
-            "system_profiler",
-            vec![
-                "SPHardwareDataType",
-                "SPSoftwareDataType",
-                "SPPowerDataType",
-                "SPStorageDataType",
-                "SPDisplaysDataType",
-            ],
-        ),
         ("diskutil-list.txt", "diskutil", vec!["list"]),
         ("diskutil-info-root.txt", "diskutil", vec!["info", "/"]),
-        ("pmset.txt", "sh", vec!["-c", "pmset -g; pmset -g batt; pmset -g assertions"]),
+        (
+            "pmset.txt",
+            "sh",
+            vec!["-c", "pmset -g; pmset -g batt; pmset -g assertions"],
+        ),
+    ];
+    for (file_name, program, args) in commands {
+        write_command_output(&out.join(file_name), program, &args)?;
+    }
+
+    progress.step("收集系统日志", "读取最近错误和诊断报告列表");
+    let commands = [
         (
             "recent-errors.log",
             "sh",
@@ -872,10 +1019,24 @@ fn collect_platform_diagnostics(out: &Path) -> Result<()> {
 }
 
 #[cfg(not(any(target_os = "windows", target_os = "macos")))]
-fn collect_platform_diagnostics(out: &Path) -> Result<()> {
+fn collect_platform_diagnostics(
+    out: &Path,
+    progress: &mut DiagnosticsProgressEmitter,
+) -> Result<()> {
+    progress.step("收集系统信息", "读取系统版本");
+    let commands = [("uname.txt", "uname", vec!["-a"])];
+    for (file_name, program, args) in commands {
+        write_command_output(&out.join(file_name), program, &args)?;
+    }
+
+    progress.step("收集磁盘信息", "读取文件系统空间");
+    let commands = [("df.txt", "df", vec!["-h"])];
+    for (file_name, program, args) in commands {
+        write_command_output(&out.join(file_name), program, &args)?;
+    }
+
+    progress.step("收集系统日志", "读取内核和 journal 警告");
     let commands = [
-        ("uname.txt", "uname", vec!["-a"]),
-        ("df.txt", "df", vec!["-h"]),
         ("dmesg-tail.txt", "sh", vec!["-c", "dmesg 2>/dev/null | tail -300"]),
         (
             "journal-errors.txt",

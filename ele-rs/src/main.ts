@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
 import "./style.css";
@@ -143,6 +144,13 @@ type DiagnosticsPackage = {
   zip_path: string;
 };
 
+type DiagnosticsProgress = {
+  current?: number;
+  total?: number;
+  stage?: string;
+  detail?: string;
+};
+
 type TabId = "settings" | "overview" | "runtime" | "diagnostics" | "details";
 
 const app = document.querySelector<HTMLDivElement>("#app");
@@ -261,10 +269,10 @@ app.innerHTML = `
         <div class="diagnostics-layout">
           <section class="diagnostics-panel">
             <span class="panel-kicker">本地排障</span>
-            <h2>排障包</h2>
-            <p>设备频繁蓝屏、异常重启、上传失败或硬件信息异常时，请生成排障包并发送给管理员。</p>
+            <h2>深度排障包</h2>
+            <p>设备频繁蓝屏、异常重启、上传失败或硬件信息异常时，生成深度排障包并发送给管理员。</p>
             <div class="diagnostics-actions">
-              <button class="button primary diagnostics-button" id="generateDiagnosticsButton" type="button">生成排障包</button>
+              <button class="button primary diagnostics-button" id="generateDiagnosticsButton" type="button">生成深度排障包</button>
               <button class="button secondary diagnostics-button" id="openDiagnosticsFolderButton" type="button" hidden>打开文件夹</button>
               <button class="button secondary diagnostics-button" id="copyDiagnosticsPathButton" type="button" hidden>复制文件位置</button>
             </div>
@@ -272,7 +280,7 @@ app.innerHTML = `
           </section>
           <section class="diagnostics-note">
             <strong>隐私提示</strong>
-            <p>排障包只保存在本机，不会自动上传。请只发送给可信管理员。</p>
+            <p>深度排障包会收集硬件、事件、驱动、磁盘、网络、进程、dump 与运行监控，只保存在本机，不会自动上传。</p>
             <p>如需更完整的蓝屏和异常重启信息，请右键软件并选择“以管理员身份运行”后重新生成。</p>
           </section>
         </div>
@@ -548,6 +556,65 @@ const systemLabel = (distro: unknown, release: unknown) => {
     return distroText;
   }
   return joinUnique([distroText, releaseText]) || "未采集";
+};
+
+const shortDeviceId = (value: unknown) => {
+  const text = displayValue(value, "").replace(/^v2-/i, "");
+  if (!text) {
+    return "未采集";
+  }
+  return text.slice(0, 12).toUpperCase();
+};
+
+const systemModelLabel = (data: Record<string, unknown>) => {
+  const system = asRecord(data.system);
+  return joinUnique([
+    firstPresent(system, ["manufacturer", "Manufacturer"]),
+    firstPresent(system, ["model", "Model"]),
+  ]) || "未采集";
+};
+
+const baseboardLabel = (data: Record<string, unknown>) => {
+  const baseboard = asRecord(data.baseboard);
+  return joinUnique([
+    firstPresent(baseboard, ["manufacturer", "Manufacturer"]),
+    firstPresent(baseboard, ["product", "Product"]),
+    firstPresent(baseboard, ["model", "Model"]),
+  ]) || "未采集";
+};
+
+const biosLabel = (data: Record<string, unknown>) => {
+  const bios = asRecord(data.bios);
+  return joinUnique([
+    firstPresent(bios, ["vendor", "Manufacturer"]),
+    firstPresent(bios, ["version", "SMBIOSBIOSVersion", "Version", "Name"]),
+  ]) || "未采集";
+};
+
+const graphicsLabel = (data: Record<string, unknown>) => {
+  const controllers = listItems(asRecord(data.graphics).controllers);
+  const primary = controllers.length ? asRecord(controllers[0]) : {};
+  const label = joinUnique([
+    firstPresent(primary, ["vendor", "Vendor"]),
+    firstPresent(primary, ["model", "Name"]),
+  ]);
+  const vram = formatBytes(firstPresent(primary, ["vram", "AdapterRAM"]));
+  if (!label) {
+    return "未采集";
+  }
+  return vram === "未采集" ? label : `${label} ${vram}`;
+};
+
+const displayLabel = (data: Record<string, unknown>) => {
+  const displays = listItems(asRecord(data.graphics).displays);
+  const primary = displays.length ? asRecord(displays[0]) : {};
+  const model = displayValue(primary.model || primary.name, "");
+  const resolution = displayValue(
+    primary.resolution ||
+      (primary.resolutionX && primary.resolutionY ? `${primary.resolutionX} x ${primary.resolutionY}` : ""),
+    "",
+  );
+  return joinUnique([model, resolution]);
 };
 
 const listRow = (label: string, values: unknown[]) => {
@@ -858,7 +925,7 @@ const setSubmitting = (submitting: boolean) => {
 
 const setGeneratingDiagnostics = (generating: boolean) => {
   isGeneratingDiagnostics = generating;
-  generateDiagnosticsButton.textContent = generating ? "正在生成..." : "生成排障包";
+  generateDiagnosticsButton.textContent = generating ? "生成中..." : "生成深度排障包";
   updateInteractiveState();
 };
 
@@ -1002,18 +1069,17 @@ const switchTab = (tab: TabId) => {
 const overviewRows = () => {
   const data = snapshot?.data ?? {};
   const cpu = asRecord(data.cpu);
-  const baseboard = asRecord(data.baseboard);
-  const system = asRecord(data.system);
   const os = asRecord(data.os);
   const firstNet = primaryNetwork(data.net);
   const memoryType = firstText(data, ["memory.0.type", "memLayout.0.type"], "");
   const memorySize = formatBytes(sumSizes(data.memory) || sumSizes(data.memLayout) || asRecord(data.mem).total);
   const ip = displayValue(firstNet.ip4 || firstNet.ip6);
   const iface = displayValue(firstNet.ifaceName || firstNet.iface, "");
-
-  return [
+  const rows = [
     { label: "上传备注", value: nameInput.value.trim() || "未填写" },
     { label: "电脑名称", value: firstText(data, ["os.hostname", "system.model"], "未采集") },
+    { label: "设备型号", value: systemModelLabel(data) },
+    { label: "设备编号", value: shortDeviceId(snapshot?.stable_device_id_v2) },
     { label: "系统", value: systemLabel(os.distro, os.release) },
     {
       label: "处理器",
@@ -1021,20 +1087,19 @@ const overviewRows = () => {
     },
     { label: "内存", value: [memoryType, memorySize].filter(Boolean).join(" ") },
     { label: "硬盘", value: formatBytes(sumSizes(data.diskLayout)) },
-    {
-      label: "主板型号",
-      value:
-        joinUnique([
-          firstPresent(baseboard, ["product", "Product"]),
-          firstPresent(baseboard, ["model", "Model"]),
-          firstPresent(system, ["model", "Model"]),
-        ]) || "未采集",
-    },
+    { label: "显卡", value: graphicsLabel(data) },
+    { label: "主板", value: baseboardLabel(data) },
+    { label: "BIOS", value: biosLabel(data) },
     {
       label: "当前 IP",
       value: iface ? `${ip} (${iface})` : ip,
     },
   ];
+  const display = displayLabel(data);
+  if (display) {
+    rows.push({ label: "显示器", value: display });
+  }
+  return rows;
 };
 
 const settingsSummaryRows = () => {
@@ -1709,11 +1774,7 @@ const refreshRuntimeHistory = async () => {
 
 const generateDiagnostics = async () => {
   setGeneratingDiagnostics(true);
-  diagnosticsResult.className = "diagnostics-result";
-  diagnosticsResult.innerHTML = `
-    <strong>正在生成排障包...</strong>
-    <span>后台正在收集系统信息，完成后发送给管理员。</span>
-  `;
+  renderDiagnosticsProgress({ current: 0, total: 1, stage: "正在生成深度排障包...", detail: "后台正在收集系统信息。" });
   openDiagnosticsFolderButton.hidden = true;
   copyDiagnosticsPathButton.hidden = true;
   diagnosticsDirectoryPath = "";
@@ -1737,6 +1798,21 @@ const generateDiagnostics = async () => {
   } finally {
     setGeneratingDiagnostics(false);
   }
+};
+
+const renderDiagnosticsProgress = (progress: DiagnosticsProgress) => {
+  const total = Math.max(1, Math.round(finiteNumber(progress.total) ?? 1));
+  const current = Math.min(total, Math.max(0, Math.round(finiteNumber(progress.current) ?? 0)));
+  const percent = Math.round((current / total) * 100);
+  diagnosticsResult.className = "diagnostics-result";
+  diagnosticsResult.innerHTML = `
+    <strong>${escapeHtml(progress.stage || "正在生成深度排障包...")}</strong>
+    <span>${escapeHtml(progress.detail || "后台正在收集系统信息。")}</span>
+    <div class="diagnostics-progress" role="progressbar" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100">
+      <span style="width: ${percent}%"></span>
+    </div>
+    <small class="diagnostics-progress-meta">${escapeHtml(`${current}/${total}`)}</small>
+  `;
 };
 
 const copyDiagnosticsPath = async () => {
@@ -1786,6 +1862,15 @@ openDiagnosticsFolderButton.addEventListener("click", () => {
 
 copyDiagnosticsPathButton.addEventListener("click", () => {
   void copyDiagnosticsPath();
+});
+
+void listen<DiagnosticsProgress>("diagnostics-progress", (event) => {
+  if (!isGeneratingDiagnostics) {
+    return;
+  }
+  renderDiagnosticsProgress(event.payload);
+}).catch((error) => {
+  console.warn("diagnostics progress listener failed", error);
 });
 
 submitButton.addEventListener("click", async () => {
