@@ -151,6 +151,12 @@ type DiagnosticsProgress = {
   detail?: string;
 };
 
+type OverviewRow = {
+  label: string;
+  value: string;
+  wide?: boolean;
+};
+
 type TabId = "settings" | "overview" | "runtime" | "diagnostics" | "details";
 
 const app = document.querySelector<HTMLDivElement>("#app");
@@ -558,22 +564,6 @@ const systemLabel = (distro: unknown, release: unknown) => {
   return joinUnique([distroText, releaseText]) || "未采集";
 };
 
-const shortDeviceId = (value: unknown) => {
-  const text = displayValue(value, "").replace(/^v2-/i, "");
-  if (!text) {
-    return "未采集";
-  }
-  return text.slice(0, 12).toUpperCase();
-};
-
-const systemModelLabel = (data: Record<string, unknown>) => {
-  const system = asRecord(data.system);
-  return joinUnique([
-    firstPresent(system, ["manufacturer", "Manufacturer"]),
-    firstPresent(system, ["model", "Model"]),
-  ]) || "未采集";
-};
-
 const baseboardLabel = (data: Record<string, unknown>) => {
   const baseboard = asRecord(data.baseboard);
   return joinUnique([
@@ -591,13 +581,25 @@ const biosLabel = (data: Record<string, unknown>) => {
   ]) || "未采集";
 };
 
+const modelWithVendor = (vendor: unknown, model: unknown) => {
+  const vendorText = displayValue(vendor, "").trim();
+  const modelText = displayValue(model, "").trim();
+  if (!modelText) {
+    return vendorText;
+  }
+  if (vendorText && modelText.toLowerCase().startsWith(vendorText.toLowerCase())) {
+    return modelText;
+  }
+  return joinUnique([vendorText, modelText]);
+};
+
 const graphicsLabel = (data: Record<string, unknown>) => {
   const controllers = listItems(asRecord(data.graphics).controllers);
   const primary = controllers.length ? asRecord(controllers[0]) : {};
-  const label = joinUnique([
+  const label = modelWithVendor(
     firstPresent(primary, ["vendor", "Vendor"]),
     firstPresent(primary, ["model", "Name"]),
-  ]);
+  );
   const vram = formatBytes(firstPresent(primary, ["vram", "AdapterRAM"]));
   if (!label) {
     return "未采集";
@@ -1066,7 +1068,7 @@ const switchTab = (tab: TabId) => {
   document.querySelector<HTMLElement>(`#${tab}Page`)?.classList.add("active");
 };
 
-const overviewRows = () => {
+const overviewRows = (): OverviewRow[] => {
   const data = snapshot?.data ?? {};
   const cpu = asRecord(data.cpu);
   const os = asRecord(data.os);
@@ -1077,22 +1079,22 @@ const overviewRows = () => {
   const iface = displayValue(firstNet.ifaceName || firstNet.iface, "");
   const rows = [
     { label: "上传备注", value: nameInput.value.trim() || "未填写" },
-    { label: "电脑名称", value: firstText(data, ["os.hostname", "system.model"], "未采集") },
-    { label: "设备型号", value: systemModelLabel(data) },
-    { label: "设备编号", value: shortDeviceId(snapshot?.stable_device_id_v2) },
-    { label: "系统", value: systemLabel(os.distro, os.release) },
+    { label: "电脑名称", value: firstText(data, ["os.hostname", "system.model"], "未采集"), wide: true },
+    { label: "系统", value: systemLabel(os.distro, os.release), wide: true },
+    { label: "内存", value: [memoryType, memorySize].filter(Boolean).join(" ") },
     {
       label: "处理器",
       value: [cpu.manufacturer, cpu.brand].filter(Boolean).join(" ") || "未采集",
+      wide: true,
     },
-    { label: "内存", value: [memoryType, memorySize].filter(Boolean).join(" ") },
     { label: "硬盘", value: formatBytes(sumSizes(data.diskLayout)) },
-    { label: "显卡", value: graphicsLabel(data) },
+    { label: "显卡", value: graphicsLabel(data), wide: true },
     { label: "主板", value: baseboardLabel(data) },
     { label: "BIOS", value: biosLabel(data) },
     {
       label: "当前 IP",
       value: iface ? `${ip} (${iface})` : ip,
+      wide: true,
     },
   ];
   const display = displayLabel(data);
@@ -1563,7 +1565,7 @@ const renderOverview = () => {
   overviewGrid.innerHTML = overviewRows()
     .map(
       (item) => `
-        <article class="summary-tile">
+        <article class="summary-tile ${item.wide ? "wide" : ""}">
           <span>${escapeHtml(item.label)}</span>
           <strong>${escapeHtml(item.value)}</strong>
         </article>

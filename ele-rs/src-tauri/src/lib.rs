@@ -447,14 +447,17 @@ fn create_diagnostics_package(app: tauri::AppHandle) -> Result<DiagnosticsPackag
         )
     })?;
 
+    let privilege_info = diagnostics_privilege_info();
     write_text(
         &directory_path.join("README.txt"),
         &format!(
-            "Npcink 设备信息上传排障包\n生成时间: {}\n平台: {}\n\n此排障包由本机生成，用于管理员排查问题。分享前请先确认文件内容。\n",
+            "Npcink 设备信息上传排障包\n生成时间: {}\n平台: {}\n运行身份: {}\n\n此排障包由本机生成，用于管理员排查问题。分享前请先确认文件内容。\n",
             Local::now().to_rfc3339(),
             std::env::consts::OS,
+            privilege_label(&privilege_info),
         ),
     )?;
+    write_json(&directory_path.join("privilege-info.json"), &privilege_info)?;
     progress.step("采集硬件信息", "读取本机静态硬件、系统和设备标识");
     let static_data =
         redact_sensitive_json(collector::collect_static_data().unwrap_or_else(|error| {
@@ -494,6 +497,7 @@ fn create_diagnostics_package(app: tauri::AppHandle) -> Result<DiagnosticsPackag
         &static_data,
         &runtime_status,
         &runtime_history_summary,
+        &privilege_info,
     )?;
 
     progress.step("压缩排障包", "生成可发送的 zip 文件");
@@ -532,6 +536,71 @@ impl DiagnosticsProgressEmitter {
 
 fn diagnostics_progress_total() -> usize {
     7 + platform_diagnostics_step_count()
+}
+
+fn privilege_label(info: &Value) -> &'static str {
+    match info.get("is_admin").and_then(Value::as_bool) {
+        Some(true) => "管理员权限",
+        Some(false) => "普通权限",
+        None => "未知",
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn diagnostics_privilege_info() -> Value {
+    let command = "$principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent()); if ($principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { 'true' } else { 'false' }";
+    let output = powershell_stdout(command, Duration::from_secs(5));
+    let is_admin = output
+        .as_deref()
+        .map(str::trim)
+        .map(|text| text.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
+
+    json!({
+        "is_admin": is_admin,
+        "label": if is_admin { "管理员权限" } else { "普通权限" },
+        "source": "windows-principal",
+        "note": if is_admin {
+            "已使用管理员权限运行，磁盘可靠性、电源唤醒和 dump 相关信息更完整。"
+        } else {
+            "当前为普通权限运行，部分磁盘可靠性、电源唤醒和 dump 相关信息可能不完整。"
+        },
+        "detection_error": output.is_none(),
+    })
+}
+
+#[cfg(not(target_os = "windows"))]
+fn diagnostics_privilege_info() -> Value {
+    let is_admin = command_stdout("id", &["-u"], Duration::from_secs(5))
+        .as_deref()
+        .map(str::trim)
+        .map(|text| text == "0")
+        .unwrap_or(false);
+    json!({
+        "is_admin": is_admin,
+        "label": if is_admin { "管理员权限" } else { "普通权限" },
+        "source": "posix-euid",
+        "note": if is_admin {
+            "已使用管理员权限运行。"
+        } else {
+            "当前为普通权限运行。"
+        },
+    })
+}
+
+#[cfg(target_os = "windows")]
+fn powershell_stdout(command: &str, timeout: Duration) -> Option<String> {
+    let args = powershell_utf8_args(command);
+    let arg_refs = args.iter().map(String::as_str).collect::<Vec<_>>();
+    command_stdout("powershell", &arg_refs, timeout)
+}
+
+fn command_stdout(program: &str, args: &[&str], timeout: Duration) -> Option<String> {
+    let output = command_output_with_timeout(program, args, timeout).ok()?;
+    if !output.status.success() || output.timed_out {
+        return None;
+    }
+    Some(String::from_utf8_lossy(&output.stdout).trim().to_string())
 }
 
 #[cfg(target_os = "windows")]
@@ -578,6 +647,7 @@ fn write_diagnostics_summary(
     static_data: &Value,
     runtime_status: &Value,
     runtime_history_summary: &Value,
+    privilege_info: &Value,
 ) -> Result<()> {
     let config = read_config().unwrap_or_default();
     let recent_error_lines = count_log_payload_lines(&out.join("recent-errors.log"));
@@ -601,6 +671,7 @@ fn write_diagnostics_summary(
                 "project_url": PROJECT_URL,
             },
             "platform": std::env::consts::OS,
+            "privilege": privilege_info,
             "config": {
                 "configured": !config.site.trim().is_empty() && !config.token.trim().is_empty(),
                 "preset_locked": config.preset_locked,
@@ -802,34 +873,20 @@ fn collect_platform_diagnostics(
     progress.step("收集 dump 信息", "复制 Minidump 并尝试自动分析");
     let minidump_dir = out.join("Minidump");
     fs::create_dir_all(&minidump_dir)?;
-    write_command_output(
+    write_powershell_output(
         &out.join("minidump-copy.txt"),
-        "powershell",
-        &[
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-Command",
-            &format!(
-                "Copy-Item 'C:\\Windows\\Minidump\\*.dmp' '{}' -ErrorAction SilentlyContinue; Get-ChildItem '{}' -ErrorAction SilentlyContinue | Select-Object FullName,Length,LastWriteTime | Format-Table -AutoSize",
-                minidump_dir.to_string_lossy(),
-                minidump_dir.to_string_lossy(),
-            ),
-        ],
+        &format!(
+            "Copy-Item 'C:\\Windows\\Minidump\\*.dmp' '{}' -ErrorAction SilentlyContinue; Get-ChildItem '{}' -ErrorAction SilentlyContinue | Select-Object FullName,Length,LastWriteTime | Format-Table -AutoSize",
+            minidump_dir.to_string_lossy(),
+            minidump_dir.to_string_lossy(),
+        ),
     )?;
 
     let dump_analysis_dir = out.join("DumpAnalysis");
     fs::create_dir_all(&dump_analysis_dir)?;
-    write_command_output(
+    write_powershell_output(
         &out.join("dump-analysis.txt"),
-        "powershell",
-        &[
-            "-NoProfile",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-Command",
-            &windows_dump_analysis_command(&minidump_dir, &dump_analysis_dir),
-        ],
+        &windows_dump_analysis_command(&minidump_dir, &dump_analysis_dir),
     )?;
 
     Ok(())
@@ -838,19 +895,31 @@ fn collect_platform_diagnostics(
 #[cfg(target_os = "windows")]
 fn run_command_group(out: &Path, commands: &[(&str, &str)]) -> Result<()> {
     for (file_name, command) in commands {
-        write_command_output(
-            &out.join(file_name),
-            "powershell",
-            &[
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-Command",
-                command,
-            ],
-        )?;
+        write_powershell_output(&out.join(file_name), command)?;
     }
     Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn write_powershell_output(path: &Path, command: &str) -> Result<()> {
+    let args = powershell_utf8_args(command);
+    let arg_refs = args.iter().map(String::as_str).collect::<Vec<_>>();
+    write_command_output(path, "powershell", &arg_refs)
+}
+
+#[cfg(target_os = "windows")]
+fn powershell_utf8_args(command: &str) -> Vec<String> {
+    let wrapped = format!(
+        "$utf8 = New-Object System.Text.UTF8Encoding $false; try {{ [Console]::InputEncoding = $utf8; [Console]::OutputEncoding = $utf8 }} catch {{ }} $OutputEncoding = $utf8; chcp.com 65001 > $null; & {{ {command} }}"
+    );
+    vec![
+        "-NoProfile".to_string(),
+        "-NonInteractive".to_string(),
+        "-ExecutionPolicy".to_string(),
+        "Bypass".to_string(),
+        "-Command".to_string(),
+        wrapped,
+    ]
 }
 
 #[cfg(target_os = "windows")]
@@ -1717,12 +1786,18 @@ mod tests {
             "sample_count": 1,
             "cpu": { "average_percent": 12.5, "max_percent": 12.5 },
         });
+        let privilege_info = json!({
+            "is_admin": false,
+            "label": "普通权限",
+            "source": "test",
+        });
 
         write_diagnostics_summary(
             &out,
             &static_data,
             &runtime_status,
             &runtime_history_summary,
+            &privilege_info,
         )
         .unwrap();
         let summary: Value = serde_json::from_str(
@@ -1731,6 +1806,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(summary["schema"], "npcink-diagnostics-summary-v1");
+        assert_eq!(summary["privilege"]["is_admin"], false);
         assert_eq!(summary["signals"]["recent_error_lines"], 1);
         assert_eq!(summary["signals"]["diagnostic_report_count"], 2);
         assert!(summary["package_files"]

@@ -1011,8 +1011,7 @@ button {
   text-align: center;
 }
 
-.summary-tile:nth-child(2),
-.summary-tile:nth-child(4) {
+.summary-tile.wide {
   grid-column: span 2;
 }
 
@@ -1190,8 +1189,7 @@ button {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .summary-tile:nth-child(2),
-  .summary-tile:nth-child(4) {
+  .summary-tile.wide {
     grid-column: span 1;
   }
 }
