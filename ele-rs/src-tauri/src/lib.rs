@@ -11,7 +11,7 @@ use tauri::menu::{AboutMetadata, MenuBuilder, SubmenuBuilder};
 use tauri_plugin_opener::OpenerExt;
 use zip::write::SimpleFileOptions;
 
-const APP_NAME: &str = "Npcink Device Agent";
+const APP_NAME: &str = "Npcink 设备信息上传";
 const APP_DIR_NAME: &str = "npcink-device-agent";
 const APP_LOG_FILE: &str = "app.log";
 const APP_LOG_MAX_BYTES: u64 = 1024 * 1024;
@@ -232,8 +232,8 @@ pub fn run() {
 }
 
 fn setup_app_menu(app: &mut tauri::App) -> tauri::Result<()> {
-    let file_menu = SubmenuBuilder::new(app, "File").close_window().build()?;
-    let edit_menu = SubmenuBuilder::new(app, "Edit")
+    let file_menu = SubmenuBuilder::new(app, "文件").close_window().build()?;
+    let edit_menu = SubmenuBuilder::new(app, "编辑")
         .undo()
         .redo()
         .separator()
@@ -242,19 +242,19 @@ fn setup_app_menu(app: &mut tauri::App) -> tauri::Result<()> {
         .paste()
         .select_all()
         .build()?;
-    let view_menu = SubmenuBuilder::new(app, "View").fullscreen().build()?;
-    let window_menu = SubmenuBuilder::new(app, "Window")
+    let view_menu = SubmenuBuilder::new(app, "查看").fullscreen().build()?;
+    let window_menu = SubmenuBuilder::new(app, "窗口")
         .minimize()
         .close_window()
         .build()?;
 
     #[cfg(target_os = "macos")]
-    let help_menu = SubmenuBuilder::new(app, "Help")
+    let help_menu = SubmenuBuilder::new(app, "帮助")
         .text(MENU_OPEN_PROJECT, "项目主页")
         .build()?;
 
     #[cfg(not(target_os = "macos"))]
-    let help_menu = SubmenuBuilder::new(app, "Help")
+    let help_menu = SubmenuBuilder::new(app, "帮助")
         .about_with_text(format!("关于 {APP_NAME}"), Some(about_metadata()))
         .separator()
         .text(MENU_OPEN_PROJECT, "项目主页")
@@ -307,7 +307,7 @@ fn about_metadata() -> AboutMetadata<'static> {
         version: Some(env!("CARGO_PKG_VERSION").to_string()),
         short_version: None,
         authors: Some(vec!["Npcink".to_string()]),
-        comments: Some("Device inventory upload agent".to_string()),
+        comments: Some("设备信息采集与上传工具".to_string()),
         copyright: None,
         license: None,
         website: Some(PROJECT_URL.to_string()),
@@ -422,7 +422,7 @@ fn create_diagnostics_package() -> Result<DiagnosticsPackage> {
     write_text(
         &directory_path.join("README.txt"),
         &format!(
-            "Npcink Device Agent diagnostics\nGenerated at: {}\nPlatform: {}\n\nThis package is generated locally for administrator troubleshooting. Review files before sharing.\n",
+            "Npcink 设备信息上传排障包\n生成时间: {}\n平台: {}\n\n此排障包由本机生成，用于管理员排查问题。分享前请先确认文件内容。\n",
             Local::now().to_rfc3339(),
             std::env::consts::OS,
         ),
@@ -445,7 +445,10 @@ fn create_diagnostics_package() -> Result<DiagnosticsPackage> {
         &static_data,
     )?;
     write_json(&directory_path.join("runtime-status.json"), &runtime_status)?;
-    write_json(&directory_path.join("runtime-history.json"), &runtime_history)?;
+    write_json(
+        &directory_path.join("runtime-history.json"),
+        &runtime_history,
+    )?;
     write_json(
         &directory_path.join("runtime-history-summary.json"),
         &runtime_history_summary,
@@ -1493,8 +1496,13 @@ mod tests {
             "cpu": { "average_percent": 12.5, "max_percent": 12.5 },
         });
 
-        write_diagnostics_summary(&out, &static_data, &runtime_status, &runtime_history_summary)
-            .unwrap();
+        write_diagnostics_summary(
+            &out,
+            &static_data,
+            &runtime_status,
+            &runtime_history_summary,
+        )
+        .unwrap();
         let summary: Value = serde_json::from_str(
             &fs::read_to_string(out.join("diagnostics-summary.json")).unwrap(),
         )

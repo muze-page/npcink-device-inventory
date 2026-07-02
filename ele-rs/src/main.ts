@@ -237,7 +237,7 @@ app.innerHTML = `
           <div class="settings-summary-head runtime-page-head">
             <div>
               <span>运行状态</span>
-              <p>持续监控当前设备的关键资源，用于快速判断负载、内存、磁盘和温度状态。</p>
+              <p>持续监控当前设备的关键资源。Windows 当前提供 CPU、内存、磁盘和网络基础监控，高级传感器数据视系统支持情况显示。</p>
             </div>
             <strong id="runtimeCollectedAt">等待监控</strong>
           </div>
@@ -1065,6 +1065,8 @@ const runtimeRows = (status: RuntimeStatus | null) => {
   const diskTotal = status?.disk?.total ?? 0;
   const diskMount = status?.disk?.mount && status.disk.mount !== "all" ? ` (${status.disk.mount})` : "";
   const advanced = status?.advanced;
+  const advancedUnavailable =
+    advanced?.reason || "当前系统暂未开放温度、功耗、GPU 使用率等高级传感器数据";
   const advancedRows = advanced?.available
     ? [
         { label: "CPU 温度", value: formatTemperature(advanced.cpu_temperature_c) },
@@ -1083,7 +1085,7 @@ const runtimeRows = (status: RuntimeStatus | null) => {
     : [
         {
           label: "高级监控",
-          value: advanced?.reason || "未启用",
+          value: advancedUnavailable,
         },
       ];
 
@@ -1101,7 +1103,9 @@ const runtimeRows = (status: RuntimeStatus | null) => {
       label: "温度",
       value: primaryTemperature
         ? `${primaryTemperature.label || "传感器"} ${primaryTemperature.temperature_c?.toFixed(1)} C`
-        : "未开放",
+        : advanced?.available
+          ? "未采集"
+          : "当前系统暂不支持",
     },
     ...advancedRows,
   ];
@@ -1426,7 +1430,7 @@ const renderRuntimeHistory = (
   const rows = [
     historyItem("记录样本", `${sampleCount} 个`),
     historyItem("实际时长", duration),
-    historyItem("高级监控", summary.advanced_available ? "已启用" : "基础监控"),
+    historyItem("高级监控", summary.advanced_available ? "已启用" : "基础监控（高级传感器未开放）"),
   ];
   const metrics = trendMetrics(chart, summary);
   lastRuntimeChart = chart;
