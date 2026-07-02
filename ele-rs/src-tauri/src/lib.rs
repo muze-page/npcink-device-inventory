@@ -582,12 +582,32 @@ fn collect_platform_diagnostics(out: &Path) -> Result<()> {
             "Get-WinEvent -FilterHashtable @{LogName='System'; StartTime=(Get-Date).AddDays(-14); Id=41,1001,6008,6005,6006,1074,7,11,15,51,55,57,129,153,157,161,17,18,19,219,7000,7001,7009,7011,7022,7023,7024,7031,7034} -ErrorAction SilentlyContinue | Sort-Object TimeCreated -Descending | Select-Object TimeCreated,Id,ProviderName,LevelDisplayName,MachineName,Message | Format-List",
         ),
         (
+            "system-relevant-events.csv",
+            "Get-WinEvent -FilterHashtable @{LogName='System'; StartTime=(Get-Date).AddDays(-14); Id=41,1001,6008,6005,6006,1074,7,11,15,51,55,57,129,153,157,161,17,18,19,46,47,219,7000,7001,7009,7011,7022,7023,7024,7031,7034} -ErrorAction SilentlyContinue | Sort-Object TimeCreated -Descending | Select-Object TimeCreated,Id,ProviderName,LevelDisplayName,MachineName,Message | ConvertTo-Csv -NoTypeInformation",
+        ),
+        (
             "application-crash-events.txt",
             "Get-WinEvent -FilterHashtable @{LogName='Application'; StartTime=(Get-Date).AddDays(-14); Id=1000,1001,1002,1005,1026} -ErrorAction SilentlyContinue | Sort-Object TimeCreated -Descending | Select-Object TimeCreated,Id,ProviderName,LevelDisplayName,MachineName,Message | Format-List",
         ),
         (
+            "application-crash-events.csv",
+            "Get-WinEvent -FilterHashtable @{LogName='Application'; StartTime=(Get-Date).AddDays(-14); Id=1000,1001,1002,1005,1026} -ErrorAction SilentlyContinue | Sort-Object TimeCreated -Descending | Select-Object TimeCreated,Id,ProviderName,LevelDisplayName,MachineName,Message | ConvertTo-Csv -NoTypeInformation",
+        ),
+        (
+            "setup-events.csv",
+            "Get-WinEvent -FilterHashtable @{LogName='Setup'; StartTime=(Get-Date).AddDays(-14)} -ErrorAction SilentlyContinue | Sort-Object TimeCreated -Descending | Select-Object TimeCreated,Id,ProviderName,LevelDisplayName,Message | ConvertTo-Csv -NoTypeInformation",
+        ),
+        (
+            "windows-update-events.csv",
+            "Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-WindowsUpdateClient/Operational'; StartTime=(Get-Date).AddDays(-14)} -ErrorAction SilentlyContinue | Sort-Object TimeCreated -Descending | Select-Object TimeCreated,Id,ProviderName,LevelDisplayName,Message | ConvertTo-Csv -NoTypeInformation",
+        ),
+        (
             "reliability-records.txt",
             "Get-CimInstance -ClassName Win32_ReliabilityRecords -ErrorAction SilentlyContinue | Where-Object { $_.TimeGenerated -ge (Get-Date).AddDays(-14) } | Select-Object TimeGenerated,SourceName,EventIdentifier,ProductName,Message | Format-List",
+        ),
+        (
+            "reliability-records.csv",
+            "Get-CimInstance -ClassName Win32_ReliabilityRecords -ErrorAction SilentlyContinue | Where-Object { $_.TimeGenerated -ge (Get-Date).AddDays(-14) } | Select-Object TimeGenerated,SourceName,EventIdentifier,ProductName,Message | ConvertTo-Csv -NoTypeInformation",
         ),
         ("computer-info.txt", "Get-ComputerInfo | Format-List"),
         (
@@ -599,17 +619,53 @@ fn collect_platform_diagnostics(out: &Path) -> Result<()> {
             "Get-CimInstance Win32_PnPSignedDriver -ErrorAction SilentlyContinue | Select-Object DeviceName,Manufacturer,DriverVersion,DriverDate,InfName,IsSigned | Sort-Object DeviceName | Format-Table -AutoSize",
         ),
         (
+            "signed-drivers.csv",
+            "Get-CimInstance Win32_PnPSignedDriver -ErrorAction SilentlyContinue | Select-Object DeviceName,Manufacturer,DriverVersion,DriverDate,InfName,IsSigned | Sort-Object DeviceName | ConvertTo-Csv -NoTypeInformation",
+        ),
+        (
+            "driverquery.csv",
+            "driverquery /v /fo csv",
+        ),
+        (
+            "pnputil-enum-drivers.txt",
+            "pnputil /enum-drivers",
+        ),
+        (
             "problem-devices.txt",
             "Get-CimInstance Win32_PnPEntity -ErrorAction SilentlyContinue | Where-Object { $_.Status -ne 'OK' -or $_.ConfigManagerErrorCode -ne 0 } | Format-List *",
+        ),
+        (
+            "physical-disk.txt",
+            "Get-PhysicalDisk -ErrorAction SilentlyContinue | Format-List *",
+        ),
+        (
+            "storage-reliability-counter.txt",
+            "Get-PhysicalDisk -ErrorAction SilentlyContinue | Get-StorageReliabilityCounter -ErrorAction SilentlyContinue | Format-List *",
+        ),
+        (
+            "smart-failure-predict-status.txt",
+            "Get-CimInstance -Namespace root\\wmi -ClassName MSStorageDriver_FailurePredictStatus -ErrorAction SilentlyContinue | Format-List *",
+        ),
+        (
+            "wmic-diskdrive-status.txt",
+            "$wmic=Get-Command wmic.exe -ErrorAction SilentlyContinue; if ($wmic) { & $wmic.Source diskdrive get model,serialnumber,status,size,interfacetype /format:list } else { 'wmic.exe is not available on this Windows installation. Disk data was collected via Get-PhysicalDisk and Win32_DiskDrive instead.' }",
         ),
         (
             "storage-reliability.txt",
             "Get-PhysicalDisk -ErrorAction SilentlyContinue | Format-List *; Get-PhysicalDisk -ErrorAction SilentlyContinue | Get-StorageReliabilityCounter -ErrorAction SilentlyContinue | Format-List *; Get-CimInstance -Namespace root\\wmi -ClassName MSStorageDriver_FailurePredictStatus -ErrorAction SilentlyContinue | Format-List *",
         ),
+        ("volumes.txt", "Get-Volume -ErrorAction SilentlyContinue | Format-Table -AutoSize"),
+        ("partitions.txt", "Get-Partition -ErrorAction SilentlyContinue | Format-Table -AutoSize"),
         (
             "volumes-partitions.txt",
             "Get-Volume -ErrorAction SilentlyContinue | Format-Table -AutoSize; Get-Partition -ErrorAction SilentlyContinue | Format-Table -AutoSize",
         ),
+        ("hotfixes.txt", "Get-HotFix -ErrorAction SilentlyContinue | Sort-Object InstalledOn -Descending | Format-Table -AutoSize"),
+        (
+            "startup-commands.csv",
+            "Get-CimInstance Win32_StartupCommand -ErrorAction SilentlyContinue | Select-Object Name,Command,Location,User | ConvertTo-Csv -NoTypeInformation",
+        ),
+        ("services.txt", "Get-Service | Sort-Object Status,Name | Format-Table -AutoSize"),
         (
             "updates-services-startup.txt",
             "Get-HotFix -ErrorAction SilentlyContinue | Sort-Object InstalledOn -Descending | Format-Table -AutoSize; Get-CimInstance Win32_StartupCommand -ErrorAction SilentlyContinue | Select-Object Name,Command,Location,User | Format-Table -AutoSize; Get-Service | Sort-Object Status,Name | Format-Table -AutoSize",
@@ -656,7 +712,121 @@ fn collect_platform_diagnostics(out: &Path) -> Result<()> {
         ],
     )?;
 
+    let dump_analysis_dir = out.join("DumpAnalysis");
+    fs::create_dir_all(&dump_analysis_dir)?;
+    write_command_output(
+        &out.join("dump-analysis.txt"),
+        "powershell",
+        &[
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            &windows_dump_analysis_command(&minidump_dir, &dump_analysis_dir),
+        ],
+    )?;
+
     Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn windows_dump_analysis_command(dump_dir: &Path, analysis_dir: &Path) -> String {
+    let dump_dir = powershell_single_quoted_path(dump_dir);
+    let analysis_dir = powershell_single_quoted_path(analysis_dir);
+    format!(
+        r#"
+$DumpDir = {dump_dir}
+$AnalysisDir = {analysis_dir}
+$SymbolPath = 'srv*C:\Symbols*https://msdl.microsoft.com/download/symbols'
+New-Item -ItemType Directory -Force -Path $AnalysisDir | Out-Null
+
+function Find-Exe {{
+  param([string]$ExeName, [string[]]$CandidatePaths)
+  $cmd = Get-Command $ExeName -ErrorAction SilentlyContinue
+  if ($cmd) {{ return $cmd.Source }}
+  foreach ($path in $CandidatePaths) {{
+    $resolvedPaths = Resolve-Path -Path $path -ErrorAction SilentlyContinue
+    foreach ($resolved in $resolvedPaths) {{
+      if (Test-Path -LiteralPath $resolved.ProviderPath) {{ return $resolved.ProviderPath }}
+    }}
+    if (Test-Path -LiteralPath $path) {{ return $path }}
+  }}
+  return $null
+}}
+
+if (!(Test-Path $DumpDir)) {{
+  'No dump directory found.' | Out-File (Join-Path $AnalysisDir 'no-dump.txt') -Encoding utf8
+  exit 0
+}}
+
+$dumps = Get-ChildItem $DumpDir -Filter '*.dmp' -ErrorAction SilentlyContinue
+if (!$dumps -or $dumps.Count -eq 0) {{
+  'No .dmp files found.' | Out-File (Join-Path $AnalysisDir 'no-dump.txt') -Encoding utf8
+  exit 0
+}}
+
+$cdb = Find-Exe 'cdb.exe' @(
+  'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe',
+  'C:\Program Files\Windows Kits\10\Debuggers\x64\cdb.exe',
+  'C:\Program Files (x86)\Windows Kits\11\Debuggers\x64\cdb.exe',
+  'C:\Program Files\Windows Kits\11\Debuggers\x64\cdb.exe'
+)
+
+if ($cdb) {{
+  "Using cdb.exe: $cdb" | Out-File (Join-Path $AnalysisDir 'debugger-used.txt') -Encoding utf8
+  foreach ($dump in $dumps) {{
+    $log = Join-Path $AnalysisDir ($dump.BaseName + '-analyze.txt')
+    & $cdb -z $dump.FullName -y $SymbolPath -c '.reload; !analyze -v; lm; q' | Out-File $log -Encoding utf8
+  }}
+  exit 0
+}}
+
+$windbgx = Find-Exe 'windbgx.exe' @(
+  "$env:LOCALAPPDATA\Microsoft\WindowsApps\windbgx.exe",
+  "$env:ProgramFiles\WindowsApps\Microsoft.WinDbg_*\windbgx.exe"
+)
+
+if ($windbgx) {{
+  "Using windbgx.exe: $windbgx" | Out-File (Join-Path $AnalysisDir 'debugger-used.txt') -Encoding utf8
+  foreach ($dump in $dumps) {{
+    $log = Join-Path $AnalysisDir ($dump.BaseName + '-analyze.txt')
+    & $windbgx -z $dump.FullName -logo $log -c '.symfix; .reload; !analyze -v; lm; q'
+  }}
+  exit 0
+}}
+
+@'
+No debugger found.
+
+Minidump files were collected, but automatic dump analysis was not run.
+
+Recommended install:
+  winget install --id Microsoft.WinDbg -e
+
+Alternative install:
+  Install Windows SDK Debugging Tools, then ensure cdb.exe is available.
+
+After installing, generate this diagnostics package again. The agent will detect
+cdb.exe or windbgx.exe and run:
+  !analyze -v
+  lm
+
+Manual WinDbg flow:
+  windbgx.exe -z C:\Path\To\Minidump\file.dmp
+  .symfix
+  .reload
+  !analyze -v
+  lm
+'@ | Out-File (Join-Path $AnalysisDir 'debugger-not-found.txt') -Encoding utf8
+"Debugger not found. Install Microsoft.WinDbg with winget, then rerun diagnostics." | Out-File (Join-Path $AnalysisDir 'windbg-install-hint.txt') -Encoding utf8
+"winget install --id Microsoft.WinDbg -e" | Out-File (Join-Path $AnalysisDir 'windbg-install-command.txt') -Encoding utf8
+"#,
+    )
+}
+
+#[cfg(target_os = "windows")]
+fn powershell_single_quoted_path(path: &Path) -> String {
+    format!("'{}'", path.to_string_lossy().replace('\'', "''"))
 }
 
 #[cfg(target_os = "macos")]
@@ -1035,6 +1205,7 @@ fn redact_diagnostics_text(content: &str) -> String {
 
 fn redact_diagnostics_line(line: &str) -> String {
     let line = redact_home_path(line);
+    let line = redact_windows_machine_tokens(&line);
     let lower = line.to_lowercase();
     if lower.contains("com.apple.os.update-") {
         if let Some((label, _)) = line.split_once(':') {
@@ -1051,6 +1222,8 @@ fn redact_diagnostics_line(line: &str) -> String {
         "hardware address",
         "host name",
         "hostname",
+        "machine name",
+        "machinename",
         "owner",
         "volume uuid",
         "disk / partition uuid",
@@ -1067,6 +1240,32 @@ fn redact_diagnostics_line(line: &str) -> String {
     }
 
     line
+}
+
+fn redact_windows_machine_tokens(line: &str) -> String {
+    let mut output = String::with_capacity(line.len());
+    let mut token = String::new();
+
+    for ch in line.chars() {
+        if ch.is_ascii_alphanumeric() || ch == '-' {
+            token.push(ch);
+            continue;
+        }
+        push_redacted_windows_token(&mut output, &token);
+        token.clear();
+        output.push(ch);
+    }
+    push_redacted_windows_token(&mut output, &token);
+    output
+}
+
+fn push_redacted_windows_token(output: &mut String, token: &str) {
+    let upper = token.to_ascii_uppercase();
+    if upper.starts_with("DESKTOP-") || upper.starts_with("WIN-") {
+        output.push_str("[windows-host-redacted]");
+    } else {
+        output.push_str(token);
+    }
 }
 
 fn redact_home_path(text: &str) -> String {

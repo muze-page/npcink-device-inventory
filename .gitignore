@@ -26,6 +26,7 @@ bin-release/
 **/target/
 vendor/
 release/
+ele-rs/smoke-reports/
 *.zip
 *.dmg
 *.exe

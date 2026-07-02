@@ -75,11 +75,23 @@ src-tauri/target/release/bundle/dmg/*.dmg
 
 ```bash
 cargo run -- inspect --pretty
+cargo run -- runtime --pretty
 cargo run -- stable-id
 cargo run -- submit --site "https://example.com" --token "后台生成的完整授权码" --note "张三"
 ```
 
 `--site` 可以填写站点首页、`/wp-json`、`/wp-json/npcink-device-inventory/v1` 或完整 `/device-observations` endpoint；客户端会自动归一化到设备上传接口。
+
+Windows 开发冒烟测试：
+
+```bat
+scripts\windows-smoke-test.bat -SkipSubmit
+scripts\windows-smoke-test.bat -Site "https://example.com/wp-json/npcink-device-inventory/v1/device-observations" -Token "后台生成的完整授权码" -Note "Windows开发测试"
+```
+
+脚本会运行前端构建、Rust 测试、硬件采集、运行监控、stable id 检查、可选上传，以及 Windows 诊断探针。BAT 会请求管理员权限，以便读取更完整的事件日志和 dump 信息。报告输出到 `smoke-reports\windows-<时间>\windows-smoke-report.json`。
+
+排障包会检测 WinDbg/cdb 是否已安装。已安装时会尝试分析 `C:\Windows\Minidump\*.dmp`；未安装时会生成 `DumpAnalysis\debugger-not-found.txt` 和 WinDbg 安装提示，不会自动安装系统组件。
 
 ## 桌面客户端结构
 

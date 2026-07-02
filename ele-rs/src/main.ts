@@ -261,17 +261,19 @@ app.innerHTML = `
         <div class="diagnostics-layout">
           <section class="diagnostics-panel">
             <span class="panel-kicker">本地排障</span>
-            <h2>生成故障诊断包</h2>
-            <p>采集系统日志、驱动、磁盘、电源、崩溃记录和当前设备状态，生成本地 zip 文件，便于管理员分析。</p>
+            <h2>排障包</h2>
+            <p>设备频繁蓝屏、异常重启、上传失败或硬件信息异常时，请生成排障包并发送给管理员。</p>
             <div class="diagnostics-actions">
-              <button class="button primary diagnostics-button" id="generateDiagnosticsButton" type="button">生成诊断包</button>
+              <button class="button primary diagnostics-button" id="generateDiagnosticsButton" type="button">生成排障包</button>
               <button class="button secondary diagnostics-button" id="openDiagnosticsFolderButton" type="button" hidden>打开文件夹</button>
+              <button class="button secondary diagnostics-button" id="copyDiagnosticsPathButton" type="button" hidden>复制文件位置</button>
             </div>
             <div class="diagnostics-result" id="diagnosticsResult"></div>
           </section>
           <section class="diagnostics-note">
             <strong>隐私提示</strong>
-            <p>诊断包保存在本机，不会自动上传。分享前请确认其中的系统日志、用户名、路径、驱动和崩溃记录可以交给管理员查看。</p>
+            <p>排障包只保存在本机，不会自动上传。请只发送给可信管理员。</p>
+            <p>如需更完整的蓝屏和异常重启信息，请右键软件并选择“以管理员身份运行”后重新生成。</p>
           </section>
         </div>
       </section>
@@ -354,6 +356,7 @@ const runtimeHistorySummary = document.querySelector<HTMLElement>("#runtimeHisto
 const runtimeRangeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>(".runtime-range-button"));
 const generateDiagnosticsButton = document.querySelector<HTMLButtonElement>("#generateDiagnosticsButton")!;
 const openDiagnosticsFolderButton = document.querySelector<HTMLButtonElement>("#openDiagnosticsFolderButton")!;
+const copyDiagnosticsPathButton = document.querySelector<HTMLButtonElement>("#copyDiagnosticsPathButton")!;
 const diagnosticsResult = document.querySelector<HTMLElement>("#diagnosticsResult")!;
 const detailMenu = document.querySelector<HTMLElement>("#detailMenu")!;
 const detailContent = document.querySelector<HTMLElement>("#detailContent")!;
@@ -706,14 +709,21 @@ const setToast = (message: string, kind: "ok" | "error" | "" = "") => {
 };
 
 const errorMessage = (error: unknown) => {
+  const readable = (message: string) => {
+    if (message.includes("invoke") || message.includes("__TAURI__")) {
+      return "本机服务未连接，请在桌面软件窗口中操作；浏览器预览只能查看界面。";
+    }
+    return message;
+  };
+
   if (error instanceof Error) {
-    return error.message;
+    return readable(error.message);
   }
   if (error && typeof error === "object") {
     const record = asRecord(error);
     const message = stringValue(record.message) || stringValue(record.error);
     if (message) {
-      return message;
+      return readable(message);
     }
     try {
       return JSON.stringify(error);
@@ -722,10 +732,7 @@ const errorMessage = (error: unknown) => {
     }
   }
   const message = String(error);
-  if (message.includes("invoke")) {
-    return "桌面采集服务未连接，请在软件窗口中操作。";
-  }
-  return message;
+  return readable(message);
 };
 
 const logAppEvent = (level: "debug" | "info" | "warn" | "error", event: string, message = "") => {
@@ -798,6 +805,8 @@ const updateInteractiveState = () => {
   importConfigButton.disabled = isSubmitting;
   manualConfigButton.disabled = isSubmitting;
   generateDiagnosticsButton.disabled = isGeneratingDiagnostics;
+  openDiagnosticsFolderButton.disabled = isGeneratingDiagnostics;
+  copyDiagnosticsPathButton.disabled = isGeneratingDiagnostics;
 };
 
 const setCollecting = (collecting: boolean) => {
@@ -816,7 +825,7 @@ const setSubmitting = (submitting: boolean) => {
 
 const setGeneratingDiagnostics = (generating: boolean) => {
   isGeneratingDiagnostics = generating;
-  generateDiagnosticsButton.textContent = generating ? "生成中..." : "生成诊断包";
+  generateDiagnosticsButton.textContent = generating ? "正在生成..." : "生成排障包";
   updateInteractiveState();
 };
 
@@ -1653,23 +1662,53 @@ const refreshRuntimeHistory = async () => {
 const generateDiagnostics = async () => {
   setGeneratingDiagnostics(true);
   diagnosticsResult.className = "diagnostics-result";
-  diagnosticsResult.textContent = "正在生成诊断包...";
+  diagnosticsResult.innerHTML = `
+    <strong>正在生成排障包...</strong>
+    <span>请稍候，完成后发送给管理员。</span>
+  `;
   openDiagnosticsFolderButton.hidden = true;
+  copyDiagnosticsPathButton.hidden = true;
   diagnosticsDirectoryPath = "";
   try {
     const result = await invoke<DiagnosticsPackage>("generate_diagnostics_package");
     diagnosticsDirectoryPath = result.directory_path;
     openDiagnosticsFolderButton.hidden = false;
+    copyDiagnosticsPathButton.hidden = false;
     diagnosticsResult.className = "diagnostics-result ok";
     diagnosticsResult.innerHTML = `
-      <strong>诊断包已生成</strong>
-      <span>${escapeHtml(result.zip_path)}</span>
+      <strong>排障包已生成</strong>
+      <span>请将 zip 文件发送给管理员。</span>
+      <span class="diagnostics-path">${escapeHtml(result.zip_path)}</span>
     `;
   } catch (error) {
     diagnosticsResult.className = "diagnostics-result error";
-    diagnosticsResult.textContent = errorMessage(error);
+    diagnosticsResult.innerHTML = `
+      <strong>生成失败</strong>
+      <span>${escapeHtml(errorMessage(error))}</span>
+    `;
   } finally {
     setGeneratingDiagnostics(false);
+  }
+};
+
+const copyDiagnosticsPath = async () => {
+  if (!diagnosticsDirectoryPath) {
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(diagnosticsDirectoryPath);
+    diagnosticsResult.className = "diagnostics-result ok";
+    diagnosticsResult.innerHTML = `
+      <strong>文件夹位置已复制</strong>
+      <span>请将排障包 zip 文件发送给管理员。</span>
+      <span class="diagnostics-path">${escapeHtml(diagnosticsDirectoryPath)}</span>
+    `;
+  } catch (error) {
+    diagnosticsResult.className = "diagnostics-result error";
+    diagnosticsResult.innerHTML = `
+      <strong>复制失败</strong>
+      <span>${escapeHtml(errorMessage(error))}</span>
+    `;
   }
 };
 
@@ -1695,6 +1734,10 @@ openDiagnosticsFolderButton.addEventListener("click", () => {
     logAppEvent("info", "ui.open_diagnostics_folder", diagnosticsDirectoryPath);
     void invoke("open_path", { path: diagnosticsDirectoryPath });
   }
+});
+
+copyDiagnosticsPathButton.addEventListener("click", () => {
+  void copyDiagnosticsPath();
 });
 
 submitButton.addEventListener("click", async () => {

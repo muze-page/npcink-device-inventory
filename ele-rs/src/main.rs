@@ -8,6 +8,7 @@ fn main() -> Result<()> {
 
     match command {
         "inspect" => inspect(&args[1..]),
+        "runtime" => runtime(&args[1..]),
         "stable-id" => stable_id(),
         "submit" => submit(&args[1..]),
         "help" | "--help" | "-h" => {
@@ -16,6 +17,17 @@ fn main() -> Result<()> {
         }
         other => bail!("unknown command: {other}"),
     }
+}
+
+fn runtime(args: &[String]) -> Result<()> {
+    let pretty = args.iter().any(|arg| arg == "--pretty");
+    let data = collector::collect_runtime_status()?;
+    if pretty {
+        println!("{}", serde_json::to_string_pretty(&data)?);
+    } else {
+        println!("{}", serde_json::to_string(&data)?);
+    }
+    Ok(())
 }
 
 fn inspect(args: &[String]) -> Result<()> {
@@ -68,6 +80,7 @@ fn print_help() {
         "Npcink Device Agent\n\n\
 Commands:\n\
   inspect [--pretty]    Print compatible hardware JSON\n\
+  runtime [--pretty]    Print runtime monitor JSON\n\
   stable-id             Print v2 stable device id\n\
   submit --site URL --token TOKEN [--note NOTE]            Submit to device observation endpoint\n"
     );

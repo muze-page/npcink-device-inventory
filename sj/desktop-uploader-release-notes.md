@@ -1,6 +1,7 @@
 # Desktop Uploader Release Notes
 
 日期：2026-06-21
+同步更新：2026-07-01
 
 本文档单独说明 `Npcink Device Agent` 桌面上传软件，供 WordPress.org 审核问询、官网发布页、客户交付说明使用。桌面软件不是 WordPress 插件 zip 的一部分。
 
@@ -13,7 +14,7 @@
 - 采集本机硬件摘要和设备身份信号。
 - 生成 `stable_device_id_v2`，帮助服务端识别同一台设备。
 - 使用管理员在 WordPress 后台生成的上传授权码发送 HMAC 签名请求。
-- 将采集结果提交到 `/wp-json/npcink-device-inventory/v1/device-post-data-v2`。
+- 将采集结果提交到 `/wp-json/npcink-device-inventory/v1/device-observations`。
 
 桌面软件不负责：
 
@@ -26,9 +27,9 @@
 
 - 客户端目录：`ele-rs/`
 - 技术栈：Rust + Tauri
-- 上传接口：`/wp-json/npcink-device-inventory/v1/device-post-data-v2`
+- 上传接口：`/wp-json/npcink-device-inventory/v1/device-observations`
 - 授权方式：WordPress 后台生成的客户端授权码 + HMAC 请求签名
-- 数据契约：`docs/device-data-v2-contract.md`
+- 数据契约：v3 observation 资产快照；资产模型见 `docs/asset-data-model.md`，稳定设备 ID 规则见 `docs/device-data-v2-contract.md`
 
 当前阶段是 Rust/Tauri 版本的第一阶段发布资料，重点验证 Windows 和 macOS 的采集字段、设备合并逻辑、授权上传流程。
 
@@ -38,7 +39,7 @@
 
 - 新增本机硬件采集预览。
 - 新增稳定设备 ID 展示，用于服务端识别重复上传。
-- 新增 WordPress v2 上传接口支持。
+- 新增 WordPress v3 observation 上传接口支持。
 - 新增上传备注字段，方便管理员识别电脑使用人或部署批次。
 - 新增 HMAC 签名上传流程，不再使用明文共享密码。
 
@@ -52,13 +53,13 @@
 上传地址格式：
 
 ```text
-https://example.com/wp-json/npcink-device-inventory/v1/device-post-data-v2
+https://example.com/wp-json/npcink-device-inventory/v1/device-observations
 ```
 
 ### 用户使用流程
 
 1. 打开 `Npcink Device Agent`。
-2. 填写 WordPress v2 上传接口地址。
+2. 填写 WordPress v3 observation 上传接口地址。
 3. 填写管理员提供的上传授权码。
 4. 可选填写上传备注，例如员工姓名、工位号或部门。
 5. 查看本机硬件采集预览。
@@ -89,13 +90,13 @@ CLI 验证：
 cd ele-rs
 cargo run -- inspect --pretty
 cargo run -- stable-id
-cargo run -- submit --site "https://example.com/wp-json/npcink-device-inventory/v1/device-post-data-v2" --token "后台生成的上传授权码" --note "张三"
+cargo run -- submit --site "https://example.com/wp-json/npcink-device-inventory/v1/device-observations" --token "后台生成的上传授权码" --note "张三"
 ```
 
 ## 发布前检查
 
 - 确认 WordPress 插件已通过 Plugin Check。
-- 确认服务端 `/device-post-data-v2` 未签名请求返回 `403`。
+- 确认服务端 `/device-observations` 未签名请求返回 `403`。
 - 确认管理员可在后台生成、禁用、删除客户端授权码。
 - 确认 Windows 样机上传后不会重复创建同一设备。
 - 确认 macOS 样机上传后不会重复创建同一设备。
