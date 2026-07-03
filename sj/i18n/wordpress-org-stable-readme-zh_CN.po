@@ -1,0 +1,124 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Npcink Device Inventory Stable Readme\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/npcink-device-inventory\n"
+"POT-Creation-Date: 2026-07-03 00:00+0000\n"
+"PO-Revision-Date: 2026-07-03 00:00+0000\n"
+"Last-Translator: Npcink\n"
+"Language-Team: Chinese (China)\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Manage device assets in WordPress with a v3 asset registry, signed client observations, identity matching, and an admin inventory workspace."
+msgstr "在 WordPress 中管理设备资产：v3 资产登记、签名客户端观测、身份匹配和后台台账工作区。"
+
+msgid "Npcink Device Inventory"
+msgstr "Npcink Device Inventory"
+
+msgid "Run <code>npm install &amp;&amp; npm run build</code> inside <code>vite-admin</code> to rebuild the bundled assets."
+msgstr "在 <code>vite-admin</code> 中运行 <code>npm install &amp;&amp; npm run build</code> 以重新构建随包提供的资源。"
+
+msgid "The WordPress package includes the built files and the corresponding React/TypeScript source:"
+msgstr "WordPress 插件包包含构建产物和对应的 React/TypeScript 源码："
+
+msgid "The plugin only deletes its custom tables and settings when the stored v3 uninstall option explicitly allows data deletion."
+msgstr "只有已保存的 v3 卸载选项明确允许删除数据时，插件才会删除自己的自定义数据表和设置。"
+
+msgid "No. Device upload endpoints require a client authorization token and HMAC signature. Admin endpoints require a WordPress user with <code>manage_options</code>."
+msgstr "不允许。设备上传端点需要客户端授权令牌和 HMAC 签名。管理端点需要具备 <code>manage_options</code> 权限的 WordPress 用户。"
+
+msgid "The plugin can store asset names, numbers, ownership fields, departments, statuses, hardware identifiers, collected hardware observations, and event history."
+msgstr "插件可存储资产名称、编号、归属字段、部门、状态、硬件标识、采集到的硬件观测数据和事件历史。"
+
+msgid "No. The WordPress plugin stores device asset data in the site's own WordPress database and does not contact a third-party service for normal operation."
+msgstr "不会。WordPress 插件把设备资产数据存储在站点自己的 WordPress 数据库中，正常运行时不会联系第三方服务。"
+
+msgid "Build configuration: <code>vite-admin/package.json</code> and <code>vite-admin/vite.config.ts</code>"
+msgstr "构建配置：<code>vite-admin/package.json</code> 和 <code>vite-admin/vite.config.ts</code>"
+
+msgid "Admin app source: <code>vite-admin/src</code>"
+msgstr "后台应用源码：<code>vite-admin/src</code>"
+
+msgid "Where is the source for bundled JavaScript?"
+msgstr "随包提供的 JavaScript 源码在哪里？"
+
+msgid "What happens on uninstall?"
+msgstr "卸载时会发生什么？"
+
+msgid "Are device upload endpoints open to anonymous users?"
+msgstr "设备上传端点是否允许匿名用户访问？"
+
+msgid "What data is stored?"
+msgstr "插件会存储哪些数据？"
+
+msgid "Does this plugin send data to a third-party service?"
+msgstr "插件会把数据发送到第三方服务吗？"
+
+msgid "Generate a client authorization token before using the optional desktop uploader."
+msgstr "使用可选桌面上传工具前，请先生成客户端授权令牌。"
+
+msgid "Open Plugins &gt; Device Inventory."
+msgstr "打开 Plugins &gt; Device Inventory。"
+
+msgid "Activate the plugin from the WordPress Plugins screen."
+msgstr "在 WordPress 插件页面启用插件。"
+
+msgid "Upload the <code>npcink-device-inventory</code> folder to <code>/wp-content/plugins/</code>."
+msgstr "将 <code>npcink-device-inventory</code> 文件夹上传到 <code>/wp-content/plugins/</code>。"
+
+msgid "The plugin does not transmit this data to Npcink or any third-party server during normal plugin operation. Site administrators are responsible for informing users and employees about their own device inventory policies."
+msgstr "插件正常运行时不会把这些数据传输给 Npcink 或任何第三方服务器。站点管理员负责向用户和员工说明自己的设备库存管理政策。"
+
+msgid "Npcink Device Inventory stores device asset data in the local WordPress database. Depending on how the site owner configures and uses the plugin, stored data may include device names, assigned users or locations, departments, status values, IP addresses, hardware identifiers, hardware details, and event history."
+msgstr "Npcink Device Inventory 将设备资产数据存储在本地 WordPress 数据库中。根据站点所有者的配置和使用方式，存储数据可能包括设备名称、分配用户或位置、部门、状态值、IP 地址、硬件标识、硬件详情和事件历史。"
+
+msgid "The WordPress plugin does not load JavaScript or CSS from third-party CDNs. Built React assets are bundled locally in the plugin package, with the corresponding React/TypeScript source and build configuration included under <code>vite-admin</code>."
+msgstr "WordPress 插件不会从第三方 CDN 加载 JavaScript 或 CSS。构建后的 React 资源随插件包本地提供，并在 <code>vite-admin</code> 下包含对应的 React/TypeScript 源码和构建配置。"
+
+msgid "The plugin provides:"
+msgstr "插件提供："
+
+msgid "Npcink Device Inventory is a device asset management plugin for small teams that want to keep hardware inventory inside WordPress."
+msgstr "Npcink Device Inventory 是一个设备资产管理插件，适合希望把硬件库存保存在 WordPress 内的小型团队使用。"
+
+msgid "A bundled React admin workspace for asset review and client token management."
+msgstr "随包提供的 React 后台工作区，用于资产查看和客户端令牌管理。"
+
+msgid "Event timelines for asset creation, updates, observations, and notes."
+msgstr "资产创建、更新、观测和备注的事件时间线。"
+
+msgid "Observation snapshots for collected hardware facts."
+msgstr "采集到的硬件事实观测快照。"
+
+msgid "Signed REST uploads for optional desktop collection clients."
+msgstr "供可选桌面采集客户端使用的签名 REST 上传。"
+
+msgid "Asset identities for matching repeated client observations to the same physical device."
+msgstr "资产身份信息，用于把重复客户端观测匹配到同一台物理设备。"
+
+msgid "A unified asset registry."
+msgstr "统一资产登记。"
+
+msgid "Privacy"
+msgstr "隐私"
+
+msgid "Client token management modal."
+msgstr "客户端令牌管理弹窗。"
+
+msgid "Asset detail drawer with overview, identities, observations, and events."
+msgstr "资产详情抽屉，包含概览、身份信息、观测和事件。"
+
+msgid "Admin asset inventory workspace."
+msgstr "后台资产台账工作区。"
+
+msgid "Moved desktop uploads to signed v3 device observations."
+msgstr "将桌面端上传迁移为签名 v3 设备观测。"
+
+msgid "Replaced legacy four-table admin screens with the v3 asset workspace."
+msgstr "用 v3 资产工作区替换旧版四表后台页面。"
+
+msgid "Rebuilt the plugin around the v3 asset registry."
+msgstr "围绕 v3 资产登记重建插件。"
