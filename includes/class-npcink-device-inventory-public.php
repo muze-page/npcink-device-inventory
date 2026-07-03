@@ -634,11 +634,10 @@ class Npcink_Device_Inventory_Public
 	{
 		$status = isset($row['status']) ? (string) $row['status'] : '';
 		$status_labels = array(
-			'active' => '在用',
-			'inactive' => '停用',
-			'maintenance' => '维护',
-			'retired' => '归档',
-			'idle' => '闲置',
+				'active' => '在用',
+				'inactive' => '闲置',
+				'maintenance' => '维护',
+				'retired' => '报废',
 		);
 
 		return array(
@@ -656,35 +655,35 @@ class Npcink_Device_Inventory_Public
 	private function format_public_hardware($row)
 	{
 		$metadata = $this->decode_json(isset($row['metadata_json']) ? (string) $row['metadata_json'] : '', array());
-		$imported_hardware = $this->get_record(isset($metadata['importedHardware']) ? $metadata['importedHardware'] : array());
-		$imported_raw = $this->get_record(isset($imported_hardware['raw']) ? $imported_hardware['raw'] : array());
+			$manual_hardware = $this->get_record(isset($metadata['manualHardware']) ? $metadata['manualHardware'] : array());
+			$manual_raw = $this->get_record(isset($manual_hardware['raw']) ? $manual_hardware['raw'] : array());
 		$latest_summary = $this->decode_json(isset($row['latest_summary_json']) ? (string) $row['latest_summary_json'] : '', array());
 		$latest_hardware = $this->decode_json(isset($row['latest_hardware_json']) ? (string) $row['latest_hardware_json'] : '', array());
 		$has_latest = !empty($latest_summary) || !empty($latest_hardware);
 		$summary = $has_latest ? $latest_summary : array(
-			'cpu' => isset($imported_hardware['cpu']) ? $imported_hardware['cpu'] : '',
-			'graphics' => isset($imported_hardware['graphics']) ? $imported_hardware['graphics'] : '',
-			'device_model' => $this->first_text(
-				isset($imported_hardware['deviceModel']) ? $imported_hardware['deviceModel'] : '',
-				isset($this->get_record(isset($imported_raw['system']) ? $imported_raw['system'] : array())['model']) ? $this->get_record($imported_raw['system'])['model'] : ''
-			),
-		);
-		$hardware = $has_latest ? $latest_hardware : $imported_raw;
+				'cpu' => isset($manual_hardware['cpu']) ? $manual_hardware['cpu'] : '',
+				'graphics' => isset($manual_hardware['graphics']) ? $manual_hardware['graphics'] : '',
+				'device_model' => $this->first_text(
+					isset($manual_hardware['deviceModel']) ? $manual_hardware['deviceModel'] : '',
+					isset($this->get_record(isset($manual_raw['system']) ? $manual_raw['system'] : array())['model']) ? $this->get_record($manual_raw['system'])['model'] : ''
+				),
+			);
+			$hardware = $has_latest ? $latest_hardware : $manual_raw;
 		$hardware_summary = $this->hardware_summary($summary, $hardware);
 
 		return array(
-			'cpu' => $this->first_text($hardware_summary['cpu'], isset($imported_hardware['cpu']) ? $imported_hardware['cpu'] : ''),
-			'memory' => $this->first_text(
-				$this->format_bytes(isset($summary['memory_bytes']) ? $summary['memory_bytes'] : 0),
-				isset($imported_hardware['memory']) ? $imported_hardware['memory'] : '',
-				implode('；', $hardware_summary['memoryLines'])
-			),
-			'disk' => $this->first_text(
-				$this->format_bytes(isset($summary['disk_bytes']) ? $summary['disk_bytes'] : 0),
-				isset($imported_hardware['disk']) ? $imported_hardware['disk'] : '',
-				$hardware_summary['primaryDisk']
-			),
-			'graphics' => $this->first_text($hardware_summary['graphics'], isset($imported_hardware['graphics']) ? $imported_hardware['graphics'] : ''),
+				'cpu' => $this->first_text($hardware_summary['cpu'], isset($manual_hardware['cpu']) ? $manual_hardware['cpu'] : ''),
+				'memory' => $this->first_text(
+					$this->format_bytes(isset($summary['memory_bytes']) ? $summary['memory_bytes'] : 0),
+					isset($manual_hardware['memory']) ? $manual_hardware['memory'] : '',
+					implode('；', $hardware_summary['memoryLines'])
+				),
+				'disk' => $this->first_text(
+					$this->format_bytes(isset($summary['disk_bytes']) ? $summary['disk_bytes'] : 0),
+					isset($manual_hardware['disk']) ? $manual_hardware['disk'] : '',
+					$hardware_summary['primaryDisk']
+				),
+				'graphics' => $this->first_text($hardware_summary['graphics'], isset($manual_hardware['graphics']) ? $manual_hardware['graphics'] : ''),
 			'baseboard' => $this->first_text($hardware_summary['baseboard'], $hardware_summary['deviceModel']),
 		);
 	}

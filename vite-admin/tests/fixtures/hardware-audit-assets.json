@@ -102,7 +102,7 @@
     "purchasePrice": 0,
     "residualValue": 0,
     "metadata": {
-      "importedHardware": {
+      "manualHardware": {
         "cpu": "Intel Core i7",
         "graphics": "Intel Iris Xe",
         "memory": "16 GB",

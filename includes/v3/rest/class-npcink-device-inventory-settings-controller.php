@@ -122,6 +122,9 @@ class Npcink_Device_Inventory_Settings_Controller
 		if (array_key_exists('defaultResidualRate', $params)) {
 			$options['default_residual_rate'] = min(100, max(0, floatval($params['defaultResidualRate'])));
 		}
+		if (array_key_exists('countAvailableAssetsOnly', $params)) {
+			$options['count_available_assets_only'] = (bool) $params['countAvailableAssetsOnly'];
+		}
 		if (array_key_exists('deleteDataOnUninstall', $params)) {
 			$options['delete_data_on_uninstall'] = (bool) $params['deleteDataOnUninstall'];
 		}
@@ -294,6 +297,7 @@ class Npcink_Device_Inventory_Settings_Controller
 			'assetNumberPrefix' => (string) $options['asset_number_prefix'],
 			'depreciationPeriodMonths' => intval($options['depreciation_period_months']),
 			'defaultResidualRate' => floatval($options['default_residual_rate']),
+			'countAvailableAssetsOnly' => !empty($options['count_available_assets_only']),
 			'deleteDataOnUninstall' => !empty($options['delete_data_on_uninstall']),
 			'clientTokens' => $tokens,
 		);

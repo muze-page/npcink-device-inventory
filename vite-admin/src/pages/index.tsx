@@ -13,6 +13,7 @@ import {
   InputNumber,
   Modal,
   Pagination,
+  Radio,
   Select,
   Space,
   Switch,
@@ -38,6 +39,7 @@ import {
   getAssets,
   getClientTokenPackageConfig,
   getEvents,
+  getObservations,
   getSettings,
   updateClientToken,
   updateSettings,
@@ -94,11 +96,14 @@ const CUSTOM_PURCHASE_PLATFORM_OPTIONS = [
 
 const STATUS_OPTIONS = [
   { label: "在用", value: "active" },
-  { label: "停用", value: "inactive" },
+  { label: "闲置", value: "inactive" },
   { label: "维护", value: "maintenance" },
-  { label: "退役", value: "retired" },
+  { label: "报废", value: "retired" },
   { label: "已归档", value: "deleted" },
 ];
+
+const EDITABLE_STATUS_OPTIONS = STATUS_OPTIONS.filter((item) => item.value !== "deleted");
+const AVAILABLE_ASSET_STATUSES = new Set(["active", "inactive"]);
 
 const EVENT_TYPE_OPTIONS = [
   { label: "创建", value: "created" },
@@ -136,24 +141,87 @@ interface SavedAssetFilter {
   purchasePlatform?: string;
 }
 
-const LEGACY_IMPORT_FIELDS = [
-  { label: "资产编号", value: "assetNumber", aliases: ["assetNumber", "资产编号", "编号", "number", "code", "id"] },
-  { label: "资产名称", value: "name", aliases: ["name", "资产名称", "名称", "电脑名称", "hostname", "主机名"] },
-  { label: "使用人", value: "ownerName", aliases: ["ownerName", "使用人", "责任人", "用户", "owner", "user"] },
-  { label: "部门", value: "department", aliases: ["department", "部门", "所在部门", "dept"] },
-  { label: "状态", value: "status", aliases: ["status", "state", "状态"] },
-  { label: "分类", value: "category", aliases: ["category", "分类", "类型"] },
-  { label: "购置价值", value: "purchasePrice", aliases: ["purchasePrice", "purchase", "购置价值", "采购价"] },
-  { label: "残值", value: "residualValue", aliases: ["residualValue", "depreciation", "残值", "折旧"] },
-  { label: "CPU", value: "cpu", aliases: ["cpu", "CPU", "中央处理器"] },
-  { label: "内存", value: "memory", aliases: ["memory", "内存", "memory_bytes"] },
-  { label: "硬盘", value: "disk", aliases: ["disk", "硬盘", "disk_bytes"] },
-  { label: "IP", value: "ip", aliases: ["ip", "IP", "primary_ip"] },
-  { label: "旧 UUID", value: "legacyUuid", aliases: ["uuid", "旧UUID", "legacyUuid"] },
+const ASSET_IMPORT_FIELDS = [
+  { label: "资产编号", value: "assetNumber", required: true },
+  { label: "资产名称", value: "name" },
+  { label: "资产类型", value: "assetType" },
+  { label: "使用人", value: "ownerName" },
+  { label: "部门", value: "department" },
+  { label: "状态", value: "status" },
+  { label: "分类", value: "category" },
+  { label: "购置价格", value: "purchasePrice" },
+  { label: "残值", value: "residualValue" },
+  { label: "购置日期", value: "purchaseDate" },
+  { label: "CPU", value: "cpu" },
+  { label: "内存", value: "memory" },
+  { label: "硬盘", value: "disk" },
+  { label: "IP", value: "ip" },
+  { label: "备注", value: "notes" },
 ] as const;
+
+type AssetImportFieldKey = (typeof ASSET_IMPORT_FIELDS)[number]["value"];
+type AssetImportStrategy = "create-only" | "update-by-number" | "upsert-by-number";
+type AssetImportSection = "basic" | "finance" | "hardware";
+type BackupExportSection = "settings" | "assets" | "identities" | "events" | "observations";
+
+interface AssetImportPreviewRow {
+  key: string;
+  rowNumber: number;
+  input: AssetInput;
+  purchaseDate?: string;
+  manualHardware: JsonRecord;
+  errors: string[];
+  existing?: Asset;
+  action: "create" | "update" | "skip" | "invalid";
+}
+
+type AssetExportFieldKey =
+  | "assetNumber"
+  | "name"
+  | "assetType"
+  | "ownerName"
+  | "department"
+  | "status"
+  | "category"
+  | "purchasePrice"
+  | "residualValue"
+  | "purchaseDate"
+  | "cpu"
+  | "memory"
+  | "disk"
+  | "ip"
+  | "graphics"
+  | "deviceModel"
+  | "baseboard"
+  | "createdAt"
+  | "updatedAt";
+
+type AssetExportScope = "current-filter" | "selected" | "computer" | "custom" | "all";
+
+const DEFAULT_ASSET_IMPORT_SECTIONS: AssetImportSection[] = ["basic", "finance", "hardware"];
+const DEFAULT_BACKUP_EXPORT_SECTIONS: BackupExportSection[] = ["settings", "assets", "identities", "events", "observations"];
 
 const SAVED_FILTER_STORAGE_KEY = "npcink-device-inventory.savedFilters";
 const HANDLED_ISSUES_STORAGE_KEY = "npcink-device-inventory.handledIssues";
+const WORKSPACE_TAB_STORAGE_KEY = "npcink-device-inventory.workspaceTab";
+const ANALYSIS_TAB_STORAGE_KEY = "npcink-device-inventory.analysisTab";
+
+const loadStoredTab = <T extends string>(storageKey: string, allowedKeys: readonly T[], fallback: T): T => {
+  try {
+    const value = window.localStorage.getItem(storageKey);
+    return allowedKeys.includes(value as T) ? (value as T) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const saveStoredTab = (storageKey: string, value: string) => {
+  try {
+    window.localStorage.setItem(storageKey, value);
+  } catch {
+    // Ignore private browsing or storage quota failures; tab navigation should still work.
+  }
+};
 
 const statusColor: Record<string, string> = {
   active: "green",
@@ -165,6 +233,9 @@ const statusColor: Record<string, string> = {
 
 const statusLabel = (value: string) =>
   STATUS_OPTIONS.find((item) => item.value === value)?.label || value || "-";
+
+const shouldCountAsset = (asset: Pick<Asset, "status">, countAvailableAssetsOnly: boolean) =>
+  !countAvailableAssetsOnly || AVAILABLE_ASSET_STATUSES.has(asset.status);
 
 const assetTypeLabel = (value: string) =>
   ASSET_TYPES.find((item) => item.value === value)?.label || value || "-";
@@ -183,6 +254,31 @@ const formatDate = (value?: string) => {
   return date.toLocaleString("zh-CN", { hour12: false });
 };
 
+const parseDateValue = (value?: string) => {
+  if (!value) {
+    return null;
+  }
+  const text = value.trim();
+  if (!text) {
+    return null;
+  }
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(text)
+    ? new Date(`${text}T00:00:00`)
+    : new Date(text.replace(" ", "T"));
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatDateInput = (value?: string) => {
+  const date = parseDateValue(value);
+  if (!date) {
+    return value || "";
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const formatMoney = (value: number) =>
   new Intl.NumberFormat("zh-CN", {
     style: "currency",
@@ -190,12 +286,12 @@ const formatMoney = (value: number) =>
     maximumFractionDigits: 2,
   }).format(Number.isFinite(value) ? value : 0);
 
-const formatMemoryDiskText = (summary: JsonRecord, importedHardware?: JsonRecord) => {
+const formatMemoryDiskText = (summary: JsonRecord, manualHardware?: JsonRecord) => {
   const memory = formatBytes(summary.memory_bytes);
   const disk = formatBytes(summary.disk_bytes);
-  const importedMemory = fieldText(importedHardware?.memory);
-  const importedDisk = fieldText(importedHardware?.disk);
-  return `${memory !== "-" ? memory : importedMemory} / ${disk !== "-" ? disk : importedDisk}`;
+  const manualMemory = fieldText(manualHardware?.memory);
+  const manualDisk = fieldText(manualHardware?.disk);
+  return `${memory !== "-" ? memory : manualMemory} / ${disk !== "-" ? disk : manualDisk}`;
 };
 
 const cpuVendorLabel = (cpu: unknown) => {
@@ -215,10 +311,10 @@ const cpuVendorLabel = (cpu: unknown) => {
 const formatHardwareHeroText = (
   cpu: unknown,
   summary: JsonRecord,
-  importedHardware: JsonRecord,
+  manualHardware: JsonRecord,
   fallback: string
 ) => {
-  const memoryDisk = formatMemoryDiskText(summary, importedHardware);
+  const memoryDisk = formatMemoryDiskText(summary, manualHardware);
   const vendor = cpuVendorLabel(cpu);
   if (vendor && memoryDisk !== "- / -") {
     return `${vendor} / ${memoryDisk}`;
@@ -232,7 +328,7 @@ const formatHardwareHeroText = (
 const countStatus = (assets: Asset[], status: string) =>
   assets.filter((asset) => asset.status === status).length;
 
-const fetchAllAssets = async (params: Omit<AssetListParams, "page" | "pageSize"> = {}) => {
+const fetchAllAssets = async (params: AssetListParams = {}) => {
   const first = await getAssets({ ...params, page: 1, pageSize: 100 });
   const assets = [...first.data];
   const totalPages = first.pagination.totalPages || 1;
@@ -300,6 +396,14 @@ const downloadTextFile = (filename: string, text: string, type = "text/csv;chars
   URL.revokeObjectURL(url);
 };
 
+const downloadCsvFile = (filename: string, text: string) => {
+  downloadTextFile(filename, `\uFEFF${text}`);
+};
+
+const downloadJsonFile = (filename: string, value: unknown) => {
+  downloadTextFile(filename, JSON.stringify(value, null, 2), "application/json;charset=utf-8");
+};
+
 const parseCsvLine = (line: string) => {
   const cells: string[] = [];
   let current = "";
@@ -349,7 +453,7 @@ const parseTabularText = (text: string): JsonRecord[] => {
   });
 };
 
-const pickLegacyValue = (row: JsonRecord, keys: readonly string[]) => {
+const pickRowValue = (row: JsonRecord, keys: readonly string[]) => {
   const rowKeys = Object.keys(row);
   for (const key of keys) {
     const matchedKey = rowKeys.find((rowKey) => rowKey.toLowerCase() === key.toLowerCase());
@@ -364,37 +468,23 @@ const pickLegacyValue = (row: JsonRecord, keys: readonly string[]) => {
   return "";
 };
 
-const parseJsonRecord = (value: unknown): JsonRecord => {
-  if (!value) {
-    return {};
-  }
-  if (typeof value === "string") {
-    try {
-      return getRecord(JSON.parse(value));
-    } catch {
-      return {};
-    }
-  }
-  return getRecord(value);
+const importFieldValue = (row: JsonRecord, field: AssetImportFieldKey) => {
+  const fieldConfig = ASSET_IMPORT_FIELDS.find((item) => item.value === field);
+  return pickRowValue(row, [field, fieldConfig?.label || ""]);
 };
 
-const legacyRawRecord = (asset: Asset | null): JsonRecord => {
-  const legacy = getRecord(getRecord(asset?.metadata).legacy);
-  const raw = getRecord(legacy.raw);
-  return Object.keys(raw).length ? raw : legacy;
-};
-
-const legacyOrderRecord = (asset: Asset | null): JsonRecord => {
+const assetPurchaseRecord = (asset: Asset | null): JsonRecord => {
   const purchase = getRecord(getRecord(asset?.metadata).purchase);
-  if (Object.keys(purchase).length) {
-    return purchase;
-  }
-  const raw = legacyRawRecord(asset);
-  return parseJsonRecord(raw.data);
+  return Object.keys(purchase).length ? purchase : {};
 };
 
 const isComputerAsset = (asset?: Asset | null) =>
   asset?.assetType === "pc" || asset?.assetType === "computer";
+
+const assetPurchaseDateText = (asset: Asset) => {
+  const purchase = getRecord(getRecord(asset.metadata).purchase);
+  return firstText(purchase.order_time, asset.createdAt);
+};
 
 const plainMoneyText = (value: unknown) => {
   const number = Number(value || 0);
@@ -405,18 +495,17 @@ const plainMoneyText = (value: unknown) => {
 };
 
 const customAssetInfo = (asset: Asset) => {
-  const raw = legacyRawRecord(asset);
-  const order = legacyOrderRecord(asset);
+  const order = assetPurchaseRecord(asset);
   const quantity = firstText(order.numbers, order.quantity, order.count);
   const total = firstText(order.total, asset.purchasePrice);
   return {
-    title: firstText(order.title, asset.name, raw.name, asset.assetNumber, "未命名资产"),
-    usage: firstText(asset.ownerName, raw.name),
-    number: firstText(asset.assetNumber, raw.number),
-    category: firstText(asset.category, raw.category, assetTypeLabel(asset.assetType)),
-    purpose: firstText(raw.purpose, getRecord(asset.metadata).purpose, order.purpose),
-    status: firstText(raw.state, statusLabel(asset.status)),
-    createdAt: firstText(raw.created_at, asset.createdAt),
+    title: firstText(order.title, asset.name, asset.assetNumber, "未命名资产"),
+    usage: firstText(asset.ownerName),
+    number: firstText(asset.assetNumber),
+    category: firstText(asset.category, assetTypeLabel(asset.assetType)),
+    purpose: firstText(getRecord(asset.metadata).purpose, order.purpose),
+    status: statusLabel(asset.status),
+    createdAt: asset.createdAt,
     purchaser: firstText(order.purchaser),
     quantity,
     total,
@@ -431,7 +520,7 @@ const customAssetInfo = (asset: Asset) => {
   };
 };
 
-const mapLegacyStatus = (value: string) => {
+const normalizeAssetStatus = (value: string) => {
   if (/闲置|停用|idle|inactive|apply/i.test(value)) {
     return "inactive";
   }
@@ -445,84 +534,6 @@ const mapLegacyStatus = (value: string) => {
     return "deleted";
   }
   return "active";
-};
-
-const parseLegacyHardware = (row: JsonRecord) => {
-  const data = row.data;
-  const parsed = typeof data === "string" ? getRecord(JSON.parse(data || "{}")) : getRecord(data);
-  const cpu = getRecord(parsed.cpu);
-  const mem = getArray(parsed.mem).length ? getArray(parsed.mem) : getArray(parsed.memLayout);
-  const disks = getArray(parsed.disk).length ? getArray(parsed.disk) : getArray(parsed.diskLayout);
-  const graphics = getRecord(parsed.graphics);
-  const controllers = getArray(graphics.controllers);
-  return {
-    raw: parsed,
-    cpu: firstText(cpu.brand, cpu.model),
-    memory: firstText(
-      parsed.memLayout,
-      mem.map((item) => formatBytes(getRecord(item).size)).filter((value) => value !== "-").join(" / ")
-    ),
-    disk: firstText(
-      disks.map((item) => firstText(getRecord(item).name, getRecord(item).device, formatBytes(getRecord(item).size))).filter(Boolean).join(" / ")
-    ),
-    ip: firstText(getRecord(parsed.net)?.ip4, getRecord(parsed.os)?.fqdn),
-    graphics: firstText(controllers[0]?.model),
-    deviceModel: firstText(getRecord(parsed.system).model, getRecord(parsed.baseboard).model),
-  };
-};
-
-const mapLegacyRow = (row: JsonRecord): AssetInput => {
-  const parsedHardware = (() => {
-    try {
-      return parseLegacyHardware(row);
-    } catch {
-      return { raw: {}, cpu: "", memory: "", disk: "", ip: "", graphics: "", deviceModel: "" };
-    }
-  })();
-  const assetNumber = pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "assetNumber")?.aliases || []);
-  const name = pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "name")?.aliases || []);
-  const ownerName = pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "ownerName")?.aliases || []);
-  const department = pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "department")?.aliases || []);
-  const status = pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "status")?.aliases || []);
-  const category = pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "category")?.aliases || []);
-  const cpu = pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "cpu")?.aliases || []) || parsedHardware.cpu;
-  const memory = pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "memory")?.aliases || []) || parsedHardware.memory;
-  const disk = pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "disk")?.aliases || []) || parsedHardware.disk;
-  const ip = pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "ip")?.aliases || []) || parsedHardware.ip;
-  const legacyUuid = pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "legacyUuid")?.aliases || []);
-  const order = parseJsonRecord(row.data);
-  const isCustomLegacyAsset = Boolean(category && !cpu && !memory);
-  const legacyPurchasePrice =
-    Number(pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "purchasePrice")?.aliases || []) || 0) ||
-    Number(order.total || 0);
-  return {
-    assetType: isCustomLegacyAsset ? "custom" : "pc",
-    assetNumber,
-    name: isCustomLegacyAsset
-      ? firstText(order.title, name, assetNumber, "旧数据资产")
-      : name || ownerName || parsedHardware.deviceModel || assetNumber || "旧数据资产",
-    ownerName: isCustomLegacyAsset ? firstText(ownerName, name) : ownerName,
-    department,
-    status: mapLegacyStatus(status),
-    category,
-    purchasePrice: legacyPurchasePrice,
-    residualValue: Number(pickLegacyValue(row, LEGACY_IMPORT_FIELDS.find((field) => field.value === "residualValue")?.aliases || []) || 0),
-    metadata: {
-      legacy: {
-        source: "import_preview",
-        uuid: legacyUuid,
-        raw: row,
-      },
-      importedHardware: {
-        cpu,
-        memory,
-        disk,
-        ip,
-        graphics: parsedHardware.graphics,
-        raw: parsedHardware.raw,
-      },
-    },
-  };
 };
 
 const loadSavedFilters = (): SavedAssetFilter[] => {
@@ -556,23 +567,248 @@ const saveHandledIssueKeys = (keys: Set<string>) => {
   window.localStorage.setItem(HANDLED_ISSUES_STORAGE_KEY, JSON.stringify(Array.from(keys)));
 };
 
-const assetsToCsv = (assets: Asset[]) => {
-  const headers = ["资产编号", "资产名称", "资产类型", "使用人", "部门", "状态", "IP", "配置", "更新时间"];
-  const rows = assets.map((asset) => {
-    const { summary, importedHardware, extracted } = assetHardwareContext(asset);
-    return [
-      asset.assetNumber,
-      asset.name,
-      assetTypeLabel(asset.assetType),
-      asset.ownerName,
-      asset.department,
-      statusLabel(asset.status),
-      extracted.primaryIp,
-      formatMemoryDiskText(summary, importedHardware),
-      formatDate(asset.updatedAt),
-    ];
-  });
+const ASSET_EXPORT_FIELDS: Array<{
+  key: AssetExportFieldKey;
+  label: string;
+  group: "基础信息" | "财务信息" | "硬件信息" | "系统信息";
+  defaultChecked?: boolean;
+  value: (asset: Asset) => unknown;
+}> = [
+  { key: "assetNumber", label: "资产编号", group: "基础信息", defaultChecked: true, value: (asset) => asset.assetNumber },
+  { key: "name", label: "资产名称", group: "基础信息", defaultChecked: true, value: (asset) => asset.name },
+  { key: "assetType", label: "资产类型", group: "基础信息", defaultChecked: true, value: (asset) => assetTypeLabel(asset.assetType) },
+  { key: "ownerName", label: "使用人", group: "基础信息", defaultChecked: true, value: (asset) => asset.ownerName },
+  { key: "department", label: "部门", group: "基础信息", defaultChecked: true, value: (asset) => asset.department },
+  { key: "status", label: "状态", group: "基础信息", defaultChecked: true, value: (asset) => statusLabel(asset.status) },
+  { key: "category", label: "分类", group: "基础信息", value: (asset) => asset.category },
+  { key: "purchasePrice", label: "购置价格", group: "财务信息", value: (asset) => asset.purchasePrice },
+  { key: "residualValue", label: "残值", group: "财务信息", value: (asset) => asset.residualValue },
+  { key: "purchaseDate", label: "购置日期", group: "财务信息", value: assetPurchaseDateText },
+  { key: "cpu", label: "CPU", group: "硬件信息", defaultChecked: true, value: (asset) => assetHardwareContext(asset).extracted.cpu },
+  {
+    key: "memory",
+    label: "内存",
+    group: "硬件信息",
+    defaultChecked: true,
+    value: (asset) => {
+      const context = assetHardwareContext(asset);
+      return firstText(context.extracted.memoryLines.join("\n"), context.manualHardware.memory, formatBytes(context.summary.memory_bytes));
+    },
+  },
+  {
+    key: "disk",
+    label: "硬盘",
+    group: "硬件信息",
+    defaultChecked: true,
+    value: (asset) => {
+      const context = assetHardwareContext(asset);
+      return firstText(context.extracted.primaryDisk, context.manualHardware.disk, formatBytes(context.summary.disk_bytes));
+    },
+  },
+  { key: "ip", label: "IP", group: "硬件信息", defaultChecked: true, value: (asset) => assetHardwareContext(asset).extracted.primaryIp },
+  { key: "graphics", label: "显卡", group: "硬件信息", value: (asset) => assetHardwareContext(asset).extracted.graphics },
+  { key: "deviceModel", label: "计算机型号", group: "硬件信息", value: (asset) => assetHardwareContext(asset).extracted.deviceModel },
+  { key: "baseboard", label: "主板型号", group: "硬件信息", value: (asset) => assetHardwareContext(asset).extracted.baseboard },
+  { key: "createdAt", label: "创建时间", group: "系统信息", value: (asset) => formatDate(asset.createdAt) },
+  { key: "updatedAt", label: "更新时间", group: "系统信息", defaultChecked: true, value: (asset) => formatDate(asset.updatedAt) },
+];
+
+const DEFAULT_ASSET_EXPORT_FIELD_KEYS = ASSET_EXPORT_FIELDS
+  .filter((field) => field.defaultChecked)
+  .map((field) => field.key);
+
+const assetsToCsv = (assets: Asset[], fieldKeys: AssetExportFieldKey[] = DEFAULT_ASSET_EXPORT_FIELD_KEYS) => {
+  const fields = ASSET_EXPORT_FIELDS.filter((field) => fieldKeys.includes(field.key));
+  const selectedFields = fields.length ? fields : ASSET_EXPORT_FIELDS.filter((field) => field.defaultChecked);
+  const headers = selectedFields.map((field) => field.label);
+  const rows = assets.map((asset) => selectedFields.map((field) => field.value(asset)));
   return [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
+};
+
+const importTemplateCsv = () => {
+  const headers = ASSET_IMPORT_FIELDS.map((field) => field.label);
+  const example = [
+    "PC-202607-001",
+    "财务部台式机",
+    "pc",
+    "张三",
+    "财务部",
+    "在用",
+    "台式机",
+    "4500",
+    "300",
+    "2026-07-03",
+    "Intel Core i5",
+    "16 GB",
+    "512 GB SSD",
+    "192.168.1.20",
+    "标准模板示例，正式导入前可删除本行",
+  ];
+  return [headers, example].map((row) => row.map(csvCell).join(",")).join("\n");
+};
+
+const parseNumberValue = (value: string) => {
+  const normalized = value.replace(/[,，￥¥元\s]/g, "");
+  const number = Number(normalized || 0);
+  return Number.isFinite(number) ? number : 0;
+};
+
+const normalizeAssetType = (value: string) => {
+  const text = value.trim();
+  if (!text) {
+    return "pc";
+  }
+  const matched = ASSET_TYPES.find((item) => item.value === text || item.label === text);
+  if (matched) {
+    return matched.value;
+  }
+  if (/电脑|pc|computer/i.test(text)) {
+    return "pc";
+  }
+  if (/网络/.test(text)) {
+    return "network";
+  }
+  if (/办公/.test(text)) {
+    return "office";
+  }
+  return "custom";
+};
+
+const manualHardwareFromImportRow = (row: JsonRecord): JsonRecord => {
+  const hardware = {
+    cpu: importFieldValue(row, "cpu"),
+    memory: importFieldValue(row, "memory"),
+    disk: importFieldValue(row, "disk"),
+    ip: importFieldValue(row, "ip"),
+  };
+  const compact = Object.fromEntries(Object.entries(hardware).filter(([, value]) => value));
+  return Object.keys(compact).length ? { ...compact, raw: compact } : {};
+};
+
+const buildAssetImportInput = (
+  row: JsonRecord,
+  existing?: Asset,
+  sections: AssetImportSection[] = DEFAULT_ASSET_IMPORT_SECTIONS
+): AssetImportPreviewRow["input"] => {
+  const includeBasic = sections.includes("basic");
+  const includeFinance = sections.includes("finance");
+  const includeHardware = sections.includes("hardware");
+  const purchaseDate = importFieldValue(row, "purchaseDate");
+  const purchasePriceText = importFieldValue(row, "purchasePrice");
+  const residualValueText = importFieldValue(row, "residualValue");
+  const notes = importFieldValue(row, "notes");
+  const manualHardware = manualHardwareFromImportRow(row);
+  const existingMetadata = getRecord(existing?.metadata);
+  const purchase = {
+    ...getRecord(existingMetadata.purchase),
+    ...(includeFinance && purchaseDate ? { order_time: formatDateInput(purchaseDate) } : {}),
+    ...(includeFinance && purchasePriceText ? { total: parseNumberValue(purchasePriceText) } : {}),
+  };
+  const metadata: JsonRecord = {
+    ...existingMetadata,
+    ...(includeFinance && Object.keys(purchase).length ? { purchase } : {}),
+    ...(includeHardware && Object.keys(manualHardware).length ? { manualHardware } : {}),
+    ...(includeBasic && notes ? { notes } : {}),
+  };
+  const valueOrExisting = (field: AssetImportFieldKey, fallback = "") =>
+    importFieldValue(row, field) || fallback;
+
+  return {
+    assetNumber: valueOrExisting("assetNumber", existing?.assetNumber || ""),
+    name: includeBasic ? valueOrExisting("name", existing?.name || "") : existing?.name || "",
+    assetType: includeBasic ? normalizeAssetType(valueOrExisting("assetType", existing?.assetType || "pc")) : existing?.assetType || "pc",
+    ownerName: includeBasic ? valueOrExisting("ownerName", existing?.ownerName || "") : existing?.ownerName || "",
+    department: includeBasic ? valueOrExisting("department", existing?.department || "") : existing?.department || "",
+    status: includeBasic ? normalizeAssetStatus(valueOrExisting("status", existing?.status || "active")) : existing?.status || "active",
+    category: includeBasic ? valueOrExisting("category", existing?.category || "") : existing?.category || "",
+    purchasePrice: includeFinance && purchasePriceText ? parseNumberValue(purchasePriceText) : existing?.purchasePrice || 0,
+    residualValue: includeFinance && residualValueText ? parseNumberValue(residualValueText) : existing?.residualValue || 0,
+    metadata,
+  };
+};
+
+const buildImportPreviewRows = (
+  rows: JsonRecord[],
+  existingAssets: Asset[],
+  strategy: AssetImportStrategy,
+  sections: AssetImportSection[]
+): AssetImportPreviewRow[] => {
+  const existingByNumber = new Map(
+    existingAssets
+      .filter((asset) => asset.assetNumber)
+      .map((asset) => [asset.assetNumber.trim().toLowerCase(), asset])
+  );
+  const seenNumbers = new Set<string>();
+  return rows.map((row, index) => {
+    const assetNumber = importFieldValue(row, "assetNumber");
+    const existing = assetNumber ? existingByNumber.get(assetNumber.trim().toLowerCase()) : undefined;
+    const input = buildAssetImportInput(row, existing, sections);
+    const errors: string[] = [];
+    if (!assetNumber) {
+      errors.push("资产编号必填");
+    }
+    const normalizedNumber = assetNumber.trim().toLowerCase();
+    if (normalizedNumber && seenNumbers.has(normalizedNumber)) {
+      errors.push("导入文件内资产编号重复");
+    }
+    if (normalizedNumber) {
+      seenNumbers.add(normalizedNumber);
+    }
+    const action = (() => {
+      if (errors.length) {
+        return "invalid";
+      }
+      if (strategy === "create-only") {
+        return existing ? "skip" : "create";
+      }
+      if (strategy === "update-by-number") {
+        return existing ? "update" : "skip";
+      }
+      return existing ? "update" : "create";
+    })();
+    return {
+      key: `${index}-${assetNumber || "row"}`,
+      rowNumber: index + 2,
+      input,
+      purchaseDate: importFieldValue(row, "purchaseDate"),
+      manualHardware: manualHardwareFromImportRow(row),
+      errors,
+      existing,
+      action,
+    };
+  });
+};
+
+const fetchAllEvents = async () => {
+  const first = await getEvents({ page: 1, pageSize: 100 });
+  const allEvents = [...first.data];
+  for (let nextPage = 2; nextPage <= (first.pagination.totalPages || 1); nextPage += 1) {
+    const next = await getEvents({ page: nextPage, pageSize: 100 });
+    allEvents.push(...next.data);
+  }
+  return allEvents;
+};
+
+const fetchAllObservations = async () => {
+  const first = await getObservations({ page: 1, pageSize: 100 });
+  const allObservations = [...first.data];
+  for (let nextPage = 2; nextPage <= (first.pagination.totalPages || 1); nextPage += 1) {
+    const next = await getObservations({ page: nextPage, pageSize: 100 });
+    allObservations.push(...next.data);
+  }
+  return allObservations;
+};
+
+const fetchAllIdentities = async (assets: Asset[]) => {
+  const results = await Promise.all(
+    assets.map(async (asset) => ({
+      assetUuid: asset.uuid,
+      assetNumber: asset.assetNumber,
+      assetName: asset.name,
+      identities: await getAssetIdentities(asset.uuid),
+    }))
+  );
+  return results.filter((item) => item.identities.length > 0);
 };
 
 const issuesToCsv = (issues: HardwareIssue[], handledIssueKeys: Set<string>) => {
@@ -902,7 +1138,7 @@ interface FieldSourceRow {
   key: string;
   label: string;
   standard: string;
-  imported: string;
+  manual: string;
   latest: string;
 }
 
@@ -917,12 +1153,6 @@ interface DetailSpecSection {
   label: string;
   rows: DetailSpecRow[];
 }
-
-const legacyFieldValue = (asset: Asset, field: (typeof LEGACY_IMPORT_FIELDS)[number]["value"]) => {
-  const raw = getRecord(getRecord(getRecord(asset.metadata).legacy).raw);
-  const aliases = LEGACY_IMPORT_FIELDS.find((item) => item.value === field)?.aliases || [];
-  return pickLegacyValue(raw, aliases);
-};
 
 const detailRow = (key: string, attribute: string, value: unknown): DetailSpecRow | null => {
   const text = fieldText(value);
@@ -1015,7 +1245,7 @@ const hardwareDetailSections = (
       key: "memory",
       label: "内存",
       rows: detailRows(
-        detailRow("memory-total", "总容量", firstText(formatBytes(summary.memory_bytes), context.importedHardware.memory)),
+        detailRow("memory-total", "总容量", firstText(formatBytes(summary.memory_bytes), context.manualHardware.memory)),
         ...memory.flatMap((item, index) => [
           detailRow(`memory-${index}-size`, `内存 ${index + 1} 容量`, formatBytes(item.size)),
           detailRow(`memory-${index}-clock`, `内存 ${index + 1} 频率`, formatFrequency(firstText(item.clockSpeed, item.clock))),
@@ -1060,7 +1290,7 @@ const hardwareDetailSections = (
       key: "disk",
       label: "硬盘",
       rows: detailRows(
-        detailRow("disk-total", "总容量", firstText(formatBytes(summary.disk_bytes), context.importedHardware.disk)),
+        detailRow("disk-total", "总容量", firstText(formatBytes(summary.disk_bytes), context.manualHardware.disk)),
         ...disks.flatMap((item, index) => [
           detailRow(`disk-${index}-name`, `硬盘 ${index + 1} 名称`, firstText(item.name, item.device, item.model)),
           detailRow(`disk-${index}-size`, `硬盘 ${index + 1} 容量`, formatBytes(item.size)),
@@ -1072,7 +1302,7 @@ const hardwareDetailSections = (
       key: "network",
       label: "网卡",
       rows: detailRows(
-        detailRow("network-ip", "IP 地址", firstText(context.extracted.primaryIp, context.importedHardware.ip)),
+        detailRow("network-ip", "IP 地址", firstText(context.extracted.primaryIp, context.manualHardware.ip)),
         detailRow("network-gateway", "默认网关", firstText(net.defaultGateway, net.gateway)),
         ...network.flatMap((item, index) => [
           detailRow(`network-${index}-name`, `网卡 ${index + 1} 名称`, firstText(item.name, item.iface, item.adapterName)),
@@ -1125,7 +1355,6 @@ const hardwareDetailSections = (
       rows: detailRows(
         detailRow("uuid-hardware", "硬件 UUID", firstText(uuid.hardware, uuid.uuid, uuid.machine, uuid.os)),
         detailRow("uuid-asset", "资产 UUID", asset.uuid),
-        detailRow("uuid-legacy", "旧 UUID", getRecord(asset.metadata.legacy).uuid),
       ),
     },
   ];
@@ -1135,9 +1364,9 @@ const fieldSourceRows = (asset: Asset, context: ReturnType<typeof assetHardwareC
   const latestSummary = getRecord(asset.latestObservation?.summary);
   const latestHardware = getRecord(asset.latestObservation?.hardware);
   const latestExtracted = hardwareSummary(latestSummary, latestHardware);
-  const importedRaw = getRecord(context.importedHardware.raw);
-  const importedExtracted = hardwareSummary({}, importedRaw);
-  const importedMemory = firstText(context.importedHardware.memory, importedExtracted.memoryLines.join("\n"));
+  const manualRaw = getRecord(context.manualHardware.raw);
+  const manualExtracted = hardwareSummary({}, manualRaw);
+  const manualMemory = firstText(context.manualHardware.memory, manualExtracted.memoryLines.join("\n"));
   const latestMemory = firstText(latestExtracted.memoryLines.join("\n"), formatBytes(latestSummary.memory_bytes));
 
   return [
@@ -1145,84 +1374,84 @@ const fieldSourceRows = (asset: Asset, context: ReturnType<typeof assetHardwareC
       key: "assetNumber",
       label: "资产编号",
       standard: fieldText(asset.assetNumber),
-      imported: fieldText(legacyFieldValue(asset, "assetNumber")),
+      manual: "-",
       latest: "-",
     },
     {
       key: "name",
       label: "资产名称",
       standard: fieldText(asset.name),
-      imported: fieldText(legacyFieldValue(asset, "name")),
+      manual: "-",
       latest: fieldText(firstText(latestSummary.hostname, latestSummary.device_model)),
     },
     {
       key: "owner",
       label: "使用人",
       standard: fieldText(asset.ownerName),
-      imported: fieldText(legacyFieldValue(asset, "ownerName")),
+      manual: "-",
       latest: "-",
     },
     {
       key: "department",
       label: "部门",
       standard: fieldText(asset.department),
-      imported: fieldText(legacyFieldValue(asset, "department")),
+      manual: "-",
       latest: "-",
     },
     {
       key: "status",
       label: "状态",
       standard: statusLabel(asset.status),
-      imported: fieldText(legacyFieldValue(asset, "status")),
+      manual: "-",
       latest: "-",
     },
     {
       key: "cpu",
       label: "CPU",
       standard: fieldText(context.extracted.cpu),
-      imported: fieldText(firstText(context.importedHardware.cpu, importedExtracted.cpu)),
+      manual: fieldText(firstText(context.manualHardware.cpu, manualExtracted.cpu)),
       latest: fieldText(latestExtracted.cpu),
     },
     {
       key: "graphics",
       label: "显卡",
       standard: fieldText(context.extracted.graphics),
-      imported: fieldText(firstText(context.importedHardware.graphics, importedExtracted.graphics)),
+      manual: fieldText(firstText(context.manualHardware.graphics, manualExtracted.graphics)),
       latest: fieldText(latestExtracted.graphics),
     },
     {
       key: "deviceModel",
       label: "计算机型号",
       standard: fieldText(context.extracted.deviceModel),
-      imported: fieldText(importedExtracted.deviceModel),
+      manual: fieldText(manualExtracted.deviceModel),
       latest: fieldText(latestExtracted.deviceModel),
     },
     {
       key: "baseboard",
       label: "主板型号",
       standard: fieldText(context.extracted.baseboard),
-      imported: fieldText(importedExtracted.baseboard),
+      manual: fieldText(manualExtracted.baseboard),
       latest: fieldText(latestExtracted.baseboard),
     },
     {
       key: "memory",
       label: "内存",
-      standard: fieldText(firstText(context.extracted.memoryLines.join("\n"), context.importedHardware.memory, formatBytes(context.summary.memory_bytes))),
-      imported: fieldText(importedMemory),
+      standard: fieldText(firstText(context.extracted.memoryLines.join("\n"), context.manualHardware.memory, formatBytes(context.summary.memory_bytes))),
+      manual: fieldText(manualMemory),
       latest: fieldText(latestMemory),
     },
     {
       key: "disk",
       label: "硬盘",
-      standard: fieldText(firstText(context.extracted.primaryDisk, context.importedHardware.disk, formatBytes(context.summary.disk_bytes))),
-      imported: fieldText(firstText(context.importedHardware.disk, importedExtracted.primaryDisk)),
+      standard: fieldText(firstText(context.extracted.primaryDisk, context.manualHardware.disk, formatBytes(context.summary.disk_bytes))),
+      manual: fieldText(firstText(context.manualHardware.disk, manualExtracted.primaryDisk)),
       latest: fieldText(firstText(latestExtracted.primaryDisk, formatBytes(latestSummary.disk_bytes))),
     },
     {
       key: "ip",
       label: "IP",
       standard: fieldText(context.extracted.primaryIp),
-      imported: fieldText(firstText(context.importedHardware.ip, importedExtracted.primaryIp)),
+      manual: fieldText(firstText(context.manualHardware.ip, manualExtracted.primaryIp)),
       latest: fieldText(latestExtracted.primaryIp),
     },
   ];
@@ -1269,7 +1498,7 @@ const formatAutoRecordValue = (option: string, value: unknown) => {
     return "-";
   }
   if (option === "设备状态") {
-    return statusLabel(mapLegacyStatus(text));
+    return statusLabel(normalizeAssetStatus(text));
   }
   return text;
 };
@@ -1324,7 +1553,7 @@ const manualRecordItem = (event: AssetEvent) => {
 
 const changeActorName = (event: AssetEvent) => {
   const payload = getRecord(event.payload);
-  return fieldText(payload.operatorName || event.actorName || (event.eventSource.startsWith("legacy") ? "旧版数据" : "系统"));
+  return fieldText(payload.operatorName || event.actorName || "系统");
 };
 
 const changeTypeLabel = (event: AssetEvent) => {
@@ -1336,9 +1565,6 @@ const changeTypeLabel = (event: AssetEvent) => {
   const fieldLabel = normalizeAutoRecordField(event.fieldName);
   if (fieldLabel) {
     return fieldLabel;
-  }
-  if (event.eventSource === "legacy_import") {
-    return "导入";
   }
   if (event.eventType === "manual_change") {
     return "手动";
@@ -1380,8 +1606,7 @@ const changeContentText = (event: AssetEvent) => {
     return messageText
       .replace("Asset created in admin.", "后台创建资产")
       .replace("Asset created from first observation.", "首次采集创建资产")
-      .replace("Observation received from client.", "客户端采集数据已接收")
-      .replace("Legacy PC asset imported.", "旧版资产导入");
+      .replace("Observation received from client.", "客户端采集数据已接收");
   }
   return "-";
 };
@@ -1528,7 +1753,7 @@ const AssetFormModal = ({ asset, open, onClose, onSubmit }: AssetFormModalProps)
               <Input placeholder="例如：显卡、手机、机房设备" />
             </Form.Item>
             <Form.Item name="status" label="状态">
-              <Select options={STATUS_OPTIONS} />
+              <Select options={EDITABLE_STATUS_OPTIONS} />
             </Form.Item>
           </div>
         </div>
@@ -1592,24 +1817,41 @@ const AssetFormModal = ({ asset, open, onClose, onSubmit }: AssetFormModalProps)
   );
 };
 
-interface LegacyImportModalProps {
+interface AssetImportModalProps {
   open: boolean;
   onClose: () => void;
   onImported: () => void;
 }
 
-const LegacyImportModal = ({ open, onClose, onImported }: LegacyImportModalProps) => {
+const AssetImportModal = ({ open, onClose, onImported }: AssetImportModalProps) => {
   const [rawText, setRawText] = useState("");
-  const [previewRows, setPreviewRows] = useState<AssetInput[]>([]);
+  const [strategy, setStrategy] = useState<AssetImportStrategy>("upsert-by-number");
+  const [sections, setSections] = useState<AssetImportSection[]>(DEFAULT_ASSET_IMPORT_SECTIONS);
+  const [previewRows, setPreviewRows] = useState<AssetImportPreviewRow[]>([]);
+  const existingAssetsQuery = useQuery(["v3-assets-import-index"], () => fetchAllAssets({ assetScope: "all" }), {
+    enabled: open,
+  });
   const importMutation = useMutation(
-    async (rows: AssetInput[]) => {
+    async (rows: AssetImportPreviewRow[]) => {
+      let created = 0;
+      let updated = 0;
+      let skipped = 0;
       for (const row of rows) {
-        await createAsset(row);
+        if (row.action === "create") {
+          await createAsset(row.input);
+          created += 1;
+        } else if (row.action === "update" && row.existing) {
+          await updateAsset(row.existing.uuid, row.input);
+          updated += 1;
+        } else {
+          skipped += 1;
+        }
       }
+      return { created, updated, skipped };
     },
     {
-      onSuccess: () => {
-        message.success("旧数据已导入");
+      onSuccess: (result) => {
+        message.success(`导入完成：新增 ${result.created} 条，更新 ${result.updated} 条，跳过 ${result.skipped} 条`);
         setRawText("");
         setPreviewRows([]);
         onImported();
@@ -1620,7 +1862,7 @@ const LegacyImportModal = ({ open, onClose, onImported }: LegacyImportModalProps
 
   const parseSource = (text = rawText) => {
     try {
-      const rows = parseTabularText(text).map(mapLegacyRow);
+      const rows = buildImportPreviewRows(parseTabularText(text), existingAssetsQuery.data || [], strategy, sections);
       setPreviewRows(rows);
       if (!rows.length) {
         message.warning("没有识别到可导入的数据");
@@ -1632,10 +1874,10 @@ const LegacyImportModal = ({ open, onClose, onImported }: LegacyImportModalProps
 
   return (
     <Modal
-      title="旧数据导入预览"
+      title="资产表格导入"
       open={open}
       onCancel={onClose}
-      width={920}
+      width={980}
       className="npcink-v3-import-modal"
       destroyOnClose
       footer={[
@@ -1648,11 +1890,11 @@ const LegacyImportModal = ({ open, onClose, onImported }: LegacyImportModalProps
         <Button
           key="import"
           type="primary"
-          disabled={!previewRows.length}
+          disabled={!previewRows.some((row) => row.action === "create" || row.action === "update")}
           loading={importMutation.isLoading}
           onClick={() => importMutation.mutate(previewRows)}
         >
-          导入 {previewRows.length} 条
+          导入可执行数据
         </Button>,
       ]}
     >
@@ -1660,12 +1902,45 @@ const LegacyImportModal = ({ open, onClose, onImported }: LegacyImportModalProps
         <Alert
           type="info"
           showIcon
-          message="支持 CSV 或 JSON"
-          description="导入前会自动识别常见旧字段并生成预览；确认后会创建 v3 资产记录，原始行会保存在 metadata.legacy.raw。"
+          message="只支持标准资产 CSV"
+          description="请先下载模板填写。导入以资产编号为匹配键，可选择仅新增、仅更新，或按编号新增/更新。"
         />
+        <Space wrap>
+          <Button onClick={() => downloadCsvFile(`asset-import-template-${Date.now()}.csv`, importTemplateCsv())}>
+            下载导入模板
+          </Button>
+          <Radio.Group
+            value={strategy}
+            onChange={(event) => {
+              setStrategy(event.target.value);
+              setPreviewRows([]);
+            }}
+            options={[
+              { label: "新增或更新", value: "upsert-by-number" },
+              { label: "只新增", value: "create-only" },
+              { label: "只更新", value: "update-by-number" },
+            ]}
+          />
+        </Space>
+        <div>
+          <Text strong>导入数据</Text>
+          <Checkbox.Group
+            className="npcink-v3-checkbox-row"
+            value={sections}
+            onChange={(values) => {
+              setSections(values as AssetImportSection[]);
+              setPreviewRows([]);
+            }}
+            options={[
+              { label: "基础信息", value: "basic" },
+              { label: "财务信息", value: "finance" },
+              { label: "手动硬件", value: "hardware" },
+            ]}
+          />
+        </div>
         <input
           type="file"
-          accept=".csv,.json,text/csv,application/json"
+          accept=".csv,text/csv"
           onChange={(event) => {
             const file = event.target.files?.[0];
             if (!file) {
@@ -1687,19 +1962,29 @@ const LegacyImportModal = ({ open, onClose, onImported }: LegacyImportModalProps
             setRawText(event.target.value);
             setPreviewRows([]);
           }}
-          placeholder="粘贴 CSV 或 JSON。第一行作为 CSV 表头，例如：编号,名称,使用人,部门,CPU,内存,硬盘,状态"
+          placeholder="粘贴标准 CSV。第一行应使用模板表头：资产编号,资产名称,资产类型,使用人,部门,状态..."
         />
         <Table
-          rowKey={(row, index) => `${row.assetNumber || row.name}-${index}`}
+          rowKey="key"
           size="small"
           pagination={{ pageSize: 5, showSizeChanger: false }}
           dataSource={previewRows}
           columns={[
-            { title: "编号", dataIndex: "assetNumber", width: 150, render: fieldText },
-            { title: "名称", dataIndex: "name", render: fieldText },
-            { title: "使用人", dataIndex: "ownerName", width: 120, render: fieldText },
-            { title: "部门", dataIndex: "department", width: 120, render: fieldText },
-            { title: "状态", dataIndex: "status", width: 100, render: statusLabel },
+            { title: "行号", dataIndex: "rowNumber", width: 76 },
+            { title: "动作", dataIndex: "action", width: 96, render: (value) => (
+              <Tag color={value === "create" ? "green" : value === "update" ? "blue" : value === "invalid" ? "red" : "default"}>
+                {value === "create" ? "新增" : value === "update" ? "更新" : value === "invalid" ? "错误" : "跳过"}
+              </Tag>
+            ) },
+            { title: "编号", render: (_, row) => fieldText(row.input.assetNumber), width: 150 },
+            { title: "名称", render: (_, row) => fieldText(row.input.name) },
+            { title: "使用人", render: (_, row) => fieldText(row.input.ownerName), width: 120 },
+            { title: "部门", render: (_, row) => fieldText(row.input.department), width: 120 },
+            { title: "状态", render: (_, row) => statusLabel(String(row.input.status || "")), width: 100 },
+            {
+              title: "校验",
+              render: (_, row) => row.errors.length ? <Text type="danger">{row.errors.join("；")}</Text> : <Text type="secondary">通过</Text>,
+            },
           ]}
           locale={{
             emptyText: (
@@ -1710,6 +1995,115 @@ const LegacyImportModal = ({ open, onClose, onImported }: LegacyImportModalProps
             ),
           }}
         />
+      </Space>
+    </Modal>
+  );
+};
+
+interface AssetExportModalProps {
+  open: boolean;
+  currentScopeLabel: string;
+  currentQueryParams: AssetListParams;
+  currentTotal?: number;
+  selectedAssets?: Asset[];
+  onClose: () => void;
+}
+
+const AssetExportModal = ({
+  open,
+  currentScopeLabel,
+  currentQueryParams,
+  currentTotal,
+  selectedAssets = [],
+  onClose,
+}: AssetExportModalProps) => {
+  const [scope, setScope] = useState<AssetExportScope>("current-filter");
+  const [fieldKeys, setFieldKeys] = useState<AssetExportFieldKey[]>(DEFAULT_ASSET_EXPORT_FIELD_KEYS);
+  const [exporting, setExporting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setScope(selectedAssets.length ? "selected" : "current-filter");
+      setFieldKeys(DEFAULT_ASSET_EXPORT_FIELD_KEYS);
+    }
+  }, [open, selectedAssets.length]);
+
+  const exportAssets = async () => {
+    setExporting(true);
+    try {
+      const exportParams: Record<Exclude<AssetExportScope, "current-filter" | "selected">, AssetListParams> = {
+        computer: { assetScope: "computer" },
+        custom: { assetScope: "other" },
+        all: { assetScope: "all" },
+      };
+      const assets = scope === "selected"
+        ? selectedAssets
+        : await fetchAllAssets(scope === "current-filter" ? currentQueryParams : exportParams[scope]);
+      downloadCsvFile(`assets-${scope}-${Date.now()}.csv`, assetsToCsv(assets, fieldKeys));
+      message.success(`已导出 ${assets.length} 条资产`);
+      onClose();
+    } finally {
+      setExporting(false);
+    }
+  };
+  const currentFilterCountText =
+    typeof currentTotal === "number" ? `${currentTotal} 条` : "导出时计算";
+
+  return (
+    <Modal
+      title="资产表格导出"
+      open={open}
+      onCancel={onClose}
+      onOk={exportAssets}
+      okText="导出 CSV"
+      confirmLoading={exporting}
+      width={760}
+      destroyOnClose
+    >
+      <Space direction="vertical" size={16} className="npcink-v3-detail-stack">
+        <div>
+          <Text strong>导出范围</Text>
+          <Text type="secondary" className="npcink-v3-export-range-note">
+            符合当前筛选条件的数据，就是资产列表里筛选后的全部结果，不只是当前页。
+          </Text>
+          <Radio.Group
+            className="npcink-v3-radio-stack"
+            value={scope}
+            onChange={(event) => setScope(event.target.value)}
+            options={[
+              {
+                label: `符合当前筛选条件的数据：${currentScopeLabel}，${currentFilterCountText}`,
+                value: "current-filter",
+              },
+              {
+                label: `只导出已勾选的数据：${selectedAssets.length} 条`,
+                value: "selected",
+                disabled: !selectedAssets.length,
+              },
+              { label: "全部电脑设备", value: "computer" },
+              { label: "全部自定义设备", value: "custom" },
+              { label: "忽略筛选，导出全部资产", value: "all" },
+            ]}
+          />
+        </div>
+        <div>
+          <Text strong>导出字段</Text>
+          <div className="npcink-v3-export-fields">
+            {["基础信息", "财务信息", "硬件信息", "系统信息"].map((group) => (
+              <div key={group}>
+                <Text type="secondary">{group}</Text>
+                <Checkbox.Group
+                  value={fieldKeys}
+                  onChange={(values) => setFieldKeys(values as AssetExportFieldKey[])}
+                  options={ASSET_EXPORT_FIELDS.filter((field) => field.group === group).map((field) => ({
+                    label: field.label,
+                    value: field.key,
+                  }))}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       </Space>
     </Modal>
   );
@@ -1767,7 +2161,7 @@ const BulkEditModal = ({ open, count, loading, onClose, onSubmit }: BulkEditModa
           <Input placeholder="统一修改使用人" />
         </Form.Item>
         <Form.Item name="status" label="状态">
-          <Select allowClear options={STATUS_OPTIONS} placeholder="统一修改状态" />
+          <Select allowClear options={EDITABLE_STATUS_OPTIONS} placeholder="统一修改状态" />
         </Form.Item>
         <Form.Item name="category" label="分类">
           <Input placeholder="统一修改分类" />
@@ -2073,10 +2467,14 @@ interface AssetSettingsPanelProps {
   onArchive: (asset: Asset) => void;
 }
 
+type AssetSettingsValues = AssetInput & {
+  orderTime?: string;
+};
+
 const AssetSettingsPanel = ({ asset, departmentOptions = [], onUpdated, onArchive }: AssetSettingsPanelProps) => {
-  const [form] = Form.useForm<AssetInput>();
+  const [form] = Form.useForm<AssetSettingsValues>();
   const settingsHardware = assetHardwareContext(asset);
-  const primaryIp = firstText(settingsHardware.extracted.primaryIp, settingsHardware.importedHardware.ip);
+  const primaryIp = firstText(settingsHardware.extracted.primaryIp, settingsHardware.manualHardware.ip);
   const normalizedDepartmentOptions = useMemo(
     () =>
       Array.from(new Set([asset.department, ...departmentOptions].map((item) => String(item || "").trim()).filter(Boolean)))
@@ -2090,8 +2488,10 @@ const AssetSettingsPanel = ({ asset, departmentOptions = [], onUpdated, onArchiv
   const residualRate = purchasePrice > 0 ? Math.round((residualValue / purchasePrice) * 100) : 0;
   const depreciationRate = purchasePrice > 0 ? Math.max(0, 100 - residualRate) : 0;
   const updateMutation = useMutation(
-    (values: AssetInput) =>
-      updateAsset(asset.uuid, {
+    (values: AssetSettingsValues) => {
+      const metadata = getRecord(asset.metadata);
+      const existingPurchase = getRecord(metadata.purchase);
+      return updateAsset(asset.uuid, {
         assetNumber: values.assetNumber,
         name: values.name ?? asset.name,
         ownerName: values.ownerName,
@@ -2099,7 +2499,16 @@ const AssetSettingsPanel = ({ asset, departmentOptions = [], onUpdated, onArchiv
         status: values.status,
         purchasePrice: Number(values.purchasePrice || 0),
         residualValue: Number(values.residualValue || 0),
-      }),
+        metadata: {
+          ...metadata,
+          purchase: {
+            ...existingPurchase,
+            order_time: values.orderTime || "",
+            total: Number(values.purchasePrice || 0),
+          },
+        },
+      });
+    },
     {
       onSuccess: (updated) => {
         onUpdated(updated);
@@ -2117,6 +2526,7 @@ const AssetSettingsPanel = ({ asset, departmentOptions = [], onUpdated, onArchiv
       status: asset.status,
       purchasePrice: asset.purchasePrice,
       residualValue: asset.residualValue,
+      orderTime: formatDateInput(assetPurchaseDateText(asset)),
     });
   }, [asset, form]);
 
@@ -2148,7 +2558,7 @@ const AssetSettingsPanel = ({ asset, departmentOptions = [], onUpdated, onArchiv
               />
             </Form.Item>
             <Form.Item name="status" label="状态">
-              <Select options={STATUS_OPTIONS} />
+              <Select options={EDITABLE_STATUS_OPTIONS} />
             </Form.Item>
             <Form.Item label="IP 地址" className="npcink-v3-settings-wide">
               <Input value={primaryIp} readOnly placeholder="暂无采集 IP" />
@@ -2161,6 +2571,9 @@ const AssetSettingsPanel = ({ asset, departmentOptions = [], onUpdated, onArchiv
           <div className="npcink-v3-settings-grid">
             <Form.Item name="purchasePrice" label="采购价">
               <InputNumber min={0} precision={2} className="npcink-v3-number" addonAfter="¥" />
+            </Form.Item>
+            <Form.Item name="orderTime" label="购置日期">
+              <Input placeholder="例如：2026-06-26" />
             </Form.Item>
             <Form.Item name="residualValue" label="二手价">
               <InputNumber min={0} precision={2} className="npcink-v3-number" addonAfter="¥" />
@@ -2311,7 +2724,7 @@ const CustomAssetSettingsPanel = ({ asset, onUpdated, onArchive }: AssetSettings
               />
             </Form.Item>
             <Form.Item name="status" label="当前状态">
-              <Select options={STATUS_OPTIONS} />
+              <Select options={EDITABLE_STATUS_OPTIONS} />
             </Form.Item>
             <Form.Item name="ownerName" label="使用人员">
               <Input placeholder="使用人或使用位置" />
@@ -2713,7 +3126,7 @@ const DetailDrawer = ({ uuid, open, departmentOptions = [], onClose, onArchive }
                 {formatHardwareHeroText(
                   extracted.cpu,
                   summary,
-                  hardwareContext.importedHardware,
+                  hardwareContext.manualHardware,
                   assetTypeLabel(asset.assetType)
                 )}
               </p>
@@ -2751,7 +3164,7 @@ const DetailDrawer = ({ uuid, open, departmentOptions = [], onClose, onArchive }
                     </div>
                     <div>
                       <Text strong>内存信息</Text>
-                      <strong>{extracted.memoryLines.length ? extracted.memoryLines.join("\n") : fieldText(hardwareContext.importedHardware.memory || formatBytes(summary.memory_bytes))}</strong>
+                      <strong>{extracted.memoryLines.length ? extracted.memoryLines.join("\n") : fieldText(hardwareContext.manualHardware.memory || formatBytes(summary.memory_bytes))}</strong>
                     </div>
                     <div>
                       <Text strong>显示器</Text>
@@ -2760,7 +3173,7 @@ const DetailDrawer = ({ uuid, open, departmentOptions = [], onClose, onArchive }
                     </div>
                     <div>
                       <Text strong>主硬盘</Text>
-                      <strong>{fieldText(extracted.primaryDisk || hardwareContext.importedHardware.disk || formatBytes(summary.disk_bytes))}</strong>
+                      <strong>{fieldText(extracted.primaryDisk || hardwareContext.manualHardware.disk || formatBytes(summary.disk_bytes))}</strong>
                     </div>
                     <div>
                       <Text strong>添加时间</Text>
@@ -2951,18 +3364,18 @@ const DetailDrawer = ({ uuid, open, departmentOptions = [], onClose, onArchive }
                         <div className="npcink-v3-field-source">
                           <div className="npcink-v3-field-source-head">
                             <Text strong>字段来源对照</Text>
-                            <Text type="secondary">标准字段、导入字段和最新采集字段并排查看。</Text>
+                            <Text type="secondary">标准字段、手动硬件字段和最新采集字段并排查看。</Text>
                           </div>
                           <div className="npcink-v3-field-source-grid">
                             <strong>字段</strong>
                             <strong>标准字段</strong>
-                            <strong>导入字段</strong>
+                            <strong>手动字段</strong>
                             <strong>最新采集</strong>
                             {sourceRows.map((row) => (
                               <Fragment key={row.key}>
                                 <span>{row.label}</span>
                                 <span>{row.standard}</span>
-                                <span>{row.imported}</span>
+                                <span>{row.manual}</span>
                                 <span>{row.latest}</span>
                               </Fragment>
                             ))}
@@ -3186,7 +3599,13 @@ const HardwareAuditWorkspace = () => {
     () => fetchAllAssets({ assetScope: "computer" }),
     { staleTime: 60_000 }
   );
-  const auditAssets = auditAssetsQuery.data || [];
+  const settingsQuery = useQuery(["v3-settings"], getSettings, { staleTime: 60_000 });
+  const allAuditAssets = auditAssetsQuery.data || [];
+  const countAvailableAssetsOnly = settingsQuery.data?.countAvailableAssetsOnly ?? true;
+  const auditAssets = useMemo(
+    () => allAuditAssets.filter((asset) => shouldCountAsset(asset, countAvailableAssetsOnly)),
+    [allAuditAssets, countAvailableAssetsOnly]
+  );
   const hardwareQueryItems = useMemo(() => auditAssets.map(hardwareQueryItem), [auditAssets]);
   const auditTotal = auditAssets.length;
   const auditStatus = countBy(auditAssets, (asset) => statusLabel(asset.status));
@@ -3404,7 +3823,7 @@ const HardwareAuditWorkspace = () => {
         label: String(row.department),
         value: Number(row.total || 0),
         valueText: `${Number(row.total || 0)} 台 · ${percentText(Number(row.total || 0), auditTotal)}`,
-        caption: `在用 ${Number(row.active || 0)} / 维护 ${Number(row.maintenance || 0)} / 归档 ${Number(row.deleted || 0)}`,
+        caption: `在用 ${Number(row.active || 0)} / 闲置 ${Number(row.inactive || 0)} / 维护 ${Number(row.maintenance || 0)} / 报废 ${Number(row.retired || 0)} / 归档 ${Number(row.deleted || 0)}`,
       })),
     [auditTotal, departmentRows]
   );
@@ -3518,7 +3937,9 @@ const HardwareAuditWorkspace = () => {
           <Title level={3}>硬件盘点</Title>
           <Text type="secondary">按采集快照查看 CPU、内存、硬盘、主板等硬件明细。</Text>
         </div>
-        <Tag color="blue">{auditAssetsQuery.isLoading ? "统计中" : `${auditTotal} 台资产`}</Tag>
+        <Tag color="blue">
+          {auditAssetsQuery.isLoading ? "统计中" : `纳入 ${auditTotal} / 全部 ${allAuditAssets.length} 台`}
+        </Tag>
       </div>
       <div className="npcink-v3-hardware-overview">
         {[
@@ -3758,7 +4179,9 @@ const HardwareAuditWorkspace = () => {
                 { title: "部门", dataIndex: "department" },
                 { title: "总数", dataIndex: "total", width: 70 },
                 { title: "在用", dataIndex: "active", width: 70 },
+                { title: "闲置", dataIndex: "inactive", width: 70 },
                 { title: "维护", dataIndex: "maintenance", width: 70 },
+                { title: "报废", dataIndex: "retired", width: 70 },
                 { title: "归档", dataIndex: "deleted", width: 70 },
               ]}
               locale={{ emptyText: <Empty description="暂无部门数据" /> }}
@@ -4004,6 +4427,27 @@ const moneyValue = (value: unknown) => {
   return Number.isFinite(number) && number > 0 ? number : 0;
 };
 
+const elapsedMonthsSince = (date: Date, now = new Date()) => {
+  const elapsedMs = now.getTime() - date.getTime();
+  if (!Number.isFinite(elapsedMs) || elapsedMs <= 0) {
+    return 0;
+  }
+  return elapsedMs / (1000 * 60 * 60 * 24 * 30.4375);
+};
+
+const depreciatedValue = (purchase: number, purchaseDate: Date | null, periodMonths: number, residualRate: number) => {
+  if (purchase <= 0) {
+    return 0;
+  }
+  const floorValue = purchase * (Math.min(100, Math.max(0, residualRate)) / 100);
+  if (!purchaseDate) {
+    return floorValue;
+  }
+  const usablePeriod = Math.max(1, periodMonths);
+  const progress = Math.min(elapsedMonthsSince(purchaseDate) / usablePeriod, 1);
+  return Math.max(floorValue, purchase - (purchase - floorValue) * progress);
+};
+
 const formatPercentValue = (value: number) =>
   `${new Intl.NumberFormat("zh-CN", {
     maximumFractionDigits: 2,
@@ -4023,7 +4467,9 @@ const AssetValueWorkspace = () => {
     { staleTime: 60_000 }
   );
   const assets = assetsQuery.data || [];
-  const valueAssets = assets.filter((asset) => asset.status !== "deleted");
+  const countAvailableAssetsOnly = settingsQuery.data?.countAvailableAssetsOnly ?? true;
+  const valueAssets = assets.filter((asset) => shouldCountAsset(asset, countAvailableAssetsOnly));
+  const depreciationPeriodMonths = settingsQuery.data?.depreciationPeriodMonths ?? 36;
   const defaultResidualRate = settingsQuery.data?.defaultResidualRate ?? 5;
   const currentValue = (asset: Asset) => {
     const explicitCurrent = moneyValue(asset.residualValue);
@@ -4031,7 +4477,12 @@ const AssetValueWorkspace = () => {
     if (explicitCurrent > 0 || purchase <= 0) {
       return explicitCurrent;
     }
-    return purchase * (defaultResidualRate / 100);
+    return depreciatedValue(
+      purchase,
+      parseDateValue(assetPurchaseDateText(asset)),
+      depreciationPeriodMonths,
+      defaultResidualRate
+    );
   };
   const totalPurchase = valueAssets.reduce((total, asset) => total + moneyValue(asset.purchasePrice), 0);
   const totalCurrent = valueAssets.reduce((total, asset) => total + currentValue(asset), 0);
@@ -4097,14 +4548,16 @@ const AssetValueWorkspace = () => {
           <Title level={3}>资产价值</Title>
               <Text type="secondary">按采购价和当前估值查看资产规模、折价和部门分布。</Text>
         </div>
-        <Tag color="blue">{assetsQuery.isLoading ? "统计中" : `纳入 ${valueAssets.length} 条资产`}</Tag>
+        <Tag color="blue">
+          {assetsQuery.isLoading ? "统计中" : `纳入 ${valueAssets.length} / 全部 ${assets.length} 条`}
+        </Tag>
       </div>
 
       <div className="npcink-v3-summary-strip">
         {[
-          { label: "资产数量", value: String(valueAssets.length), note: "不含已归档" },
+          { label: "资产数量", value: String(valueAssets.length), note: countAvailableAssetsOnly ? "不含维护、报废、归档" : "包含全部状态" },
           { label: "总采购价", value: formatMoney(totalPurchase), note: "采购价合计" },
-          { label: "当前估值", value: formatMoney(totalCurrent), note: "二手价/残值字段，缺失时按默认残值率估算", meter: currentRate },
+          { label: "当前估值", value: formatMoney(totalCurrent), note: "二手价/残值字段，缺失时按折旧年限估算", meter: currentRate },
           { label: "已折价", value: formatMoney(totalDepreciation), note: "采购价 - 当前估值", meter: depreciationRate },
           { label: "估值率", value: formatPercentValue(currentRate), note: "当前估值 / 采购价", meter: currentRate },
           { label: "折价率", value: formatPercentValue(depreciationRate), note: "已折价 / 采购价", meter: depreciationRate },
@@ -4183,7 +4636,7 @@ const AssetValueWorkspace = () => {
           <div className="npcink-v3-audit-block-head">
             <div>
               <Text strong>状态价值</Text>
-              <Text type="secondary">查看在用、停用、维护等状态的金额分布</Text>
+              <Text type="secondary">查看在用、闲置、维护、报废等状态的金额分布</Text>
             </div>
             <ViewModeToggle value={valueViews.status} onChange={(mode) => setValueView("status", mode)} />
           </div>
@@ -4217,12 +4670,13 @@ const AssetValueWorkspace = () => {
             label: "计算口径",
             children: (
               <div className="npcink-v3-formula-copy">
-                <p>当前估值 = 资产的二手价/残值字段合计；缺失时按设置中的默认残值率估算。</p>
+                <p>当前估值 = 资产的二手价/残值字段合计；缺失时按购置日期、折旧年限和默认残值率做直线折旧估算。</p>
                 <p>已折价 = 总采购价 - 当前估值。</p>
                 <p>估值率 = 当前估值 / 总采购价。</p>
                 <p>折价率 = 已折价 / 总采购价。</p>
+                <p>当前折旧年限：{depreciationPeriodMonths} 个月。</p>
                 <p>当前默认残值率：{formatPercentValue(defaultResidualRate)}。</p>
-                <p>已归档资产不纳入默认统计。</p>
+                <p>{countAvailableAssetsOnly ? "当前只统计在用、闲置资产；维护、报废、归档不纳入。" : "当前统计全部状态资产。"}</p>
               </div>
             ),
           },
@@ -4232,30 +4686,149 @@ const AssetValueWorkspace = () => {
   );
 };
 
-const AnalysisWorkspace = () => (
-  <Tabs
-    defaultActiveKey="hardware"
-    className="npcink-v3-analysis-tabs"
-    items={[
-      {
-        key: "hardware",
-        label: "硬件盘点",
-        children: <HardwareAuditWorkspace />,
-      },
-      {
-        key: "value",
-        label: "资产价值",
-        children: <AssetValueWorkspace />,
-      },
-    ]}
-  />
-);
+const ANALYSIS_TAB_KEYS = ["hardware", "value"] as const;
+
+const AnalysisWorkspace = () => {
+  const [activeTab, setActiveTab] = useState<(typeof ANALYSIS_TAB_KEYS)[number]>(() =>
+    loadStoredTab(ANALYSIS_TAB_STORAGE_KEY, ANALYSIS_TAB_KEYS, "hardware")
+  );
+
+  return (
+    <Tabs
+      activeKey={activeTab}
+      className="npcink-v3-analysis-tabs"
+      onChange={(key) => {
+        const nextKey = ANALYSIS_TAB_KEYS.includes(key as (typeof ANALYSIS_TAB_KEYS)[number])
+          ? (key as (typeof ANALYSIS_TAB_KEYS)[number])
+          : "hardware";
+        setActiveTab(nextKey);
+        saveStoredTab(ANALYSIS_TAB_STORAGE_KEY, nextKey);
+      }}
+      items={[
+        {
+          key: "hardware",
+          label: "硬件盘点",
+          children: <HardwareAuditWorkspace />,
+        },
+        {
+          key: "value",
+          label: "资产价值",
+          children: <AssetValueWorkspace />,
+        },
+      ]}
+    />
+  );
+};
+
+const DataToolsWorkspace = () => {
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupSections, setBackupSections] = useState<BackupExportSection[]>(DEFAULT_BACKUP_EXPORT_SECTIONS);
+  const queryClient = useQueryClient();
+
+  const exportBackup = async () => {
+    setBackupLoading(true);
+    try {
+      const assetsNeeded = backupSections.includes("assets") || backupSections.includes("identities");
+      const [settings, assets, events, observations] = await Promise.all([
+        backupSections.includes("settings") ? getSettings() : Promise.resolve(undefined),
+        assetsNeeded ? fetchAllAssets({ assetScope: "all" }) : Promise.resolve(undefined),
+        backupSections.includes("events") ? fetchAllEvents() : Promise.resolve(undefined),
+        backupSections.includes("observations") ? fetchAllObservations() : Promise.resolve(undefined),
+      ]);
+      const identities = backupSections.includes("identities") && assets
+        ? await fetchAllIdentities(assets)
+        : undefined;
+      downloadJsonFile(`npcink-device-inventory-backup-${Date.now()}.json`, {
+        schema: "npcink-device-inventory/v3-admin-export",
+        exportedAt: new Date().toISOString(),
+        sections: backupSections,
+        ...(settings ? { settings } : {}),
+        ...(assets ? { assets } : {}),
+        ...(identities ? { identities } : {}),
+        ...(events ? { events } : {}),
+        ...(observations ? { observations } : {}),
+      });
+      message.success("JSON 备份已导出");
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  return (
+    <div className="npcink-v3-section">
+      <div className="npcink-v3-section-header">
+        <div>
+          <Title level={3}>数据工具</Title>
+          <Text type="secondary">导入标准资产表格，按需导出资产台账，并生成管理员备份文件。</Text>
+        </div>
+      </div>
+      <div className="npcink-v3-data-tools">
+        <div className="npcink-v3-tool-panel">
+          <div>
+            <Title level={4}>资产表格导入</Title>
+            <Text type="secondary">下载标准模板后填写，可按资产编号新增或更新资产主表、财务字段和手动硬件字段。</Text>
+          </div>
+          <Button type="primary" onClick={() => setImportModalOpen(true)}>
+            导入资产表格
+          </Button>
+        </div>
+        <div className="npcink-v3-tool-panel">
+          <div>
+            <Title level={4}>资产表格导出</Title>
+            <Text type="secondary">给财务/行政查看、筛选、统计；可选择电脑设备、自定义设备、当前筛选或已勾选资产。</Text>
+          </div>
+          <Button onClick={() => setExportModalOpen(true)}>导出资产表格</Button>
+        </div>
+        <div className="npcink-v3-tool-panel">
+          <div>
+            <Title level={4}>JSON 备份导出</Title>
+            <Text type="secondary">
+              给管理员完整迁移或归档，默认导出全部业务数据，不按电脑/自定义设备拆分；不会导出令牌密钥或访问码明文。
+            </Text>
+            <Text type="secondary" className="npcink-v3-export-range-note">
+              电脑采集快照用于保留客户端上报的硬件历史；日常台账表格导出不需要。
+            </Text>
+            <Checkbox.Group
+              className="npcink-v3-checkbox-row"
+              value={backupSections}
+              onChange={(values) => setBackupSections(values as BackupExportSection[])}
+              options={[
+                { label: "设置", value: "settings" },
+                { label: "资产台账", value: "assets" },
+                { label: "设备匹配标识", value: "identities" },
+                { label: "变更记录", value: "events" },
+                { label: "电脑采集快照", value: "observations" },
+              ]}
+            />
+          </div>
+          <Button loading={backupLoading} disabled={!backupSections.length} onClick={exportBackup}>
+            导出 JSON 备份
+          </Button>
+        </div>
+      </div>
+      <AssetImportModal
+        open={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onImported={() => {
+          queryClient.invalidateQueries(["v3-assets"]);
+          queryClient.invalidateQueries(["v3-assets-import-index"]);
+        }}
+      />
+      <AssetExportModal
+        open={exportModalOpen}
+        currentScopeLabel="全部资产"
+        currentQueryParams={{ assetScope: "all" }}
+        onClose={() => setExportModalOpen(false)}
+      />
+    </div>
+  );
+};
 
 const SettingsWorkspace = () => {
   const [form] = Form.useForm<InventorySettings>();
   const [tokenModalOpen, setTokenModalOpen] = useState(false);
-  const [importModalOpen, setImportModalOpen] = useState(false);
-  const clientUploadBaseUrl = Form.useWatch("clientUploadBaseUrl", form);
   const publicQueryPageSlug = Form.useWatch("publicQueryPageSlug", form);
   const queryClient = useQueryClient();
   const settingsQuery = useQuery(["v3-settings"], getSettings);
@@ -4300,19 +4873,13 @@ const SettingsWorkspace = () => {
   }, [publicQueryPageSlug, settingsQuery.data?.publicQueryPage?.url]);
   const publicQueryPage = settingsQuery.data?.publicQueryPage;
   const hasPublicQueryPage = Boolean(publicQueryPage?.exists);
-  const clientUploadEndpoint = useMemo(
-    () => buildClientUploadEndpoint(clientUploadBaseUrl || RestUrl),
-    [clientUploadBaseUrl]
-  );
-
   return (
     <div className="npcink-v3-section">
       <div className="npcink-v3-section-header">
         <div>
           <Title level={3}>设置</Title>
-          <Text type="secondary">管理公开查询、资产编号和采集客户端授权。</Text>
+          <Text type="secondary">管理公开查询、采集客户端授权和统计口径。</Text>
         </div>
-        <Button onClick={() => setTokenModalOpen(true)}>客户端接入</Button>
       </div>
       <div className="npcink-v3-settings-panel">
         <Form
@@ -4322,7 +4889,10 @@ const SettingsWorkspace = () => {
           onFinish={(values) => settingsMutation.mutate(values)}
         >
           <div className="npcink-v3-settings-section">
-            <Title level={4}>客户端接入</Title>
+            <div className="npcink-v3-settings-section-head">
+              <Title level={4}>客户端接入</Title>
+              <Button onClick={() => setTokenModalOpen(true)}>客户端接入</Button>
+            </div>
             <div className="npcink-v3-settings-grid">
               <Form.Item
                 name="clientUploadBaseUrl"
@@ -4333,31 +4903,19 @@ const SettingsWorkspace = () => {
                 <Input placeholder={RestUrl} />
               </Form.Item>
             </div>
-            <div className="npcink-v3-client-endpoint">
-              <Text type="secondary">客户端上传地址</Text>
-              <Text copyable code>
-                {clientUploadEndpoint}
-              </Text>
-            </div>
           </div>
           <div className="npcink-v3-settings-section">
-            <Title level={4}>公开查询与编号</Title>
+            <Title level={4}>公开查询</Title>
             <div className="npcink-v3-settings-grid">
-              <Form.Item
-                name="publicQueryEnabled"
-                label="公开查询"
-                valuePropName="checked"
-                extra="控制公开查询入口是否允许读取已开放的资产信息。"
-              >
-                <Switch checkedChildren="启用" unCheckedChildren="关闭" />
-              </Form.Item>
-              <Form.Item
-                name="assetNumberPrefix"
-                label="资产编号前缀"
-                extra="仅允许字母、数字、下划线和短横线。"
-              >
-                <Input placeholder="例如：A" />
-              </Form.Item>
+              <div className="npcink-v3-setting-switch-row">
+                <div>
+                  <Text strong>公开查询</Text>
+                  <Text type="secondary">控制公开查询入口是否允许读取已开放的资产信息。</Text>
+                </div>
+                <Form.Item name="publicQueryEnabled" valuePropName="checked" noStyle>
+                  <Switch checkedChildren="启用" unCheckedChildren="关闭" />
+                </Form.Item>
+              </div>
               <Form.Item
                 name="publicQueryPageSlug"
                 label="公共查询页面"
@@ -4428,7 +4986,7 @@ const SettingsWorkspace = () => {
               <Form.Item
                 name="depreciationPeriodMonths"
                 label="折旧年限"
-                extra="用于资产价值分析中的默认折旧周期。"
+                extra="用于没有单独二手价/残值时，按购置日期估算当前价值。"
               >
                 <InputNumber
                   min={1}
@@ -4440,7 +4998,7 @@ const SettingsWorkspace = () => {
               <Form.Item
                 name="defaultResidualRate"
                 label="默认残值率"
-                extra="用于没有单独残值数据时的估算参考。"
+                extra="用于按折旧年限估算时的最低残值。"
               >
                 <InputNumber
                   min={0}
@@ -4453,23 +5011,31 @@ const SettingsWorkspace = () => {
             </div>
           </div>
           <div className="npcink-v3-settings-section">
-            <Title level={4}>维护</Title>
+            <Title level={4}>统计口径</Title>
             <div className="npcink-v3-settings-grid">
-              <Form.Item
-                name="observationRetentionDays"
-                label="采集记录保留天数"
-                extra="0 表示不按天数自动清理。"
-              >
-                <InputNumber min={0} precision={0} className="npcink-v3-number" addonAfter="天" />
-              </Form.Item>
-              <Form.Item
-                name="deleteDataOnUninstall"
-                label="卸载时删除数据"
-                valuePropName="checked"
-                extra="开启后，删除插件时会清理插件数据表和设置。"
-              >
-                <Switch checkedChildren="删除" unCheckedChildren="保留" />
-              </Form.Item>
+              <div className="npcink-v3-setting-switch-row">
+                <div>
+                  <Text strong>只统计可用资产</Text>
+                  <Text type="secondary">开启后，硬件盘点和资产价值只统计在用、闲置设备；维护、报废、归档不计入。</Text>
+                </div>
+                <Form.Item name="countAvailableAssetsOnly" valuePropName="checked" noStyle>
+                  <Switch checkedChildren="开启" unCheckedChildren="关闭" />
+                </Form.Item>
+              </div>
+            </div>
+          </div>
+          <div className="npcink-v3-settings-section npcink-v3-danger-section">
+            <Title level={4}>危险操作</Title>
+            <div className="npcink-v3-settings-grid">
+              <div className="npcink-v3-setting-switch-row">
+                <div>
+                  <Text strong>卸载时删除数据</Text>
+                  <Text type="secondary">开启后，删除插件时会清理插件数据表和设置。</Text>
+                </div>
+                <Form.Item name="deleteDataOnUninstall" valuePropName="checked" noStyle>
+                  <Switch checkedChildren="删除" unCheckedChildren="保留" />
+                </Form.Item>
+              </div>
             </div>
           </div>
           <div className="npcink-v3-settings-actions">
@@ -4478,20 +5044,8 @@ const SettingsWorkspace = () => {
             </Button>
           </div>
         </Form>
-        <div className="npcink-v3-settings-section npcink-v3-settings-utility">
-          <div>
-            <Title level={4}>数据迁移</Title>
-            <Text type="secondary">从旧版插件备份文件导入历史资产数据。</Text>
-          </div>
-          <Button onClick={() => setImportModalOpen(true)}>导入旧数据</Button>
-        </div>
       </div>
       <TokenModal open={tokenModalOpen} onClose={() => setTokenModalOpen(false)} />
-      <LegacyImportModal
-        open={importModalOpen}
-        onClose={() => setImportModalOpen(false)}
-        onImported={() => queryClient.invalidateQueries(["v3-assets"])}
-      />
     </div>
   );
 };
@@ -4513,7 +5067,7 @@ const AssetCard = ({
   compact = false,
   onSelect,
 }: AssetCardProps) => {
-  const { summary, importedHardware, extracted } = assetHardwareContext(asset);
+  const { summary, manualHardware, extracted } = assetHardwareContext(asset);
   const title = asset.ownerName || asset.name || "未命名资产";
   const isPc = isComputerAsset(asset);
   const customInfo = !isPc ? customAssetInfo(asset) : null;
@@ -4592,7 +5146,7 @@ const AssetCard = ({
             <dl>
               <div>
                 <dt>配置：</dt>
-                <dd>{formatMemoryDiskText(summary, importedHardware)}</dd>
+                <dd>{formatMemoryDiskText(summary, manualHardware)}</dd>
               </div>
               <div>
                 <dt>编号：</dt>
@@ -4643,6 +5197,7 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
   const [batchMode, setBatchMode] = useState(false);
   const [selectedUuids, setSelectedUuids] = useState<Set<string>>(new Set());
   const [savedFilters, setSavedFilters] = useState<SavedAssetFilter[]>(loadSavedFilters);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
   const queryParams = useMemo(
     () => ({
       page,
@@ -4834,17 +5389,6 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
     setSavedFilters(next);
     saveFilters(next);
     message.success("筛选已保存");
-  };
-
-  const exportCurrentFilter = async () => {
-    const first = await getAssets({ ...queryParams, page: 1, pageSize: 100 });
-    const allAssets = [...first.data];
-    for (let nextPage = 2; nextPage <= (first.pagination.totalPages || 1); nextPage += 1) {
-      const next = await getAssets({ ...queryParams, page: nextPage, pageSize: 100 });
-      allAssets.push(...next.data);
-    }
-    downloadTextFile(`assets-${Date.now()}.csv`, assetsToCsv(allAssets));
-    message.success(`已导出 ${allAssets.length} 条资产`);
   };
 
   const columns: ColumnsType<Asset> = [
@@ -5063,7 +5607,7 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
           <Dropdown
             menu={{
               items: [
-                { key: "export", label: "导出筛选" },
+                { key: "export", label: "导出表格" },
                 { key: "save-filter", label: "保存筛选" },
                 { key: "batch", label: batchMode ? "退出批量模式" : "批量模式" },
                 ...(viewMode === "card"
@@ -5076,7 +5620,7 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
               ],
               onClick: ({ key }) => {
                 if (key === "export") {
-                  exportCurrentFilter();
+                  setExportModalOpen(true);
                 } else if (key === "save-filter") {
                   saveCurrentFilter();
                 } else if (key === "batch") {
@@ -5111,6 +5655,9 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
             <Button disabled={selectedCount === 0} onClick={() => setBulkModalOpen(true)}>
               批量修改
             </Button>
+            <Button disabled={selectedCount === 0} onClick={() => setExportModalOpen(true)}>
+              导出已选
+            </Button>
             <Button onClick={() => setBatchMode(false)}>退出批量</Button>
           </Space>
         </div>
@@ -5140,8 +5687,8 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                 description={
                   assetScope === "other"
-                    ? "暂无自定义资产，可新增自定义资产或在设置中导入旧数据"
-                    : "暂无电脑资产，可在设置中导入旧数据或等待客户端采集"
+                    ? "暂无自定义资产，可新增自定义资产或在数据工具中导入标准表格"
+                    : "暂无电脑资产，可在数据工具中导入标准表格或等待客户端采集"
                 }
               />
             </div>
@@ -5219,16 +5766,37 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
           await batchUpdateMutation.mutateAsync({ targets: selectedAssets, input });
         }}
       />
+      <AssetExportModal
+        open={exportModalOpen}
+        currentScopeLabel={activeScopeLabel}
+        currentQueryParams={queryParams}
+        currentTotal={pagination?.totalItems}
+        selectedAssets={selectedAssets}
+        onClose={() => setExportModalOpen(false)}
+      />
     </div>
   );
 };
 
+const WORKSPACE_TAB_KEYS = ["computer", "custom", "events", "analysis", "tools", "settings"] as const;
+
 const InventoryAdmin = () => {
+  const [activeTab, setActiveTab] = useState<(typeof WORKSPACE_TAB_KEYS)[number]>(() =>
+    loadStoredTab(WORKSPACE_TAB_STORAGE_KEY, WORKSPACE_TAB_KEYS, "computer")
+  );
+
   return (
     <div className="npcink-v3-app">
       <Tabs
-        defaultActiveKey="computer"
+        activeKey={activeTab}
         className="npcink-v3-workspace-tabs"
+        onChange={(key) => {
+          const nextKey = WORKSPACE_TAB_KEYS.includes(key as (typeof WORKSPACE_TAB_KEYS)[number])
+            ? (key as (typeof WORKSPACE_TAB_KEYS)[number])
+            : "computer";
+          setActiveTab(nextKey);
+          saveStoredTab(WORKSPACE_TAB_STORAGE_KEY, nextKey);
+        }}
         items={[
           {
             key: "computer",
@@ -5249,6 +5817,11 @@ const InventoryAdmin = () => {
             key: "analysis",
             label: "分析",
             children: <AnalysisWorkspace />,
+          },
+          {
+            key: "tools",
+            label: "数据工具",
+            children: <DataToolsWorkspace />,
           },
           {
             key: "settings",

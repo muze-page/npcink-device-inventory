@@ -107,23 +107,23 @@ export const hardwareSummary = (summary: JsonRecord, hardware: JsonRecord) => {
 export const assetHardwareContext = (asset?: Asset | null) => {
   const latestSummary = getRecord(asset?.latestObservation?.summary);
   const latestHardware = getRecord(asset?.latestObservation?.hardware);
-  const importedHardware = getRecord(getRecord(asset?.metadata).importedHardware);
-  const importedRaw = getRecord(importedHardware.raw);
+  const manualHardware = getRecord(getRecord(asset?.metadata).manualHardware);
+  const manualRaw = getRecord(manualHardware.raw);
   const hasLatestHardware = Object.keys(latestSummary).length > 0 || Object.keys(latestHardware).length > 0;
   const summary = hasLatestHardware
     ? latestSummary
     : {
-        cpu: importedHardware.cpu,
-        graphics: importedHardware.graphics,
-        device_model: firstText(importedHardware.deviceModel, getRecord(importedRaw.system).model),
-        primary_ip: importedHardware.ip,
-        platform: getRecord(importedRaw.os).platform,
+        cpu: manualHardware.cpu,
+        graphics: manualHardware.graphics,
+        device_model: firstText(manualHardware.deviceModel, getRecord(manualRaw.system).model),
+        primary_ip: manualHardware.ip,
+        platform: getRecord(manualRaw.os).platform,
       };
-  const hardware = hasLatestHardware ? latestHardware : importedRaw;
+  const hardware = hasLatestHardware ? latestHardware : manualRaw;
   return {
     summary,
     hardware,
-    importedHardware,
+    manualHardware,
     extracted: hardwareSummary(getRecord(summary), getRecord(hardware)),
     hasLatestHardware,
   };
@@ -341,7 +341,7 @@ export const detectHardwareIssues = (assets: Asset[]) => {
         message: `${assetLabel} 缺少显卡型号`,
       });
     }
-    if (!ignored.has("memory_bytes") && hardwareMemoryBytes(asset) <= 0 && missingHardwareValue(String(context.importedHardware.memory || ""))) {
+    if (!ignored.has("memory_bytes") && hardwareMemoryBytes(asset) <= 0 && missingHardwareValue(String(context.manualHardware.memory || ""))) {
       issues.push({
         key: `${asset.uuid}-missing-memory`,
         level: "warning",
@@ -350,7 +350,7 @@ export const detectHardwareIssues = (assets: Asset[]) => {
         message: `${assetLabel} 缺少内存信息`,
       });
     }
-    if (!ignored.has("disk_bytes") && hardwareDiskBytes(asset) <= 0 && missingHardwareValue(String(context.importedHardware.disk || ""))) {
+    if (!ignored.has("disk_bytes") && hardwareDiskBytes(asset) <= 0 && missingHardwareValue(String(context.manualHardware.disk || ""))) {
       issues.push({
         key: `${asset.uuid}-missing-disk`,
         level: "warning",
@@ -359,13 +359,13 @@ export const detectHardwareIssues = (assets: Asset[]) => {
         message: `${assetLabel} 缺少硬盘信息`,
       });
     }
-    if (!latestObservationTime(asset) && Object.keys(context.importedHardware).length > 0) {
+    if (!latestObservationTime(asset) && Object.keys(context.manualHardware).length > 0) {
       issues.push({
-        key: `${asset.uuid}-imported-only`,
+        key: `${asset.uuid}-manual-hardware-only`,
         level: "info",
         type: "未接入采集",
         asset,
-        message: `${assetLabel} 目前只有导入硬件信息`,
+        message: `${assetLabel} 目前只有手动硬件信息`,
       });
     } else if (daysSince(latestObservationTime(asset)) > 30) {
       issues.push({
