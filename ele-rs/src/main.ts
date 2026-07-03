@@ -180,12 +180,21 @@ app.innerHTML = `
           <button class="tab" data-tab="diagnostics" type="button">排障</button>
           <button class="tab" data-tab="details" type="button">技术详情</button>
         </nav>
-        <button class="help-button" id="helpButton" type="button">帮助</button>
+        <div class="head-actions">
+          <span class="head-drag-fill" data-tauri-drag-region aria-hidden="true"></span>
+          <button class="help-button" id="helpButton" type="button">帮助</button>
+        </div>
       </header>
 
       <section class="tab-page active" id="settingsPage">
         <div class="settings-layout">
           <form class="upload-form" id="configForm">
+            <section class="software-note" aria-label="软件说明">
+              <strong>这是设备资产信息上传工具</strong>
+              <p>仅采集电脑硬件、系统版本、基础运行状态和排障所需日志，用于资产登记、上传和故障排查。</p>
+              <p>不会读取聊天内容、屏幕画面、浏览器内容、个人文件内容，也不会录音录像。</p>
+            </section>
+
             <label class="field">
               <span>上传备注</span>
               <input id="name" name="name" placeholder="可选，例如：张三、财务电脑、前台备用机" />

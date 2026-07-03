@@ -88,6 +88,21 @@ button {
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.11);
 }
 
+.head-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.head-drag-fill {
+  min-width: 28px;
+  height: 32px;
+  flex: 1 1 auto;
+  cursor: move;
+}
+
 .help-button {
   justify-self: end;
   height: 32px;
@@ -143,6 +158,27 @@ button {
 
 .upload-form {
   max-width: none;
+}
+
+.software-note {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 14px;
+  border-left: 3px solid rgba(255, 255, 255, 0.45);
+  padding: 2px 0 2px 12px;
+}
+
+.software-note strong {
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.software-note p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 .field {

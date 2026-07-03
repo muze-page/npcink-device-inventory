@@ -119,7 +119,19 @@ fn save_config(config: AgentConfig) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn collect_device_snapshot() -> Result<DeviceSnapshot, String> {
+async fn collect_device_snapshot() -> Result<DeviceSnapshot, String> {
+    let result = tauri::async_runtime::spawn_blocking(collect_device_snapshot_inner).await;
+    match result {
+        Ok(snapshot) => snapshot,
+        Err(error) => {
+            let message = error.to_string();
+            write_app_log("error", "device.collect_static_task_failed", &message);
+            Err(message)
+        }
+    }
+}
+
+fn collect_device_snapshot_inner() -> Result<DeviceSnapshot, String> {
     match collector::collect_static_data() {
         Ok(data) => {
             let stable_device_id_v2 = collector::stable_device_id_v2(&data).unwrap_or_default();
@@ -138,7 +150,19 @@ fn collect_device_snapshot() -> Result<DeviceSnapshot, String> {
 }
 
 #[tauri::command]
-fn collect_runtime_status() -> Result<Value, String> {
+async fn collect_runtime_status() -> Result<Value, String> {
+    let result = tauri::async_runtime::spawn_blocking(collect_runtime_status_inner).await;
+    match result {
+        Ok(status) => status,
+        Err(error) => {
+            let message = error.to_string();
+            write_app_log("error", "runtime.collect_task_failed", &message);
+            Err(message)
+        }
+    }
+}
+
+fn collect_runtime_status_inner() -> Result<Value, String> {
     match collector::collect_runtime_status() {
         Ok(status) => Ok(status),
         Err(error) => {
@@ -158,7 +182,20 @@ fn get_runtime_history(range_minutes: Option<u64>) -> Value {
 }
 
 #[tauri::command]
-fn submit_device_data(mut config: AgentConfig) -> Result<Value, String> {
+async fn submit_device_data(config: AgentConfig) -> Result<Value, String> {
+    let result =
+        tauri::async_runtime::spawn_blocking(move || submit_device_data_inner(config)).await;
+    match result {
+        Ok(response) => response,
+        Err(error) => {
+            let message = error.to_string();
+            write_app_log("error", "upload.task_failed", &message);
+            Err(message)
+        }
+    }
+}
+
+fn submit_device_data_inner(mut config: AgentConfig) -> Result<Value, String> {
     apply_build_preset(&mut config);
     if let Err(error) = validate_config(&config) {
         write_app_log("warn", "upload.validation_failed", &error);
