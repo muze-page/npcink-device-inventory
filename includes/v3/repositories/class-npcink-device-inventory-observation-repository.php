@@ -6,6 +6,9 @@ if (!defined('ABSPATH')) {
 
 class Npcink_Device_Inventory_Observation_Repository
 {
+	const CACHE_GROUP = 'npcink_device_inventory_observations';
+	const CACHE_TTL = 60;
+
 	public function create($asset_id, $observation)
 	{
 		global $wpdb;
@@ -19,21 +22,32 @@ class Npcink_Device_Inventory_Observation_Repository
 			'raw_json' => Npcink_Device_Inventory_V3_Sanitizer::json_encode($observation['raw']),
 		);
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned observation table write invalidates repository object-cache version after success.
 		$result = $wpdb->insert(
 			Npcink_Device_Inventory_V3_Tables::observations(),
 			$row,
 			array('%d', '%s', '%d', '%s', '%s', '%s', '%s')
 		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		if ($result === false) {
 			return null;
 		}
+		$this->bump_list_cache_version();
 		return $this->find_by_id($wpdb->insert_id);
 	}
 
 	public function find_by_id($id)
 	{
 		global $wpdb;
-		return $wpdb->get_row(
+		$id = intval($id);
+		$cache_key = 'observation:' . $id;
+		$cached = wp_cache_get($cache_key, self::CACHE_GROUP);
+		if ($cached !== false) {
+			return $cached;
+		}
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned observation table query is wrapped in the object cache.
+		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				'SELECT * FROM %i WHERE id = %d',
 				Npcink_Device_Inventory_V3_Tables::observations(),
@@ -41,15 +55,35 @@ class Npcink_Device_Inventory_Observation_Repository
 			),
 			ARRAY_A
 		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+
+		wp_cache_set($cache_key, $row, self::CACHE_GROUP, self::CACHE_TTL);
+		return $row;
 	}
 
 	public function list_for_asset($asset_id, $page, $page_size)
 	{
 		global $wpdb;
+		$asset_id = intval($asset_id);
 		$page = max(1, intval($page));
 		$page_size = max(1, min(100, intval($page_size)));
 		$offset = ($page - 1) * $page_size;
+		$cache_key = $this->build_cache_key(
+			'asset-list',
+			array(
+				'asset_id' => $asset_id,
+				'page' => $page,
+				'page_size' => $page_size,
+				'version' => $this->get_list_cache_version(),
+			)
+		);
+		$cached = wp_cache_get($cache_key, self::CACHE_GROUP);
+		if ($cached !== false) {
+			return $cached;
+		}
+
 		$table = Npcink_Device_Inventory_V3_Tables::observations();
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned observation table queries are wrapped in the object cache.
 		$total = $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i WHERE asset_id = %d', $table, $asset_id));
 		$items = $wpdb->get_results(
 			$wpdb->prepare(
@@ -61,7 +95,11 @@ class Npcink_Device_Inventory_Observation_Repository
 			),
 			ARRAY_A
 		);
-		return array('items' => $items ?: array(), 'total' => intval($total), 'page' => $page, 'pageSize' => $page_size);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+
+		$result = array('items' => $items ?: array(), 'total' => intval($total), 'page' => $page, 'pageSize' => $page_size);
+		wp_cache_set($cache_key, $result, self::CACHE_GROUP, self::CACHE_TTL);
+		return $result;
 	}
 
 	public function list_all($args)
@@ -72,41 +110,169 @@ class Npcink_Device_Inventory_Observation_Repository
 		$offset = ($page - 1) * $page_size;
 		$observations_table = Npcink_Device_Inventory_V3_Tables::observations();
 		$assets_table = Npcink_Device_Inventory_V3_Tables::assets();
-		$where = array();
-		$params = array();
-
-		if (!empty($args['source'])) {
-			$where[] = 'o.source = %s';
-			$params[] = sanitize_key($args['source']);
-		}
-
-		if (!empty($args['search'])) {
-			$like = '%' . $wpdb->esc_like(sanitize_text_field($args['search'])) . '%';
-			$where[] = '(a.asset_number LIKE %s OR a.name LIKE %s OR a.department LIKE %s OR o.summary_json LIKE %s)';
-			array_push($params, $like, $like, $like, $like);
-		}
-
-		$where_sql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
-		$total = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM %i o LEFT JOIN %i a ON a.id = o.asset_id $where_sql",
-				array_merge(array($observations_table, $assets_table), $params)
+		$source = isset($args['source']) ? sanitize_key($args['source']) : '';
+		$search = isset($args['search']) ? sanitize_text_field($args['search']) : '';
+		$cache_key = $this->build_cache_key(
+			'all-list',
+			array(
+				'source' => $source,
+				'search' => $search,
+				'page' => $page,
+				'page_size' => $page_size,
+				'version' => $this->get_list_cache_version(),
 			)
 		);
-		$query_params = array_merge(array($observations_table, $assets_table), $params, array($page_size, $offset));
-		$items = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT o.*, a.uuid AS asset_uuid, a.asset_number, a.name AS asset_name, a.asset_type, a.status, a.department, a.owner_name
-			FROM %i o
-			LEFT JOIN %i a ON a.id = o.asset_id
-			$where_sql
-			ORDER BY o.observed_at DESC, o.id DESC
-			LIMIT %d OFFSET %d",
-				$query_params
-			),
-			ARRAY_A
-		);
+		$cached = wp_cache_get($cache_key, self::CACHE_GROUP);
+		if ($cached !== false) {
+			return $cached;
+		}
 
-		return array('items' => $items ?: array(), 'total' => intval($total), 'page' => $page, 'pageSize' => $page_size);
+		$like = '%' . $wpdb->esc_like($search) . '%';
+		if ($source !== '' && $search !== '') {
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned observation table queries are wrapped in the object cache.
+			$total = $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT COUNT(*) FROM %i o LEFT JOIN %i a ON a.id = o.asset_id WHERE o.source = %s AND (a.asset_number LIKE %s OR a.name LIKE %s OR a.department LIKE %s OR o.summary_json LIKE %s)',
+					$observations_table,
+					$assets_table,
+					$source,
+					$like,
+					$like,
+					$like,
+					$like
+				)
+			);
+			$items = $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT o.*, a.uuid AS asset_uuid, a.asset_number, a.name AS asset_name, a.asset_type, a.status, a.department, a.owner_name
+					FROM %i o
+					LEFT JOIN %i a ON a.id = o.asset_id
+					WHERE o.source = %s AND (a.asset_number LIKE %s OR a.name LIKE %s OR a.department LIKE %s OR o.summary_json LIKE %s)
+					ORDER BY o.observed_at DESC, o.id DESC
+					LIMIT %d OFFSET %d',
+					$observations_table,
+					$assets_table,
+					$source,
+					$like,
+					$like,
+					$like,
+					$like,
+					$page_size,
+					$offset
+				),
+				ARRAY_A
+			);
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		} elseif ($source !== '') {
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned observation table queries are wrapped in the object cache.
+			$total = $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT COUNT(*) FROM %i o LEFT JOIN %i a ON a.id = o.asset_id WHERE o.source = %s',
+					$observations_table,
+					$assets_table,
+					$source
+				)
+			);
+			$items = $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT o.*, a.uuid AS asset_uuid, a.asset_number, a.name AS asset_name, a.asset_type, a.status, a.department, a.owner_name
+					FROM %i o
+					LEFT JOIN %i a ON a.id = o.asset_id
+					WHERE o.source = %s
+					ORDER BY o.observed_at DESC, o.id DESC
+					LIMIT %d OFFSET %d',
+					$observations_table,
+					$assets_table,
+					$source,
+					$page_size,
+					$offset
+				),
+				ARRAY_A
+			);
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		} elseif ($search !== '') {
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned observation table queries are wrapped in the object cache.
+			$total = $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT COUNT(*) FROM %i o LEFT JOIN %i a ON a.id = o.asset_id WHERE a.asset_number LIKE %s OR a.name LIKE %s OR a.department LIKE %s OR o.summary_json LIKE %s',
+					$observations_table,
+					$assets_table,
+					$like,
+					$like,
+					$like,
+					$like
+				)
+			);
+			$items = $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT o.*, a.uuid AS asset_uuid, a.asset_number, a.name AS asset_name, a.asset_type, a.status, a.department, a.owner_name
+					FROM %i o
+					LEFT JOIN %i a ON a.id = o.asset_id
+					WHERE a.asset_number LIKE %s OR a.name LIKE %s OR a.department LIKE %s OR o.summary_json LIKE %s
+					ORDER BY o.observed_at DESC, o.id DESC
+					LIMIT %d OFFSET %d',
+					$observations_table,
+					$assets_table,
+					$like,
+					$like,
+					$like,
+					$like,
+					$page_size,
+					$offset
+				),
+				ARRAY_A
+			);
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		} else {
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned observation table queries are wrapped in the object cache.
+			$total = $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT COUNT(*) FROM %i o LEFT JOIN %i a ON a.id = o.asset_id',
+					$observations_table,
+					$assets_table
+				)
+			);
+			$items = $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT o.*, a.uuid AS asset_uuid, a.asset_number, a.name AS asset_name, a.asset_type, a.status, a.department, a.owner_name
+					FROM %i o
+					LEFT JOIN %i a ON a.id = o.asset_id
+					ORDER BY o.observed_at DESC, o.id DESC
+					LIMIT %d OFFSET %d',
+					$observations_table,
+					$assets_table,
+					$page_size,
+					$offset
+				),
+				ARRAY_A
+			);
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		}
+
+		$result = array('items' => $items ?: array(), 'total' => intval($total), 'page' => $page, 'pageSize' => $page_size);
+		wp_cache_set($cache_key, $result, self::CACHE_GROUP, self::CACHE_TTL);
+		return $result;
+	}
+
+	private function build_cache_key($prefix, $parts)
+	{
+		$encoded = wp_json_encode($parts);
+		return $prefix . ':' . md5(is_string($encoded) ? $encoded : serialize($parts));
+	}
+
+	private function get_list_cache_version()
+	{
+		$version = wp_cache_get('list_version', self::CACHE_GROUP);
+		if ($version === false) {
+			$version = 1;
+			wp_cache_set('list_version', $version, self::CACHE_GROUP);
+		}
+		return intval($version);
+	}
+
+	private function bump_list_cache_version()
+	{
+		$version = $this->get_list_cache_version();
+		wp_cache_set('list_version', $version + 1, self::CACHE_GROUP);
 	}
 }
