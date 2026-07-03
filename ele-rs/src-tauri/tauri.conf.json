@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Npcink 设备信息上传",
+  "productName": "Npcink Device Agent",
   "version": "0.1.0",
   "identifier": "ink.npc.npcink-device-agent",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Npcink 设备信息上传",
+        "title": "Npcink Device Agent",
         "label": "main",
         "width": 1120,
         "height": 720,
@@ -28,8 +28,8 @@
     "active": true,
     "targets": ["nsis", "dmg", "app"],
     "category": "Utility",
-    "shortDescription": "设备信息采集与上传工具",
-    "longDescription": "采集本机硬件与运行信息，并提交到 Npcink Device Inventory。",
+    "shortDescription": "Device collection and upload tool",
+    "longDescription": "Collects local hardware and runtime information and submits it to Npcink Device Inventory.",
     "windows": {
       "nsis": {
         "languages": ["SimpChinese"],

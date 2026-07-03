@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { cp, mkdir, readFile, rm } from "node:fs/promises";
+import { cp, mkdir, readFile, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -43,6 +43,7 @@ for (const dir of runtimeDirs) {
 }
 
 await assertVersionMatchesReadme();
+await removeReleaseJunk(stagingPlugin);
 
 await rm(output, { force: true });
 execFileSync("zip", ["-qr", output, slug], { cwd: stagingRoot });
@@ -65,5 +66,22 @@ async function assertVersionMatchesReadme() {
       `Plugin Version and README.txt Stable tag must match. Version=${pluginVersion || "missing"}, Stable tag=${stableTag || "missing"}`
     );
     process.exit(1);
+  }
+}
+
+async function removeReleaseJunk(dir) {
+  const entries = await readdir(dir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const entryPath = path.join(dir, entry.name);
+
+    if (entry.name === ".DS_Store" || entry.name === "__MACOSX") {
+      await rm(entryPath, { recursive: true, force: true });
+      continue;
+    }
+
+    if (entry.isDirectory()) {
+      await removeReleaseJunk(entryPath);
+    }
   }
 }

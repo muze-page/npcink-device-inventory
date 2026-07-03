@@ -14,7 +14,7 @@ use tauri::Emitter;
 use tauri_plugin_opener::OpenerExt;
 use zip::write::SimpleFileOptions;
 
-const APP_NAME: &str = "Npcink 设备信息上传";
+const APP_NAME: &str = "Npcink Device Agent";
 const APP_DIR_NAME: &str = "npcink-device-agent";
 const APP_LOG_FILE: &str = "app.log";
 const APP_LOG_MAX_BYTES: u64 = 1024 * 1024;
@@ -370,7 +370,7 @@ fn about_metadata() -> AboutMetadata<'static> {
         version: Some(env!("CARGO_PKG_VERSION").to_string()),
         short_version: None,
         authors: Some(vec!["Npcink".to_string()]),
-        comments: Some("设备信息采集与上传工具".to_string()),
+        comments: Some("Device collection and upload tool".to_string()),
         copyright: None,
         license: None,
         website: Some(PROJECT_URL.to_string()),
@@ -488,7 +488,7 @@ fn create_diagnostics_package(app: tauri::AppHandle) -> Result<DiagnosticsPackag
     write_text(
         &directory_path.join("README.txt"),
         &format!(
-            "Npcink 设备信息上传排障包\n生成时间: {}\n平台: {}\n运行身份: {}\n\n此排障包由本机生成，用于管理员排查问题。分享前请先确认文件内容。\n",
+            "Npcink Device Agent diagnostics package\n生成时间: {}\n平台: {}\n运行身份: {}\n\n此排障包由本机生成，用于管理员排查问题。分享前请先确认文件内容。\n",
             Local::now().to_rfc3339(),
             std::env::consts::OS,
             privilege_label(&privilege_info),

@@ -28,6 +28,8 @@ const requiredEntries = [
 
 const forbiddenPatterns = [
   /(^|\/)\.git(\/|$)/,
+  /(^|\/)\.DS_Store$/,
+  /(^|\/)__MACOSX(\/|$)/,
   /(^|\/)node_modules(\/|$)/,
   /(^|\/)vendor(\/|$)/,
   /(^|\/)release(\/|$)/,
