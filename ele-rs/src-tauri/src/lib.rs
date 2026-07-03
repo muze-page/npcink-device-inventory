@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use chrono::Local;
+use chrono::{DateTime, Local, Utc};
 use npcink_device_agent::{collector, upload};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -503,13 +503,15 @@ fn create_diagnostics_package(app: tauri::AppHandle) -> Result<DiagnosticsPackag
             })
         }));
     progress.step("采集运行状态", "记录 CPU、内存、磁盘和本次会话监控");
-    let runtime_status = collector::collect_runtime_status().unwrap_or_else(|error| {
-        json!({
-            "error": error.to_string(),
-        })
-    });
-    let runtime_history = collector::runtime_history(None);
+    let runtime_status =
+        redact_sensitive_json(collector::collect_runtime_status().unwrap_or_else(|error| {
+            json!({
+                "error": error.to_string(),
+            })
+        }));
+    let runtime_history = redact_sensitive_json(collector::runtime_history(None));
     let runtime_history_summary = collector::runtime_history_summary(None);
+    let runtime_history_coverage = runtime_history_coverage(&runtime_history_summary);
     progress.step("写入基础快照", "保存配置、硬件、运行状态和监控历史");
     write_json(
         &directory_path.join("device-static-data.json"),
@@ -524,6 +526,10 @@ fn create_diagnostics_package(app: tauri::AppHandle) -> Result<DiagnosticsPackag
         &directory_path.join("runtime-history-summary.json"),
         &runtime_history_summary,
     )?;
+    write_json(
+        &directory_path.join("runtime-history-coverage.json"),
+        &runtime_history_coverage,
+    )?;
     write_config_snapshot(&directory_path)?;
     collect_platform_diagnostics(&directory_path, &mut progress)?;
     progress.step("收集应用日志", "保存软件本地日志尾部");
@@ -534,6 +540,7 @@ fn create_diagnostics_package(app: tauri::AppHandle) -> Result<DiagnosticsPackag
         &static_data,
         &runtime_status,
         &runtime_history_summary,
+        &runtime_history_coverage,
         &privilege_info,
     )?;
 
@@ -545,6 +552,46 @@ fn create_diagnostics_package(app: tauri::AppHandle) -> Result<DiagnosticsPackag
     Ok(DiagnosticsPackage {
         directory_path: directory_path.to_string_lossy().to_string(),
         zip_path: zip_path.to_string_lossy().to_string(),
+    })
+}
+
+fn runtime_history_coverage(runtime_history_summary: &Value) -> Value {
+    let sample_count = value_u64(runtime_history_summary, "/sample_count").unwrap_or(0);
+    let started_at = value_text(runtime_history_summary, "/started_at");
+    let ended_at = value_text(runtime_history_summary, "/ended_at");
+    let duration_seconds = match (
+        DateTime::parse_from_rfc3339(&started_at),
+        DateTime::parse_from_rfc3339(&ended_at),
+    ) {
+        (Ok(start), Ok(end)) => Some(
+            end.with_timezone(&Utc)
+                .signed_duration_since(start.with_timezone(&Utc))
+                .num_seconds()
+                .max(0),
+        ),
+        _ => None,
+    };
+    let recommended_seconds = 300;
+    let quality = if sample_count == 0 {
+        "missing"
+    } else if duration_seconds.unwrap_or(0) < recommended_seconds {
+        "short"
+    } else {
+        "usable"
+    };
+
+    json!({
+        "quality": quality,
+        "sample_count": sample_count,
+        "started_at": empty_label(&started_at),
+        "ended_at": empty_label(&ended_at),
+        "duration_seconds": duration_seconds,
+        "recommended_minimum_seconds": recommended_seconds,
+        "note": match quality {
+            "missing" => "未记录到运行历史；只能分析生成排障包时的单次快照。",
+            "short" => "运行历史覆盖时间偏短，适合初筛当前负载；偶发卡顿建议让软件运行 5-15 分钟后重新生成排障包。",
+            _ => "运行历史覆盖时间可用于初步分析性能波动。",
+        },
     })
 }
 
@@ -642,7 +689,7 @@ fn command_stdout(program: &str, args: &[&str], timeout: Duration) -> Option<Str
 
 #[cfg(target_os = "windows")]
 fn platform_diagnostics_step_count() -> usize {
-    8
+    9
 }
 
 #[cfg(target_os = "macos")]
@@ -660,7 +707,7 @@ fn write_config_snapshot(out: &Path) -> Result<()> {
     write_json(
         &out.join("agent-config-redacted.json"),
         &json!({
-            "site": config.site,
+            "site": redact_url_for_log(&config.site),
             "name": config.name,
             "preset_locked": config.preset_locked,
             "preset_label": config.preset_label,
@@ -684,6 +731,7 @@ fn write_diagnostics_summary(
     static_data: &Value,
     runtime_status: &Value,
     runtime_history_summary: &Value,
+    runtime_history_coverage: &Value,
     privilege_info: &Value,
 ) -> Result<()> {
     let config = read_config().unwrap_or_default();
@@ -692,6 +740,10 @@ fn write_diagnostics_summary(
         &out.join("recent-diagnostic-reports.txt"),
         &[".crash", ".panic", ".ips"],
     );
+    let cbs_repair_line_count = count_log_payload_lines(&out.join("cbs-recent-errors.txt"));
+    let minidump_count = count_payload_matching_lines(&out.join("minidump-copy.txt"), &[".dmp"]);
+    let wer_report_count =
+        count_payload_matching_lines(&out.join("wer-report-summary.txt"), &["name "]);
     let app_log_included = out.join(APP_LOG_FILE).exists();
     let mut package_files = package_file_list(out)?;
     package_files.push("diagnostics-summary.json".to_string());
@@ -745,10 +797,14 @@ fn write_diagnostics_summary(
                 "primary_temperature": primary_temperature_summary(runtime_status),
                 "advanced": runtime_status.get("advanced").cloned().unwrap_or(Value::Null),
                 "history_summary": runtime_history_summary,
+                "history_coverage": runtime_history_coverage,
             },
             "signals": {
                 "recent_error_lines": recent_error_lines,
                 "diagnostic_report_count": diagnostic_report_count,
+                "cbs_repair_line_count": cbs_repair_line_count,
+                "minidump_count": minidump_count,
+                "wer_report_count": wer_report_count,
                 "app_log_included": app_log_included,
             },
             "package_files": package_files,
@@ -912,6 +968,28 @@ fn collect_platform_diagnostics(
         ),
     ];
     run_command_group(out, &system_commands)?;
+    diagnostics_group_pause();
+
+    progress.step("收集系统修复线索", "读取 CBS、DISM 和 WER 报告摘要");
+    let repair_commands = [
+        (
+            "cbs-log-tail.txt",
+            "$path='C:\\Windows\\Logs\\CBS\\CBS.log'; if (Test-Path $path) { Get-Content -LiteralPath $path -Tail 400 -ErrorAction SilentlyContinue } else { 'CBS.log not found.' }",
+        ),
+        (
+            "cbs-recent-errors.txt",
+            "$path='C:\\Windows\\Logs\\CBS\\CBS.log'; if (Test-Path $path) { Get-Content -LiteralPath $path -Tail 5000 -ErrorAction SilentlyContinue | Select-String -Pattern '\\[SR\\]','error','failed','corrupt','repair' -CaseSensitive:$false | Select-Object -Last 200 } else { 'CBS.log not found.' }",
+        ),
+        (
+            "dism-log-tail.txt",
+            "$path='C:\\Windows\\Logs\\DISM\\dism.log'; if (Test-Path $path) { Get-Content -LiteralPath $path -Tail 400 -ErrorAction SilentlyContinue } else { 'DISM log not found.' }",
+        ),
+        (
+            "wer-report-summary.txt",
+            "$roots=@('C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportArchive','C:\\ProgramData\\Microsoft\\Windows\\WER\\ReportQueue'); foreach ($root in $roots) { \"===== $root =====\"; if (Test-Path $root) { Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 40 Name,FullName,CreationTime,LastWriteTime | Format-List } else { 'not found' } }",
+        ),
+    ];
+    run_command_group(out, &repair_commands)?;
     diagnostics_group_pause();
 
     progress.step("收集 dump 信息", "复制 Minidump 并尝试自动分析");
@@ -1302,12 +1380,20 @@ fn count_log_payload_lines(path: &Path) -> usize {
     };
     content
         .lines()
+        .filter(|line| is_command_payload_line(line))
+        .count()
+}
+
+fn count_payload_matching_lines(path: &Path, patterns: &[&str]) -> usize {
+    let Ok(content) = fs::read_to_string(path) else {
+        return 0;
+    };
+    content
+        .lines()
+        .filter(|line| is_command_payload_line(line))
         .filter(|line| {
-            let line = line.trim();
-            !line.is_empty()
-                && !line.starts_with("command:")
-                && !line.starts_with("status:")
-                && !line.starts_with("---")
+            let lower = line.to_lowercase();
+            patterns.iter().any(|pattern| lower.contains(pattern))
         })
         .count()
 }
@@ -1323,6 +1409,14 @@ fn count_matching_lines(path: &Path, patterns: &[&str]) -> usize {
             patterns.iter().any(|pattern| lower.contains(pattern))
         })
         .count()
+}
+
+fn is_command_payload_line(line: &str) -> bool {
+    let line = line.trim();
+    !line.is_empty()
+        && !line.starts_with("command:")
+        && !line.starts_with("status:")
+        && !line.starts_with("---")
 }
 
 fn package_file_list(out: &Path) -> Result<Vec<String>> {
@@ -1419,7 +1513,7 @@ fn write_command_output(path: &Path, program: &str, args: &[&str]) -> Result<()>
         }
         Err(error) => format!("command: {} {}\nfailed: {error}\n", program, args.join(" ")),
     };
-    write_text(path, &redact_diagnostics_text(&content))
+    write_text(path, &redact_diagnostics_text(&content.replace('\0', "")))
 }
 
 struct TimedCommandOutput {
@@ -1551,6 +1645,7 @@ fn redact_diagnostics_text(content: &str) -> String {
 fn redact_diagnostics_line(line: &str) -> String {
     let line = redact_home_path(line);
     let line = redact_windows_machine_tokens(&line);
+    let line = redact_mac_addresses(&line);
     let lower = line.to_lowercase();
     if lower.contains("com.apple.os.update-") {
         if let Some((label, _)) = line.split_once(':') {
@@ -1585,6 +1680,49 @@ fn redact_diagnostics_line(line: &str) -> String {
     }
 
     line
+}
+
+fn redact_mac_addresses(line: &str) -> String {
+    let chars = line.chars().collect::<Vec<_>>();
+    let mut output = String::with_capacity(line.len());
+    let mut index = 0;
+    while index < chars.len() {
+        if looks_like_mac_at(&chars, index) {
+            output.push_str("[mac-redacted]");
+            index += 17;
+        } else {
+            output.push(chars[index]);
+            index += 1;
+        }
+    }
+    output
+}
+
+fn looks_like_mac_at(chars: &[char], index: usize) -> bool {
+    if index + 17 > chars.len() {
+        return false;
+    }
+    let separator = chars[index + 2];
+    if separator != ':' && separator != '-' {
+        return false;
+    }
+    for pair in 0..6 {
+        let start = index + pair * 3;
+        if !chars[start].is_ascii_hexdigit() || !chars[start + 1].is_ascii_hexdigit() {
+            return false;
+        }
+        if pair < 5 && chars[start + 2] != separator {
+            return false;
+        }
+    }
+    let before_is_hex = index
+        .checked_sub(1)
+        .and_then(|previous| chars.get(previous))
+        .is_some_and(|ch| ch.is_ascii_hexdigit());
+    let after_is_hex = chars
+        .get(index + 17)
+        .is_some_and(|ch| ch.is_ascii_hexdigit());
+    !before_is_hex && !after_is_hex
 }
 
 fn redact_windows_machine_tokens(line: &str) -> String {
@@ -1727,6 +1865,17 @@ mod tests {
     }
 
     #[test]
+    fn diagnostics_text_redacts_inline_mac_addresses() {
+        let text = "MacAddress Status\nB0-7B-25-2D-75-AD Up\nremote aa:bb:cc:dd:ee:ff connected";
+        let redacted = redact_diagnostics_text(text);
+
+        assert!(redacted.contains("[mac-redacted] Up"));
+        assert!(redacted.contains("remote [mac-redacted] connected"));
+        assert!(!redacted.contains("B0-7B-25-2D-75-AD"));
+        assert!(!redacted.contains("aa:bb:cc:dd:ee:ff"));
+    }
+
+    #[test]
     fn diagnostics_json_redacts_sensitive_values() {
         let redacted = redact_sensitive_json(json!({
             "system": {
@@ -1748,6 +1897,33 @@ mod tests {
         assert_eq!(redacted["system"]["uuid"], "[redacted]");
         assert_eq!(redacted["system"]["model"], "MacBook Air");
         assert_eq!(redacted["net"][0]["mac"], "[redacted]");
+    }
+
+    #[test]
+    fn runtime_history_coverage_marks_short_sessions() {
+        let coverage = runtime_history_coverage(&json!({
+            "sample_count": 8,
+            "started_at": "2026-07-03T01:54:09Z",
+            "ended_at": "2026-07-03T01:54:43Z",
+        }));
+
+        assert_eq!(coverage["quality"], "short");
+        assert_eq!(coverage["duration_seconds"], 34);
+        assert_eq!(coverage["recommended_minimum_seconds"], 300);
+    }
+
+    #[test]
+    fn diagnostics_runtime_status_json_redacts_network_identity() {
+        let redacted = redact_sensitive_json(json!({
+            "network": {
+                "iface": "以太网",
+                "ip4": "192.168.10.221",
+                "mac": "b0:7b:25:2d:75:ad"
+            }
+        }));
+
+        assert_eq!(redacted["network"]["mac"], "[redacted]");
+        assert_eq!(redacted["network"]["iface"], "以太网");
     }
 
     #[test]
@@ -1837,6 +2013,11 @@ mod tests {
             "sample_count": 1,
             "cpu": { "average_percent": 12.5, "max_percent": 12.5 },
         });
+        let runtime_history_coverage = json!({
+            "quality": "short",
+            "sample_count": 1,
+            "duration_seconds": 0,
+        });
         let privilege_info = json!({
             "is_admin": false,
             "label": "普通权限",
@@ -1848,6 +2029,7 @@ mod tests {
             &static_data,
             &runtime_status,
             &runtime_history_summary,
+            &runtime_history_coverage,
             &privilege_info,
         )
         .unwrap();
@@ -1858,6 +2040,7 @@ mod tests {
 
         assert_eq!(summary["schema"], "npcink-diagnostics-summary-v1");
         assert_eq!(summary["privilege"]["is_admin"], false);
+        assert_eq!(summary["runtime"]["history_coverage"]["quality"], "short");
         assert_eq!(summary["signals"]["recent_error_lines"], 1);
         assert_eq!(summary["signals"]["diagnostic_report_count"], 2);
         assert!(summary["package_files"]

@@ -187,66 +187,60 @@ app.innerHTML = `
       </header>
 
       <section class="tab-page active" id="settingsPage">
-        <div class="settings-layout">
-          <form class="upload-form" id="configForm">
-            <section class="software-note" aria-label="软件说明">
-              <strong>这是设备资产信息上传工具</strong>
-              <p>仅采集电脑硬件、系统版本、基础运行状态和排障所需日志，用于资产登记、上传和故障排查。</p>
-              <p>不会读取聊天内容、屏幕画面、浏览器内容、个人文件内容，也不会录音录像。</p>
-            </section>
-
-            <label class="field">
-              <span>上传备注</span>
-              <input id="name" name="name" placeholder="可选，例如：张三、财务电脑、前台备用机" />
-            </label>
-
-            <div class="config-state">
-              <span>上传配置</span>
-              <strong id="configStateText">未配置</strong>
-            </div>
-
-            <div class="preset-notice" id="presetNotice" hidden>
-              <strong>已预置上传配置</strong>
-              <span>只需填写备注即可提交设备信息。</span>
-            </div>
-
-            <div class="config-toolbar" id="configImportToolbar">
-              <div class="config-actions">
-                <button class="button config-button config-button-dark" id="importConfigButton" type="button">导入配置</button>
-                <button class="button config-button config-button-light" id="manualConfigButton" type="button" aria-expanded="false" aria-controls="manualConfigPanel">手动填写</button>
-              </div>
-              <div class="manual-config-panel" id="manualConfigPanel" hidden>
+        <div class="settings-page-layout">
+          <div class="settings-layout">
+            <div class="settings-left-panel">
+              <form class="upload-form" id="configForm">
                 <label class="field">
-                  <span>完整授权码</span>
-                  <input id="token" name="token" type="password" placeholder="后台生成的上传授权码" />
-                </label>
-                <label class="field">
-                  <span>站点地址</span>
-                  <input id="site" name="site" placeholder="https://example.com 或 https://example.com/wp-json/npcink-device-inventory/v1" />
-                </label>
-                <p class="tip">默认提交设备采集接口，并使用完整授权码 HMAC 签名。</p>
-              </div>
-            </div>
-
-            <button class="button primary submit-button" id="submitButton" type="button" hidden>提交</button>
-            <div class="submit-meta" id="submitMeta" hidden></div>
-            <div class="message" id="toast"></div>
-          </form>
-
-          <div class="side-column">
-            <aside class="device-summary" aria-label="本机信息摘要">
-              <div class="settings-summary-head">
-                <div class="summary-title">
-                  <span>本机信息</span>
-                  <span class="collect-state" id="collectState">
-                    <span class="collect-spinner" aria-hidden="true"></span>
-                    <span id="collectStateText">准备采集</span>
+                  <span class="field-head">
+                    <span class="field-label">上传备注</span>
+                    <span class="config-state-inline">
+                      <span>上传配置</span>
+                      <strong id="configStateText">未配置</strong>
+                    </span>
                   </span>
+                  <input id="name" name="name" placeholder="可选，例如：张三、财务电脑、前台备用机" />
+                </label>
+
+                <div class="preset-notice" id="presetNotice" hidden>
+                  <strong>已预置上传配置</strong>
+                  <span>只需填写备注即可提交设备信息。</span>
                 </div>
-                <button class="summary-refresh" id="collectButton" type="button">重新采集</button>
-              </div>
-              <div class="settings-summary-list" id="settingsSummaryList"></div>
-            </aside>
+
+                <div class="config-toolbar" id="configImportToolbar">
+                  <div class="config-actions">
+                    <button class="button config-button config-button-dark" id="importConfigButton" type="button">导入配置</button>
+                    <button class="button config-button config-button-light" id="manualConfigButton" type="button" aria-controls="manualConfigDialog">手动填写</button>
+                  </div>
+                </div>
+
+                <button class="button primary submit-button" id="submitButton" type="button" hidden>提交</button>
+                <div class="submit-meta" id="submitMeta" hidden></div>
+                <div class="message" id="toast"></div>
+              </form>
+
+              <section class="software-note" aria-label="软件说明">
+                <strong>这是设备资产信息上传工具</strong>
+                <p>仅采集电脑硬件、系统版本、基础运行状态和排障所需日志，用于资产登记、上传和故障排查。</p>
+                <p>不会读取聊天内容、屏幕画面、浏览器内容、个人文件内容，也不会录音录像。</p>
+              </section>
+            </div>
+
+            <div class="side-column">
+              <aside class="device-summary" aria-label="本机信息摘要">
+                <div class="settings-summary-head">
+                  <div class="summary-title">
+                    <span>本机信息</span>
+                    <span class="collect-state" id="collectState">
+                      <span class="collect-spinner" aria-hidden="true"></span>
+                      <span id="collectStateText">准备采集</span>
+                    </span>
+                  </div>
+                  <button class="summary-refresh" id="collectButton" type="button">重新采集</button>
+                </div>
+                <div class="settings-summary-list" id="settingsSummaryList"></div>
+              </aside>
+            </div>
           </div>
         </div>
       </section>
@@ -258,9 +252,14 @@ app.innerHTML = `
       <section class="tab-page" id="runtimePage">
         <section class="runtime-card runtime-page-card" aria-label="运行状态">
           <div class="settings-summary-head runtime-page-head">
-            <div>
+            <div class="runtime-title-line">
               <span>运行状态</span>
-              <p>持续监控当前设备的关键资源。Windows 当前提供 CPU、内存、磁盘和网络基础监控，高级传感器数据视系统支持情况显示。</p>
+              <button
+                class="info-dot"
+                type="button"
+                aria-label="运行状态说明：持续监控当前设备的 CPU、内存、磁盘和网络基础状态，高级传感器数据视系统支持情况显示。"
+                data-tooltip="持续监控当前设备的 CPU、内存、磁盘和网络基础状态；高级传感器数据视系统支持情况显示。"
+              >i</button>
             </div>
             <strong id="runtimeCollectedAt">等待监控</strong>
           </div>
@@ -321,6 +320,25 @@ app.innerHTML = `
         </div>
       </div>
     </dialog>
+    <dialog class="config-dialog manual-config-dialog" id="manualConfigDialog" aria-labelledby="manualConfigTitle">
+      <div class="config-dialog-box">
+        <h2 id="manualConfigTitle">手动填写上传配置</h2>
+        <label class="dialog-field">
+          <span>完整授权码</span>
+          <input id="token" name="token" type="password" placeholder="后台生成的上传授权码" />
+        </label>
+        <label class="dialog-field">
+          <span>站点地址</span>
+          <input id="site" name="site" placeholder="https://example.com 或 https://example.com/wp-json/npcink-device-inventory/v1" />
+        </label>
+        <p class="dialog-note">默认提交设备采集接口，并使用完整授权码 HMAC 签名。</p>
+        <div class="dialog-message" id="manualDialogMessage"></div>
+        <div class="dialog-actions">
+          <button class="button secondary compact" id="cancelManualConfigButton" type="button">取消</button>
+          <button class="button primary compact" id="saveManualConfigButton" type="button">保存</button>
+        </div>
+      </div>
+    </dialog>
     <dialog class="config-dialog help-dialog" id="helpDialog" aria-labelledby="helpDialogTitle">
       <div class="config-dialog-box">
         <h2 id="helpDialogTitle">帮助</h2>
@@ -350,7 +368,6 @@ const configStateText = document.querySelector<HTMLElement>("#configStateText")!
 const presetNotice = document.querySelector<HTMLElement>("#presetNotice")!;
 const configImportToolbar = document.querySelector<HTMLElement>("#configImportToolbar")!;
 const manualConfigButton = document.querySelector<HTMLButtonElement>("#manualConfigButton")!;
-const manualConfigPanel = document.querySelector<HTMLElement>("#manualConfigPanel")!;
 const configForm = document.querySelector<HTMLFormElement>("#configForm")!;
 const collectButton = document.querySelector<HTMLButtonElement>("#collectButton")!;
 const submitButton = document.querySelector<HTMLButtonElement>("#submitButton")!;
@@ -361,6 +378,10 @@ const configJsonInput = document.querySelector<HTMLTextAreaElement>("#configJson
 const importDialogMessage = document.querySelector<HTMLElement>("#importDialogMessage")!;
 const cancelImportButton = document.querySelector<HTMLButtonElement>("#cancelImportButton")!;
 const confirmImportButton = document.querySelector<HTMLButtonElement>("#confirmImportButton")!;
+const manualConfigDialog = document.querySelector<HTMLDialogElement>("#manualConfigDialog")!;
+const manualDialogMessage = document.querySelector<HTMLElement>("#manualDialogMessage")!;
+const cancelManualConfigButton = document.querySelector<HTMLButtonElement>("#cancelManualConfigButton")!;
+const saveManualConfigButton = document.querySelector<HTMLButtonElement>("#saveManualConfigButton")!;
 const helpDialog = document.querySelector<HTMLDialogElement>("#helpDialog")!;
 const closeHelpButton = document.querySelector<HTMLButtonElement>("#closeHelpButton")!;
 const helpButton = document.querySelector<HTMLButtonElement>("#helpButton")!;
@@ -389,6 +410,7 @@ const pages = Array.from(document.querySelectorAll<HTMLElement>(".tab-page"));
 let snapshot: DeviceSnapshot | null = null;
 let activeDetail = "cpu";
 let activeConfig: AgentConfig = { site: "", name: "", token: "" };
+let manualConfigDraft: { site: string; token: string; presetLabel: string } | null = null;
 let isCollecting = false;
 let isSubmitting = false;
 let isGeneratingDiagnostics = false;
@@ -915,6 +937,7 @@ const updateInteractiveState = () => {
   submitButton.disabled = isCollecting || isSubmitting;
   importConfigButton.disabled = isSubmitting;
   manualConfigButton.disabled = isSubmitting;
+  saveManualConfigButton.disabled = isSubmitting;
   generateDiagnosticsButton.disabled = isGeneratingDiagnostics;
   openDiagnosticsFolderButton.disabled = isGeneratingDiagnostics;
   copyDiagnosticsPathButton.disabled = isGeneratingDiagnostics;
@@ -1056,9 +1079,32 @@ const markManualConfigEdited = () => {
   renderConfigStatus();
 };
 
-const setManualConfigOpen = (open: boolean) => {
-  manualConfigPanel.hidden = !open;
-  manualConfigButton.setAttribute("aria-expanded", String(open));
+const openManualConfigDialog = () => {
+  manualConfigDraft = {
+    site: siteInput.value,
+    token: tokenInput.value,
+    presetLabel: activeConfig.preset_label || "",
+  };
+  manualDialogMessage.textContent = "";
+  setToast("");
+  showModalSafely(manualConfigDialog);
+  (tokenInput.value ? siteInput : tokenInput).focus();
+};
+
+const closeManualConfigDialog = (options: { restore?: boolean } = {}) => {
+  if (options.restore && manualConfigDraft) {
+    siteInput.value = manualConfigDraft.site;
+    tokenInput.value = manualConfigDraft.token;
+    activeConfig = {
+      ...activeConfig,
+      preset_label: manualConfigDraft.presetLabel,
+    };
+    renderConfigStatus();
+    renderAll();
+  }
+  manualConfigDraft = null;
+  manualDialogMessage.textContent = "";
+  closeDialogSafely(manualConfigDialog);
 };
 
 const showSubmitResult = (kind: "success" | "error", title: string, message: string) => {
@@ -1641,7 +1687,7 @@ const renderConfig = (config: AgentConfig) => {
     presetNotice.querySelector("strong")!.textContent = label;
   }
   if (hasPreset) {
-    setManualConfigOpen(false);
+    closeManualConfigDialog();
   }
   siteInput.disabled = hasPreset;
   tokenInput.disabled = hasPreset;
@@ -1655,10 +1701,12 @@ const loadConfig = async () => {
   renderConfig(config);
 };
 
-const saveConfig = async () => {
+const saveConfig = async (options: { quietMissing?: boolean } = {}) => {
   const config = getConfig();
   if (!hasUploadConfig(config)) {
-    showSubmitResult("error", "缺少上传配置", "请先导入配置，或手动填写完整授权码和站点地址。");
+    if (!options.quietMissing) {
+      showSubmitResult("error", "缺少上传配置", "请先导入配置，或手动填写完整授权码和站点地址。");
+    }
     return false;
   }
 
@@ -1667,6 +1715,21 @@ const saveConfig = async () => {
   renderConfigStatus(config);
   renderAll();
   return true;
+};
+
+const saveManualConfig = async () => {
+  try {
+    manualDialogMessage.textContent = "";
+    const saved = await saveConfig({ quietMissing: true });
+    if (!saved) {
+      manualDialogMessage.textContent = "请填写完整授权码和站点地址。";
+      return;
+    }
+    closeManualConfigDialog();
+    setToast("上传配置已保存。", "ok");
+  } catch (error) {
+    manualDialogMessage.textContent = errorMessage(error);
+  }
 };
 
 const openImportDialog = () => {
@@ -1687,7 +1750,7 @@ const importConfig = async () => {
     await invoke("save_config", { config });
     resetSubmittedState();
     renderConfig(config);
-    setManualConfigOpen(false);
+    closeManualConfigDialog();
     closeImportDialog();
     setToast("上传配置已导入。", "ok");
     logAppEvent("info", "ui.import_config_succeeded", config.token ? "token_present=true" : "token_present=false");
@@ -1855,12 +1918,18 @@ collectButton.addEventListener("click", () => {
   void collect();
 });
 importConfigButton.addEventListener("click", openImportDialog);
-manualConfigButton.addEventListener("click", () => {
-  setManualConfigOpen(manualConfigPanel.hidden);
-});
+manualConfigButton.addEventListener("click", openManualConfigDialog);
 cancelImportButton.addEventListener("click", closeImportDialog);
 confirmImportButton.addEventListener("click", importConfig);
 configImportDialog.addEventListener("close", clearImportDialog);
+cancelManualConfigButton.addEventListener("click", () => closeManualConfigDialog({ restore: true }));
+saveManualConfigButton.addEventListener("click", () => {
+  void saveManualConfig();
+});
+manualConfigDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeManualConfigDialog({ restore: true });
+});
 generateDiagnosticsButton.addEventListener("click", () => {
   void generateDiagnostics();
 });

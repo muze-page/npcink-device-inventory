@@ -148,57 +148,103 @@ button {
   display: block;
 }
 
-.settings-layout {
+.settings-page-layout {
   display: grid;
-  grid-template-columns: minmax(360px, 480px) minmax(360px, 1fr);
-  gap: 36px;
-  align-items: start;
+  max-width: 1156px;
   padding-top: 10px;
 }
 
+.settings-layout {
+  display: grid;
+  grid-template-columns: minmax(360px, 480px) minmax(360px, 640px);
+  gap: 36px;
+  align-items: start;
+}
+
+.settings-left-panel {
+  display: grid;
+  gap: 24px;
+  align-content: start;
+  min-width: 0;
+}
+
 .upload-form {
+  display: grid;
+  gap: 14px;
+  align-content: start;
   max-width: none;
 }
 
 .software-note {
   display: grid;
-  gap: 6px;
-  margin: 0 0 14px;
-  border-left: 3px solid rgba(255, 255, 255, 0.45);
-  padding: 2px 0 2px 12px;
+  gap: 4px;
+  margin: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 16px 0 0;
 }
 
 .software-note strong {
-  color: rgba(255, 255, 255, 0.94);
-  font-size: 15px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
   font-weight: 750;
 }
 
 .software-note p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.68);
-  font-size: 13px;
-  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  line-height: 1.45;
 }
 
 .field {
   display: grid;
-  gap: 7px;
-  margin: 12px 0;
+  gap: 6px;
+  margin: 0;
 }
 
-.field span {
+.field > span,
+.field-label {
   font-size: 15px;
   font-weight: 700;
 }
 
+.field-head {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.config-state-inline {
+  display: inline-flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.config-state-inline strong {
+  min-width: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 14px;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
 .field input {
   width: 100%;
+  height: 40px;
   border: 0;
   border-radius: 5px;
-  padding: 10px 11px;
+  padding: 0 11px;
   color: #172033;
   background: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
   outline: none;
 }
 
@@ -208,33 +254,17 @@ button {
 
 .config-toolbar {
   display: grid;
-  gap: 12px;
-  margin: 12px 0 2px;
+  gap: 10px;
+  margin: 0;
 }
 
 .config-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
 }
 
-.manual-config-panel {
-  display: grid;
-  gap: 10px;
-  padding-top: 2px;
-}
-
-.config-state {
-  display: grid;
-  gap: 5px;
-  margin: 10px 0 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 10px 0;
-  background: transparent;
-}
-
-.config-state span,
 .settings-summary-head span,
 .settings-summary-row span,
 .runtime-row span {
@@ -242,19 +272,10 @@ button {
   font-size: 13px;
 }
 
-.config-state strong {
-  min-width: 0;
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 15px;
-  font-weight: 750;
-  text-align: left;
-  overflow-wrap: anywhere;
-}
-
 .preset-notice {
   display: grid;
   gap: 3px;
-  margin: 12px 0 2px;
+  margin: 0;
   border-radius: 8px;
   padding: 12px 14px;
   color: rgba(255, 255, 255, 0.88);
@@ -283,12 +304,14 @@ button {
 .side-column {
   display: grid;
   gap: 14px;
+  min-width: 0;
 }
 
 .device-summary,
 .runtime-card {
   display: grid;
   gap: 16px;
+  width: 100%;
   max-width: 640px;
   border-radius: 8px;
   padding: 18px 20px;
@@ -418,15 +441,70 @@ button {
 }
 
 .runtime-page-head {
-  align-items: flex-start;
+  align-items: center;
 }
 
-.runtime-page-head p {
-  max-width: 58ch;
-  margin: 8px 0 0;
+.runtime-title-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.runtime-title-line > span {
   color: rgba(255, 255, 255, 0.68);
   font-size: 14px;
-  line-height: 1.6;
+  font-weight: 700;
+}
+
+.info-dot {
+  position: relative;
+  display: inline-grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: help;
+}
+
+.info-dot::after {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  z-index: 5;
+  width: min(340px, 72vw);
+  border-radius: 7px;
+  padding: 9px 11px;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(20, 29, 17, 0.96);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+  content: attr(data-tooltip);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(4px);
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+
+.info-dot:hover,
+.info-dot:focus-visible {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.58);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.info-dot:hover::after,
+.info-dot:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .runtime-page-grid {
@@ -771,8 +849,10 @@ button {
 
 .button.config-button {
   min-width: 0;
-  width: 100%;
-  height: 42px;
+  width: auto;
+  flex: 0 1 190px;
+  height: 38px;
+  padding: 0 18px;
   font-weight: 750;
 }
 
@@ -780,7 +860,7 @@ button {
   width: 100%;
   min-width: 0;
   height: 46px;
-  margin-top: 18px;
+  margin-top: 0;
   font-size: 16px;
 }
 
@@ -878,6 +958,31 @@ button {
   font-size: 13px;
 }
 
+.dialog-field {
+  display: grid;
+  gap: 7px;
+}
+
+.dialog-field span {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dialog-field input {
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  padding: 11px;
+  color: #172033;
+  background: rgba(255, 255, 255, 0.92);
+  outline: none;
+}
+
+.dialog-field input:focus {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.26);
+}
+
 .config-dialog textarea {
   width: 100%;
   min-height: 220px;
@@ -924,10 +1029,14 @@ button {
 }
 
 .message {
-  min-height: 22px;
-  margin-top: 14px;
+  min-height: 0;
+  margin-top: 0;
   color: rgba(255, 255, 255, 0.8);
   font-size: 14px;
+}
+
+.message:empty {
+  display: none;
 }
 
 .message.error {
