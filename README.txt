@@ -4,7 +4,7 @@ Tags: inventory, assets, device management, rest api, admin
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.7.1
+Stable tag: 2.7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,6 +73,11 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 
 == Changelog ==
 
+= 2.7.2 =
+* Add short-lived object caching around custom inventory table reads.
+* Replace dynamic asset list SQL fragments with fixed prepared query conditions.
+* Scope Plugin Check database query annotations to the relevant custom table reads and writes.
+
 = 2.7.1 =
 * Keep release packages free of macOS metadata files.
 * Keep the desktop uploader package name in English for safer installer paths.
@@ -87,6 +92,9 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 * Moved desktop uploads to signed v3 device observations.
 
 == Upgrade Notice ==
+
+= 2.7.2 =
+This release improves custom table query caching and clears remaining Plugin Check code warnings.
 
 = 2.7.1 =
 This release refreshes packaging guardrails and keeps the desktop uploader installer name in English.
