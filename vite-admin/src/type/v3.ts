@@ -116,6 +116,7 @@ export interface AssetListParams {
   department?: string;
   category?: string;
   purchasePlatform?: string;
+  sortBy?: "latestUpload" | "updated";
 }
 
 export interface EventListParams {

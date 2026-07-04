@@ -952,6 +952,7 @@ button {
 
 .dialog-copy {
   color: rgba(255, 255, 255, 0.9);
+  white-space: pre-line;
 }
 
 .dialog-note {

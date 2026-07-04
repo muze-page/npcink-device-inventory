@@ -4,7 +4,7 @@ Tags: inventory, assets, device management, rest api, admin
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.7.2
+Stable tag: 2.7.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,6 +73,11 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 
 == Changelog ==
 
+= 2.7.3 =
+* Improve the admin asset inventory workspace with clearer hardware inventory and value analysis views.
+* Group memory inventory by capacity and disk inventory by disk type and capacity.
+* Improve device upload matching and client feedback for repeated uploads.
+
 = 2.7.2 =
 * Add short-lived object caching around custom inventory table reads.
 * Replace dynamic asset list SQL fragments with fixed prepared query conditions.
@@ -92,6 +97,9 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 * Moved desktop uploads to signed v3 device observations.
 
 == Upgrade Notice ==
+
+= 2.7.3 =
+This release improves admin inventory analysis, hardware capacity grouping, and repeated upload handling.
 
 = 2.7.2 =
 This release improves custom table query caching and clears remaining Plugin Check code warnings.

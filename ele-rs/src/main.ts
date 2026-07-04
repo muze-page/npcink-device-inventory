@@ -151,6 +151,18 @@ type DiagnosticsProgress = {
   detail?: string;
 };
 
+type SubmitDeviceAsset = {
+  assetNumber?: string;
+  ownerName?: string;
+  department?: string;
+  name?: string;
+};
+
+type SubmitDeviceResponse = {
+  mode?: string;
+  asset?: SubmitDeviceAsset;
+};
+
 type OverviewRow = {
   label: string;
   value: string;
@@ -879,6 +891,45 @@ const logAppEvent = (level: "debug" | "info" | "warn" | "error", event: string, 
 };
 
 const stringValue = (value: unknown) => (typeof value === "string" ? value.trim() : "");
+
+const submitResponsePayload = (value: unknown): SubmitDeviceResponse => {
+  const record = asRecord(value);
+  const data = asRecord(record.data);
+  const payload = Object.keys(data).length ? data : record;
+  const asset = asRecord(payload.asset);
+  return {
+    mode: stringValue(payload.mode),
+    asset: {
+      assetNumber: stringValue(asset.assetNumber),
+      ownerName: stringValue(asset.ownerName),
+      department: stringValue(asset.department),
+      name: stringValue(asset.name),
+    },
+  };
+};
+
+const formatSubmitResultMessage = (response: unknown) => {
+  const payload = submitResponsePayload(response);
+  const asset = payload.asset ?? {};
+  const modeText =
+    payload.mode === "created"
+      ? "已创建新资产，请管理员确认资产信息"
+      : payload.mode === "matched"
+        ? "已关联到现有资产"
+        : "设备信息已提交。";
+  const rows = [
+    ["编号", stringValue(asset.assetNumber)],
+    ["使用人", stringValue(asset.ownerName)],
+    ["部门", stringValue(asset.department)],
+    ["设备", stringValue(asset.name)],
+  ].filter(([, value]) => value);
+
+  if (!rows.length) {
+    return modeText;
+  }
+
+  return [modeText, "", ...rows.map(([label, value]) => `${label}：${value}`)].join("\n");
+};
 
 const importedConfigPayload = (value: unknown): ImportedUploadConfig => {
   const record = asRecord(value);
@@ -1976,11 +2027,11 @@ submitButton.addEventListener("click", async () => {
     if (!saved) {
       return;
     }
-    await invoke<unknown>("submit_device_data", { config: getConfig() });
+    const response = await invoke<SubmitDeviceResponse>("submit_device_data", { config: getConfig() });
     lastSubmittedAt = new Date();
     lastSubmittedConfigLabel = configLabel();
     renderSubmitMeta();
-    showSubmitResult("success", "上传成功", "设备信息已提交。");
+    showSubmitResult("success", "上传成功", formatSubmitResultMessage(response));
   } catch (error) {
     showSubmitResult("error", "上传失败", errorMessage(error));
   } finally {

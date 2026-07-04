@@ -153,6 +153,7 @@ class Npcink_Device_Inventory_Assets_Controller
 				'department' => $request->get_param('department'),
 				'category' => $request->get_param('category'),
 				'purchase_platform' => $request->get_param('purchasePlatform'),
+				'sort_by' => $request->get_param('sortBy'),
 			)
 		);
 		$items = array_map(array($this, 'format_asset'), $result['items']);

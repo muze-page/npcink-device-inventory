@@ -60,26 +60,26 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 		} else {
 			$this->identities->add_many(intval($asset['id']), $identities);
 			$uploaded_owner = $this->uploaded_owner_name($observation_payload);
-			if ($uploaded_owner !== '' && $uploaded_owner !== (string) $asset['owner_name']) {
+			if ($uploaded_owner !== '' && trim((string) $asset['owner_name']) === '') {
 				$updated_asset = $this->assets->update(
 					$asset['uuid'],
 					array(
 						'owner_name' => $uploaded_owner,
 					)
 				);
-				if ($updated_asset) {
-					$this->events->record(
-						intval($asset['id']),
-						'upload',
-						'owner_updated',
-						'Asset owner updated from upload note.',
-						array(
-							'old_owner_name' => (string) $asset['owner_name'],
-							'new_owner_name' => $uploaded_owner,
-						)
-					);
-					$asset = $updated_asset;
-				}
+					if ($updated_asset) {
+						$this->events->record(
+							intval($asset['id']),
+							'upload',
+							'owner_filled',
+							'Asset owner filled from upload note.',
+							array(
+								'old_owner_name' => (string) $asset['owner_name'],
+								'new_owner_name' => $uploaded_owner,
+							)
+						);
+						$asset = $updated_asset;
+					}
 			}
 		}
 

@@ -127,25 +127,53 @@ class Npcink_Device_Inventory_Asset_Repository
 		$status = isset($args['status']) ? sanitize_text_field($args['status']) : '';
 		$department = isset($args['department']) ? sanitize_text_field($args['department']) : '';
 		$category = isset($args['category']) ? sanitize_text_field($args['category']) : '';
-		$asset_scope = isset($args['asset_scope']) ? sanitize_key($args['asset_scope']) : '';
-		if ($asset_scope !== 'computer' && $asset_scope !== 'other') {
-			$asset_scope = '';
-		}
-		$search = isset($args['search']) ? sanitize_text_field($args['search']) : '';
+			$asset_scope = isset($args['asset_scope']) ? sanitize_key($args['asset_scope']) : '';
+			if ($asset_scope !== 'computer' && $asset_scope !== 'other') {
+				$asset_scope = '';
+			}
+			$sort_by = isset($args['sort_by']) ? sanitize_key($args['sort_by']) : '';
+			$search = isset($args['search']) ? sanitize_text_field($args['search']) : '';
 		$like = '%' . $wpdb->esc_like($search) . '%';
+		$prefix_like = $wpdb->esc_like($search) . '%';
+		$extended_like = $this->should_search_extended_asset_data($search) ? $like : '__npcink_no_extended_asset_match__';
+		$extended_prefix_like = $this->should_search_extended_asset_data($search) ? $prefix_like : '__npcink_no_extended_asset_match__';
+		$primary_ip_exact_like = '%"primary_ip":"' . $wpdb->esc_like($search) . '"%';
+		$primary_ip_prefix_like = $this->should_search_extended_asset_data($search) ? '%"primary_ip":"' . $wpdb->esc_like($search) . '%' : '__npcink_no_extended_asset_match__';
 		$platform_regex = $this->build_platform_regex(isset($args['purchase_platform']) ? $args['purchase_platform'] : '');
 		$table = Npcink_Device_Inventory_V3_Tables::assets();
+		$identities_table = Npcink_Device_Inventory_V3_Tables::identities();
+		$observations_table = Npcink_Device_Inventory_V3_Tables::observations();
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned asset table query is wrapped in the object cache.
 		$total = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM %i
-				WHERE (%s = '' OR asset_type = %s)
-				AND (%s = '' OR status = %s)
-				AND (%s = '' OR department = %s)
-				AND (%s = '' OR category = %s)
-				AND (%s = '' OR (%s = 'computer' AND asset_type IN ('pc', 'computer')) OR (%s = 'other' AND asset_type NOT IN ('pc', 'computer')))
-				AND (%s = '' OR asset_number LIKE %s OR name LIKE %s OR owner_name LIKE %s OR department LIKE %s OR metadata_json LIKE %s)
-				AND (%s = '' OR metadata_json REGEXP %s)",
+				"SELECT COUNT(*) FROM %i a
+				WHERE (%s = '' OR a.asset_type = %s)
+				AND (%s = '' OR a.status = %s)
+				AND (%s = '' OR a.department = %s)
+				AND (%s = '' OR a.category = %s)
+				AND (%s = '' OR (%s = 'computer' AND a.asset_type IN ('pc', 'computer')) OR (%s = 'other' AND a.asset_type NOT IN ('pc', 'computer')))
+				AND (
+					%s = ''
+					OR a.asset_number LIKE %s
+					OR a.name LIKE %s
+					OR a.owner_name LIKE %s
+					OR a.department LIKE %s
+					OR a.metadata_json LIKE %s
+					OR EXISTS (
+						SELECT 1
+						FROM %i si
+						WHERE si.asset_id = a.id
+						AND si.identity_type IN ('mac_address', 'hardware_uuid', 'system_uuid', 'system_serial', 'bios_serial', 'baseboard_serial')
+						AND si.identity_value LIKE %s
+					)
+					OR EXISTS (
+						SELECT 1
+						FROM %i so
+						WHERE so.asset_id = a.id
+						AND so.summary_json LIKE %s
+					)
+				)
+				AND (%s = '' OR a.metadata_json REGEXP %s)",
 				$table,
 				$asset_type,
 				$asset_type,
@@ -164,12 +192,15 @@ class Npcink_Device_Inventory_Asset_Repository
 				$like,
 				$like,
 				$like,
+				$identities_table,
+				$extended_like,
+				$observations_table,
+				$extended_like,
 				$platform_regex,
 				$platform_regex
 			)
 		);
 
-		$observations_table = Npcink_Device_Inventory_V3_Tables::observations();
 		$items = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT a.*,
@@ -190,10 +221,64 @@ class Npcink_Device_Inventory_Asset_Repository
 			AND (%s = '' OR a.department = %s)
 			AND (%s = '' OR a.category = %s)
 			AND (%s = '' OR (%s = 'computer' AND a.asset_type IN ('pc', 'computer')) OR (%s = 'other' AND a.asset_type NOT IN ('pc', 'computer')))
-			AND (%s = '' OR a.asset_number LIKE %s OR a.name LIKE %s OR a.owner_name LIKE %s OR a.department LIKE %s OR a.metadata_json LIKE %s)
+			AND (
+				%s = ''
+				OR a.asset_number LIKE %s
+				OR a.name LIKE %s
+				OR a.owner_name LIKE %s
+				OR a.department LIKE %s
+				OR a.metadata_json LIKE %s
+				OR EXISTS (
+					SELECT 1
+					FROM %i si
+					WHERE si.asset_id = a.id
+					AND si.identity_type IN ('mac_address', 'hardware_uuid', 'system_uuid', 'system_serial', 'bios_serial', 'baseboard_serial')
+					AND si.identity_value LIKE %s
+				)
+				OR EXISTS (
+					SELECT 1
+					FROM %i so
+					WHERE so.asset_id = a.id
+					AND so.summary_json LIKE %s
+				)
+			)
 			AND (%s = '' OR a.metadata_json REGEXP %s)
-			ORDER BY a.updated_at DESC, a.id DESC
-			LIMIT %d OFFSET %d",
+			ORDER BY
+				CASE
+					WHEN %s = '' THEN 0
+					WHEN a.asset_number = %s THEN 0
+					WHEN a.name = %s THEN 1
+					WHEN a.owner_name = %s THEN 2
+					WHEN a.department = %s THEN 3
+					WHEN EXISTS (
+						SELECT 1
+						FROM %i oi
+						WHERE oi.asset_id = a.id
+						AND oi.identity_type IN ('mac_address', 'hardware_uuid', 'system_uuid', 'system_serial', 'bios_serial', 'baseboard_serial')
+						AND oi.identity_value = %s
+					) THEN 4
+					WHEN lo.summary_json LIKE %s THEN 5
+					WHEN a.asset_number LIKE %s THEN 6
+					WHEN a.name LIKE %s THEN 7
+					WHEN a.owner_name LIKE %s THEN 8
+					WHEN a.department LIKE %s THEN 9
+					WHEN EXISTS (
+						SELECT 1
+						FROM %i pi
+						WHERE pi.asset_id = a.id
+						AND pi.identity_type IN ('mac_address', 'hardware_uuid', 'system_uuid', 'system_serial', 'bios_serial', 'baseboard_serial')
+						AND pi.identity_value LIKE %s
+					) THEN 10
+						WHEN lo.summary_json LIKE %s THEN 11
+						WHEN a.metadata_json LIKE %s THEN 12
+						ELSE 13
+					END ASC,
+					CASE WHEN %s IN ('latest_upload', 'latestupload') THEN a.created_at END DESC,
+					CASE WHEN %s IN ('latest_observed', 'latestobserved') THEN COALESCE(lo.observed_at, a.updated_at, a.created_at) END DESC,
+					CASE WHEN %s IN ('latest_observed', 'latestobserved') THEN a.updated_at END DESC,
+					CASE WHEN %s NOT IN ('latest_upload', 'latestupload', 'latest_observed', 'latestobserved') THEN a.updated_at END DESC,
+					a.id DESC
+				LIMIT %d OFFSET %d",
 				$table,
 				$observations_table,
 				$observations_table,
@@ -214,11 +299,35 @@ class Npcink_Device_Inventory_Asset_Repository
 				$like,
 				$like,
 				$like,
+				$identities_table,
+				$extended_like,
+				$observations_table,
+				$extended_like,
 				$platform_regex,
 				$platform_regex,
-				$page_size,
-				$offset
-			),
+				$search,
+				$search,
+				$search,
+				$search,
+				$search,
+				$identities_table,
+				$search,
+				$primary_ip_exact_like,
+				$prefix_like,
+				$prefix_like,
+				$prefix_like,
+				$prefix_like,
+					$identities_table,
+					$extended_prefix_like,
+					$primary_ip_prefix_like,
+					$like,
+					$sort_by,
+					$sort_by,
+					$sort_by,
+					$sort_by,
+					$page_size,
+					$offset
+				),
 			ARRAY_A
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -360,10 +469,22 @@ class Npcink_Device_Inventory_Asset_Repository
 	private function sanitize_list_cache_args($args)
 	{
 		$result = array();
-		foreach (array('asset_type', 'status', 'department', 'category', 'asset_scope', 'search', 'purchase_platform') as $field) {
+		foreach (array('asset_type', 'status', 'department', 'category', 'asset_scope', 'search', 'purchase_platform', 'sort_by') as $field) {
 			$result[$field] = isset($args[$field]) ? sanitize_text_field((string) $args[$field]) : '';
 		}
 		return $result;
+	}
+
+	private function should_search_extended_asset_data($search)
+	{
+		$search = trim((string) $search);
+		if ($search === '') {
+			return false;
+		}
+		if (preg_match('/^\d{1,2}$/', $search)) {
+			return false;
+		}
+		return true;
 	}
 
 	private function get_list_cache_version()
