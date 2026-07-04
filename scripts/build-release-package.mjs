@@ -7,9 +7,12 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 const viteAdminDir = path.join(repoRoot, "vite-admin");
 const slug = "npcink-device-inventory";
 const releaseDir = path.join(repoRoot, "release");
+const submissionDir = path.join(repoRoot, "sj");
 const stagingRoot = path.join(repoRoot, ".release-build");
 const stagingPlugin = path.join(stagingRoot, slug);
 const output = path.join(releaseDir, `${slug}.zip`);
+const packageDir = path.join(releaseDir, slug);
+const submissionZip = path.join(submissionDir, `${slug}.zip`);
 
 const rootFiles = [
   "index.php",
@@ -47,6 +50,10 @@ await removeReleaseJunk(stagingPlugin);
 
 await rm(output, { force: true });
 execFileSync("zip", ["-qr", output, slug], { cwd: stagingRoot });
+await rm(packageDir, { recursive: true, force: true });
+await cp(stagingPlugin, packageDir, { recursive: true });
+await mkdir(submissionDir, { recursive: true });
+await cp(output, submissionZip);
 await rm(stagingRoot, { recursive: true, force: true });
 execFileSync("node", ["scripts/check-wordpress-org-review-rules.mjs", "release/npcink-device-inventory.zip"], {
   cwd: repoRoot,

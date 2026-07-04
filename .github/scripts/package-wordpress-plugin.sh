@@ -8,9 +8,8 @@ PACKAGE_DIR="${RELEASE_DIR}/${PLUGIN_SLUG}"
 ZIP_PATH="${RELEASE_DIR}/${PLUGIN_SLUG}.zip"
 
 cd "${ROOT_DIR}"
-node scripts/build-release-package.mjs
+npm run build:release
 
-rm -rf "${PACKAGE_DIR}"
-unzip -q "${ZIP_PATH}" -d "${RELEASE_DIR}"
+test -d "${PACKAGE_DIR}"
 
 echo "${ZIP_PATH}"
