@@ -89,7 +89,7 @@ const friendlyErrorTextMap: Record<string, string> = {
 
 const errorInterceptor = (error: any) => {
   // 检查是否有返回错误信息，有的话展示，没有就显示默认错误信息
-  let errorMessage = "请求出错";
+  let errorMessage: string;
 
   if (error.response) {
     // 服务器返回了错误状态码
@@ -137,7 +137,9 @@ const errorInterceptor = (error: any) => {
   }
 
   message.error(errorMessage);
-  console.error("请求错误:", error);
+  if (import.meta.env.DEV) {
+    console.error("请求错误:", error);
+  }
   return Promise.reject(error);
 };
 

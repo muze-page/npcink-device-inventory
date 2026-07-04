@@ -29,9 +29,6 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1300,
       //sourcemap: true,//保留映射关系，方便调试
     },
-    esbuild: {
-      drop: isProd ? ["console", "debugger"] : [],
-    },
     //配置路径别名
     resolve: {
       alias: [
