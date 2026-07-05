@@ -185,3 +185,35 @@ export interface InventorySettings {
 }
 
 export type CreatedPublicQueryPage = PublicQueryPageState;
+
+export interface BackupRestoreSummary {
+  schema: string;
+  exportedAt: string;
+  available: {
+    settings: number;
+    assets: number;
+    identities: number;
+    events: number;
+    observations: number;
+  };
+  imported: {
+    settings: number;
+    assetsCreated: number;
+    assetsUpdated: number;
+    identitiesCreated: number;
+    observationsCreated: number;
+    eventsCreated: number;
+  };
+  skipped: {
+    assets: number;
+    identities: number;
+    observations: number;
+    events: number;
+  };
+  warnings: string[];
+}
+
+export interface BackupRestoreResult {
+  dryRun: boolean;
+  summary: BackupRestoreSummary;
+}

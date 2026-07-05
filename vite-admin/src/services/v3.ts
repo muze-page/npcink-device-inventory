@@ -7,6 +7,7 @@ import type {
   AssetInput,
   AssetListParams,
   AssetObservation,
+  BackupRestoreResult,
   ClientToken,
   ClientTokenPackageConfig,
   CreatedClientToken,
@@ -208,4 +209,16 @@ export const deleteClientToken = async (id: string): Promise<void> => {
   await restInstance.delete(`/client-tokens/${id}`, {
     showSuccessMessage: false,
   } as RequestConfig);
+};
+
+export const restoreBackup = async (
+  backup: unknown,
+  dryRun = false
+): Promise<BackupRestoreResult> => {
+  const response = await restInstance.post<DataEnvelope<BackupRestoreResult>>(
+    "/backup-restore",
+    { backup, dryRun },
+    { showSuccessMessage: false } as RequestConfig
+  );
+  return unwrapData(response.data);
 };

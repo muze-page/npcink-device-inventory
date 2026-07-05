@@ -23,6 +23,7 @@ class Npcink_Device_Inventory_V3_Rest
 		require_once $base . 'rest/class-npcink-device-inventory-assets-controller.php';
 		require_once $base . 'rest/class-npcink-device-inventory-device-observations-controller.php';
 		require_once $base . 'rest/class-npcink-device-inventory-settings-controller.php';
+		require_once $base . 'rest/class-npcink-device-inventory-backup-restore-controller.php';
 	}
 
 	public static function run()
@@ -45,9 +46,11 @@ class Npcink_Device_Inventory_V3_Rest
 		$assets_controller = new Npcink_Device_Inventory_Assets_Controller($assets, $identities, $observations, $events, $event_service);
 		$device_observations_controller = new Npcink_Device_Inventory_Device_Observations_Controller($ingest, $auth);
 		$settings_controller = new Npcink_Device_Inventory_Settings_Controller();
+		$backup_restore_controller = new Npcink_Device_Inventory_Backup_Restore_Controller();
 
 		$assets_controller->register_routes();
 		$device_observations_controller->register_routes();
 		$settings_controller->register_routes();
+		$backup_restore_controller->register_routes();
 	}
 }
