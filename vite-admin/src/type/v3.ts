@@ -196,6 +196,17 @@ export interface BackupRestoreSummary {
     events: number;
     observations: number;
   };
+  planned: {
+    settings: number;
+    assetsCreated: number;
+    assetsUpdated: number;
+    identitiesCreated: number;
+    identitiesExisting: number;
+    observationsCreated: number;
+    observationsExisting: number;
+    eventsCreated: number;
+    eventsExisting: number;
+  };
   imported: {
     settings: number;
     assetsCreated: number;
@@ -210,6 +221,7 @@ export interface BackupRestoreSummary {
     observations: number;
     events: number;
   };
+  conflicts: string[];
   warnings: string[];
 }
 

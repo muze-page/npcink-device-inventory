@@ -7,6 +7,7 @@
     "build:submission": "node scripts/build-release-package.mjs --submission",
     "check:wporg-review": "node scripts/check-wordpress-org-review-rules.mjs release/npcink-device-inventory.zip",
     "check:package": "node scripts/check-release-package.mjs release/npcink-device-inventory.zip && npm run check:wporg-review",
-    "check:release": "node scripts/check-release-readiness.mjs"
+    "check:release": "node scripts/check-release-readiness.mjs",
+    "check:submission": "node scripts/check-release-readiness.mjs --submission"
   }
 }

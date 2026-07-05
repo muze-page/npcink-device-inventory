@@ -4,9 +4,27 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
+class Npcink_Device_Inventory_Backup_Restore_Conflict_Exception extends Exception
+{
+	private $summary;
+
+	public function __construct($summary)
+	{
+		parent::__construct('Backup restore conflict detected during import.', 409);
+		$this->summary = $summary;
+	}
+
+	public function get_summary()
+	{
+		return $this->summary;
+	}
+}
+
 class Npcink_Device_Inventory_Backup_Restore_Controller
 {
 	private const SCHEMA = 'npcink-device-inventory/v3-admin-export';
+	private const MAX_BACKUP_BYTES = 52428800;
+	private const MAX_SECTION_ROWS = 10000;
 
 	public function register_routes()
 	{
@@ -31,19 +49,29 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 
 	public function restore_backup($request)
 	{
+		$content_length = $request instanceof WP_REST_Request ? intval($request->get_header('content-length')) : 0;
+		if ($content_length > self::MAX_BACKUP_BYTES) {
+			return Npcink_Device_Inventory_V3_Response::error('backup_too_large', 'Backup JSON is too large.', 413);
+		}
+
+		$body = $request instanceof WP_REST_Request ? (string) $request->get_body() : '';
+		if ($body !== '' && strlen($body) > self::MAX_BACKUP_BYTES) {
+			return Npcink_Device_Inventory_V3_Response::error('backup_too_large', 'Backup JSON is too large.', 413);
+		}
+
 		$params = $request->get_json_params();
 		if (!is_array($params) || !isset($params['backup']) || !is_array($params['backup'])) {
 			return Npcink_Device_Inventory_V3_Response::error('invalid_backup', 'Backup JSON is required.', 400);
 		}
 
 		$backup = $params['backup'];
+		$dry_run = !empty($params['dryRun']);
 		$validation = $this->validate_backup($backup);
 		if (is_wp_error($validation)) {
 			return $validation;
 		}
 
-		$dry_run = !empty($params['dryRun']);
-		$summary = $this->summarize_backup($backup);
+		$summary = $this->build_restore_plan($backup);
 		if ($dry_run) {
 			return rest_ensure_response(
 				array(
@@ -55,8 +83,14 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 			);
 		}
 
+		if (!empty($summary['conflicts'])) {
+			return Npcink_Device_Inventory_V3_Response::error('backup_conflicts', 'Backup has restore conflicts. Review the preview before importing.', 409, $summary);
+		}
+
 		try {
 			$result = $this->import_backup($backup, $summary);
+		} catch (Npcink_Device_Inventory_Backup_Restore_Conflict_Exception $exception) {
+			return Npcink_Device_Inventory_V3_Response::error('backup_conflicts', $exception->getMessage(), 409, $exception->get_summary());
 		} catch (Exception $exception) {
 			return Npcink_Device_Inventory_V3_Response::error('backup_restore_failed', $exception->getMessage(), 500);
 		}
@@ -80,9 +114,22 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 
 		$has_known_section = false;
 		foreach (array('settings', 'assets', 'identities', 'events', 'observations') as $section) {
-			if (array_key_exists($section, $backup)) {
-				$has_known_section = true;
-				break;
+			if (!array_key_exists($section, $backup)) {
+				continue;
+			}
+			$has_known_section = true;
+			if ($section === 'settings') {
+				if (!is_array($backup[$section])) {
+					return Npcink_Device_Inventory_V3_Response::error('invalid_backup_section', 'Settings section must be an object.', 422);
+				}
+				continue;
+			}
+			if (!is_array($backup[$section])) {
+				return Npcink_Device_Inventory_V3_Response::error('invalid_backup_section', 'Backup sections must be arrays.', 422);
+			}
+			$row_count = $section === 'identities' ? $this->count_backup_identities($backup[$section]) : count($backup[$section]);
+			if ($row_count > self::MAX_SECTION_ROWS) {
+				return Npcink_Device_Inventory_V3_Response::error('backup_section_too_large', 'Backup section contains too many rows.', 413);
 			}
 		}
 
@@ -93,16 +140,38 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 		return true;
 	}
 
-	private function summarize_backup($backup)
+	private function build_restore_plan($backup)
+	{
+		$summary = $this->empty_summary($backup);
+		$asset_map = $this->empty_asset_map();
+
+		if (isset($backup['settings']) && is_array($backup['settings'])) {
+			$summary['planned']['settings'] = 1;
+		}
+		if (isset($backup['assets']) && is_array($backup['assets'])) {
+			$result = $this->process_assets($backup['assets'], $summary, $asset_map, false);
+			$summary = $result['summary'];
+			$asset_map = $result['asset_map'];
+		}
+		if (isset($backup['identities']) && is_array($backup['identities'])) {
+			$summary = $this->process_identities($backup['identities'], $summary, $asset_map, false);
+		}
+		if (isset($backup['observations']) && is_array($backup['observations'])) {
+			$summary = $this->process_observations($backup['observations'], $summary, $asset_map, false);
+		}
+		if (isset($backup['events']) && is_array($backup['events'])) {
+			$summary = $this->process_events($backup['events'], $summary, $asset_map, false);
+		}
+
+		return $summary;
+	}
+
+	private function empty_summary($backup)
 	{
 		$identity_count = 0;
 		if (!empty($backup['identities']) && is_array($backup['identities'])) {
 			foreach ($backup['identities'] as $item) {
-				if (is_array($item) && isset($item['identities']) && is_array($item['identities'])) {
-					$identity_count += count($item['identities']);
-				} else {
-					$identity_count++;
-				}
+				$identity_count += is_array($item) && isset($item['identities']) && is_array($item['identities']) ? count($item['identities']) : 1;
 			}
 		}
 
@@ -115,6 +184,17 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 				'identities' => $identity_count,
 				'events' => isset($backup['events']) && is_array($backup['events']) ? count($backup['events']) : 0,
 				'observations' => isset($backup['observations']) && is_array($backup['observations']) ? count($backup['observations']) : 0,
+			),
+			'planned' => array(
+				'settings' => 0,
+				'assetsCreated' => 0,
+				'assetsUpdated' => 0,
+				'identitiesCreated' => 0,
+				'identitiesExisting' => 0,
+				'observationsCreated' => 0,
+				'observationsExisting' => 0,
+				'eventsCreated' => 0,
+				'eventsExisting' => 0,
 			),
 			'imported' => array(
 				'settings' => 0,
@@ -130,6 +210,7 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 				'observations' => 0,
 				'events' => 0,
 			),
+			'conflicts' => array(),
 			'warnings' => array(
 				'上传授权码、公开查询访问码明文、公开查询启用状态、客户端上传基础 URL 不会从备份恢复，请在正式站点重新配置。',
 				'导入采用合并/更新策略，不会清空正式站点现有数据。',
@@ -140,45 +221,56 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 	private function import_backup($backup, $summary)
 	{
 		global $wpdb;
-
-		$asset_map = array(
-			'by_old_id' => array(),
-			'by_uuid' => array(),
-			'by_number' => array(),
-		);
-
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Restore spans plugin-owned tables and needs transaction boundaries.
-		$wpdb->query('START TRANSACTION');
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$asset_map = $this->empty_asset_map();
+		$previous_options = get_option(Npcink_Device_Inventory_V3_Tables::OPTION, array());
+		$settings_imported = false;
+		$planned_summary = $summary;
+		$summary = $this->empty_summary($backup);
+		$summary['planned'] = $planned_summary['planned'];
+		$summary['warnings'] = $planned_summary['warnings'];
 
 		try {
 			if (isset($backup['settings']) && is_array($backup['settings'])) {
+				$settings_imported = true;
 				$summary = $this->import_settings($backup['settings'], $summary);
 			}
+
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Restore spans plugin-owned tables and needs transaction boundaries.
+			$wpdb->query('START TRANSACTION');
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+
 			if (isset($backup['assets']) && is_array($backup['assets'])) {
-				$asset_result = $this->import_assets($backup['assets'], $summary, $asset_map);
-				$summary = $asset_result['summary'];
-				$asset_map = $asset_result['asset_map'];
+				$result = $this->process_assets($backup['assets'], $summary, $asset_map, true);
+				$summary = $result['summary'];
+				$asset_map = $result['asset_map'];
+				$this->assert_no_import_conflicts($summary);
 			}
 			if (isset($backup['identities']) && is_array($backup['identities'])) {
-				$summary = $this->import_identities($backup['identities'], $summary, $asset_map);
+				$summary = $this->process_identities($backup['identities'], $summary, $asset_map, true);
+				$this->assert_no_import_conflicts($summary);
 			}
 			if (isset($backup['observations']) && is_array($backup['observations'])) {
-				$summary = $this->import_observations($backup['observations'], $summary, $asset_map);
+				$summary = $this->process_observations($backup['observations'], $summary, $asset_map, true);
+				$this->assert_no_import_conflicts($summary);
 			}
 			if (isset($backup['events']) && is_array($backup['events'])) {
-				$summary = $this->import_events($backup['events'], $summary, $asset_map);
+				$summary = $this->process_events($backup['events'], $summary, $asset_map, true);
+				$this->assert_no_import_conflicts($summary);
 			}
+
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- See transaction note above.
+			$wpdb->query('COMMIT');
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		} catch (Exception $exception) {
 			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- See transaction note above.
 			$wpdb->query('ROLLBACK');
 			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+			if ($settings_imported) {
+				update_option(Npcink_Device_Inventory_V3_Tables::OPTION, $previous_options);
+			}
 			throw $exception;
 		}
 
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- See transaction note above.
-		$wpdb->query('COMMIT');
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$this->bump_cache_versions();
 
 		return $summary;
@@ -215,62 +307,86 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 		return $summary;
 	}
 
-	private function import_assets($assets, $summary, $asset_map)
+	private function process_assets($assets, $summary, $asset_map, $mutate)
 	{
 		global $wpdb;
-		foreach ($assets as $asset) {
+		$seen_uuids = array();
+		$seen_numbers = array();
+		foreach ($assets as $index => $asset) {
 			if (!is_array($asset)) {
 				$summary['skipped']['assets']++;
+				$this->add_warning($summary, '资产台账第 ' . ($index + 1) . ' 行格式无效，已跳过。');
 				continue;
 			}
 
 			$row = $this->asset_row_from_backup($asset);
-			if ($row['uuid'] === '' || $row['asset_number'] === '') {
+			if ($row['asset_number'] === '') {
 				$summary['skipped']['assets']++;
+				$this->add_warning($summary, '资产台账第 ' . ($index + 1) . ' 行缺少资产编号，已跳过。');
+				continue;
+			}
+			$uuid_was_missing = $row['uuid'] === '';
+			if ($uuid_was_missing) {
+				$row['uuid'] = $mutate ? $this->generate_unique_asset_uuid() : '__preview_missing_uuid_' . ($index + 1);
+				$this->add_warning($summary, '资产 ' . $row['asset_number'] . ' 缺少 UUID，导入时会生成新 UUID。');
+			}
+			if (((!$uuid_was_missing || $mutate) && isset($seen_uuids[$row['uuid']])) || isset($seen_numbers[$row['asset_number']])) {
+				$summary['skipped']['assets']++;
+				$summary['conflicts'][] = '备份内资产 UUID 或编号重复：' . $row['asset_number'];
+				continue;
+			}
+			if (!$uuid_was_missing || $mutate) {
+				$seen_uuids[$row['uuid']] = true;
+			}
+			$seen_numbers[$row['asset_number']] = true;
+
+			$by_uuid = $uuid_was_missing && !$mutate ? null : $this->find_asset_by_uuid($row['uuid']);
+			$by_number = $this->find_asset_by_number($row['asset_number']);
+			if ($by_uuid && $by_number && intval($by_uuid['id']) !== intval($by_number['id'])) {
+				$summary['skipped']['assets']++;
+				$summary['conflicts'][] = '资产冲突：UUID ' . $row['uuid'] . ' 与资产编号 ' . $row['asset_number'] . ' 分别命中不同资产。';
 				continue;
 			}
 
-			$existing = $this->find_asset($row['uuid'], $row['asset_number']);
+			$existing = $by_uuid ? $by_uuid : $by_number;
 			if ($existing) {
-				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table restore.
-				$result = $wpdb->update(
-					Npcink_Device_Inventory_V3_Tables::assets(),
-					array(
-						'asset_type' => $row['asset_type'],
-						'asset_number' => $row['asset_number'],
-						'name' => $row['name'],
-						'owner_name' => $row['owner_name'],
-						'department' => $row['department'],
-						'status' => $row['status'],
-						'category' => $row['category'],
-						'purchase_price' => $row['purchase_price'],
-						'residual_value' => $row['residual_value'],
-						'metadata_json' => $row['metadata_json'],
-						'updated_at' => $row['updated_at'],
-					),
-					array('id' => intval($existing['id'])),
-					array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%f', '%s', '%s'),
-					array('%d')
-				);
-				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-				if ($result === false) {
-					throw new Exception('Failed to update asset backup row.');
-				}
 				$asset_id = intval($existing['id']);
-				$summary['imported']['assetsUpdated']++;
-			} else {
-				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table restore.
-				$result = $wpdb->insert(
-					Npcink_Device_Inventory_V3_Tables::assets(),
-					$row,
-					array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%f', '%s', '%s', '%s')
-				);
-				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-				if ($result === false) {
-					throw new Exception('Failed to create asset backup row.');
+				if ($mutate) {
+					$update_row = $this->asset_update_row($row, $by_uuid ? true : false);
+					// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table restore.
+					$result = $wpdb->update(
+						Npcink_Device_Inventory_V3_Tables::assets(),
+						$update_row['row'],
+						array('id' => $asset_id),
+						$update_row['formats'],
+						array('%d')
+					);
+					// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+					if ($result === false) {
+						throw new Exception('Failed to update asset backup row.');
+					}
+					$summary['imported']['assetsUpdated']++;
+				} else {
+					$summary['planned']['assetsUpdated']++;
 				}
-				$asset_id = intval($wpdb->insert_id);
-				$summary['imported']['assetsCreated']++;
+			} else {
+				if ($mutate) {
+					// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table restore.
+					$result = $wpdb->insert(
+						Npcink_Device_Inventory_V3_Tables::assets(),
+						$row,
+						array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%f', '%s', '%s', '%s')
+					);
+					// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+					if ($result === false) {
+						throw new Exception('Failed to create asset backup row.');
+					}
+					$asset_id = intval($wpdb->insert_id);
+					$summary['imported']['assetsCreated']++;
+				} else {
+					$asset_id = -1 * (count($asset_map['by_number']) + 1);
+					$summary['planned']['assetsCreated']++;
+				}
 			}
 
 			$this->remember_asset($asset_map, $asset, $asset_id, $row['uuid'], $row['asset_number']);
@@ -279,12 +395,14 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 		return array('summary' => $summary, 'asset_map' => $asset_map);
 	}
 
-	private function import_identities($groups, $summary, $asset_map)
+	private function process_identities($groups, $summary, $asset_map, $mutate)
 	{
 		global $wpdb;
+		$seen_identities = array();
 		foreach ($groups as $group) {
 			if (!is_array($group)) {
 				$summary['skipped']['identities']++;
+				$this->add_warning($summary, '设备匹配标识存在无效分组，已跳过。');
 				continue;
 			}
 
@@ -301,40 +419,61 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 				$value = $this->backup_text($identity, array('identityValue', 'value'), 'text');
 				if (!$current_asset_id || $type === '' || $value === '') {
 					$summary['skipped']['identities']++;
+					$this->add_warning($summary, '设备匹配标识缺少资产、类型或值，已跳过。');
 					continue;
 				}
+				$identity_key = $type . "\0" . $value;
+				if (isset($seen_identities[$identity_key])) {
+					$summary['skipped']['identities']++;
+					$this->add_warning($summary, '备份内设备匹配标识重复：' . $type . '=' . $value . '，重复项已跳过。');
+					continue;
+				}
+				$seen_identities[$identity_key] = true;
 
 				$existing_asset_id = $this->identity_asset_id($type, $value);
 				if ($existing_asset_id) {
+					if ($current_asset_id < 1 || intval($existing_asset_id) !== intval($current_asset_id)) {
+						$summary['conflicts'][] = '设备匹配标识冲突：' . $type . '=' . $value . ' 已属于其他资产。';
+					} elseif (!$mutate) {
+						$summary['planned']['identitiesExisting']++;
+					}
 					$summary['skipped']['identities']++;
 					continue;
 				}
 
-				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table restore.
-				$result = $wpdb->insert(
-					Npcink_Device_Inventory_V3_Tables::identities(),
-					array(
-						'asset_id' => $current_asset_id,
-						'identity_type' => $type,
-						'identity_value' => $value,
-						'confidence' => isset($identity['confidence']) ? floatval($identity['confidence']) : 100,
-						'is_primary' => !empty($identity['isPrimary']) ? 1 : 0,
-						'source' => $this->backup_text($identity, array('source'), 'key', 'import'),
-						'created_at' => $this->backup_datetime($identity, 'createdAt'),
-					),
-					array('%d', '%s', '%s', '%f', '%d', '%s', '%s')
-				);
-				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-				if ($result === false) {
-					throw new Exception('Failed to create identity backup row.');
+				if ($mutate) {
+					if ($current_asset_id < 1) {
+						$summary['skipped']['identities']++;
+						continue;
+					}
+					// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table restore.
+					$result = $wpdb->insert(
+						Npcink_Device_Inventory_V3_Tables::identities(),
+						array(
+							'asset_id' => $current_asset_id,
+							'identity_type' => $type,
+							'identity_value' => $value,
+							'confidence' => isset($identity['confidence']) ? floatval($identity['confidence']) : 100,
+							'is_primary' => !empty($identity['isPrimary']) ? 1 : 0,
+							'source' => $this->backup_text($identity, array('source'), 'key', 'import'),
+							'created_at' => $this->backup_datetime($identity, 'createdAt', false),
+						),
+						array('%d', '%s', '%s', '%f', '%d', '%s', '%s')
+					);
+					// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+					if ($result === false) {
+						throw new Exception('Failed to create identity backup row.');
+					}
+					$summary['imported']['identitiesCreated']++;
+				} else {
+					$summary['planned']['identitiesCreated']++;
 				}
-				$summary['imported']['identitiesCreated']++;
 			}
 		}
 		return $summary;
 	}
 
-	private function import_observations($observations, $summary, $asset_map)
+	private function process_observations($observations, $summary, $asset_map, $mutate)
 	{
 		global $wpdb;
 		foreach ($observations as $observation) {
@@ -344,42 +483,55 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 			}
 			$asset_id = $this->asset_id_from_backup_reference($observation, $asset_map);
 			$source = $this->backup_text($observation, array('source'), 'key', 'import');
-			$observed_at = $this->backup_datetime($observation, 'observedAt');
-			$schema_version = isset($observation['schemaVersion']) ? intval($observation['schemaVersion']) : 1;
+			$observed_at = $this->backup_datetime($observation, 'observedAt', true);
+			$received_at = $this->backup_datetime($observation, 'receivedAt', false);
+			$schema_version = isset($observation['schemaVersion']) ? max(1, intval($observation['schemaVersion'])) : 1;
 			if (!$asset_id || $observed_at === '') {
 				$summary['skipped']['observations']++;
+				$this->add_warning($summary, '电脑采集快照缺少资产或有效采集时间，已跳过。');
 				continue;
 			}
-			if ($this->observation_exists($asset_id, $source, $schema_version, $observed_at)) {
+			if ($asset_id > 0 && $this->observation_exists($asset_id, $source, $schema_version, $observed_at)) {
+				if (!$mutate) {
+					$summary['planned']['observationsExisting']++;
+				}
 				$summary['skipped']['observations']++;
 				continue;
 			}
 
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table restore.
-			$result = $wpdb->insert(
-				Npcink_Device_Inventory_V3_Tables::observations(),
-				array(
-					'asset_id' => $asset_id,
-					'source' => $source,
-					'schema_version' => $schema_version,
-					'observed_at' => $observed_at,
-					'received_at' => $this->backup_datetime($observation, 'receivedAt'),
-					'summary_json' => Npcink_Device_Inventory_V3_Sanitizer::json_encode(isset($observation['summary']) && is_array($observation['summary']) ? $observation['summary'] : array()),
-					'hardware_json' => Npcink_Device_Inventory_V3_Sanitizer::json_encode(isset($observation['hardware']) && is_array($observation['hardware']) ? $observation['hardware'] : array()),
-					'raw_json' => Npcink_Device_Inventory_V3_Sanitizer::json_encode(isset($observation['raw']) && is_array($observation['raw']) ? $observation['raw'] : array()),
-				),
-				array('%d', '%s', '%d', '%s', '%s', '%s', '%s', '%s')
-			);
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			if ($result === false) {
-				throw new Exception('Failed to create observation backup row.');
+			if ($mutate) {
+				if ($asset_id < 1) {
+					$summary['skipped']['observations']++;
+					continue;
+				}
+				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table restore.
+				$result = $wpdb->insert(
+					Npcink_Device_Inventory_V3_Tables::observations(),
+					array(
+						'asset_id' => $asset_id,
+						'source' => $source,
+						'schema_version' => $schema_version,
+						'observed_at' => $observed_at,
+						'received_at' => $received_at,
+						'summary_json' => $this->safe_json_field($observation, 'summary'),
+						'hardware_json' => $this->safe_json_field($observation, 'hardware'),
+						'raw_json' => $this->safe_json_field($observation, 'raw'),
+					),
+					array('%d', '%s', '%d', '%s', '%s', '%s', '%s', '%s')
+				);
+				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+				if ($result === false) {
+					throw new Exception('Failed to create observation backup row.');
+				}
+				$summary['imported']['observationsCreated']++;
+			} else {
+				$summary['planned']['observationsCreated']++;
 			}
-			$summary['imported']['observationsCreated']++;
 		}
 		return $summary;
 	}
 
-	private function import_events($events, $summary, $asset_map)
+	private function process_events($events, $summary, $asset_map, $mutate)
 	{
 		global $wpdb;
 		foreach ($events as $event) {
@@ -389,38 +541,50 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 			}
 
 			$asset_id = $this->asset_id_from_backup_reference($event, $asset_map);
-			$created_at = $this->backup_datetime($event, 'createdAt');
+			$created_at = $this->backup_datetime($event, 'createdAt', true);
 			$event_source = $this->backup_text($event, array('eventSource'), 'key', 'import');
 			$event_type = $this->backup_text($event, array('eventType'), 'key', 'restored');
 			$message = $this->backup_text($event, array('message'), 'textarea');
-			if ($this->event_exists($asset_id, $event_source, $event_type, $message, $created_at)) {
+			if ($created_at === '') {
+				$summary['skipped']['events']++;
+				$this->add_warning($summary, '变更记录缺少有效创建时间，已跳过。');
+				continue;
+			}
+			if ($asset_id > 0 && $this->event_exists($asset_id, $event_source, $event_type, $message, $created_at)) {
+				if (!$mutate) {
+					$summary['planned']['eventsExisting']++;
+				}
 				$summary['skipped']['events']++;
 				continue;
 			}
 
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table restore.
-			$result = $wpdb->insert(
-				Npcink_Device_Inventory_V3_Tables::events(),
-				array(
-					'asset_id' => $asset_id ? $asset_id : null,
-					'event_source' => $event_source,
-					'event_type' => $event_type,
-					'field_name' => $this->backup_text($event, array('fieldName'), 'text'),
-					'old_value' => $this->backup_text($event, array('oldValue'), 'textarea'),
-					'new_value' => $this->backup_text($event, array('newValue'), 'textarea'),
-					'message' => $message,
-					'actor_user_id' => isset($event['actorUserId']) ? intval($event['actorUserId']) : null,
-					'actor_name' => $this->backup_text($event, array('actorName'), 'text'),
-					'payload_json' => Npcink_Device_Inventory_V3_Sanitizer::json_encode(isset($event['payload']) && is_array($event['payload']) ? $event['payload'] : array()),
-					'created_at' => $created_at,
-				),
-				array('%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s')
-			);
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			if ($result === false) {
-				throw new Exception('Failed to create event backup row.');
+			if ($mutate) {
+				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table restore.
+				$result = $wpdb->insert(
+					Npcink_Device_Inventory_V3_Tables::events(),
+					array(
+						'asset_id' => $asset_id > 0 ? $asset_id : null,
+						'event_source' => $event_source,
+						'event_type' => $event_type,
+						'field_name' => $this->backup_text($event, array('fieldName'), 'text'),
+						'old_value' => $this->backup_text($event, array('oldValue'), 'textarea'),
+						'new_value' => $this->backup_text($event, array('newValue'), 'textarea'),
+						'message' => $message,
+						'actor_user_id' => isset($event['actorUserId']) ? intval($event['actorUserId']) : null,
+						'actor_name' => $this->backup_text($event, array('actorName'), 'text'),
+						'payload_json' => $this->safe_json_field($event, 'payload'),
+						'created_at' => $created_at,
+					),
+					array('%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s')
+				);
+				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+				if ($result === false) {
+					throw new Exception('Failed to create event backup row.');
+				}
+				$summary['imported']['eventsCreated']++;
+			} else {
+				$summary['planned']['eventsCreated']++;
 			}
-			$summary['imported']['eventsCreated']++;
 		}
 		return $summary;
 	}
@@ -438,27 +602,61 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 			'category' => $this->backup_text($asset, array('category'), 'text'),
 			'purchase_price' => isset($asset['purchasePrice']) ? floatval($asset['purchasePrice']) : 0,
 			'residual_value' => isset($asset['residualValue']) ? floatval($asset['residualValue']) : 0,
-			'metadata_json' => Npcink_Device_Inventory_V3_Sanitizer::json_encode(isset($asset['metadata']) && is_array($asset['metadata']) ? $asset['metadata'] : array()),
-			'created_at' => $this->backup_datetime($asset, 'createdAt'),
-			'updated_at' => $this->backup_datetime($asset, 'updatedAt'),
+			'metadata_json' => $this->safe_json_field($asset, 'metadata'),
+			'created_at' => $this->backup_datetime($asset, 'createdAt', false),
+			'updated_at' => $this->backup_datetime($asset, 'updatedAt', false),
 		);
 	}
 
-	private function find_asset($uuid, $asset_number)
+	private function asset_update_row($row, $matched_by_uuid)
 	{
+		$update = array(
+			'asset_type' => $row['asset_type'],
+			'name' => $row['name'],
+			'owner_name' => $row['owner_name'],
+			'department' => $row['department'],
+			'status' => $row['status'],
+			'category' => $row['category'],
+			'purchase_price' => $row['purchase_price'],
+			'residual_value' => $row['residual_value'],
+			'metadata_json' => $row['metadata_json'],
+			'updated_at' => current_time('mysql'),
+		);
+		$formats = array('%s', '%s', '%s', '%s', '%s', '%s', '%f', '%f', '%s', '%s');
+		if ($matched_by_uuid) {
+			$update['asset_number'] = $row['asset_number'];
+			$formats[] = '%s';
+		}
+
+		return array('row' => $update, 'formats' => $formats);
+	}
+
+	private function find_asset_by_uuid($uuid)
+	{
+		if ($uuid === '') {
+			return null;
+		}
 		global $wpdb;
-		$table = Npcink_Device_Inventory_V3_Tables::assets();
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned restore lookup.
 		$row = $wpdb->get_row(
-			$wpdb->prepare('SELECT * FROM %i WHERE uuid = %s LIMIT 1', $table, $uuid),
+			$wpdb->prepare('SELECT * FROM %i WHERE uuid = %s LIMIT 1', Npcink_Device_Inventory_V3_Tables::assets(), $uuid),
 			ARRAY_A
 		);
-		if (!$row && $asset_number !== '') {
-			$row = $wpdb->get_row(
-				$wpdb->prepare('SELECT * FROM %i WHERE asset_number = %s LIMIT 1', $table, $asset_number),
-				ARRAY_A
-			);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		return $row;
+	}
+
+	private function find_asset_by_number($asset_number)
+	{
+		if ($asset_number === '') {
+			return null;
 		}
+		global $wpdb;
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned restore lookup.
+		$row = $wpdb->get_row(
+			$wpdb->prepare('SELECT * FROM %i WHERE asset_number = %s LIMIT 1', Npcink_Device_Inventory_V3_Tables::assets(), $asset_number),
+			ARRAY_A
+		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		return $row;
 	}
@@ -506,8 +704,14 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 		if (isset($item['assetId']) && isset($asset_map['by_old_id'][intval($item['assetId'])])) {
 			return intval($asset_map['by_old_id'][intval($item['assetId'])]);
 		}
-		if ($uuid !== '' || $asset_number !== '') {
-			$existing = $this->find_asset($uuid, $asset_number);
+		if ($uuid !== '') {
+			$existing = $this->find_asset_by_uuid($uuid);
+			if ($existing) {
+				return intval($existing['id']);
+			}
+		}
+		if ($asset_number !== '') {
+			$existing = $this->find_asset_by_number($asset_number);
 			if ($existing) {
 				return intval($existing['id']);
 			}
@@ -580,6 +784,11 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 		return !empty($found);
 	}
 
+	private function safe_json_field($item, $key)
+	{
+		return Npcink_Device_Inventory_V3_Sanitizer::json_encode(isset($item[$key]) && is_array($item[$key]) ? $item[$key] : array());
+	}
+
 	private function backup_text($item, $keys, $mode = 'text', $fallback = '')
 	{
 		foreach ($keys as $key) {
@@ -601,17 +810,65 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 		return $fallback;
 	}
 
-	private function backup_datetime($item, $key)
+	private function backup_datetime($item, $key, $required)
 	{
 		if (!isset($item[$key]) || !is_scalar($item[$key])) {
-			return current_time('mysql');
+			return $required ? '' : current_time('mysql');
 		}
 		$value = sanitize_text_field((string) $item[$key]);
 		$timestamp = strtotime($value);
 		if (!$timestamp) {
-			return current_time('mysql');
+			return $required ? '' : current_time('mysql');
 		}
 		return gmdate('Y-m-d H:i:s', $timestamp);
+	}
+
+	private function count_backup_identities($groups)
+	{
+		$count = 0;
+		foreach ($groups as $group) {
+			if (is_array($group) && isset($group['identities']) && is_array($group['identities'])) {
+				$count += count($group['identities']);
+			} else {
+				$count++;
+			}
+		}
+		return $count;
+	}
+
+	private function generate_unique_asset_uuid()
+	{
+		for ($attempt = 0; $attempt < 5; $attempt++) {
+			$uuid = wp_generate_uuid4();
+			if (!$this->find_asset_by_uuid($uuid)) {
+				return $uuid;
+			}
+		}
+		throw new Exception('Failed to generate unique asset UUID.');
+	}
+
+	private function add_warning(&$summary, $message)
+	{
+		if (!in_array($message, $summary['warnings'], true)) {
+			$summary['warnings'][] = $message;
+		}
+	}
+
+	private function assert_no_import_conflicts($summary)
+	{
+		if (!empty($summary['conflicts'])) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Summary is structured REST error data, not HTML output.
+			throw new Npcink_Device_Inventory_Backup_Restore_Conflict_Exception($summary);
+		}
+	}
+
+	private function empty_asset_map()
+	{
+		return array(
+			'by_old_id' => array(),
+			'by_uuid' => array(),
+			'by_number' => array(),
+		);
 	}
 
 	private function bump_cache_versions()

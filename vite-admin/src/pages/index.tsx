@@ -211,6 +211,18 @@ const BACKUP_RESTORE_SECTION_LABELS: Record<keyof BackupRestoreSummary["availabl
   observations: "电脑采集快照",
 };
 
+const BACKUP_RESTORE_PLAN_LABELS: Record<keyof BackupRestoreSummary["planned"], string> = {
+  settings: "设置恢复",
+  assetsCreated: "新增资产",
+  assetsUpdated: "更新资产",
+  identitiesCreated: "新增设备匹配标识",
+  identitiesExisting: "已存在设备匹配标识",
+  observationsCreated: "新增电脑采集快照",
+  observationsExisting: "已存在电脑采集快照",
+  eventsCreated: "新增变更记录",
+  eventsExisting: "已存在变更记录",
+};
+
 const SAVED_FILTER_STORAGE_KEY = "npcink-device-inventory.savedFilters";
 const HANDLED_ISSUES_STORAGE_KEY = "npcink-device-inventory.handledIssues";
 const WORKSPACE_TAB_STORAGE_KEY = "npcink-device-inventory.workspaceTab";
@@ -5224,6 +5236,7 @@ const BackupRestoreModal = ({ open, onClose, onImported }: BackupRestoreModalPro
   const [rawText, setRawText] = useState("");
   const [backup, setBackup] = useState<unknown>(null);
   const [summary, setSummary] = useState<BackupRestoreSummary | null>(null);
+  const [restoreConfirmed, setRestoreConfirmed] = useState(false);
   const previewMutation = useMutation(
     async (text: string) => {
       const parsed = JSON.parse(text);
@@ -5234,11 +5247,13 @@ const BackupRestoreModal = ({ open, onClose, onImported }: BackupRestoreModalPro
       onSuccess: (result) => {
         setBackup(result.parsed);
         setSummary(result.summary);
+        setRestoreConfirmed(false);
         message.success("备份文件校验通过");
       },
       onError: (error) => {
         setBackup(null);
         setSummary(null);
+        setRestoreConfirmed(false);
         message.error(error instanceof Error ? error.message : "备份文件校验失败");
       },
     }
@@ -5257,10 +5272,12 @@ const BackupRestoreModal = ({ open, onClose, onImported }: BackupRestoreModalPro
         setRawText("");
         setBackup(null);
         setSummary(null);
+        setRestoreConfirmed(false);
         onImported();
         onClose();
       },
       onError: (error) => {
+        setRestoreConfirmed(false);
         message.error(error instanceof Error ? error.message : "JSON 备份导入失败");
       },
     }
@@ -5271,6 +5288,7 @@ const BackupRestoreModal = ({ open, onClose, onImported }: BackupRestoreModalPro
       setRawText("");
       setBackup(null);
       setSummary(null);
+      setRestoreConfirmed(false);
       previewMutation.reset();
       restoreMutation.reset();
     }
@@ -5291,6 +5309,21 @@ const BackupRestoreModal = ({ open, onClose, onImported }: BackupRestoreModalPro
       count: value,
     }))
     : [];
+  const planRows = summary
+    ? Object.entries(summary.planned).map(([key, value]) => ({
+      key,
+      label: BACKUP_RESTORE_PLAN_LABELS[key as keyof BackupRestoreSummary["planned"]],
+      count: value,
+    })).filter((item) => item.count > 0)
+    : [];
+  const skipRows = summary
+    ? Object.entries(summary.skipped).map(([key, value]) => ({
+      key,
+      label: BACKUP_RESTORE_SECTION_LABELS[key as keyof BackupRestoreSummary["skipped"]],
+      count: value,
+    })).filter((item) => item.count > 0)
+    : [];
+  const hasConflicts = Boolean(summary?.conflicts.length);
 
   return (
     <Modal
@@ -5310,7 +5343,7 @@ const BackupRestoreModal = ({ open, onClose, onImported }: BackupRestoreModalPro
           key="restore"
           type="primary"
           danger
-          disabled={!backup || !summary}
+          disabled={!backup || !summary || hasConflicts || !restoreConfirmed}
           loading={restoreMutation.isLoading}
           onClick={() => restoreMutation.mutate()}
         >
@@ -5339,6 +5372,7 @@ const BackupRestoreModal = ({ open, onClose, onImported }: BackupRestoreModalPro
               setRawText(text);
               setBackup(null);
               setSummary(null);
+              setRestoreConfirmed(false);
               parseSource(text);
             };
             reader.readAsText(file);
@@ -5351,6 +5385,7 @@ const BackupRestoreModal = ({ open, onClose, onImported }: BackupRestoreModalPro
             setRawText(event.target.value);
             setBackup(null);
             setSummary(null);
+            setRestoreConfirmed(false);
           }}
           placeholder="粘贴从本插件“JSON 备份导出”生成的备份内容"
         />
@@ -5372,6 +5407,45 @@ const BackupRestoreModal = ({ open, onClose, onImported }: BackupRestoreModalPro
                 { title: "可导入数量", dataIndex: "count", width: 140 },
               ]}
             />
+            <Table
+              rowKey="key"
+              size="small"
+              pagination={false}
+              dataSource={planRows}
+              locale={{ emptyText: "没有需要创建或更新的数据" }}
+              columns={[
+                { title: "导入计划", dataIndex: "label" },
+                { title: "数量", dataIndex: "count", width: 140 },
+              ]}
+            />
+            {skipRows.length ? (
+              <Table
+                rowKey="key"
+                size="small"
+                pagination={false}
+                dataSource={skipRows}
+                columns={[
+                  { title: "跳过区段", dataIndex: "label" },
+                  { title: "跳过数量", dataIndex: "count", width: 140 },
+                ]}
+              />
+            ) : null}
+            {hasConflicts ? (
+              <Alert
+                type="error"
+                showIcon
+                message="发现导入冲突"
+                description={(
+                  <Space direction="vertical" size={4}>
+                    {summary.conflicts.map((conflict) => (
+                      <Text key={conflict} type="danger">
+                        {conflict}
+                      </Text>
+                    ))}
+                  </Space>
+                )}
+              />
+            ) : null}
             <div className="npcink-v3-checkbox-row">
               {summary.warnings.map((warning) => (
                 <Tag color="orange" key={warning}>
@@ -5379,6 +5453,13 @@ const BackupRestoreModal = ({ open, onClose, onImported }: BackupRestoreModalPro
                 </Tag>
               ))}
             </div>
+            <Checkbox
+              checked={restoreConfirmed}
+              disabled={hasConflicts}
+              onChange={(event) => setRestoreConfirmed(event.target.checked)}
+            >
+              我确认会按预览计划合并/更新正式站点数据，且已保留当前站点备份
+            </Checkbox>
           </Space>
         ) : (
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="先选择或粘贴 JSON，再校验预览" />

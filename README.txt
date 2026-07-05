@@ -50,6 +50,10 @@ No. Device upload endpoints require a client authorization token and HMAC signat
 
 The plugin only deletes its custom tables and settings when the stored v3 uninstall option explicitly allows data deletion.
 
+= Can I restore a JSON backup on another site? =
+
+Yes. Use the admin JSON backup preview first, review planned creates, updates, skipped rows, conflicts, and warnings, then confirm the import. The restore process merges plugin business data and does not clear existing inventory rows. Client upload secrets, public query access code plaintext, public query enabled state, and client upload base URL are not restored from backups and must be configured again on the target site.
+
 = Where is the source for bundled JavaScript? =
 
 The project repository includes the built files and the corresponding React/TypeScript source:

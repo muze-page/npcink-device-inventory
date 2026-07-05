@@ -52,10 +52,11 @@ await removeReleaseJunk(stagingPlugin);
 await rm(output, { force: true });
 execFileSync("zip", ["-qr", output, slug], { cwd: stagingRoot });
 await rm(packageDir, { recursive: true, force: true });
-await cp(stagingPlugin, packageDir, { recursive: true });
 if (shouldBuildSubmissionPackage) {
   await mkdir(submissionDir, { recursive: true });
   await cp(output, submissionZip);
+} else {
+  await rm(submissionZip, { force: true });
 }
 await rm(stagingRoot, { recursive: true, force: true });
 execFileSync("node", ["scripts/check-wordpress-org-review-rules.mjs", "release/npcink-device-inventory.zip"], {
