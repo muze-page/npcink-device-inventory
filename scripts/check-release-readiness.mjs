@@ -8,6 +8,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 const viteAdminDir = path.join(repoRoot, "vite-admin");
 const releaseZip = path.join(repoRoot, "release/npcink-device-inventory.zip");
 const submissionZip = path.join(repoRoot, "sj/npcink-device-inventory.zip");
+const shouldCheckSubmissionPackage = process.argv.includes("--submission");
 const slug = "npcink-device-inventory";
 const builtAssetFiles = [
   "vite-admin/dist/index.html",
@@ -64,7 +65,9 @@ for (const step of steps) {
   runStep(step);
 }
 
-for (const zipPath of [releaseZip, submissionZip]) {
+const zipPaths = shouldCheckSubmissionPackage ? [releaseZip, submissionZip] : [releaseZip];
+
+for (const zipPath of zipPaths) {
   if (!existsSync(zipPath)) {
     console.error(`Missing release package: ${path.relative(repoRoot, zipPath)}`);
     process.exit(1);
@@ -88,13 +91,15 @@ for (const zipPath of [releaseZip, submissionZip]) {
 }
 
 const releaseHash = sha256(releaseZip);
-const submissionHash = sha256(submissionZip);
 
-if (releaseHash !== submissionHash) {
-  console.error("Release packages differ.");
-  console.error(`release: ${releaseHash}`);
-  console.error(`sj:      ${submissionHash}`);
-  process.exit(1);
+if (shouldCheckSubmissionPackage) {
+  const submissionHash = sha256(submissionZip);
+  if (releaseHash !== submissionHash) {
+    console.error("Release packages differ.");
+    console.error(`release: ${releaseHash}`);
+    console.error(`sj:      ${submissionHash}`);
+    process.exit(1);
+  }
 }
 
 console.log("");

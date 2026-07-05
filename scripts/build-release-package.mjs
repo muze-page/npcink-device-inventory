@@ -13,6 +13,7 @@ const stagingPlugin = path.join(stagingRoot, slug);
 const output = path.join(releaseDir, `${slug}.zip`);
 const packageDir = path.join(releaseDir, slug);
 const submissionZip = path.join(submissionDir, `${slug}.zip`);
+const shouldBuildSubmissionPackage = process.argv.includes("--submission");
 
 const rootFiles = [
   "index.php",
@@ -52,8 +53,10 @@ await rm(output, { force: true });
 execFileSync("zip", ["-qr", output, slug], { cwd: stagingRoot });
 await rm(packageDir, { recursive: true, force: true });
 await cp(stagingPlugin, packageDir, { recursive: true });
-await mkdir(submissionDir, { recursive: true });
-await cp(output, submissionZip);
+if (shouldBuildSubmissionPackage) {
+  await mkdir(submissionDir, { recursive: true });
+  await cp(output, submissionZip);
+}
 await rm(stagingRoot, { recursive: true, force: true });
 execFileSync("node", ["scripts/check-wordpress-org-review-rules.mjs", "release/npcink-device-inventory.zip"], {
   cwd: repoRoot,
@@ -61,6 +64,9 @@ execFileSync("node", ["scripts/check-wordpress-org-review-rules.mjs", "release/n
 });
 
 console.log(`Built ${path.relative(repoRoot, output)}`);
+if (shouldBuildSubmissionPackage) {
+  console.log(`Copied ${path.relative(repoRoot, submissionZip)}`);
+}
 
 async function assertVersionMatchesReadme() {
   const pluginFile = await readFile(path.join(stagingPlugin, "npcink-device-inventory.php"), "utf8");

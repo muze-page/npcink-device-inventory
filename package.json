@@ -4,8 +4,9 @@
   "type": "module",
   "scripts": {
     "build:release": "node scripts/build-release-package.mjs",
-    "check:wporg-review": "node scripts/check-wordpress-org-review-rules.mjs release/npcink-device-inventory.zip sj/npcink-device-inventory.zip",
-    "check:package": "node scripts/check-release-package.mjs release/npcink-device-inventory.zip && node scripts/check-release-package.mjs sj/npcink-device-inventory.zip && npm run check:wporg-review",
+    "build:submission": "node scripts/build-release-package.mjs --submission",
+    "check:wporg-review": "node scripts/check-wordpress-org-review-rules.mjs release/npcink-device-inventory.zip",
+    "check:package": "node scripts/check-release-package.mjs release/npcink-device-inventory.zip && npm run check:wporg-review",
     "check:release": "node scripts/check-release-readiness.mjs"
   }
 }
