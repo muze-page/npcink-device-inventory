@@ -3,8 +3,12 @@
 This repository builds three release artifacts through GitHub Actions:
 
 - `npcink-device-inventory-plugin.zip`: installable Npcink Device Inventory WordPress plugin package.
-- `Npcink Device Agent_*.dmg`: macOS hardware information uploader.
+- `Npcink Device Agent_*.dmg`: macOS hardware information uploader for Apple Silicon internal testing.
 - `Npcink Device Agent_*_x64-setup.exe`: Windows hardware information uploader.
+
+macOS DMG artifacts are currently unsigned and not notarized. They are attached
+to tagged releases for internal testing only; public distribution must add Apple
+Developer ID signing and notarization first.
 
 ## Preview build
 
@@ -53,8 +57,8 @@ git push origin v0.1.0
 ```
 
 The `Build release packages` workflow runs only for `v*` tags and uploads the
-artifacts to a GitHub Release automatically. Do not use a tag until the preview
-artifacts have been checked.
+WordPress plugin zip, macOS DMG, and Windows installer to a GitHub Release
+automatically. Do not use a tag until the preview artifacts have been checked.
 
 ## Packaging boundaries
 
@@ -74,8 +78,9 @@ plugin zip.
 
 ## Distribution notes
 
-The first macOS DMG is unsigned. It is usable for internal testing, but public
-distribution should add Apple Developer ID signing and notarization.
+macOS DMG is currently unsigned and not notarized. It is included in tagged
+releases for internal testing, but public distribution must add Apple Developer
+ID signing and notarization first.
 
 The Windows package currently uses Tauri NSIS output. Add code signing before
 distributing outside a trusted internal environment.

@@ -4,7 +4,7 @@ Tags: inventory, assets, device management, rest api, admin
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.7.3
+Stable tag: 2.7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -77,6 +77,11 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 
 == Changelog ==
 
+= 2.7.4 =
+* Default the admin computer asset list to latest observed uploads and show upload update time consistently.
+* Improve first-screen admin loading, detail modal rendering, search highlighting, and macOS device visuals.
+* Localize the plugin list settings link and reduce desktop uploader success dialog details to asset number and device.
+
 = 2.7.3 =
 * Improve the admin asset inventory workspace with clearer hardware inventory and value analysis views.
 * Group memory inventory by capacity and disk inventory by disk type and capacity.
@@ -101,6 +106,9 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 * Moved desktop uploads to signed v3 device observations.
 
 == Upgrade Notice ==
+
+= 2.7.4 =
+This release improves latest-upload asset sorting, admin loading feedback, search highlighting, macOS visuals, and uploader privacy messaging.
 
 = 2.7.3 =
 This release improves admin inventory analysis, hardware capacity grouping, and repeated upload handling.

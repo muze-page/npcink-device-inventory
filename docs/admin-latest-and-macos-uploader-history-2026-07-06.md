@@ -210,6 +210,8 @@ hdiutil verify "ele-rs/src-tauri/target/release/bundle/dmg/Npcink Device Agent_0
 
 后续如果继续发布新版本，建议先处理 macOS 签名和公证，否则即使图标已修复，用户下载 Mac DMG 仍可能看到“已损坏，无法打开”。
 
+`v2.7.4` 的 GitHub Release 会产出 WordPress 插件 zip、Windows 安装包和 Mac DMG。Mac DMG 仅供内部测试，当前未签名、未公证；后续正式面向普通 Mac 用户分发前，需要补 Apple Developer ID 签名和 notarization。
+
 后续如果继续优化后台性能，不要把所有 REST 请求都改成首屏注入。当前只对默认资产列表做注入是合理边界；筛选、分页、搜索仍应保持 REST 查询，避免页面初始 HTML 变重。
 
 后续如果继续调整上传成功弹窗，应保持“普通用户端少展示管理字段”的边界。资产使用人、部门、状态、匹配细节属于后台管理界面，不应回流到上传软件成功弹窗中。

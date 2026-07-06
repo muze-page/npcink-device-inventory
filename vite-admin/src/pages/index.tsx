@@ -694,7 +694,7 @@ const readCachedAssetList = (params: AssetListParams): PaginatedResult<Asset> | 
       return undefined;
     }
     return parsed.result;
-  } catch (_error) {
+  } catch {
     return undefined;
   }
 };
@@ -711,7 +711,7 @@ const writeCachedAssetList = (params: AssetListParams, result: PaginatedResult<A
         result,
       })
     );
-  } catch (_error) {
+  } catch {
     // Storage can be unavailable in private mode; the REST result remains authoritative.
   }
 };
