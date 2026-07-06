@@ -29,6 +29,7 @@ if (!defined('ABSPATH')) {
  */
 class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_Interface
 {
+	const SCHEMA_REVISION = '20260706_latest_observed';
 
 	/**
 	 * 插件激活时运行的主要方法
@@ -52,6 +53,7 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 		self::create_table_asset_observations();
 		self::create_table_asset_events();
 		self::normalize_json_storage_columns();
+		$latest_observation_columns_ready = self::sync_latest_observation_columns();
 
 		self::create_default_v3_options();
 
@@ -59,6 +61,9 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 			update_option('npcink_device_inventory_plugin_version', $current_version);
 		}
 		update_option('npcink_device_inventory_data_model_version', '3');
+		if ($latest_observation_columns_ready) {
+			update_option('npcink_device_inventory_schema_revision', self::SCHEMA_REVISION);
+		}
 	}
 
 	/**
@@ -129,6 +134,8 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 	        purchase_price DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT '采购价',
 	        residual_value DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT '残值',
 	        metadata_json LONGTEXT COMMENT 'JSON encoded extended asset information',
+	        latest_observation_id BIGINT UNSIGNED DEFAULT NULL COMMENT 'Latest observation row ID',
+	        latest_observed_at DATETIME DEFAULT NULL COMMENT 'Latest observation time',
 	        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 	        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 	        PRIMARY KEY  (id),
@@ -138,6 +145,8 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 	        KEY idx_department_status (department, status),
 	        KEY idx_owner_name (owner_name),
 	        KEY idx_category (category),
+	        KEY idx_latest_observed (latest_observed_at, updated_at),
+	        KEY idx_latest_observation_id (latest_observation_id),
 	        KEY idx_updated_at (updated_at)
 	     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='资产主表';";
 
@@ -260,5 +269,52 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 				"ALTER TABLE $quoted_table MODIFY `$column_name` LONGTEXT COMMENT '" . esc_sql($comment) . "'"
 			);
 		}
+	}
+
+	/**
+	 * Backfill denormalized latest observation columns used by the admin asset list.
+	 */
+	private static function sync_latest_observation_columns()
+	{
+		global $wpdb;
+		$assets_table = $wpdb->prefix . self::$table_assets_name;
+		$observations_table = $wpdb->prefix . self::$table_asset_observations_name;
+		$quoted_assets = self::quote_internal_table_name($assets_table);
+		$quoted_observations = self::quote_internal_table_name($observations_table);
+		if ($quoted_assets === null || $quoted_observations === null) {
+			return false;
+		}
+		$column_count = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME IN (%s, %s)',
+				$assets_table,
+				'latest_observation_id',
+				'latest_observed_at'
+			)
+		);
+		if (intval($column_count) !== 2) {
+			return false;
+		}
+
+		$wpdb->query(
+			"UPDATE $quoted_assets a
+			SET
+				a.updated_at = a.updated_at,
+				a.latest_observation_id = (
+					SELECT o.id
+					FROM $quoted_observations o
+					WHERE o.asset_id = a.id
+					ORDER BY o.observed_at DESC, o.id DESC
+					LIMIT 1
+				),
+				a.latest_observed_at = (
+					SELECT o.observed_at
+					FROM $quoted_observations o
+					WHERE o.asset_id = a.id
+					ORDER BY o.observed_at DESC, o.id DESC
+					LIMIT 1
+				)"
+		);
+		return true;
 	}
 }

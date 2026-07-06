@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
+import { AppleFilled, DesktopOutlined, PlusOutlined, SearchOutlined, WindowsFilled } from "@ant-design/icons";
 import {
   Alert,
   Button,
@@ -24,7 +24,7 @@ import {
   message,
 } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
-import { RestUrl, Site } from "@/utils/index";
+import { InitialAssets, RestUrl, Site } from "@/utils/index";
 import {
   archiveAsset,
   createAsset,
@@ -60,6 +60,7 @@ import type {
   CreatedClientToken,
   InventorySettings,
   JsonRecord,
+  PaginatedResult,
 } from "@/type/v3";
 import {
   assetHardwareContext,
@@ -348,6 +349,43 @@ const formatHardwareHeroText = (
   return vendor || fallback;
 };
 
+type PlatformKind = "macos" | "windows" | "device";
+
+interface PlatformVisual {
+  kind: PlatformKind;
+  label: string;
+}
+
+const resolvePlatformVisual = (...values: unknown[]): PlatformVisual => {
+  const text = values
+    .map((value) => String(value || ""))
+    .join(" ")
+    .toLowerCase();
+  if (/macos|mac\s*os|darwin|\bmac\b|macbook|imac|mac\s*mini|mac\s*studio|apple\s*m\d|\bm\d\s*(pro|max|ultra)?\b/i.test(text)) {
+    return { kind: "macos", label: "macOS" };
+  }
+  if (/windows|win32|win64|\bwin\b/i.test(text)) {
+    return { kind: "windows", label: "Windows" };
+  }
+  return { kind: "device", label: "Device" };
+};
+
+const platformIcon = (kind: PlatformKind) => {
+  if (kind === "macos") {
+    return <AppleFilled />;
+  }
+  if (kind === "windows") {
+    return <WindowsFilled />;
+  }
+  return <DesktopOutlined />;
+};
+
+const PlatformMark = ({ visual, variant }: { visual: PlatformVisual; variant: "card" | "hero" }) => (
+  <div className={`npcink-v3-platform-mark is-${variant} is-${visual.kind}`} aria-hidden="true">
+    {platformIcon(visual.kind)}
+  </div>
+);
+
 const countStatus = (assets: Asset[], status: string) =>
   assets.filter((asset) => asset.status === status).length;
 
@@ -585,6 +623,110 @@ const assetPurchaseDateText = (asset: Asset) => {
   return firstText(purchase.order_time, asset.createdAt);
 };
 
+const assetUpdateTimeText = (asset: Asset) =>
+  formatDate(asset.latestObservation?.observedAt || asset.updatedAt);
+
+const searchHighlightKeyword = (keyword?: string) => (keyword || "").trim();
+
+const shouldHighlightText = (text: string, keyword: string, exactShortMatch = false) => {
+  if (!keyword || text === "-") {
+    return false;
+  }
+  if (keyword.length >= 2) {
+    return text.toLowerCase().includes(keyword.toLowerCase());
+  }
+  return exactShortMatch && text.toLowerCase() === keyword.toLowerCase();
+};
+
+const highlightText = (value: unknown, keyword?: string, exactShortMatch = false): ReactNode => {
+  const text = fieldText(value);
+  const normalizedKeyword = searchHighlightKeyword(keyword);
+  if (!shouldHighlightText(text, normalizedKeyword, exactShortMatch)) {
+    return text;
+  }
+  const index = text.toLowerCase().indexOf(normalizedKeyword.toLowerCase());
+  if (index < 0) {
+    return text;
+  }
+  const before = text.slice(0, index);
+  const match = text.slice(index, index + normalizedKeyword.length);
+  const after = text.slice(index + normalizedKeyword.length);
+  return (
+    <>
+      {before}
+      <mark className="npcink-v3-search-highlight">{match}</mark>
+      {after}
+    </>
+  );
+};
+
+const ASSET_LIST_CACHE_PREFIX = "npcinkDeviceInventoryAssetList:";
+const ASSET_LIST_CACHE_TTL_MS = 10 * 60 * 1000;
+
+const normalizedAssetListParams = (params: AssetListParams) => ({
+  page: params.page || 1,
+  pageSize: params.pageSize || 10,
+  search: params.search || "",
+  assetScope: params.assetScope || "computer",
+  assetType: params.assetType || "",
+  status: params.status || "",
+  department: params.department || "",
+  category: params.category || "",
+  purchasePlatform: params.purchasePlatform || "",
+  sortBy: params.sortBy || "latestObserved",
+});
+
+const assetListCacheKey = (params: AssetListParams) =>
+  `${ASSET_LIST_CACHE_PREFIX}${JSON.stringify(normalizedAssetListParams(params))}`;
+
+const readCachedAssetList = (params: AssetListParams): PaginatedResult<Asset> | undefined => {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+  try {
+    const raw = window.localStorage.getItem(assetListCacheKey(params));
+    if (!raw) {
+      return undefined;
+    }
+    const parsed = JSON.parse(raw) as { cachedAt?: number; result?: PaginatedResult<Asset> };
+    if (!parsed.cachedAt || Date.now() - parsed.cachedAt > ASSET_LIST_CACHE_TTL_MS) {
+      window.localStorage.removeItem(assetListCacheKey(params));
+      return undefined;
+    }
+    return parsed.result;
+  } catch (_error) {
+    return undefined;
+  }
+};
+
+const writeCachedAssetList = (params: AssetListParams, result: PaginatedResult<Asset>) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    window.localStorage.setItem(
+      assetListCacheKey(params),
+      JSON.stringify({
+        cachedAt: Date.now(),
+        result,
+      })
+    );
+  } catch (_error) {
+    // Storage can be unavailable in private mode; the REST result remains authoritative.
+  }
+};
+
+const initialAssetsForParams = (params: AssetListParams): PaginatedResult<Asset> | undefined => {
+  if (!InitialAssets?.params || !InitialAssets.result) {
+    return undefined;
+  }
+  const initialParams = normalizedAssetListParams(InitialAssets.params as AssetListParams);
+  const currentParams = normalizedAssetListParams(params);
+  return JSON.stringify(initialParams) === JSON.stringify(currentParams)
+    ? (InitialAssets.result as PaginatedResult<Asset>)
+    : undefined;
+};
+
 const plainMoneyText = (value: unknown) => {
   const number = Number(value || 0);
   if (!Number.isFinite(number) || number <= 0) {
@@ -709,7 +851,7 @@ const ASSET_EXPORT_FIELDS: Array<{
   { key: "deviceModel", label: "计算机型号", group: "硬件信息", value: (asset) => assetHardwareContext(asset).extracted.deviceModel },
   { key: "baseboard", label: "主板型号", group: "硬件信息", value: (asset) => assetHardwareContext(asset).extracted.baseboard },
   { key: "createdAt", label: "创建时间", group: "系统信息", value: (asset) => formatDate(asset.createdAt) },
-  { key: "updatedAt", label: "更新时间", group: "系统信息", defaultChecked: true, value: (asset) => formatDate(asset.updatedAt) },
+  { key: "updatedAt", label: "更新时间", group: "系统信息", defaultChecked: true, value: assetUpdateTimeText },
 ];
 
 const DEFAULT_ASSET_EXPORT_FIELD_KEYS = ASSET_EXPORT_FIELDS
@@ -1419,7 +1561,7 @@ const hardwareDetailSections = (
         detailRow("category", "分类", asset.category),
         detailRow("purchase", "购置价值", formatMoney(asset.purchasePrice)),
         detailRow("residual", "残值", formatMoney(asset.residualValue)),
-        detailRow("updated", "更新时间", formatDate(asset.updatedAt))
+        detailRow("updated", "更新时间", assetUpdateTimeText(asset))
       ),
     },
     {
@@ -3135,12 +3277,13 @@ const CustomAssetDetail = ({
 interface DetailDrawerProps {
   uuid: string | null;
   open: boolean;
+  initialAsset?: Asset | null;
   departmentOptions?: string[];
   onClose: () => void;
   onArchive: (asset: Asset) => void;
 }
 
-const DetailDrawer = ({ uuid, open, departmentOptions = [], onClose, onArchive }: DetailDrawerProps) => {
+const DetailDrawer = ({ uuid, open, initialAsset = null, departmentOptions = [], onClose, onArchive }: DetailDrawerProps) => {
   const queryClient = useQueryClient();
   const [manualRecordOpen, setManualRecordOpen] = useState(false);
   const [manualRecordKeyword, setManualRecordKeyword] = useState("");
@@ -3150,6 +3293,7 @@ const DetailDrawer = ({ uuid, open, departmentOptions = [], onClose, onArchive }
   const enabled = Boolean(uuid && open);
   const assetQuery = useQuery(["v3-asset", uuid], () => getAsset(uuid || ""), {
     enabled,
+    initialData: initialAsset || undefined,
   });
   const identitiesQuery = useQuery(
     ["v3-asset-identities", uuid],
@@ -3173,6 +3317,12 @@ const DetailDrawer = ({ uuid, open, departmentOptions = [], onClose, onArchive }
   const hardwareContext = assetHardwareContext(asset);
   const summary = hardwareContext.summary;
   const extracted = hardwareContext.extracted;
+  const platformVisual = resolvePlatformVisual(
+    extracted.platform,
+    extracted.cpu,
+    extracted.deviceModel,
+    summary.os_label
+  );
   const sourceRows = useMemo(
     () => (asset ? fieldSourceRows(asset, hardwareContext) : []),
     [asset, hardwareContext]
@@ -3309,15 +3459,10 @@ const DetailDrawer = ({ uuid, open, departmentOptions = [], onClose, onArchive }
         />
       ) : asset ? (
         <Space direction="vertical" size={12} className="npcink-v3-detail-stack">
-          <div className="npcink-v3-device-hero">
+          <div className={`npcink-v3-device-hero is-${platformVisual.kind}`}>
             <div className="npcink-v3-device-brand">
-              <div className="npcink-v3-os-mark" aria-hidden="true">
-                <span />
-                <span />
-                <span />
-                <span />
-              </div>
-              <strong>{extracted.platform || "Device"}</strong>
+              <PlatformMark visual={platformVisual} variant="hero" />
+              <strong>{platformVisual.label}</strong>
             </div>
             <div>
               <h3>{asset.ownerName || asset.name || "未命名资产"}</h3>
@@ -5828,6 +5973,7 @@ const SettingsWorkspace = () => {
 interface AssetCardProps {
   asset: Asset;
   onOpen: () => void;
+  searchKeyword?: string;
   selectable?: boolean;
   selected?: boolean;
   compact?: boolean;
@@ -5837,6 +5983,7 @@ interface AssetCardProps {
 const AssetCard = ({
   asset,
   onOpen,
+  searchKeyword = "",
   selectable = false,
   selected = false,
   compact = false,
@@ -5849,6 +5996,7 @@ const AssetCard = ({
   const baseboardLabel = cardBaseboardLabel(extracted.baseboard || extracted.deviceModel);
   const cpuLabel = cardCpuLabel(extracted.cpu);
   const graphicsLabel = cardGraphicsLabel(extracted.graphics);
+  const platformVisual = resolvePlatformVisual(extracted.platform, extracted.cpu, extracted.deviceModel);
   const handleOpen = () => {
     if (selectable) {
       onSelect?.();
@@ -5877,19 +6025,19 @@ const AssetCard = ({
       ) : null}
       {customInfo ? (
         <div className="npcink-v3-asset-card-body npcink-v3-custom-card-body">
-          <h3>{customInfo.title}</h3>
+          <h3>{highlightText(customInfo.title, searchKeyword)}</h3>
           <dl>
             <div>
               <dt>编号：</dt>
-              <dd>{customInfo.number || "-"}</dd>
+              <dd>{highlightText(customInfo.number, searchKeyword, true)}</dd>
             </div>
             <div>
               <dt>分类：</dt>
-              <dd>{customInfo.category || "-"}</dd>
+              <dd>{highlightText(customInfo.category, searchKeyword)}</dd>
             </div>
             <div>
               <dt>使用：</dt>
-              <dd>{customInfo.usage || "-"}</dd>
+              <dd>{highlightText(customInfo.usage, searchKeyword)}</dd>
             </div>
             <div>
               <dt>价格：</dt>
@@ -5900,27 +6048,28 @@ const AssetCard = ({
               <dd>{customInfo.status || "-"}</dd>
             </div>
             <div>
-              <dt>时间：</dt>
-              <dd>{formatDate(customInfo.createdAt)}</dd>
+              <dt>购置：</dt>
+              <dd>{formatDate(customInfo.orderTime || customInfo.createdAt)}</dd>
+            </div>
+            <div>
+              <dt>更新：</dt>
+              <dd>{assetUpdateTimeText(asset)}</dd>
             </div>
           </dl>
         </div>
       ) : (
         <>
           <div className="npcink-v3-asset-card-brand">
-          <div className="npcink-v3-card-os-mark" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
-          </div>
-            <strong>{extracted.platform || "Windows"}</strong>
+            <PlatformMark visual={platformVisual} variant="card" />
+            <strong>{platformVisual.label}</strong>
           </div>
           <div className="npcink-v3-asset-card-body">
-            <h3>{title}</h3>
-            <p title={fieldText(extracted.baseboard || extracted.deviceModel)}>{baseboardLabel}</p>
-            <p title={fieldText(extracted.cpu)}>{cpuLabel}</p>
-            <p title={fieldText(extracted.graphics)}>{graphicsLabel}</p>
+            <h3>{highlightText(title, searchKeyword)}</h3>
+            <p title={fieldText(extracted.baseboard || extracted.deviceModel)}>
+              {highlightText(baseboardLabel, searchKeyword)}
+            </p>
+            <p title={fieldText(extracted.cpu)}>{highlightText(cpuLabel, searchKeyword)}</p>
+            <p title={fieldText(extracted.graphics)}>{highlightText(graphicsLabel, searchKeyword)}</p>
             <dl>
               <div>
                 <dt>配置：</dt>
@@ -5928,7 +6077,7 @@ const AssetCard = ({
               </div>
               <div>
                 <dt>编号：</dt>
-                <dd>{asset.assetNumber || "-"}</dd>
+                <dd>{highlightText(asset.assetNumber, searchKeyword, true)}</dd>
               </div>
               <div>
                 <dt>状态：</dt>
@@ -5936,7 +6085,11 @@ const AssetCard = ({
               </div>
               <div>
                 <dt>部门：</dt>
-                <dd>{asset.department || "-"}</dd>
+                <dd>{highlightText(asset.department, searchKeyword)}</dd>
+              </div>
+              <div>
+                <dt>更新：</dt>
+                <dd>{assetUpdateTimeText(asset)}</dd>
               </div>
             </dl>
           </div>
@@ -5984,12 +6137,22 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
       status,
       category: assetScope === "other" ? category : undefined,
       purchasePlatform: assetScope === "other" ? purchasePlatform : undefined,
-      sortBy: "latestUpload" as const,
+      sortBy: "latestObserved" as const,
     }),
     [assetScope, assetType, category, page, pageSize, purchasePlatform, search, status]
   );
+  const initialAssetsData = useMemo(
+    () => initialAssetsForParams(queryParams) || readCachedAssetList(queryParams),
+    [queryParams]
+  );
   const assetsQuery = useQuery(["v3-assets", queryParams], () => getAssets(queryParams), {
+    initialData: initialAssetsData,
     keepPreviousData: true,
+    onSuccess: (result) => {
+      if (result) {
+        writeCachedAssetList(queryParams, result);
+      }
+    },
   });
 
   useEffect(() => {
@@ -6130,6 +6293,7 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
   };
 
   const selectedAssets = assets.filter((asset) => selectedUuids.has(asset.uuid));
+  const selectedAsset = selectedUuid ? assets.find((asset) => asset.uuid === selectedUuid) || null : null;
 
   const applySavedFilter = (id: string) => {
     const filter = savedFilters.find((item) => item.id === id);
@@ -6174,7 +6338,7 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
       title: "资产编号",
       dataIndex: "assetNumber",
       width: 170,
-      render: (value: string) => <Text code>{value || "-"}</Text>,
+      render: (value: string) => <Text code>{highlightText(value, search, true)}</Text>,
     },
     {
       title: "资产名称",
@@ -6188,7 +6352,7 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
             setSelectedUuid(asset.uuid);
           }}
         >
-          {value || "未命名资产"}
+          {highlightText(value || "未命名资产", search)}
         </Button>
       ),
     },
@@ -6198,8 +6362,8 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
       width: 120,
       render: assetTypeLabel,
     },
-    { title: "使用人", dataIndex: "ownerName", width: 120, render: (value) => value || "-" },
-    { title: "部门", dataIndex: "department", width: 140, render: (value) => value || "-" },
+    { title: "使用人", dataIndex: "ownerName", width: 120, render: (value) => highlightText(value, search) },
+    { title: "部门", dataIndex: "department", width: 140, render: (value) => highlightText(value, search) },
     {
       title: "状态",
       dataIndex: "status",
@@ -6212,7 +6376,7 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
       title: "更新时间",
       dataIndex: "updatedAt",
       width: 180,
-      render: formatDate,
+      render: (_value, asset) => assetUpdateTimeText(asset),
     },
     {
       title: "操作",
@@ -6451,7 +6615,7 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
 
       {viewMode === "card" ? (
         <div className="npcink-v3-card-surface">
-          {assetsQuery.isLoading || assetsQuery.isFetching ? (
+          {assetsQuery.isLoading && !assets.length ? (
             <Table loading pagination={false} showHeader={false} />
           ) : assets.length ? (
             <div className="npcink-v3-card-grid">
@@ -6459,6 +6623,7 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
                 <AssetCard
                   key={asset.uuid}
                   asset={asset}
+                  searchKeyword={search}
                   onOpen={() => setSelectedUuid(asset.uuid)}
                   selectable={batchMode}
                   selected={selectedUuids.has(asset.uuid)}
@@ -6498,7 +6663,7 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
           size="middle"
           columns={columns}
           dataSource={assets}
-          loading={assetsQuery.isLoading || assetsQuery.isFetching}
+          loading={assetsQuery.isLoading && !assets.length}
           onChange={handleTableChange}
           rowSelection={
             batchMode
@@ -6532,6 +6697,7 @@ const AssetWorkspace = ({ initialScope = "computer", title }: AssetWorkspaceProp
       <DetailDrawer
         uuid={selectedUuid}
         open={Boolean(selectedUuid)}
+        initialAsset={selectedAsset}
         departmentOptions={departmentOptions}
         onClose={() => setSelectedUuid(null)}
         onArchive={confirmArchive}

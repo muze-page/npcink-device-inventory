@@ -36,16 +36,9 @@ class Npcink_Device_Inventory_Asset_Repository
 					lo.observed_at AS latest_observed_at,
 					lo.source AS latest_observation_source
 				FROM %i a
-				LEFT JOIN %i lo ON lo.id = (
-					SELECT o.id
-					FROM %i o
-					WHERE o.asset_id = a.id
-					ORDER BY o.observed_at DESC, o.id DESC
-					LIMIT 1
-				)
+				LEFT JOIN %i lo ON lo.id = a.latest_observation_id
 				WHERE a.uuid = %s",
 				$assets_table,
-				$observations_table,
 				$observations_table,
 				$uuid
 			),
@@ -83,16 +76,9 @@ class Npcink_Device_Inventory_Asset_Repository
 					lo.observed_at AS latest_observed_at,
 					lo.source AS latest_observation_source
 				FROM %i a
-				LEFT JOIN %i lo ON lo.id = (
-					SELECT o.id
-					FROM %i o
-					WHERE o.asset_id = a.id
-					ORDER BY o.observed_at DESC, o.id DESC
-					LIMIT 1
-				)
+				LEFT JOIN %i lo ON lo.id = a.latest_observation_id
 				WHERE a.id = %d",
 				$assets_table,
-				$observations_table,
 				$observations_table,
 				$id
 			),
@@ -211,13 +197,7 @@ class Npcink_Device_Inventory_Asset_Repository
 				lo.observed_at AS latest_observed_at,
 				lo.source AS latest_observation_source
 			FROM %i a
-			LEFT JOIN %i lo ON lo.id = (
-				SELECT o.id
-				FROM %i o
-				WHERE o.asset_id = a.id
-				ORDER BY o.observed_at DESC, o.id DESC
-				LIMIT 1
-			)
+			LEFT JOIN %i lo ON lo.id = a.latest_observation_id
 			WHERE (%s = '' OR a.asset_type = %s)
 			AND (%s = '' OR a.status = %s)
 			AND (%s = '' OR a.department = %s)
@@ -275,14 +255,12 @@ class Npcink_Device_Inventory_Asset_Repository
 						WHEN a.metadata_json LIKE %s THEN 12
 						ELSE 13
 					END ASC,
-					CASE WHEN %s IN ('latest_upload', 'latestupload') THEN a.created_at END DESC,
-					CASE WHEN %s IN ('latest_observed', 'latestobserved') THEN COALESCE(lo.observed_at, a.updated_at, a.created_at) END DESC,
-					CASE WHEN %s IN ('latest_observed', 'latestobserved') THEN a.updated_at END DESC,
+					CASE WHEN %s IN ('latest_upload', 'latestupload', 'latest_observed', 'latestobserved') THEN COALESCE(a.latest_observed_at, a.updated_at, a.created_at) END DESC,
+					CASE WHEN %s IN ('latest_upload', 'latestupload', 'latest_observed', 'latestobserved') THEN a.updated_at END DESC,
 					CASE WHEN %s NOT IN ('latest_upload', 'latestupload', 'latest_observed', 'latestobserved') THEN a.updated_at END DESC,
 					a.id DESC
 				LIMIT %d OFFSET %d",
 				$table,
-				$observations_table,
 				$observations_table,
 				$asset_type,
 				$asset_type,
@@ -323,7 +301,6 @@ class Npcink_Device_Inventory_Asset_Repository
 					$extended_prefix_like,
 					$primary_ip_prefix_like,
 					$like,
-					$sort_by,
 					$sort_by,
 					$sort_by,
 					$sort_by,

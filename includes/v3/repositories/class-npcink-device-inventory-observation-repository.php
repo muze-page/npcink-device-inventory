@@ -32,8 +32,67 @@ class Npcink_Device_Inventory_Observation_Repository
 		if ($result === false) {
 			return null;
 		}
+		$this->update_asset_latest_observation(intval($asset_id), intval($wpdb->insert_id), (string) $row['observed_at']);
 		$this->bump_list_cache_version();
 		return $this->find_by_id($wpdb->insert_id);
+	}
+
+	private function update_asset_latest_observation($asset_id, $observation_id, $observed_at)
+	{
+		global $wpdb;
+		if (!$this->assets_support_latest_observation_columns()) {
+			return;
+		}
+
+		$assets_table = Npcink_Device_Inventory_V3_Tables::assets();
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Observation ingest denormalizes latest observation metadata onto the plugin-owned asset row.
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i
+				SET updated_at = updated_at, latest_observation_id = %d, latest_observed_at = %s
+				WHERE id = %d
+				AND (
+					latest_observed_at IS NULL
+					OR latest_observed_at < %s
+					OR (latest_observed_at = %s AND (latest_observation_id IS NULL OR latest_observation_id < %d))
+				)",
+				$assets_table,
+				$observation_id,
+				$observed_at,
+				$asset_id,
+				$observed_at,
+				$observed_at,
+				$observation_id
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ($updated !== false && class_exists('Npcink_Device_Inventory_Asset_Repository')) {
+			$version = wp_cache_get('list_version', Npcink_Device_Inventory_Asset_Repository::CACHE_GROUP);
+			wp_cache_set('list_version', intval($version === false ? 1 : $version) + 1, Npcink_Device_Inventory_Asset_Repository::CACHE_GROUP);
+		}
+	}
+
+	private function assets_support_latest_observation_columns()
+	{
+		static $supported = null;
+		if ($supported !== null) {
+			return $supported;
+		}
+
+		global $wpdb;
+		$table = Npcink_Device_Inventory_V3_Tables::assets();
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema guard prevents upload failures during rolling upgrades.
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME IN (%s, %s)',
+				$table,
+				'latest_observation_id',
+				'latest_observed_at'
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$supported = intval($count) === 2;
+		return $supported;
 	}
 
 	public function find_by_id($id)

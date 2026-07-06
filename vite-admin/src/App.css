@@ -489,6 +489,13 @@
   font-weight: 500;
 }
 
+.npcink-v3-search-highlight {
+  padding: 0 2px;
+  color: inherit;
+  background: #fff36d;
+  border-radius: 2px;
+}
+
 .npcink-v3-detail-stack {
   width: 100%;
 }
@@ -539,8 +546,8 @@
   gap: 7px;
   width: 200px;
   max-width: 200px;
-  height: 250px;
-  max-height: 250px;
+  height: 268px;
+  max-height: 268px;
   min-height: 0;
   padding: 13px 14px;
   overflow: hidden;
@@ -611,24 +618,42 @@
   line-height: 1;
 }
 
-.npcink-v3-card-os-mark,
-.npcink-v3-os-mark {
+.npcink-v3-platform-mark {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 3px;
+  place-items: center;
+  flex: 0 0 auto;
+  color: #ffffff;
   background: #2f78ff;
 }
 
-.npcink-v3-card-os-mark {
+.npcink-v3-platform-mark.is-card {
   width: 34px;
   height: 34px;
-  padding: 7px;
   border-radius: 50%;
+  font-size: 21px;
 }
 
-.npcink-v3-card-os-mark span,
-.npcink-v3-os-mark span {
-  background: #ffffff;
+.npcink-v3-platform-mark.is-hero {
+  width: 48px;
+  height: 48px;
+  background: transparent;
+  font-size: 40px;
+}
+
+.npcink-v3-platform-mark.is-macos {
+  background: #111111;
+}
+
+.npcink-v3-platform-mark.is-hero.is-macos {
+  background: transparent;
+}
+
+.npcink-v3-platform-mark.is-device {
+  background: #667085;
+}
+
+.npcink-v3-platform-mark.is-hero.is-device {
+  background: transparent;
 }
 
 .npcink-v3-card-type-mark {
@@ -1838,6 +1863,14 @@
   border-radius: 8px;
 }
 
+.npcink-v3-device-hero.is-macos {
+  background: linear-gradient(110deg, #0b0c0f 0%, #17191d 52%, #2e3238 100%);
+}
+
+.npcink-v3-device-hero.is-device {
+  background: linear-gradient(110deg, #475467 0%, #667085 52%, #98a2b3 100%);
+}
+
 .npcink-v3-device-brand {
   display: grid;
   place-items: center;
@@ -1847,19 +1880,20 @@
   background: rgba(20, 72, 197, 0.36);
 }
 
+.npcink-v3-device-hero.is-macos .npcink-v3-device-brand {
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.npcink-v3-device-hero.is-device .npcink-v3-device-brand {
+  background: rgba(52, 64, 84, 0.36);
+}
+
 .npcink-v3-device-brand strong {
   color: #ffffff;
   font-size: 21px;
   font-style: italic;
   font-weight: 600;
   line-height: 1;
-}
-
-.npcink-v3-os-mark {
-  width: 42px;
-  height: 42px;
-  padding: 8px;
-  background: transparent;
 }
 
 .npcink-v3-device-hero > div:last-child {

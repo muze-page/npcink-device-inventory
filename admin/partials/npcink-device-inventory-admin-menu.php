@@ -119,9 +119,57 @@ if (!class_exists('Npcink_Device_Inventory_Admin_Menu')) {
 	                    'rest_nonce' => wp_create_nonce('wp_rest'),
 	                    'locale' => function_exists('determine_locale') ? determine_locale() : get_locale(),
 	                    'labels' => self::admin_labels(),
+	                    'initial_assets' => self::initial_assets_payload(),
 	                )
 	            );
 	        }
+
+        private static function initial_assets_payload()
+        {
+            $params = array(
+                'page' => 1,
+                'pageSize' => 10,
+                'search' => '',
+                'assetScope' => 'computer',
+                'sortBy' => 'latestObserved',
+            );
+
+            try {
+                if (!class_exists('Npcink_Device_Inventory_V3_Rest')) {
+                    require_once plugin_dir_path(dirname(dirname(__FILE__))) . 'includes/v3/class-npcink-device-inventory-v3-rest.php';
+                }
+                Npcink_Device_Inventory_V3_Rest::load();
+
+                $assets = new Npcink_Device_Inventory_Asset_Repository();
+                $identities = new Npcink_Device_Inventory_Identity_Repository();
+                $observations = new Npcink_Device_Inventory_Observation_Repository();
+                $events = new Npcink_Device_Inventory_Event_Repository();
+                $event_service = new Npcink_Device_Inventory_Event_Service($events);
+                $controller = new Npcink_Device_Inventory_Assets_Controller($assets, $identities, $observations, $events, $event_service);
+                $result = $assets->list_assets(
+                    array(
+                        'page' => $params['page'],
+                        'pageSize' => $params['pageSize'],
+                        'search' => $params['search'],
+                        'asset_scope' => $params['assetScope'],
+                        'sort_by' => $params['sortBy'],
+                    )
+                );
+                $items = array_map(array($controller, 'format_asset'), $result['items']);
+
+                return array(
+                    'params' => $params,
+                    'result' => Npcink_Device_Inventory_V3_Response::paginated($items, $result['page'], $result['pageSize'], $result['total']),
+                    'cachedAt' => current_time('mysql'),
+                );
+            } catch (Throwable $error) {
+                return array(
+                    'params' => $params,
+                    'result' => null,
+                    'error' => 'initial_assets_unavailable',
+                );
+            }
+        }
 
         //对js文件进行module接入
         public static function refund_type_script($tag, $handle)

@@ -190,7 +190,8 @@ class Npcink_Device_Inventory
 		}
 
 		$installed_version = get_option('npcink_device_inventory_plugin_version');
-		if ($installed_version === $this->version) {
+		$schema_revision = get_option('npcink_device_inventory_schema_revision');
+		if ($installed_version === $this->version && $schema_revision === '20260706_latest_observed') {
 			return;
 		}
 

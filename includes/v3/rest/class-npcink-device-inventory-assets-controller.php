@@ -374,7 +374,7 @@ class Npcink_Device_Inventory_Assets_Controller
 		return $asset;
 	}
 
-	private function format_asset($row)
+	public function format_asset($row)
 	{
 		if (!$row) {
 			return null;

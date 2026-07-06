@@ -153,8 +153,6 @@ type DiagnosticsProgress = {
 
 type SubmitDeviceAsset = {
   assetNumber?: string;
-  ownerName?: string;
-  department?: string;
   name?: string;
 };
 
@@ -901,8 +899,6 @@ const submitResponsePayload = (value: unknown): SubmitDeviceResponse => {
     mode: stringValue(payload.mode),
     asset: {
       assetNumber: stringValue(asset.assetNumber),
-      ownerName: stringValue(asset.ownerName),
-      department: stringValue(asset.department),
       name: stringValue(asset.name),
     },
   };
@@ -919,8 +915,6 @@ const formatSubmitResultMessage = (response: unknown) => {
         : "设备信息已提交。";
   const rows = [
     ["编号", stringValue(asset.assetNumber)],
-    ["使用人", stringValue(asset.ownerName)],
-    ["部门", stringValue(asset.department)],
     ["设备", stringValue(asset.name)],
   ].filter(([, value]) => value);
 
