@@ -215,3 +215,211 @@ npm run build
 - 资产主数据仍以插件端管理员维护为准。
 - 上传软件继续负责采集和查看，不负责编辑资产主数据。
 - 发布包默认面向 GitHub release，WordPress.org submission 需要显式触发。
+
+## 后续落实：演练、测试与发布前核对
+
+在备份恢复主流程合入后，又继续落实了发布前的四个收口动作：
+
+```text
+a0d590f Add backup restore rehearsal checks
+30e940f Restore settings after backup restore rehearsal
+```
+
+这两次提交补齐了之前 eval-lab 和人工审查指出的“缺少可重复验证入口”问题。
+
+新增本地离线测试：
+
+```bash
+npm run check:backup-restore
+```
+
+覆盖内容：
+
+- dry-run 中存在冲突时，仍能返回预览摘要和 `conflicts`。
+- 非 dry-run 中存在冲突时，返回 `backup_conflicts` 和 `409`。
+- 嵌套 `identities` 会按明细展开计数，超过 `10000` 行返回 `413`。
+- 备份内重复 identity 只计划创建一条，其余跳过并提示。
+- 缺 UUID 的资产在 dry-run 中仍能通过资产编号关联 identity。
+- schema 不匹配返回 `422`。
+
+该检查已经接入：
+
+```bash
+npm run check:release
+npm run check:submission
+```
+
+新增真实 WordPress 迁移演练脚本：
+
+```bash
+WP_PATH="/path/to/wordpress" \
+bash scripts/verify-local-backup-restore.sh
+```
+
+脚本通过 WP-CLI 调用真实 REST route，执行：
+
+1. 清理历史 `RESTORE-E2E-*` 演练资产。
+2. 构造同版本 JSON 备份。
+3. 执行 dry-run，确认会创建资产、identity、observation、event。
+4. 执行正式导入，确认写入数量。
+5. 再次 dry-run，确认重复导入走更新/已存在路径。
+6. 构造 identity 冲突，确认预览有冲突、正式导入返回 `409`。
+7. 清理演练资产。
+8. 恢复演练前的插件设置。
+
+第二次提交 `30e940f` 的原因是：真实站点演练最初会导入测试设置，导致 `public_query_page_slug` 被改成 `restore-e2e-public-search`。修复后脚本会在结束时恢复 `npcink_device_inventory_v3_options` 原值，避免演练污染真实站配置。
+
+## 真实本地站点检查记录
+
+检查站点：
+
+```text
+http://npcink-device-manage.local/
+WP_PATH=/Users/muze/Local Sites/npcink-device-manage/app/public
+```
+
+该站点的插件目录是当前仓库的 symlink：
+
+```text
+/Users/muze/Local Sites/npcink-device-manage/app/public/wp-content/plugins/npcink-device-inventory
+-> /Users/muze/gitee/npcink-device-inventory
+```
+
+使用 Local.app 对应 PHP 和 php.ini 运行 WP-CLI：
+
+```bash
+LOCAL_PHP="/Users/muze/Library/Application Support/Local/lightning-services/php-8.2.29+0/bin/darwin-arm64/bin/php"
+LOCAL_INI="/Users/muze/Library/Application Support/Local/run/sVqJuYLYN/conf/php/php.ini"
+```
+
+真实演练结果：
+
+```text
+Backup restore rehearsal passed.
+restore_e2e_assets=0
+public_query_page_slug=public-search-page
+```
+
+说明：
+
+- 演练数据已清理。
+- 演练脚本已确认不会再污染公开查询页面 slug。
+- `public_query_page_slug` 已恢复为真实页面 `public-search-page`。
+
+## 真实迁移数据健康检查
+
+对 `http://npcink-device-manage.local/` 的插件 v3 表做只读检查，结果如下：
+
+```text
+assets:       170
+identities:   1087
+observations: 170
+events:       967
+```
+
+关键健康项：
+
+- `RESTORE-E2E-*` 演练资产：`0`
+- 空 UUID 资产：`0`
+- 空资产编号资产：`0`
+- 空 identity type/value：`0`
+- 重复资产编号：`0`
+- 重复 UUID：`0`
+- 重复 identity：`0`
+- orphan identities：`0`
+- orphan observations：`0`
+- 指向缺失资产的 events：`0`
+
+资产状态分布：
+
+```text
+active:      139
+inactive:     20
+maintenance:   6
+retired:       5
+```
+
+资产类型分布：
+
+```text
+pc:     162
+custom:   8
+```
+
+数据来源：
+
+```text
+observations:
+- legacy_import: 170
+
+events:
+- legacy_auto:   629
+- legacy_import: 170
+- legacy_manual: 168
+```
+
+旧表检查：
+
+```text
+wp_npcink_device_auto:   0
+wp_npcink_device_manual: 0
+wp_npcink_device_pc:     0
+wp_npcink_device_style:  0
+```
+
+结论：这批从旧站迁移来的真实数据结构健康，不需要立即做自动清理。
+
+## 当前建议清理项
+
+建议不要对业务数据做批量清理。当前只需要处理以下几类低风险收口：
+
+1. 旧表可以暂时保留。
+   - 旧表都是空表，不影响 v3 运行。
+   - 等发布确认后，先做 DB 备份，再删除这些空旧表。
+
+2. 上传 token 需要人工复核。
+   - 当前有 5 个 token：`Local dev token`、`test`、`yuu`、`Open Web UI`、`UIi`。
+   - 如果此站点继续作为真实环境，应删除不用的测试 token，只保留真实客户端需要的 token。
+
+3. 公开查询访问码建议重设。
+   - 当前 `public_query_enabled=true`。
+   - 当前访问码 hash 已存在。
+   - 如果该站点会继续面向真实用户，建议重设一次公开查询访问码，避免旧站访问码继续有效。
+
+4. 资产状态属于业务判断。
+   - `inactive`、`maintenance`、`retired` 不建议由脚本清理。
+   - 后台按状态人工复核即可。
+
+## 当前发布状态
+
+最终 release-only 包仍是唯一默认产物：
+
+```text
+release/npcink-device-inventory.zip
+```
+
+此前完整发布前核对已通过：
+
+```bash
+npm run build:release
+npm run check:release
+npm run build:submission
+npm run check:submission
+npm run build:release
+npm run check:release
+```
+
+当时最终包 hash：
+
+```text
+02eb7a7844d91c4415d5292ee1d47869f86d185b0f83fcd5b47f0dbcf395f410
+```
+
+版本一致性：
+
+```text
+plugin_version=2.7.3
+readme_stable_tag=2.7.3
+```
+
+注意：后续如果再次修改 docs、scripts 或前端构建产物，并重新打包，zip hash 会变化。发布前以最后一次 `npm run check:release` 输出为准。
