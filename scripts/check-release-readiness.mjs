@@ -42,6 +42,12 @@ const steps = [
     cwd: repoRoot,
   },
   {
+    title: "Backup restore fixtures",
+    command: "npm",
+    args: ["run", "check:backup-restore"],
+    cwd: repoRoot,
+  },
+  {
     title: "PHPStan",
     command: "composer",
     args: ["run", "phpstan"],
@@ -88,6 +94,12 @@ for (const zipPath of zipPaths) {
   });
 
   await compareBuiltAssets(zipPath);
+}
+
+if (!shouldCheckSubmissionPackage && existsSync(submissionZip)) {
+  console.error(`Unexpected submission package for release-only check: ${path.relative(repoRoot, submissionZip)}`);
+  console.error("Run npm run build:release to keep only release/npcink-device-inventory.zip.");
+  process.exit(1);
 }
 
 const releaseHash = sha256(releaseZip);

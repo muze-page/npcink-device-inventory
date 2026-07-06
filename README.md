@@ -77,6 +77,19 @@ npm ci
 npm run build
 ```
 
+JSON 备份恢复离线夹具：
+
+```bash
+npm run check:backup-restore
+```
+
+已启动本地 WordPress 站点后，可执行真实迁移演练。该脚本会创建 `RESTORE-E2E-*` 临时资产，验证 dry-run、导入、重复导入预览、冲突 409，并在结束时清理演练数据：
+
+```bash
+WP_PATH="/path/to/wordpress" \
+bash scripts/verify-local-backup-restore.sh
+```
+
 Rust/Tauri 上传器：
 
 ```bash
