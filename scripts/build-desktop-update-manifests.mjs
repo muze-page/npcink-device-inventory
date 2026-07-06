@@ -114,5 +114,9 @@ async function readSignature(file) {
 }
 
 function releaseAssetUrl(ownerRepo, releaseTag, fileName) {
-  return `https://github.com/${ownerRepo}/releases/download/${encodeURIComponent(releaseTag)}/${encodeURIComponent(fileName)}`;
+  return `https://github.com/${ownerRepo}/releases/download/${encodeURIComponent(releaseTag)}/${encodeURIComponent(releaseAssetName(fileName))}`;
+}
+
+function releaseAssetName(fileName) {
+  return fileName.replace(/\s+/g, ".");
 }
