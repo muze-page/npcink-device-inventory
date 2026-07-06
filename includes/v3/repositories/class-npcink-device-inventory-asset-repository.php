@@ -140,6 +140,8 @@ class Npcink_Device_Inventory_Asset_Repository
 		$primary_ip_exact_like = '%"primary_ip":"' . $wpdb->esc_like($search) . '"%';
 		$primary_ip_prefix_like = $this->should_search_extended_asset_data($search) ? '%"primary_ip":"' . $wpdb->esc_like($search) . '%' : '__npcink_no_extended_asset_match__';
 		$platform_regex = $this->build_platform_regex(isset($args['purchase_platform']) ? $args['purchase_platform'] : '');
+		$platform_filter = $platform_regex === '' ? '' : '1';
+		$platform_query_regex = $platform_regex === '' ? 'a^' : $platform_regex;
 		$table = Npcink_Device_Inventory_V3_Tables::assets();
 		$identities_table = Npcink_Device_Inventory_V3_Tables::identities();
 		$observations_table = Npcink_Device_Inventory_V3_Tables::observations();
@@ -196,8 +198,8 @@ class Npcink_Device_Inventory_Asset_Repository
 				$extended_like,
 				$observations_table,
 				$extended_like,
-				$platform_regex,
-				$platform_regex
+				$platform_filter,
+				$platform_query_regex
 			)
 		);
 
@@ -303,8 +305,8 @@ class Npcink_Device_Inventory_Asset_Repository
 				$extended_like,
 				$observations_table,
 				$extended_like,
-				$platform_regex,
-				$platform_regex,
+				$platform_filter,
+				$platform_query_regex,
 				$search,
 				$search,
 				$search,
