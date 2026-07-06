@@ -2980,6 +2980,10 @@
   background: linear-gradient(180deg, rgba(244, 246, 249, 0), #f4f6f9 35%);
 }
 
+.npcink-v3-detail-settings .npcink-v3-settings-actions {
+  background: transparent;
+}
+
 .npcink-v3-data-tools {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
