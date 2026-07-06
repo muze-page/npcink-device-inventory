@@ -38,7 +38,9 @@ if (!class_exists('Npcink_Device_Inventory_V3_Tables')) {
 	exit(1);
 }
 
-$cleanup = function () use ($wpdb) {
+$previous_options = get_option(Npcink_Device_Inventory_V3_Tables::OPTION, array());
+
+$cleanup = function () use ($wpdb, $previous_options) {
 	$assets_table = Npcink_Device_Inventory_V3_Tables::assets();
 	$identities_table = Npcink_Device_Inventory_V3_Tables::identities();
 	$observations_table = Npcink_Device_Inventory_V3_Tables::observations();
@@ -55,6 +57,9 @@ $cleanup = function () use ($wpdb) {
 		$wpdb->query($wpdb->prepare("DELETE FROM {$identities_table} WHERE asset_id IN ({$id_placeholders})", $asset_ids));
 		$wpdb->query($wpdb->prepare("DELETE FROM {$assets_table} WHERE id IN ({$id_placeholders})", $asset_ids));
 		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+	}
+	if (is_array($previous_options)) {
+		update_option(Npcink_Device_Inventory_V3_Tables::OPTION, $previous_options);
 	}
 };
 
