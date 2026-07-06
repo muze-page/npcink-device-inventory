@@ -487,6 +487,7 @@ let downloadUpdateUrl = "";
 
 const DESKTOP_UPDATE_MANIFEST_URL =
   "https://github.com/muze-page/npcink-device-inventory/releases/latest/download/latest-desktop.json";
+const MENU_CHECK_UPDATE_EVENT = "desktop-check-update";
 
 const detailItems = [
   { key: "cpu", title: "处理器", desc: "CPU 信息" },
@@ -2205,6 +2206,15 @@ copyDiagnosticsPathButton.addEventListener("click", () => {
 });
 
 checkUpdateButton.addEventListener("click", () => {
+  void checkDesktopUpdate();
+});
+
+void listen(MENU_CHECK_UPDATE_EVENT, () => {
+  switchTab("settings");
+  if (isCheckingUpdate || isInstallingUpdate) {
+    return;
+  }
+  renderUpdateCard("正在检查更新...");
   void checkDesktopUpdate();
 });
 

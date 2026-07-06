@@ -22,6 +22,8 @@ const DIAGNOSTICS_LOG_TAIL_BYTES: u64 = 256 * 1024;
 const DIAGNOSTICS_COMMAND_TIMEOUT: Duration = Duration::from_secs(12);
 const DIAGNOSTICS_PROGRESS_EVENT: &str = "diagnostics-progress";
 const PROJECT_URL: &str = "https://github.com/muze-page/npcink-device-inventory";
+const MENU_CHECK_UPDATE: &str = "check_for_updates";
+const MENU_CHECK_UPDATE_EVENT: &str = "desktop-check-update";
 const MENU_OPEN_PROJECT: &str = "open_project_url";
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -328,6 +330,8 @@ fn setup_app_menu(app: &mut tauri::App) -> tauri::Result<()> {
 
     #[cfg(not(target_os = "macos"))]
     let help_menu = SubmenuBuilder::new(app, "帮助")
+        .text(MENU_CHECK_UPDATE, "检查更新...")
+        .separator()
         .about_with_text(format!("关于 {APP_NAME}"), Some(about_metadata()))
         .separator()
         .text(MENU_OPEN_PROJECT, "项目主页")
@@ -336,6 +340,8 @@ fn setup_app_menu(app: &mut tauri::App) -> tauri::Result<()> {
     #[cfg(target_os = "macos")]
     let app_menu = SubmenuBuilder::new(app, APP_NAME)
         .about_with_text(format!("关于 {APP_NAME}"), Some(about_metadata()))
+        .separator()
+        .text(MENU_CHECK_UPDATE, "检查更新...")
         .separator()
         .text(MENU_OPEN_PROJECT, "项目主页")
         .separator()
@@ -365,10 +371,18 @@ fn setup_app_menu(app: &mut tauri::App) -> tauri::Result<()> {
 
     app.set_menu(menu)?;
     app.on_menu_event(|app_handle, event| {
-        if event.id() == MENU_OPEN_PROJECT {
-            if let Err(error) = app_handle.opener().open_url(PROJECT_URL, None::<&str>) {
-                eprintln!("failed to open project url: {error}");
+        match event.id().0.as_str() {
+            MENU_CHECK_UPDATE => {
+                if let Err(error) = app_handle.emit(MENU_CHECK_UPDATE_EVENT, ()) {
+                    eprintln!("failed to emit update check event: {error}");
+                }
             }
+            MENU_OPEN_PROJECT => {
+                if let Err(error) = app_handle.opener().open_url(PROJECT_URL, None::<&str>) {
+                    eprintln!("failed to open project url: {error}");
+                }
+            }
+            _ => {}
         }
     });
     Ok(())
