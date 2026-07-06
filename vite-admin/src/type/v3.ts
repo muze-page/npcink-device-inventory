@@ -117,6 +117,7 @@ export interface AssetListParams {
   category?: string;
   purchasePlatform?: string;
   sortBy?: "latestUpload" | "latestObserved" | "updated";
+  includeDeleted?: boolean;
 }
 
 export interface EventListParams {

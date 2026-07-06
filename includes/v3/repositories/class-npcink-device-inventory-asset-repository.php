@@ -111,6 +111,7 @@ class Npcink_Device_Inventory_Asset_Repository
 
 		$asset_type = isset($args['asset_type']) ? sanitize_text_field($args['asset_type']) : '';
 		$status = isset($args['status']) ? sanitize_text_field($args['status']) : '';
+		$include_deleted = !empty($args['include_deleted']) || $status === 'deleted' ? '1' : '';
 		$department = isset($args['department']) ? sanitize_text_field($args['department']) : '';
 		$category = isset($args['category']) ? sanitize_text_field($args['category']) : '';
 			$asset_scope = isset($args['asset_scope']) ? sanitize_key($args['asset_scope']) : '';
@@ -137,6 +138,7 @@ class Npcink_Device_Inventory_Asset_Repository
 				"SELECT COUNT(*) FROM %i a
 				WHERE (%s = '' OR a.asset_type = %s)
 				AND (%s = '' OR a.status = %s)
+				AND (%s = '1' OR a.status <> 'deleted')
 				AND (%s = '' OR a.department = %s)
 				AND (%s = '' OR a.category = %s)
 				AND (%s = '' OR (%s = 'computer' AND a.asset_type IN ('pc', 'computer')) OR (%s = 'other' AND a.asset_type NOT IN ('pc', 'computer')))
@@ -167,6 +169,7 @@ class Npcink_Device_Inventory_Asset_Repository
 				$asset_type,
 				$status,
 				$status,
+				$include_deleted,
 				$department,
 				$department,
 				$category,
@@ -200,6 +203,7 @@ class Npcink_Device_Inventory_Asset_Repository
 			LEFT JOIN %i lo ON lo.id = a.latest_observation_id
 			WHERE (%s = '' OR a.asset_type = %s)
 			AND (%s = '' OR a.status = %s)
+			AND (%s = '1' OR a.status <> 'deleted')
 			AND (%s = '' OR a.department = %s)
 			AND (%s = '' OR a.category = %s)
 			AND (%s = '' OR (%s = 'computer' AND a.asset_type IN ('pc', 'computer')) OR (%s = 'other' AND a.asset_type NOT IN ('pc', 'computer')))
@@ -266,6 +270,7 @@ class Npcink_Device_Inventory_Asset_Repository
 				$asset_type,
 				$status,
 				$status,
+				$include_deleted,
 				$department,
 				$department,
 				$category,
@@ -448,7 +453,7 @@ class Npcink_Device_Inventory_Asset_Repository
 	private function sanitize_list_cache_args($args)
 	{
 		$result = array();
-		foreach (array('asset_type', 'status', 'department', 'category', 'asset_scope', 'search', 'purchase_platform', 'sort_by') as $field) {
+		foreach (array('asset_type', 'status', 'department', 'category', 'asset_scope', 'search', 'purchase_platform', 'sort_by', 'include_deleted') as $field) {
 			$result[$field] = isset($args[$field]) ? sanitize_text_field((string) $args[$field]) : '';
 		}
 		return $result;

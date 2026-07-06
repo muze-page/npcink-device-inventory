@@ -674,6 +674,7 @@ const normalizedAssetListParams = (params: AssetListParams) => ({
   category: params.category || "",
   purchasePlatform: params.purchasePlatform || "",
   sortBy: params.sortBy || "latestObserved",
+  includeDeleted: Boolean(params.includeDeleted),
 });
 
 const assetListCacheKey = (params: AssetListParams) =>
@@ -2167,7 +2168,7 @@ const AssetImportModal = ({ open, onClose, onImported }: AssetImportModalProps) 
   const [strategy, setStrategy] = useState<AssetImportStrategy>("upsert-by-number");
   const [sections, setSections] = useState<AssetImportSection[]>(DEFAULT_ASSET_IMPORT_SECTIONS);
   const [previewRows, setPreviewRows] = useState<AssetImportPreviewRow[]>([]);
-  const existingAssetsQuery = useQuery(["v3-assets-import-index"], () => fetchAllAssets({ assetScope: "all" }), {
+  const existingAssetsQuery = useQuery(["v3-assets-import-index"], () => fetchAllAssets({ assetScope: "all", includeDeleted: true }), {
     enabled: open,
   });
   const importMutation = useMutation(
@@ -4926,7 +4927,7 @@ const AssetValueWorkspace = () => {
   const settingsQuery = useQuery(["v3-settings"], getSettings, { staleTime: 60_000 });
   const assetsQuery = useQuery(
     ["v3-asset-value-analysis"],
-    () => fetchAllAssets({ assetScope: "all" }),
+    () => fetchAllAssets({ assetScope: "all", includeDeleted: true }),
     { staleTime: 60_000 }
   );
   const assets = assetsQuery.data || [];
@@ -5630,7 +5631,7 @@ const DataToolsWorkspace = () => {
       const assetsNeeded = backupSections.includes("assets") || backupSections.includes("identities");
       const [settings, assets, events, observations] = await Promise.all([
         backupSections.includes("settings") ? getSettings() : Promise.resolve(undefined),
-        assetsNeeded ? fetchAllAssets({ assetScope: "all" }) : Promise.resolve(undefined),
+        assetsNeeded ? fetchAllAssets({ assetScope: "all", includeDeleted: true }) : Promise.resolve(undefined),
         backupSections.includes("events") ? fetchAllEvents() : Promise.resolve(undefined),
         backupSections.includes("observations") ? fetchAllObservations() : Promise.resolve(undefined),
       ]);
@@ -5728,7 +5729,7 @@ const DataToolsWorkspace = () => {
       <AssetExportModal
         open={exportModalOpen}
         currentScopeLabel="全部资产"
-        currentQueryParams={{ assetScope: "all" }}
+        currentQueryParams={{ assetScope: "all", includeDeleted: true }}
         onClose={() => setExportModalOpen(false)}
       />
       <BackupRestoreModal
