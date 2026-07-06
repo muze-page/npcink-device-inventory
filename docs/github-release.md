@@ -28,6 +28,9 @@ Use this workflow while iterating on UI, icons, copy, and packaging checks.
 The preview workflow uses Node 24, runs PHP syntax checks for plugin PHP files,
 builds both Vite apps with `npm ci`, audits the WordPress plugin zip boundary,
 and runs `cargo check` before building the macOS/Windows Tauri installers.
+The CI packaging script also unpacks the generated WordPress zip back into
+`release/npcink-device-inventory/` so WordPress Plugin Check can scan the same
+files that are shipped in the zip.
 
 ## Local end-to-end verification
 
@@ -59,6 +62,8 @@ git push origin v0.1.0
 The `Build release packages` workflow runs only for `v*` tags and uploads the
 WordPress plugin zip, macOS DMG, and Windows installer to a GitHub Release
 automatically. Do not use a tag until the preview artifacts have been checked.
+The macOS DMG is intentionally present in this release flow for Apple Silicon
+internal testing even before Developer ID signing and notarization are added.
 
 ## Packaging boundaries
 
