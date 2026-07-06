@@ -4,7 +4,7 @@ Tags: inventory, assets, device management, rest api, admin
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.7.4
+Stable tag: 2.7.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -77,6 +77,11 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 
 == Changelog ==
 
+= 2.7.5 =
+* Add GitHub Release powered desktop uploader update checks and signed Tauri updater metadata.
+* Fix uploaded observation timestamps so admin update times display in the local timezone.
+* Hide archived assets from default asset lists while preserving archived data for exports, backups, and explicit archived-status filters.
+
 = 2.7.4 =
 * Default the admin computer asset list to latest observed uploads and show upload update time consistently.
 * Improve first-screen admin loading, detail modal rendering, search highlighting, and macOS device visuals.
@@ -106,6 +111,9 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 * Moved desktop uploads to signed v3 device observations.
 
 == Upgrade Notice ==
+
+= 2.7.5 =
+This release adds signed desktop updater metadata, fixes upload time display, and keeps archived assets out of default lists.
 
 = 2.7.4 =
 This release improves latest-upload asset sorting, admin loading feedback, search highlighting, macOS visuals, and uploader privacy messaging.
