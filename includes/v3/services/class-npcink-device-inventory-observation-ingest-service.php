@@ -142,7 +142,7 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 		$asset = isset($payload['asset']) && is_array($payload['asset']) ? $payload['asset'] : array();
 		$meta = isset($payload['_npcink_device']) && is_array($payload['_npcink_device']) ? $payload['_npcink_device'] : array();
 		$collector = isset($meta['collector']) && is_array($meta['collector']) ? $meta['collector'] : array();
-		$observed_at = !empty($collector['collected_at']) ? sanitize_text_field($collector['collected_at']) : current_time('mysql');
+		$observed_at = !empty($collector['collected_at']) ? sanitize_text_field($collector['collected_at']) : current_time('mysql', true);
 
 		return array(
 			'source' => !empty($collector['name']) ? sanitize_key($collector['name']) : 'uploader',
@@ -158,9 +158,18 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 	{
 		$timestamp = strtotime($value);
 		if (!$timestamp) {
-			return current_time('mysql');
+			return current_time('mysql', true);
 		}
 		return gmdate('Y-m-d H:i:s', $timestamp);
+	}
+
+	private function format_utc_datetime($value)
+	{
+		$value = trim((string) $value);
+		if ($value === '') {
+			return '';
+		}
+		return str_replace(' ', 'T', $value) . 'Z';
 	}
 
 	private function format_asset($row)
@@ -204,7 +213,7 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 			'assetId' => intval($row['asset_id']),
 			'source' => (string) $row['source'],
 			'schemaVersion' => intval($row['schema_version']),
-			'observedAt' => (string) $row['observed_at'],
+			'observedAt' => $this->format_utc_datetime(isset($row['observed_at']) ? $row['observed_at'] : ''),
 			'receivedAt' => (string) $row['received_at'],
 			'summary' => $this->decode_json(isset($row['summary_json']) ? $row['summary_json'] : '', array()),
 			'hardware' => $this->decode_json(isset($row['hardware_json']) ? $row['hardware_json'] : '', array()),

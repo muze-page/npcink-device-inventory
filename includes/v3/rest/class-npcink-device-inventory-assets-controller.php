@@ -400,7 +400,7 @@ class Npcink_Device_Inventory_Assets_Controller
 			$item['latestObservation'] = array(
 				'summary' => $this->decode_json(isset($row['latest_summary_json']) ? $row['latest_summary_json'] : '', array()),
 				'hardware' => $this->decode_json(isset($row['latest_hardware_json']) ? $row['latest_hardware_json'] : '', array()),
-				'observedAt' => isset($row['latest_observed_at']) ? (string) $row['latest_observed_at'] : '',
+				'observedAt' => $this->format_utc_datetime(isset($row['latest_observed_at']) ? $row['latest_observed_at'] : ''),
 				'source' => isset($row['latest_observation_source']) ? (string) $row['latest_observation_source'] : '',
 			);
 		}
@@ -428,7 +428,7 @@ class Npcink_Device_Inventory_Assets_Controller
 			'assetId' => intval($row['asset_id']),
 			'source' => (string) $row['source'],
 			'schemaVersion' => intval($row['schema_version']),
-			'observedAt' => (string) $row['observed_at'],
+			'observedAt' => $this->format_utc_datetime(isset($row['observed_at']) ? $row['observed_at'] : ''),
 			'receivedAt' => (string) $row['received_at'],
 			'summary' => $this->decode_json(isset($row['summary_json']) ? $row['summary_json'] : '', array()),
 			'hardware' => $this->decode_json(isset($row['hardware_json']) ? $row['hardware_json'] : '', array()),
@@ -460,6 +460,15 @@ class Npcink_Device_Inventory_Assets_Controller
 			$item['asset'] = $this->format_asset_reference($row);
 		}
 		return $item;
+	}
+
+	private function format_utc_datetime($value)
+	{
+		$value = trim((string) $value);
+		if ($value === '') {
+			return '';
+		}
+		return str_replace(' ', 'T', $value) . 'Z';
 	}
 
 	private function format_asset_reference($row)
