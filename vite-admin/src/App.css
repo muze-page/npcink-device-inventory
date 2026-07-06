@@ -2877,6 +2877,10 @@
   row-gap: 0;
 }
 
+.npcink-v3-settings-grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .npcink-v3-setting-switch-row {
   display: flex;
   grid-column: 1 / -1;

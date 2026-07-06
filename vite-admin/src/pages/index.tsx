@@ -2739,6 +2739,8 @@ const AssetSettingsPanel = ({ asset, departmentOptions = [], onUpdated, onArchiv
             <Form.Item name="assetNumber" label="编号">
               <Input />
             </Form.Item>
+          </div>
+          <div className="npcink-v3-settings-grid npcink-v3-settings-grid-three">
             <Form.Item name="department" label="部门">
               <Select
                 showSearch
@@ -2757,7 +2759,7 @@ const AssetSettingsPanel = ({ asset, departmentOptions = [], onUpdated, onArchiv
             <Form.Item name="status" label="状态">
               <Select options={EDITABLE_STATUS_OPTIONS} />
             </Form.Item>
-            <Form.Item label="IP 地址" className="npcink-v3-settings-wide">
+            <Form.Item label="IP 地址">
               <Input value={primaryIp} readOnly placeholder="暂无采集 IP" />
             </Form.Item>
           </div>
@@ -2765,15 +2767,15 @@ const AssetSettingsPanel = ({ asset, departmentOptions = [], onUpdated, onArchiv
 
         <div className="npcink-v3-settings-section">
           <h4>财务参数</h4>
-          <div className="npcink-v3-settings-grid">
+          <div className="npcink-v3-settings-grid npcink-v3-settings-grid-three">
             <Form.Item name="purchasePrice" label="采购价">
+              <InputNumber min={0} precision={2} className="npcink-v3-number" addonAfter="¥" />
+            </Form.Item>
+            <Form.Item name="residualValue" label="二手价">
               <InputNumber min={0} precision={2} className="npcink-v3-number" addonAfter="¥" />
             </Form.Item>
             <Form.Item name="orderTime" label="购置日期">
               <Input placeholder="例如：2026-06-26" />
-            </Form.Item>
-            <Form.Item name="residualValue" label="二手价">
-              <InputNumber min={0} precision={2} className="npcink-v3-number" addonAfter="¥" />
             </Form.Item>
           </div>
           <div className="npcink-v3-finance-summary">
