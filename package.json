@@ -6,6 +6,7 @@
     "build:release": "node scripts/build-release-package.mjs",
     "build:submission": "node scripts/build-release-package.mjs --submission",
     "check:backup-restore": "php tests/backup-restore-fixtures.php",
+    "check:desktop-manifests": "node scripts/check-desktop-update-manifests.mjs",
     "check:wporg-review": "node scripts/check-wordpress-org-review-rules.mjs release/npcink-device-inventory.zip",
     "check:package": "node scripts/check-release-package.mjs release/npcink-device-inventory.zip && npm run check:wporg-review",
     "check:release": "node scripts/check-release-readiness.mjs",

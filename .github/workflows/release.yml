@@ -165,6 +165,9 @@ jobs:
           TAG_NAME: ${{ github.ref_name }}
         run: node scripts/build-desktop-update-manifests.mjs artifacts
 
+      - name: Check desktop update manifests
+        run: npm run check:desktop-manifests -- artifacts
+
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
