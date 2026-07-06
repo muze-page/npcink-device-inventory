@@ -26,6 +26,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": false,
     "targets": ["nsis", "dmg", "app"],
     "category": "Utility",
     "icon": [
@@ -42,6 +43,14 @@
         "languages": ["SimpChinese"],
         "displayLanguageSelector": false
       }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDYwRERFNTEwODdCMjQyODAKUldTQVFyS0hFT1hkWUk2QzU5RXF2clNIZ2VHY3ZXbzArZUFKZitxSzNtNHVSV0c1dmV3Rkx5TG0K",
+      "endpoints": [
+        "https://github.com/muze-page/npcink-device-inventory/releases/latest/download/latest.json"
+      ]
     }
   }
 }

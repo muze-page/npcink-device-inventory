@@ -74,6 +74,8 @@ jobs:
       CARGO_HTTP_MULTIPLEXING: "false"
       CARGO_HTTP_TIMEOUT: "120"
       CARGO_NET_RETRY: "10"
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     strategy:
       fail-fast: false
       matrix:
@@ -106,16 +108,32 @@ jobs:
         working-directory: ele-rs/src-tauri
         run: cargo check
 
+      - name: Verify updater signing key
+        shell: bash
+        run: |
+          if [ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
+            echo "TAURI_SIGNING_PRIVATE_KEY secret is required to build updater artifacts."
+            exit 1
+          fi
+
+      - name: Prepare updater build config
+        working-directory: ele-rs
+        run: |
+          node -e "require('fs').writeFileSync('updater-build.json', JSON.stringify({ bundle: { createUpdaterArtifacts: true } }))"
+
       - name: Build Tauri bundle
         working-directory: ele-rs
-        run: npm run tauri:build
+        run: npm run tauri:build -- --ci --config updater-build.json
 
       - name: Upload macOS DMG
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v7
         with:
           name: npcink-device-agent-macos
-          path: ele-rs/src-tauri/target/release/bundle/dmg/*.dmg
+          path: |
+            ele-rs/src-tauri/target/release/bundle/dmg/*.dmg
+            ele-rs/src-tauri/target/release/bundle/**/*.tar.gz
+            ele-rs/src-tauri/target/release/bundle/**/*.tar.gz.sig
           if-no-files-found: error
 
       - name: Upload Windows installer
@@ -123,7 +141,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: npcink-device-agent-windows
-          path: ele-rs/src-tauri/target/release/bundle/nsis/*.exe
+          path: |
+            ele-rs/src-tauri/target/release/bundle/nsis/*.exe
+            ele-rs/src-tauri/target/release/bundle/nsis/*.exe.sig
           if-no-files-found: error
 
   github-release:
@@ -132,10 +152,18 @@ jobs:
     needs: [wordpress-plugin, desktop-agent]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
           path: artifacts
+
+      - name: Build desktop update manifests
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: node scripts/build-desktop-update-manifests.mjs artifacts
 
       - name: Create release
         env:

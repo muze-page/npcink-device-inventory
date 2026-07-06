@@ -1,5 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { getVersion } from "@tauri-apps/api/app";
+import { relaunch } from "@tauri-apps/plugin-process";
+import { check, type DownloadEvent, type Update } from "@tauri-apps/plugin-updater";
 import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
 import "./style.css";
@@ -169,6 +172,25 @@ type OverviewRow = {
 
 type TabId = "settings" | "overview" | "runtime" | "diagnostics" | "details";
 
+type DesktopDownload = {
+  label?: string;
+  url?: string;
+  size?: number;
+  sha256?: string;
+};
+
+type DesktopUpdateManifest = {
+  schema?: string;
+  version?: string;
+  notes?: string;
+  pubDate?: string;
+  releaseUrl?: string;
+  downloads?: {
+    macosAarch64?: DesktopDownload;
+    windowsX64?: DesktopDownload;
+  };
+};
+
 const app = document.querySelector<HTMLDivElement>("#app");
 
 if (!app) {
@@ -249,6 +271,20 @@ app.innerHTML = `
                   <button class="summary-refresh" id="collectButton" type="button">重新采集</button>
                 </div>
                 <div class="settings-summary-list" id="settingsSummaryList"></div>
+              </aside>
+              <aside class="update-card" aria-label="软件更新">
+                <div class="settings-summary-head">
+                  <div class="summary-title">
+                    <span>软件更新</span>
+                    <strong id="appVersionText">当前版本 -</strong>
+                  </div>
+                  <button class="summary-refresh" id="checkUpdateButton" type="button">检查更新</button>
+                </div>
+                <div class="update-status" id="updateStatus">点击检查更新，获取最新上传软件。</div>
+                <div class="update-actions" id="updateActions" hidden>
+                  <button class="button secondary compact" id="downloadUpdateButton" type="button" hidden>打开下载</button>
+                  <button class="button primary compact" id="installUpdateButton" type="button" hidden>下载安装并重启</button>
+                </div>
               </aside>
             </div>
           </div>
@@ -380,6 +416,12 @@ const configImportToolbar = document.querySelector<HTMLElement>("#configImportTo
 const manualConfigButton = document.querySelector<HTMLButtonElement>("#manualConfigButton")!;
 const configForm = document.querySelector<HTMLFormElement>("#configForm")!;
 const collectButton = document.querySelector<HTMLButtonElement>("#collectButton")!;
+const appVersionText = document.querySelector<HTMLElement>("#appVersionText")!;
+const checkUpdateButton = document.querySelector<HTMLButtonElement>("#checkUpdateButton")!;
+const updateStatus = document.querySelector<HTMLElement>("#updateStatus")!;
+const updateActions = document.querySelector<HTMLElement>("#updateActions")!;
+const downloadUpdateButton = document.querySelector<HTMLButtonElement>("#downloadUpdateButton")!;
+const installUpdateButton = document.querySelector<HTMLButtonElement>("#installUpdateButton")!;
 const submitButton = document.querySelector<HTMLButtonElement>("#submitButton")!;
 const defaultSubmitButtonText = submitButton.textContent ?? "提交";
 const importConfigButton = document.querySelector<HTMLButtonElement>("#importConfigButton")!;
@@ -424,6 +466,8 @@ let manualConfigDraft: { site: string; token: string; presetLabel: string } | nu
 let isCollecting = false;
 let isSubmitting = false;
 let isGeneratingDiagnostics = false;
+let isCheckingUpdate = false;
+let isInstallingUpdate = false;
 let isRuntimeRefreshing = false;
 let isRuntimeHistoryRefreshing = false;
 let activeRuntimeRange: RuntimeRange = "current";
@@ -436,6 +480,13 @@ let lastTrendMetrics: TrendMetric[] = [];
 let lastSubmittedAt: Date | null = null;
 let lastSubmittedConfigLabel = "";
 let diagnosticsDirectoryPath = "";
+let currentAppVersion = "";
+let latestDesktopManifest: DesktopUpdateManifest | null = null;
+let pendingAutoUpdate: Update | null = null;
+let downloadUpdateUrl = "";
+
+const DESKTOP_UPDATE_MANIFEST_URL =
+  "https://github.com/muze-page/npcink-device-inventory/releases/latest/download/latest-desktop.json";
 
 const detailItems = [
   { key: "cpu", title: "处理器", desc: "CPU 信息" },
@@ -986,6 +1037,9 @@ const updateInteractiveState = () => {
   generateDiagnosticsButton.disabled = isGeneratingDiagnostics;
   openDiagnosticsFolderButton.disabled = isGeneratingDiagnostics;
   copyDiagnosticsPathButton.disabled = isGeneratingDiagnostics;
+  checkUpdateButton.disabled = isCheckingUpdate || isInstallingUpdate;
+  downloadUpdateButton.disabled = isCheckingUpdate || isInstallingUpdate || !downloadUpdateUrl;
+  installUpdateButton.disabled = isCheckingUpdate || isInstallingUpdate || !pendingAutoUpdate;
 };
 
 const setCollecting = (collecting: boolean) => {
@@ -1005,6 +1059,18 @@ const setSubmitting = (submitting: boolean) => {
 const setGeneratingDiagnostics = (generating: boolean) => {
   isGeneratingDiagnostics = generating;
   generateDiagnosticsButton.textContent = generating ? "生成中..." : "生成深度排障包";
+  updateInteractiveState();
+};
+
+const setCheckingUpdate = (checking: boolean) => {
+  isCheckingUpdate = checking;
+  checkUpdateButton.textContent = checking ? "检查中..." : "检查更新";
+  updateInteractiveState();
+};
+
+const setInstallingUpdate = (installing: boolean) => {
+  isInstallingUpdate = installing;
+  installUpdateButton.textContent = installing ? "安装中..." : "下载安装并重启";
   updateInteractiveState();
 };
 
@@ -1105,6 +1171,43 @@ const configLabel = (config: AgentConfig = getConfig()) => {
     return "手动配置";
   }
   return "";
+};
+
+const compareVersions = (left = "", right = "") => {
+  const leftParts = left.split(/[.-]/).map((part) => Number.parseInt(part, 10) || 0);
+  const rightParts = right.split(/[.-]/).map((part) => Number.parseInt(part, 10) || 0);
+  const length = Math.max(leftParts.length, rightParts.length);
+  for (let index = 0; index < length; index += 1) {
+    const diff = (leftParts[index] ?? 0) - (rightParts[index] ?? 0);
+    if (diff !== 0) {
+      return diff;
+    }
+  }
+  return 0;
+};
+
+const preferredDesktopDownload = (manifest: DesktopUpdateManifest | null) => {
+  const downloads = manifest?.downloads ?? {};
+  const isMac = /Macintosh|Mac OS|MacIntel/i.test(navigator.userAgent);
+  const isWindows = /Windows/i.test(navigator.userAgent);
+  if (isMac) {
+    return downloads.macosAarch64 ?? null;
+  }
+  if (isWindows) {
+    return downloads.windowsX64 ?? null;
+  }
+  return downloads.macosAarch64 ?? downloads.windowsX64 ?? null;
+};
+
+const updateNote = (value?: string) => (value || "").trim().split(/\r?\n/).filter(Boolean)[0] || "";
+
+const renderUpdateCard = (message = "") => {
+  appVersionText.textContent = currentAppVersion ? `当前版本 ${currentAppVersion}` : "当前版本 -";
+  updateStatus.textContent = message || "点击检查更新，获取最新上传软件。";
+  updateActions.hidden = !downloadUpdateUrl && !pendingAutoUpdate;
+  downloadUpdateButton.hidden = !downloadUpdateUrl;
+  installUpdateButton.hidden = !pendingAutoUpdate;
+  updateInteractiveState();
 };
 
 const resetSubmittedState = () => {
@@ -1891,6 +1994,118 @@ const refreshRuntimeHistory = async () => {
   }
 };
 
+const loadAppVersion = async () => {
+  try {
+    currentAppVersion = await getVersion();
+  } catch {
+    currentAppVersion = "";
+  }
+  renderUpdateCard();
+};
+
+const fetchDesktopUpdateManifest = async () => {
+  const response = await fetch(`${DESKTOP_UPDATE_MANIFEST_URL}?t=${Date.now()}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`更新清单读取失败：HTTP ${response.status}`);
+  }
+  latestDesktopManifest = (await response.json()) as DesktopUpdateManifest;
+  const download = preferredDesktopDownload(latestDesktopManifest);
+  downloadUpdateUrl = stringValue(download?.url) || stringValue(latestDesktopManifest.releaseUrl);
+  return latestDesktopManifest;
+};
+
+const checkDesktopUpdate = async () => {
+  setCheckingUpdate(true);
+  pendingAutoUpdate = null;
+  downloadUpdateUrl = "";
+  let manualMessage = "";
+  let manifestError = "";
+
+  try {
+    const manifest = await fetchDesktopUpdateManifest();
+    const latestVersion = stringValue(manifest.version);
+    const note = updateNote(manifest.notes);
+    if (latestVersion && currentAppVersion && compareVersions(latestVersion, currentAppVersion) > 0) {
+      manualMessage = `发现新版本 ${latestVersion}${note ? `：${note}` : ""}`;
+    } else if (latestVersion) {
+      manualMessage = `当前已是最新版本 ${currentAppVersion || latestVersion}`;
+    }
+  } catch (error) {
+    manifestError = errorMessage(error);
+  }
+
+  try {
+    const update = await check({ timeout: 15000 });
+    if (update) {
+      pendingAutoUpdate = update;
+      const note = updateNote(update.body);
+      renderUpdateCard(`发现新版本 ${update.version}${note ? `：${note}` : ""}`);
+      logAppEvent("info", "update.available", `version=${update.version}`);
+      return;
+    }
+    if (manualMessage) {
+      renderUpdateCard(manualMessage);
+      return;
+    }
+    renderUpdateCard("当前已是最新版本。");
+  } catch (error) {
+    const updaterError = errorMessage(error);
+    if (manualMessage) {
+      renderUpdateCard(`${manualMessage}。自动更新暂不可用：${updaterError}`);
+      return;
+    }
+    renderUpdateCard(manifestError ? `检查失败：${manifestError}；${updaterError}` : `检查失败：${updaterError}`);
+    logAppEvent("warn", "update.check_failed", updaterError);
+  } finally {
+    setCheckingUpdate(false);
+  }
+};
+
+const installDesktopUpdate = async () => {
+  if (!pendingAutoUpdate) {
+    return;
+  }
+  setInstallingUpdate(true);
+  let downloaded = 0;
+  try {
+    await pendingAutoUpdate.downloadAndInstall((event: DownloadEvent) => {
+      if (event.event === "Started") {
+        downloaded = 0;
+        renderUpdateCard("开始下载更新包...");
+      } else if (event.event === "Progress") {
+        downloaded += event.data.chunkLength;
+        renderUpdateCard(`正在下载更新包：${formatBytes(downloaded)}`);
+      } else if (event.event === "Finished") {
+        renderUpdateCard("更新包下载完成，正在安装...");
+      }
+    });
+    renderUpdateCard("更新已安装，正在重启软件...");
+    logAppEvent("info", "update.installed", `version=${pendingAutoUpdate.version}`);
+    await relaunch();
+  } catch (error) {
+    const message = errorMessage(error);
+    renderUpdateCard(`安装失败：${message}`);
+    logAppEvent("error", "update.install_failed", message);
+  } finally {
+    setInstallingUpdate(false);
+  }
+};
+
+const openDesktopUpdateDownload = async () => {
+  const url = downloadUpdateUrl || stringValue(latestDesktopManifest?.releaseUrl);
+  if (!url) {
+    return;
+  }
+  try {
+    await invoke("open_url", { url });
+    logAppEvent("info", "update.open_download", url);
+  } catch (error) {
+    renderUpdateCard(`打开下载失败：${errorMessage(error)}`);
+  }
+};
+
 const generateDiagnostics = async () => {
   setGeneratingDiagnostics(true);
   renderDiagnosticsProgress({ current: 0, total: 1, stage: "正在生成深度排障包...", detail: "后台正在收集系统信息。" });
@@ -1989,6 +2204,18 @@ copyDiagnosticsPathButton.addEventListener("click", () => {
   void copyDiagnosticsPath();
 });
 
+checkUpdateButton.addEventListener("click", () => {
+  void checkDesktopUpdate();
+});
+
+downloadUpdateButton.addEventListener("click", () => {
+  void openDesktopUpdateDownload();
+});
+
+installUpdateButton.addEventListener("click", () => {
+  void installDesktopUpdate();
+});
+
 void listen<DiagnosticsProgress>("diagnostics-progress", (event) => {
   if (!isGeneratingDiagnostics) {
     return;
@@ -2072,8 +2299,10 @@ tokenInput.addEventListener("input", () => {
 renderAll();
 renderRuntimeStatus(null);
 renderRuntimeHistory(null);
+renderUpdateCard();
 
 const bootstrap = async () => {
+  await loadAppVersion();
   let loadConfigError = "";
   try {
     await loadConfig();

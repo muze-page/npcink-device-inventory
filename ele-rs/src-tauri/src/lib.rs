@@ -266,6 +266,13 @@ fn open_path(app: tauri::AppHandle, path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn open_url(app: tauri::AppHandle, url: String) -> Result<(), String> {
+    app.opener()
+        .open_url(url, None::<&str>)
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
 fn append_app_log(input: AppLogInput) {
     let level = input.level.as_deref().unwrap_or("info");
     write_app_log(level, &input.event, input.message.as_deref().unwrap_or(""));
@@ -275,6 +282,8 @@ fn append_app_log(input: AppLogInput) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             setup_app_menu(app)?;
             Ok(())
@@ -288,6 +297,7 @@ pub fn run() {
             submit_device_data,
             generate_diagnostics_package,
             open_path,
+            open_url,
             append_app_log
         ])
         .run(tauri::generate_context!())
