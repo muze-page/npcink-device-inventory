@@ -64,11 +64,11 @@ real macOS and Windows machines before checking for updates.
 
 ## Upload Smoke
 
-- WordPress site: pending
-- Temporary upload token created: pending
-- macOS upload result: pending
+- WordPress site: `http://npcink-device-manage.local`, plugin symlinked to this repository.
+- Temporary upload token created: passed via `.github/scripts/verify-local-e2e.sh`.
+- macOS upload result: passed; Rust CLI submitted signed v3 data and WordPress stored a normalized observation for asset `175`.
 - Windows upload result: pending
-- Temporary upload token disabled: pending
+- Temporary upload token disabled: passed; `Local E2E` token count verified as `0`.
 
 ## Known Limits
 
@@ -78,10 +78,10 @@ real macOS and Windows machines before checking for updates.
 - Plugin Check annotations: direct database call caching warnings remain in
   `includes/v3/rest/class-npcink-device-inventory-backup-restore-controller.php`;
   they did not fail the release workflow.
-- Any release blocker: none from local checks, preview builds, release workflow, or release asset manifest checks.
+- Any release blocker: none from local checks, preview builds, release workflow, release asset manifest checks, or local macOS upload smoke.
 
 ## Decision
 
-- Release candidate status: tagged release artifacts passed.
-- Follow-up required before external use: real macOS and Windows update smoke from previous official 0.1.3 packages, plus upload smoke against a WordPress site.
+- Release candidate status: tagged release artifacts passed; local macOS upload smoke passed.
+- Follow-up required before external use: real macOS and Windows update smoke from previous official 0.1.3 packages, plus Windows upload smoke against a WordPress site.
 - Follow-up allowed after tag: code signing/notarization, installer trust hardening, and caching cleanup for Plugin Check warnings.
