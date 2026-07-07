@@ -110,6 +110,9 @@ class Npcink_Device_Inventory_Settings_Controller
 				$options['public_query_access_code_hash'] = wp_hash_password($access_code);
 			}
 		}
+		if (!empty($options['public_query_enabled']) && empty($options['public_query_access_code_hash'])) {
+			return Npcink_Device_Inventory_V3_Response::error('public_query_access_code_required', '启用公开查询前必须先设置访问码。', 400);
+		}
 		if (array_key_exists('observationRetentionDays', $params)) {
 			$options['observation_retention_days'] = max(0, intval($params['observationRetentionDays']));
 		}

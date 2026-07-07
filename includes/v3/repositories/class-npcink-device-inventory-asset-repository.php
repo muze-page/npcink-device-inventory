@@ -114,18 +114,19 @@ class Npcink_Device_Inventory_Asset_Repository
 		$include_deleted = !empty($args['include_deleted']) || $status === 'deleted' ? '1' : '';
 		$department = isset($args['department']) ? sanitize_text_field($args['department']) : '';
 		$category = isset($args['category']) ? sanitize_text_field($args['category']) : '';
-			$asset_scope = isset($args['asset_scope']) ? sanitize_key($args['asset_scope']) : '';
-			if ($asset_scope !== 'computer' && $asset_scope !== 'other') {
-				$asset_scope = '';
-			}
-			$sort_by = isset($args['sort_by']) ? sanitize_key($args['sort_by']) : '';
-			$search = isset($args['search']) ? sanitize_text_field($args['search']) : '';
+		$asset_scope = isset($args['asset_scope']) ? sanitize_key($args['asset_scope']) : '';
+		if ($asset_scope !== 'computer' && $asset_scope !== 'other') {
+			$asset_scope = '';
+		}
+		$sort_by = isset($args['sort_by']) ? sanitize_key($args['sort_by']) : '';
+		$search = isset($args['search']) ? sanitize_text_field($args['search']) : '';
 		$like = '%' . $wpdb->esc_like($search) . '%';
 		$prefix_like = $wpdb->esc_like($search) . '%';
-		$extended_like = $this->should_search_extended_asset_data($search) ? $like : '__npcink_no_extended_asset_match__';
-		$extended_prefix_like = $this->should_search_extended_asset_data($search) ? $prefix_like : '__npcink_no_extended_asset_match__';
+		$extended_search = $this->should_search_extended_asset_data($search) ? '1' : '';
+		$extended_like = $extended_search === '1' ? $like : '__npcink_no_extended_asset_match__';
+		$extended_prefix_like = $extended_search === '1' ? $prefix_like : '__npcink_no_extended_asset_match__';
 		$primary_ip_exact_like = '%"primary_ip":"' . $wpdb->esc_like($search) . '"%';
-		$primary_ip_prefix_like = $this->should_search_extended_asset_data($search) ? '%"primary_ip":"' . $wpdb->esc_like($search) . '%' : '__npcink_no_extended_asset_match__';
+		$primary_ip_prefix_like = $extended_search === '1' ? '%"primary_ip":"' . $wpdb->esc_like($search) . '%' : '__npcink_no_extended_asset_match__';
 		$platform_regex = $this->build_platform_regex(isset($args['purchase_platform']) ? $args['purchase_platform'] : '');
 		$platform_filter = $platform_regex === '' ? '' : '1';
 		$platform_query_regex = $platform_regex === '' ? 'a^' : $platform_regex;
@@ -148,20 +149,20 @@ class Npcink_Device_Inventory_Asset_Repository
 					OR a.name LIKE %s
 					OR a.owner_name LIKE %s
 					OR a.department LIKE %s
-					OR a.metadata_json LIKE %s
-					OR EXISTS (
+					OR (%s = '1' AND a.metadata_json LIKE %s)
+					OR (%s = '1' AND EXISTS (
 						SELECT 1
 						FROM %i si
 						WHERE si.asset_id = a.id
 						AND si.identity_type IN ('mac_address', 'hardware_uuid', 'system_uuid', 'system_serial', 'bios_serial', 'baseboard_serial')
 						AND si.identity_value LIKE %s
-					)
-					OR EXISTS (
+					))
+					OR (%s = '1' AND EXISTS (
 						SELECT 1
 						FROM %i so
 						WHERE so.asset_id = a.id
 						AND so.summary_json LIKE %s
-					)
+					))
 				)
 				AND (%s = '' OR a.metadata_json REGEXP %s)",
 				$table,
@@ -182,9 +183,12 @@ class Npcink_Device_Inventory_Asset_Repository
 				$like,
 				$like,
 				$like,
-				$like,
+				$extended_search,
+				$extended_like,
+				$extended_search,
 				$identities_table,
 				$extended_like,
+				$extended_search,
 				$observations_table,
 				$extended_like,
 				$platform_filter,
@@ -213,20 +217,20 @@ class Npcink_Device_Inventory_Asset_Repository
 				OR a.name LIKE %s
 				OR a.owner_name LIKE %s
 				OR a.department LIKE %s
-				OR a.metadata_json LIKE %s
-				OR EXISTS (
+				OR (%s = '1' AND a.metadata_json LIKE %s)
+				OR (%s = '1' AND EXISTS (
 					SELECT 1
 					FROM %i si
 					WHERE si.asset_id = a.id
 					AND si.identity_type IN ('mac_address', 'hardware_uuid', 'system_uuid', 'system_serial', 'bios_serial', 'baseboard_serial')
 					AND si.identity_value LIKE %s
-				)
-				OR EXISTS (
+				))
+				OR (%s = '1' AND EXISTS (
 					SELECT 1
 					FROM %i so
 					WHERE so.asset_id = a.id
 					AND so.summary_json LIKE %s
-				)
+				))
 			)
 			AND (%s = '' OR a.metadata_json REGEXP %s)
 			ORDER BY
@@ -243,21 +247,21 @@ class Npcink_Device_Inventory_Asset_Repository
 						AND oi.identity_type IN ('mac_address', 'hardware_uuid', 'system_uuid', 'system_serial', 'bios_serial', 'baseboard_serial')
 						AND oi.identity_value = %s
 					) THEN 4
-					WHEN lo.summary_json LIKE %s THEN 5
+					WHEN %s = '1' AND lo.summary_json LIKE %s THEN 5
 					WHEN a.asset_number LIKE %s THEN 6
 					WHEN a.name LIKE %s THEN 7
 					WHEN a.owner_name LIKE %s THEN 8
 					WHEN a.department LIKE %s THEN 9
-					WHEN EXISTS (
+					WHEN %s = '1' AND EXISTS (
 						SELECT 1
 						FROM %i pi
 						WHERE pi.asset_id = a.id
 						AND pi.identity_type IN ('mac_address', 'hardware_uuid', 'system_uuid', 'system_serial', 'bios_serial', 'baseboard_serial')
 						AND pi.identity_value LIKE %s
 					) THEN 10
-						WHEN lo.summary_json LIKE %s THEN 11
-						WHEN a.metadata_json LIKE %s THEN 12
-						ELSE 13
+					WHEN %s = '1' AND lo.summary_json LIKE %s THEN 11
+					WHEN %s = '1' AND a.metadata_json LIKE %s THEN 12
+					ELSE 13
 					END ASC,
 					CASE WHEN %s IN ('latest_upload', 'latestupload', 'latest_observed', 'latestobserved') THEN COALESCE(a.latest_observed_at, a.updated_at, a.created_at) END DESC,
 					CASE WHEN %s IN ('latest_upload', 'latestupload', 'latest_observed', 'latestobserved') THEN a.updated_at END DESC,
@@ -283,9 +287,12 @@ class Npcink_Device_Inventory_Asset_Repository
 				$like,
 				$like,
 				$like,
-				$like,
+				$extended_search,
+				$extended_like,
+				$extended_search,
 				$identities_table,
 				$extended_like,
+				$extended_search,
 				$observations_table,
 				$extended_like,
 				$platform_filter,
@@ -297,20 +304,24 @@ class Npcink_Device_Inventory_Asset_Repository
 				$search,
 				$identities_table,
 				$search,
+				$extended_search,
 				$primary_ip_exact_like,
 				$prefix_like,
 				$prefix_like,
 				$prefix_like,
 				$prefix_like,
-					$identities_table,
-					$extended_prefix_like,
-					$primary_ip_prefix_like,
-					$like,
-					$sort_by,
-					$sort_by,
-					$sort_by,
-					$page_size,
-					$offset
+				$extended_search,
+				$identities_table,
+				$extended_prefix_like,
+				$extended_search,
+				$primary_ip_prefix_like,
+				$extended_search,
+				$extended_like,
+				$sort_by,
+				$sort_by,
+				$sort_by,
+				$page_size,
+				$offset
 				),
 			ARRAY_A
 		);
@@ -465,10 +476,19 @@ class Npcink_Device_Inventory_Asset_Repository
 		if ($search === '') {
 			return false;
 		}
-		if (preg_match('/^\d{1,2}$/', $search)) {
+		if (strlen($search) < 3) {
 			return false;
 		}
-		return true;
+		if (preg_match('/^(?:\d{1,3}\.){1,3}\d{0,3}$/', $search)) {
+			return true;
+		}
+		if (preg_match('/^[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){2,5}$/', $search)) {
+			return true;
+		}
+		if (preg_match('/^[A-Za-z0-9_-]{8,}$/', $search)) {
+			return true;
+		}
+		return false;
 	}
 
 	private function get_list_cache_version()

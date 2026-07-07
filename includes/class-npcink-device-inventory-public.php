@@ -8,6 +8,9 @@ if (!defined('ABSPATH')) {
 
 class Npcink_Device_Inventory_Public
 {
+	const PUBLIC_QUERY_RATE_LIMIT = 20;
+	const PUBLIC_QUERY_RATE_WINDOW = 300;
+
 	public function register_shortcode()
 	{
 		add_shortcode('npcink_device_inventory_public_search', array($this, 'render_public_search'));
@@ -43,7 +46,8 @@ class Npcink_Device_Inventory_Public
 		$options = Npcink_Device_Inventory_V3_Tables::options();
 		$endpoint = rest_url('npcink-device-inventory/v1/public-query');
 		$enabled = !empty($options['public_query_enabled']);
-		$requires_code = !empty($options['public_query_access_code_hash']);
+		$access_code_configured = !empty($options['public_query_access_code_hash']);
+		$requires_code = $enabled;
 		$root_id = function_exists('wp_unique_id') ? wp_unique_id('npcink-public-query-') : 'npcink-public-query-' . wp_rand(1000, 999999);
 		$config_data = array(
 			'endpoint' => esc_url_raw($endpoint),
@@ -68,7 +72,12 @@ class Npcink_Device_Inventory_Public
 			<?php if (!$enabled) : ?>
 				<div class="npcink-public-query__notice">
 					<strong><?php echo esc_html__('公开查询尚未启用', 'npcink-device-inventory'); ?></strong>
-					<span><?php echo esc_html__('管理员可在插件设置中启用查询页面，并按需要设置访问码。', 'npcink-device-inventory'); ?></span>
+					<span><?php echo esc_html__('管理员可在插件设置中启用查询页面，并设置访问码。', 'npcink-device-inventory'); ?></span>
+				</div>
+			<?php elseif (!$access_code_configured) : ?>
+				<div class="npcink-public-query__notice">
+					<strong><?php echo esc_html__('公开查询需要访问码', 'npcink-device-inventory'); ?></strong>
+					<span><?php echo esc_html__('管理员需要先在插件设置中设置访问码，公开查询入口才会开放。', 'npcink-device-inventory'); ?></span>
 				</div>
 			<?php else : ?>
 				<form class="npcink-public-query__form <?php echo $requires_code ? 'npcink-public-query__form--with-code' : ''; ?>" data-npcink-public-query-form>
@@ -580,11 +589,18 @@ class Npcink_Device_Inventory_Public
 			return new WP_Error('public_query_disabled', '公开查询尚未启用。', array('status' => 403));
 		}
 
-		if (!empty($options['public_query_access_code_hash'])) {
-			$access_code = (string) $request->get_param('accessCode');
-			if ($access_code === '' || !wp_check_password($access_code, (string) $options['public_query_access_code_hash'])) {
-				return new WP_Error('invalid_access_code', '访问码不正确。', array('status' => 403));
-			}
+		if (empty($options['public_query_access_code_hash'])) {
+			return new WP_Error('public_query_access_code_required', '公开查询需要先设置访问码。', array('status' => 403));
+		}
+
+		$rate_limit = $this->public_query_rate_limit();
+		if (is_wp_error($rate_limit)) {
+			return $rate_limit;
+		}
+
+		$access_code = (string) $request->get_param('accessCode');
+		if ($access_code === '' || !wp_check_password($access_code, (string) $options['public_query_access_code_hash'])) {
+			return new WP_Error('invalid_access_code', '访问码不正确。', array('status' => 403));
 		}
 
 		$keyword = trim((string) $request->get_param('keyword'));
@@ -821,5 +837,19 @@ class Npcink_Device_Inventory_Public
 		}
 		$precision = $bytes >= 10 ? 0 : 1;
 		return rtrim(rtrim(number_format($bytes, $precision, '.', ''), '0'), '.') . ' ' . $units[$index];
+	}
+
+	private function public_query_rate_limit()
+	{
+		$remote_addr = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : 'unknown';
+		$key = 'npcink_public_query_' . md5($remote_addr);
+		$count = intval(get_transient($key));
+
+		if ($count >= self::PUBLIC_QUERY_RATE_LIMIT) {
+			return new WP_Error('public_query_rate_limited', '查询过于频繁，请稍后再试。', array('status' => 429));
+		}
+
+		set_transient($key, $count + 1, self::PUBLIC_QUERY_RATE_WINDOW);
+		return true;
 	}
 }

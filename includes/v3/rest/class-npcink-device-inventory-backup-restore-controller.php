@@ -235,9 +235,9 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 				$summary = $this->import_settings($backup['settings'], $summary);
 			}
 
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Restore spans plugin-owned tables and needs transaction boundaries.
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Restore spans plugin-owned tables and needs transaction boundaries.
 			$wpdb->query('START TRANSACTION');
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 
 			if (isset($backup['assets']) && is_array($backup['assets'])) {
 				$result = $this->process_assets($backup['assets'], $summary, $asset_map, true);
@@ -258,13 +258,13 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 				$this->assert_no_import_conflicts($summary);
 			}
 
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- See transaction note above.
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- See transaction note above.
 			$wpdb->query('COMMIT');
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		} catch (Exception $exception) {
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- See transaction note above.
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- See transaction note above.
 			$wpdb->query('ROLLBACK');
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 			if ($settings_imported) {
 				update_option(Npcink_Device_Inventory_V3_Tables::OPTION, $previous_options);
 			}
@@ -637,12 +637,12 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 			return null;
 		}
 		global $wpdb;
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned restore lookup.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned restore lookup.
 		$row = $wpdb->get_row(
 			$wpdb->prepare('SELECT * FROM %i WHERE uuid = %s LIMIT 1', Npcink_Device_Inventory_V3_Tables::assets(), $uuid),
 			ARRAY_A
 		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $row;
 	}
 
@@ -652,12 +652,12 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 			return null;
 		}
 		global $wpdb;
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned restore lookup.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned restore lookup.
 		$row = $wpdb->get_row(
 			$wpdb->prepare('SELECT * FROM %i WHERE asset_number = %s LIMIT 1', Npcink_Device_Inventory_V3_Tables::assets(), $asset_number),
 			ARRAY_A
 		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $row;
 	}
 
@@ -722,7 +722,7 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 	private function identity_asset_id($type, $value)
 	{
 		global $wpdb;
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned restore lookup.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned restore lookup.
 		$asset_id = $wpdb->get_var(
 			$wpdb->prepare(
 				'SELECT asset_id FROM %i WHERE identity_type = %s AND identity_value = %s LIMIT 1',
@@ -731,14 +731,14 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 				$value
 			)
 		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $asset_id ? intval($asset_id) : 0;
 	}
 
 	private function observation_exists($asset_id, $source, $schema_version, $observed_at)
 	{
 		global $wpdb;
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned restore lookup.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned restore lookup.
 		$found = $wpdb->get_var(
 			$wpdb->prepare(
 				'SELECT id FROM %i WHERE asset_id = %d AND source = %s AND schema_version = %d AND observed_at = %s LIMIT 1',
@@ -749,7 +749,7 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 				$observed_at
 			)
 		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		return !empty($found);
 	}
 
@@ -757,7 +757,7 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 	{
 		global $wpdb;
 		$asset_id = $asset_id ? intval($asset_id) : 0;
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned restore lookup.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned restore lookup.
 		$found = $asset_id
 			? $wpdb->get_var(
 				$wpdb->prepare(
@@ -780,7 +780,7 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 					$created_at
 				)
 			);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		return !empty($found);
 	}
 

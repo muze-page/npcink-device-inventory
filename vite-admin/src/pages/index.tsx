@@ -5794,6 +5794,7 @@ const SettingsWorkspace = () => {
   }, [publicQueryPageSlug, settingsQuery.data?.publicQueryPage?.url]);
   const publicQueryPage = settingsQuery.data?.publicQueryPage;
   const hasPublicQueryPage = Boolean(publicQueryPage?.exists);
+  const hasPublicQueryAccessCode = Boolean(settingsQuery.data?.publicQueryAccessCodeSet);
   return (
     <div className="npcink-v3-section">
       <div className="npcink-v3-section-header">
@@ -5857,6 +5858,15 @@ const SettingsWorkspace = () => {
                 }
                 extra="留空不会修改当前访问码；设置后，公开查询页面必须输入访问码。"
                 className="npcink-v3-settings-wide"
+                rules={[
+                  ({ getFieldValue }) => ({
+                    validator: async (_, value) => {
+                      if (getFieldValue("publicQueryEnabled") && !hasPublicQueryAccessCode && !String(value || "").trim()) {
+                        throw new Error("启用公开查询前必须设置访问码");
+                      }
+                    },
+                  }),
+                ]}
               >
                 <Input.Password placeholder="输入新的查询访问码" autoComplete="new-password" />
               </Form.Item>
