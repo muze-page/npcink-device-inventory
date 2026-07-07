@@ -48,6 +48,18 @@ const steps = [
     cwd: repoRoot,
   },
   {
+    title: "Public query fixtures",
+    command: "npm",
+    args: ["run", "check:public-query"],
+    cwd: repoRoot,
+  },
+  {
+    title: "Asset search fixtures",
+    command: "npm",
+    args: ["run", "check:asset-search"],
+    cwd: repoRoot,
+  },
+  {
     title: "PHPStan",
     command: "composer",
     args: ["run", "phpstan"],

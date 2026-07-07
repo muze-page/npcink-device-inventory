@@ -19,6 +19,8 @@ npm run check:release
 - `npm run build`，生成后台生产资源。
 - `node scripts/check-wordpress-org-review-rules.mjs`，检查 WordPress.org 人工审核曾指出但 PCP 不一定拦截的问题。
 - `npm run check:backup-restore`，验证 JSON 备份恢复离线夹具。
+- `npm run check:public-query`，验证公开查询必须配置访问码、错误访问码拒绝、短窗口限流和正确访问码返回公开资产。
+- `npm run check:asset-search`，验证资产列表普通短关键词不会触发高成本 JSON / observation 扩展搜索，IP、MAC、长序列号类查询仍进入扩展搜索。
 - `composer run phpstan`，验证 PHP 静态类型。
 - `composer run phpcs`，验证 WordPress/PHP 编码规范。
 - `git diff --check`，检查空白字符问题。
