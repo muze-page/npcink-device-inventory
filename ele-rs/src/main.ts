@@ -272,20 +272,6 @@ app.innerHTML = `
                 </div>
                 <div class="settings-summary-list" id="settingsSummaryList"></div>
               </aside>
-              <aside class="update-card" aria-label="软件更新">
-                <div class="settings-summary-head">
-                  <div class="summary-title">
-                    <span>软件更新</span>
-                    <strong id="appVersionText">当前版本 -</strong>
-                  </div>
-                  <button class="summary-refresh" id="checkUpdateButton" type="button">检查更新</button>
-                </div>
-                <div class="update-status" id="updateStatus">点击检查更新，获取最新上传软件。</div>
-                <div class="update-actions" id="updateActions" hidden>
-                  <button class="button secondary compact" id="downloadUpdateButton" type="button" hidden>打开下载</button>
-                  <button class="button primary compact" id="installUpdateButton" type="button" hidden>下载安装并重启</button>
-                </div>
-              </aside>
             </div>
           </div>
         </div>
@@ -416,12 +402,6 @@ const configImportToolbar = document.querySelector<HTMLElement>("#configImportTo
 const manualConfigButton = document.querySelector<HTMLButtonElement>("#manualConfigButton")!;
 const configForm = document.querySelector<HTMLFormElement>("#configForm")!;
 const collectButton = document.querySelector<HTMLButtonElement>("#collectButton")!;
-const appVersionText = document.querySelector<HTMLElement>("#appVersionText")!;
-const checkUpdateButton = document.querySelector<HTMLButtonElement>("#checkUpdateButton")!;
-const updateStatus = document.querySelector<HTMLElement>("#updateStatus")!;
-const updateActions = document.querySelector<HTMLElement>("#updateActions")!;
-const downloadUpdateButton = document.querySelector<HTMLButtonElement>("#downloadUpdateButton")!;
-const installUpdateButton = document.querySelector<HTMLButtonElement>("#installUpdateButton")!;
 const submitButton = document.querySelector<HTMLButtonElement>("#submitButton")!;
 const defaultSubmitButtonText = submitButton.textContent ?? "提交";
 const importConfigButton = document.querySelector<HTMLButtonElement>("#importConfigButton")!;
@@ -1038,9 +1018,6 @@ const updateInteractiveState = () => {
   generateDiagnosticsButton.disabled = isGeneratingDiagnostics;
   openDiagnosticsFolderButton.disabled = isGeneratingDiagnostics;
   copyDiagnosticsPathButton.disabled = isGeneratingDiagnostics;
-  checkUpdateButton.disabled = isCheckingUpdate || isInstallingUpdate;
-  downloadUpdateButton.disabled = isCheckingUpdate || isInstallingUpdate || !downloadUpdateUrl;
-  installUpdateButton.disabled = isCheckingUpdate || isInstallingUpdate || !pendingAutoUpdate;
 };
 
 const setCollecting = (collecting: boolean) => {
@@ -1065,13 +1042,11 @@ const setGeneratingDiagnostics = (generating: boolean) => {
 
 const setCheckingUpdate = (checking: boolean) => {
   isCheckingUpdate = checking;
-  checkUpdateButton.textContent = checking ? "检查中..." : "检查更新";
   updateInteractiveState();
 };
 
 const setInstallingUpdate = (installing: boolean) => {
   isInstallingUpdate = installing;
-  installUpdateButton.textContent = installing ? "安装中..." : "下载安装并重启";
   updateInteractiveState();
 };
 
@@ -1202,13 +1177,9 @@ const preferredDesktopDownload = (manifest: DesktopUpdateManifest | null) => {
 
 const updateNote = (value?: string) => (value || "").trim().split(/\r?\n/).filter(Boolean)[0] || "";
 
-const renderUpdateCard = (message = "") => {
-  appVersionText.textContent = currentAppVersion ? `当前版本 ${currentAppVersion}` : "当前版本 -";
-  updateStatus.textContent = message || "点击检查更新，获取最新上传软件。";
-  updateActions.hidden = !downloadUpdateUrl && !pendingAutoUpdate;
-  downloadUpdateButton.hidden = !downloadUpdateUrl;
-  installUpdateButton.hidden = !pendingAutoUpdate;
-  updateInteractiveState();
+const notifyUpdate = (message: string, kind: "ok" | "error" | "" = "") => {
+  setToast(message, kind);
+  logAppEvent(kind === "error" ? "warn" : "info", "update.status", message);
 };
 
 const resetSubmittedState = () => {
@@ -2001,7 +1972,6 @@ const loadAppVersion = async () => {
   } catch {
     currentAppVersion = "";
   }
-  renderUpdateCard();
 };
 
 const fetchDesktopUpdateManifest = async () => {
@@ -2022,6 +1992,7 @@ const checkDesktopUpdate = async () => {
   pendingAutoUpdate = null;
   downloadUpdateUrl = "";
   let manualMessage = "";
+  let manualUpdateAvailable = false;
   let manifestError = "";
 
   try {
@@ -2029,6 +2000,7 @@ const checkDesktopUpdate = async () => {
     const latestVersion = stringValue(manifest.version);
     const note = updateNote(manifest.notes);
     if (latestVersion && currentAppVersion && compareVersions(latestVersion, currentAppVersion) > 0) {
+      manualUpdateAvailable = true;
       manualMessage = `发现新版本 ${latestVersion}${note ? `：${note}` : ""}`;
     } else if (latestVersion) {
       manualMessage = `当前已是最新版本 ${currentAppVersion || latestVersion}`;
@@ -2042,22 +2014,35 @@ const checkDesktopUpdate = async () => {
     if (update) {
       pendingAutoUpdate = update;
       const note = updateNote(update.body);
-      renderUpdateCard(`发现新版本 ${update.version}${note ? `：${note}` : ""}`);
+      const message = `发现新版本 ${update.version}${note ? `：${note}` : ""}`;
+      notifyUpdate(message, "ok");
       logAppEvent("info", "update.available", `version=${update.version}`);
+      if (window.confirm(`${message}\n\n现在下载安装并重启？`)) {
+        await installDesktopUpdate();
+      }
       return;
     }
     if (manualMessage) {
-      renderUpdateCard(manualMessage);
+      notifyUpdate(manualMessage, manualUpdateAvailable ? "ok" : "");
+      if (manualUpdateAvailable && downloadUpdateUrl && window.confirm(`${manualMessage}\n\n自动更新暂未返回安装包，是否打开下载页面？`)) {
+        await openDesktopUpdateDownload();
+      }
       return;
     }
-    renderUpdateCard("当前已是最新版本。");
+    notifyUpdate("当前已是最新版本。");
   } catch (error) {
     const updaterError = errorMessage(error);
     if (manualMessage) {
-      renderUpdateCard(`${manualMessage}。自动更新暂不可用：${updaterError}`);
+      const message = `${manualMessage}。自动更新暂不可用：${updaterError}`;
+      notifyUpdate(message, manualUpdateAvailable ? "ok" : "error");
+      if (manualUpdateAvailable && downloadUpdateUrl && window.confirm(`${message}\n\n是否打开下载页面？`)) {
+        await openDesktopUpdateDownload();
+      }
       return;
     }
-    renderUpdateCard(manifestError ? `检查失败：${manifestError}；${updaterError}` : `检查失败：${updaterError}`);
+    const message = manifestError ? `检查失败：${manifestError}；${updaterError}` : `检查失败：${updaterError}`;
+    notifyUpdate(message, "error");
+    window.alert(message);
     logAppEvent("warn", "update.check_failed", updaterError);
   } finally {
     setCheckingUpdate(false);
@@ -2074,20 +2059,21 @@ const installDesktopUpdate = async () => {
     await pendingAutoUpdate.downloadAndInstall((event: DownloadEvent) => {
       if (event.event === "Started") {
         downloaded = 0;
-        renderUpdateCard("开始下载更新包...");
+        notifyUpdate("开始下载更新包...");
       } else if (event.event === "Progress") {
         downloaded += event.data.chunkLength;
-        renderUpdateCard(`正在下载更新包：${formatBytes(downloaded)}`);
+        notifyUpdate(`正在下载更新包：${formatBytes(downloaded)}`);
       } else if (event.event === "Finished") {
-        renderUpdateCard("更新包下载完成，正在安装...");
+        notifyUpdate("更新包下载完成，正在安装...");
       }
     });
-    renderUpdateCard("更新已安装，正在重启软件...");
+    notifyUpdate("更新已安装，正在重启软件...", "ok");
     logAppEvent("info", "update.installed", `version=${pendingAutoUpdate.version}`);
     await relaunch();
   } catch (error) {
     const message = errorMessage(error);
-    renderUpdateCard(`安装失败：${message}`);
+    notifyUpdate(`安装失败：${message}`, "error");
+    window.alert(`安装失败：${message}`);
     logAppEvent("error", "update.install_failed", message);
   } finally {
     setInstallingUpdate(false);
@@ -2101,9 +2087,12 @@ const openDesktopUpdateDownload = async () => {
   }
   try {
     await invoke("open_url", { url });
+    notifyUpdate("已打开下载页面。", "ok");
     logAppEvent("info", "update.open_download", url);
   } catch (error) {
-    renderUpdateCard(`打开下载失败：${errorMessage(error)}`);
+    const message = `打开下载失败：${errorMessage(error)}`;
+    notifyUpdate(message, "error");
+    window.alert(message);
   }
 };
 
@@ -2205,25 +2194,13 @@ copyDiagnosticsPathButton.addEventListener("click", () => {
   void copyDiagnosticsPath();
 });
 
-checkUpdateButton.addEventListener("click", () => {
-  void checkDesktopUpdate();
-});
-
 void listen(MENU_CHECK_UPDATE_EVENT, () => {
-  switchTab("settings");
   if (isCheckingUpdate || isInstallingUpdate) {
+    notifyUpdate("正在处理更新，请稍候。");
     return;
   }
-  renderUpdateCard("正在检查更新...");
+  notifyUpdate("正在检查更新...");
   void checkDesktopUpdate();
-});
-
-downloadUpdateButton.addEventListener("click", () => {
-  void openDesktopUpdateDownload();
-});
-
-installUpdateButton.addEventListener("click", () => {
-  void installDesktopUpdate();
 });
 
 void listen<DiagnosticsProgress>("diagnostics-progress", (event) => {
@@ -2309,7 +2286,6 @@ tokenInput.addEventListener("input", () => {
 renderAll();
 renderRuntimeStatus(null);
 renderRuntimeHistory(null);
-renderUpdateCard();
 
 const bootstrap = async () => {
   await loadAppVersion();

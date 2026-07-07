@@ -309,7 +309,6 @@ button {
 }
 
 .device-summary,
-.update-card,
 .runtime-card {
   display: grid;
   gap: 16px;
@@ -419,22 +418,6 @@ button {
   color: rgba(255, 255, 255, 0.9);
   font-weight: 650;
   overflow-wrap: anywhere;
-}
-
-.update-status {
-  margin: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 13px;
-  color: rgba(255, 255, 255, 0.76);
-  font-size: 13px;
-  line-height: 1.55;
-  overflow-wrap: anywhere;
-}
-
-.update-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
 }
 
 .runtime-grid {
