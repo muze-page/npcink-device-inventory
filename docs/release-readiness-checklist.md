@@ -43,6 +43,16 @@ npm run check:submission
 
 submission 检查会同时验证 `release/npcink-device-inventory.zip` 和 `sj/npcink-device-inventory.zip`，并对比两个 zip 的 SHA-256，确认提交包和 release 包一致。
 
+## Eval Lab 对抗式质量门
+
+发布前可以运行本地只读 eval-lab 质量门：
+
+```bash
+composer eval:project:quality-gate
+```
+
+该命令通过 `scripts/eval-lab.sh` 调用相邻的 `npcink-eval-lab` checkout，或使用 `NPCINK_EVAL_LAB_PATH` 指向其它位置。它只生成本地评估报告，不写 WordPress，不进入插件发布包，不替代 `npm run check:release`、GitHub Actions 或真实机器 smoke。
+
 ## WordPress.org 人工审核规则
 
 2026-06-26 的插件审核反馈说明：PCP / Plugin Check 通过不代表人工审核规则全部覆盖。发布前必须额外确认：

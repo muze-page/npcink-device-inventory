@@ -12,6 +12,8 @@
     "wp-coding-standards/wpcs": "^3.2"
   },
   "scripts": {
+    "eval:lab": "bash scripts/eval-lab.sh",
+    "eval:project:quality-gate": "bash scripts/eval-lab.sh task=project_quality_gate",
     "phpstan": "phpstan analyse --memory-limit=1G",
     "phpcs": "phpcs"
   },

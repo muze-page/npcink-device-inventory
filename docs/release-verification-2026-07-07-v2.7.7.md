@@ -50,6 +50,12 @@ Artifacts:
 - `latest-desktop.json`: present and available from `releases/latest/download/latest-desktop.json`.
 - Desktop manifest check against downloaded release artifacts: passed for desktop version `0.1.4`.
 
+## Eval Lab Quality Gate
+
+- `composer eval:project:quality-gate`: passed; `Checks needing review: 0`.
+- Eval-lab caller contract check: passed with `NPCINK_EVAL_LAB_CALLERS=/Users/muze/gitee/npcink-device-inventory`.
+- Scope: offline, read-only project quality report; no WordPress writes and no provider-backed model calls.
+
 ## Desktop Update Smoke
 
 This step requires installing the previous official desktop release package on
@@ -78,7 +84,7 @@ real macOS and Windows machines before checking for updates.
 - Plugin Check annotations: direct database call caching warnings remain in
   `includes/v3/rest/class-npcink-device-inventory-backup-restore-controller.php`;
   they did not fail the release workflow.
-- Any release blocker: none from local checks, preview builds, release workflow, release asset manifest checks, or local macOS upload smoke.
+- Any release blocker: none from local checks, preview builds, release workflow, release asset manifest checks, eval-lab quality gate, or local macOS upload smoke.
 
 ## Decision
 
