@@ -3,15 +3,15 @@
 ## Candidate
 
 - Date: 2026-07-07
-- Git commit: this release candidate commit (`Prepare v2.7.7 release candidate`)
-- Planned plugin tag: `v2.7.7`
+- Git commit: `db9999a` (`Prepare v2.7.7 release candidate`)
+- Plugin tag: `v2.7.7`
 - WordPress plugin version: `2.7.7`
 - Desktop app version: `0.1.4`
 - Previous desktop release used for update testing: `v2.7.6` / desktop `0.1.3`
 
 ## Local Checks
 
-- `git status --short --branch`: dirty only with planned v2.7.7 release candidate files.
+- `git status --short --branch`: clean after the v2.7.7 release candidate commit was pushed.
 - `node --check scripts/check-desktop-update-manifests.mjs`: passed.
 - `TAG_NAME=v2.7.7 node scripts/build-desktop-update-manifests.mjs <fixture> && npm run check:desktop-manifests -- <fixture>`: passed; generated manifest version `0.1.4`.
 - `npm run build:release`: passed; generated `release/npcink-device-inventory.zip`.
@@ -37,16 +37,18 @@ Artifacts:
 
 ## Tagged Release Checks
 
-- Release URL: pending
-- `npcink-device-inventory.zip`: pending
-- macOS DMG: pending
-- macOS updater `.tar.gz`: pending
-- macOS updater signature: pending
-- Windows installer: pending
-- Windows updater signature: pending
-- `latest.json`: pending
-- `latest-desktop.json`: pending
-- Desktop manifest check against release artifacts: pending
+- Release workflow: <https://github.com/muze-page/npcink-device-inventory/actions/runs/28834242263> passed.
+- Release URL: <https://github.com/muze-page/npcink-device-inventory/releases/tag/v2.7.7>
+- Release state: published, not draft, not prerelease.
+- `npcink-device-inventory.zip`: present.
+- macOS DMG `Npcink.Device.Agent_0.1.4_aarch64.dmg`: present.
+- macOS updater `Npcink.Device.Agent.app.tar.gz`: present.
+- macOS updater signature `Npcink.Device.Agent.app.tar.gz.sig`: present.
+- Windows installer `Npcink.Device.Agent_0.1.4_x64-setup.exe`: present.
+- Windows updater signature `Npcink.Device.Agent_0.1.4_x64-setup.exe.sig`: present.
+- `latest.json`: present and available from `releases/latest/download/latest.json`.
+- `latest-desktop.json`: present and available from `releases/latest/download/latest-desktop.json`.
+- Desktop manifest check against downloaded release artifacts: passed for desktop version `0.1.4`.
 
 ## Desktop Update Smoke
 
@@ -73,10 +75,13 @@ real macOS and Windows machines before checking for updates.
 - macOS DMG signing/notarization: not added; internal testing only.
 - Windows code signing: not added; internal testing only.
 - Public GitHub Release access: required for desktop updater.
-- Any release blocker: none from local checks.
+- Plugin Check annotations: direct database call caching warnings remain in
+  `includes/v3/rest/class-npcink-device-inventory-backup-restore-controller.php`;
+  they did not fail the release workflow.
+- Any release blocker: none from local checks, preview builds, release workflow, or release asset manifest checks.
 
 ## Decision
 
-- Release candidate status: local checks passed; tagged release pending.
-- Follow-up required before tag: commit and push the v2.7.7 release candidate.
-- Follow-up allowed after tag: real macOS and Windows update smoke from previous official 0.1.3 package.
+- Release candidate status: tagged release artifacts passed.
+- Follow-up required before external use: real macOS and Windows update smoke from previous official 0.1.3 packages, plus upload smoke against a WordPress site.
+- Follow-up allowed after tag: code signing/notarization, installer trust hardening, and caching cleanup for Plugin Check warnings.
