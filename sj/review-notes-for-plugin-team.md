@@ -2,7 +2,7 @@
 
 Plugin: Npcink Device Inventory
 
-Version: 2.7.0
+Version: see the current plugin header and README.txt Stable tag
 
 Slug: npcink-device-inventory
 
@@ -44,20 +44,15 @@ React/TypeScript source and build configuration:
 - `vite-admin/package-lock.json`
 - `vite-admin/vite.config.ts`
 - `vite-admin/tsconfig*.json`
-- `vite-search/src`
-- `vite-search/package.json`
-- `vite-search/package-lock.json`
-- `vite-search/vite.config.ts`
-- `vite-search/tsconfig*.json`
 
 The built assets can be reproduced by running:
 
 ```bash
-npm install
+npm ci
 npm run build
 ```
 
-inside each Vite app directory.
+inside `vite-admin/`.
 
 ## Custom Database Tables
 
@@ -92,12 +87,10 @@ The following checks were run successfully before packaging:
 
 ```bash
 npm run build --prefix vite-admin
-npm run build --prefix vite-search
 composer phpcs
 composer phpstan
-npm run build:release
-cp release/npcink-device-inventory.zip sj/npcink-device-inventory.zip
-npm run check:release
+npm run build:submission
+npm run check:submission
 wp --path='/Users/muze/Local Sites/npcink-device-inventory/app/public' plugin check /Users/muze/gitee/npcink-device-inventory/release/npcink-device-inventory --format=json
 ```
 

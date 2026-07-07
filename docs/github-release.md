@@ -2,7 +2,7 @@
 
 This repository builds three release artifacts through GitHub Actions:
 
-- `npcink-device-inventory-plugin.zip`: installable Npcink Device Inventory WordPress plugin package.
+- `npcink-device-inventory.zip`: installable Npcink Device Inventory WordPress plugin package.
 - `Npcink Device Agent_*.dmg`: macOS hardware information uploader for Apple Silicon internal testing.
 - `Npcink Device Agent_*_x64-setup.exe`: Windows hardware information uploader.
 - `latest-desktop.json`: desktop update metadata used by the app's manual update check.
@@ -32,7 +32,7 @@ Preview artifacts are attached to the workflow run and expire after 7 days.
 Use this workflow while iterating on UI, icons, copy, and packaging checks.
 
 The preview workflow uses Node 24, runs PHP syntax checks for plugin PHP files,
-builds both Vite apps with `npm ci`, audits the WordPress plugin zip boundary,
+builds the `vite-admin` app with `npm ci`, audits the WordPress plugin zip boundary,
 and runs `cargo check` before building the macOS/Windows Tauri installers.
 The CI packaging script also unpacks the generated WordPress zip back into
 `release/npcink-device-inventory/` so WordPress Plugin Check can scan the same
@@ -52,7 +52,7 @@ bash .github/scripts/verify-local-e2e.sh
 ```
 
 The script generates a temporary upload authorization code in WordPress, submits
-a signed v2 upload through the Rust CLI, verifies that the stored row has
+a signed v3 observation through the Rust CLI, verifies that the stored row has
 `_npcink_device`, `asset`, and `raw`, then disables the temporary authorization
 code.
 
@@ -95,7 +95,6 @@ assets:
 - `includes/`
 - `languages/`
 - `vite-admin/dist/`
-- `vite-search/dist/`
 - plugin bootstrap/readme/license files
 
 The old Electron client, the new Rust/Tauri source, docs, local caches,

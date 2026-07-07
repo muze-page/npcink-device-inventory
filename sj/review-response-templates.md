@@ -31,13 +31,8 @@ Admin app source and build files are included under vite-admin, including
 vite-admin/src, vite-admin/package.json, vite-admin/package-lock.json,
 vite-admin/vite.config.ts, and vite-admin/tsconfig*.json.
 
-Public search app source and build files are included under vite-search,
-including vite-search/src, vite-search/package.json,
-vite-search/package-lock.json, vite-search/vite.config.ts, and
-vite-search/tsconfig*.json.
-
-The assets can be rebuilt by running npm install and npm run build inside each
-Vite app directory.
+The assets can be rebuilt by running npm ci and npm run build inside the
+vite-admin directory.
 ```
 
 ## 3. 如果审核询问第三方服务或隐私
@@ -70,4 +65,3 @@ The UI now uses generic text labels instead of bundled third-party platform or
 payment images. The package scan also verifies that those removed image assets
 do not reappear in the release package.
 ```
-

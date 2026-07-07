@@ -1,5 +1,7 @@
 # WordPress.org 提交表单文案
 
+> 当前发布包版本以根目录 `npcink-device-inventory.php` 的 `Version` 和 `README.txt` 的 `Stable tag` 为准。实际上传前先运行 `npm run build:submission && npm run check:submission` 生成并验证 `sj/npcink-device-inventory.zip`。
+
 ## Upload File
 
 Use:
@@ -33,7 +35,7 @@ Npcink Device Inventory is a WordPress plugin for managing device and hardware a
 
 The plugin stores data in the site's own WordPress database and does not contact a third-party service during normal operation. Public query and upload endpoints require a client authorization token and HMAC signature. Admin endpoints require a WordPress user with manage_options.
 
-The package includes built React assets and the corresponding React/TypeScript source and build configuration under vite-admin and vite-search. The package does not include node_modules, sourcemaps, external CDN assets, or bundled trademark/payment/platform image assets.
+The package includes built React assets and the corresponding React/TypeScript source and build configuration under vite-admin. The package does not include node_modules, sourcemaps, external CDN assets, or bundled trademark/payment/platform image assets.
 ```
 
 ## Optional Reviewer Note
@@ -57,7 +59,7 @@ inventory, assets, device management, rest api, admin
 ## Version and Compatibility
 
 ```text
-Version: 2.7.0
+Version: see the current plugin header and README.txt Stable tag
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4

@@ -2,11 +2,13 @@
 
 日期：2026-06-23
 
+> 历史归档：本文记录首发提交准备阶段的历史决策和当时验证结果，不代表当前版本、当前 zip 或当前发布命令。当前发布入口见根目录 `README.md`、`README.txt`、`docs/release-readiness-checklist.md` 和 `sj/README.md`。
+
 本文档归纳 `Npcink Device Inventory` 在提交 WordPress.org 插件审核前的主要历史决策、已完成事项、验证结果和当前状态。它用于后续交接、审核追问回复和避免重复排查。
 
 ## 当前结论
 
-项目已经完成首发提交前的准备工作，可以进入 WordPress.org 插件审核提交流程。
+当时项目已经完成首发提交前的准备工作，可以进入 WordPress.org 插件审核提交流程。
 
 当前提交身份：
 
@@ -18,7 +20,7 @@
 - zip 根目录：`npcink-device-inventory/`
 - SHA-256：`f94739d08938e1f1ee89dad0aaa36c25b652cc4a0b2493bdc8cfcae77bf527c8`
 
-建议下一步是提交 `sj/npcink-device-inventory.zip` 到 WordPress.org 插件审核，不建议在审核前继续做大功能、重构后台 UI 或调整接口协议。
+如果当前要再次提交 WordPress.org，应先重新生成和验证 `sj/npcink-device-inventory.zip`，不应复用本文记录的历史 zip/hash。
 
 ## 历史推进脉络
 

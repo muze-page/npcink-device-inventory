@@ -4,6 +4,8 @@
 
 Current local state after commit `b7e4d63` on 2026-06-20.
 
+> Historical note: this file records the modernization state from June 2026 and may mention retired runtime surfaces such as `vite-search`. Current project layout is documented in the root `README.md`.
+
 This document summarizes the modernization work done for the WordPress plugin
 and the new Rust/Tauri hardware uploader. It records the product decisions,
 data-model changes, local migration results, and remaining follow-up work.

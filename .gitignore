@@ -26,6 +26,7 @@ bin-release/
 **/target/
 vendor/
 release/
+release-preview/
 ele-rs/smoke-reports/
 *.zip
 *.dmg
@@ -35,4 +36,5 @@ ele-rs/smoke-reports/
 # Local migration backups
 .local-backups/
 设备数据备份/
+临时/
 device-inventory-current.png

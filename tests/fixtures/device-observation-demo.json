@@ -1,0 +1,83 @@
+{
+  "_fixture_note": "Synthetic and sanitized hardware observation sample. Values are not from a real device.",
+  "os": {
+    "arch": "x64",
+    "fqdn": "WORKSTATION-EXAMPLE",
+    "uefi": true,
+    "build": "26100",
+    "distro": "Microsoft Windows 11 Pro",
+    "kernel": "10.0.26100",
+    "serial": "SYNTHETIC-OS-SERIAL",
+    "release": "10.0.26100",
+    "hostname": "WORKSTATION-EXAMPLE",
+    "platform": "Windows",
+    "hypervisor": false,
+    "remoteSession": false
+  },
+  "cpu": {
+    "brand": "Example 12-Core CPU",
+    "cores": 16,
+    "speed": 2.5,
+    "vendor": "ExampleVendor",
+    "processors": 1,
+    "manufacturer": "ExampleVendor",
+    "physicalCores": 12,
+    "virtualization": true
+  },
+  "net": [
+    {
+      "ip4": "192.0.2.10",
+      "ip6": "2001:db8::10",
+      "mac": "02:00:00:00:00:10",
+      "dhcp": true,
+      "type": "wired",
+      "iface": "Ethernet",
+      "speed": 1000,
+      "default": true,
+      "virtual": false,
+      "internal": false,
+      "ifaceName": "Example Gigabit Ethernet Adapter",
+      "operstate": "up"
+    }
+  ],
+  "bios": {
+    "serial": "SYNTHETIC-BIOS-SERIAL",
+    "vendor": "Example BIOS Vendor",
+    "version": "1.0.0",
+    "releaseDate": "2026-01-01"
+  },
+  "uuid": {
+    "os": "00000000-0000-4000-8000-000000000010",
+    "macs": ["02:00:00:00:00:10"],
+    "hardware": "00000000-0000-4000-8000-000000000020"
+  },
+  "system": {
+    "sku": "EXAMPLE-SKU",
+    "uuid": "00000000-0000-4000-8000-000000000020",
+    "model": "Example Workstation",
+    "serial": "SYNTHETIC-SYSTEM-SERIAL",
+    "version": "1.0",
+    "virtual": false,
+    "manufacturer": "Example Manufacturer"
+  },
+  "chassis": {
+    "type": "Desktop",
+    "serial": "SYNTHETIC-CHASSIS-SERIAL",
+    "assetTag": "ASSET-DEMO-001",
+    "manufacturer": "Example Manufacturer"
+  },
+  "version": "5.21.4",
+  "graphics": {
+    "displays": [
+      {
+        "main": true,
+        "model": "Example Display",
+        "connection": "DP",
+        "deviceName": "\\\\.\\DISPLAY1",
+        "currentResX": 2560,
+        "currentResY": 1440,
+        "currentRefreshRate": 60
+      }
+    ]
+  }
+}

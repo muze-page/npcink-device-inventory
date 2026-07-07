@@ -3,6 +3,8 @@
 ## Date
 2026-06-30
 
+> Historical note: this file records implementation history and may contain old packaging commands. Current release commands live in `docs/release-readiness-checklist.md`.
+
 ## Scope
 This document summarizes the troubleshooting and implementation history for the client-token package preset flow in the WordPress admin and the Tauri desktop uploader.
 

@@ -24,7 +24,7 @@
         },
         {
           "question": "Where is the source for bundled JavaScript?",
-          "answer": "The WordPress package includes the built files and the corresponding React/TypeScript source. Admin app source is in vite-admin/src; public search app source is in vite-search/src."
+          "answer": "The WordPress package includes the built files and the corresponding React/TypeScript source. Admin app source is in vite-admin/src."
         }
       ]
     },
@@ -50,7 +50,7 @@
         },
         {
           "question": "构建后的 JavaScript 源码在哪里？",
-          "answer": "插件包包含构建产物和对应的 React/TypeScript 源码。后台应用源码在 vite-admin/src，公开查询应用源码在 vite-search/src。"
+          "answer": "插件包包含构建产物和对应的 React/TypeScript 源码。后台应用源码在 vite-admin/src。"
         }
       ]
     }

@@ -25,7 +25,7 @@ The plugin provides:
 - A public search page protected by a client authorization token and HMAC signature.
 - A signed REST upload endpoint for an optional desktop collection client.
 
-The WordPress plugin does not load JavaScript or CSS from third-party CDNs. Built React assets are bundled locally in the plugin package, with the corresponding React/TypeScript source and build configuration included under `vite-admin` and `vite-search`.
+The WordPress plugin does not load JavaScript or CSS from third-party CDNs. Built React assets are bundled locally in the plugin package, with the corresponding React/TypeScript source and build configuration included under `vite-admin`.
 
 ### Installation
 
@@ -57,14 +57,12 @@ The plugin only deletes its custom tables and settings when the administrator ha
 The WordPress package includes the built files and the corresponding React/TypeScript source:
 
 - Admin app source: `vite-admin/src`
-- Public search app source: `vite-search/src`
-- Build configuration: `vite-admin/package.json`, `vite-admin/vite.config.ts`, `vite-search/package.json`, and `vite-search/vite.config.ts`
+- Build configuration: `vite-admin/package.json` and `vite-admin/vite.config.ts`
 
-Run `npm install && npm run build` inside each Vite app directory to rebuild the bundled assets.
+Run `npm ci && npm run build` inside `vite-admin/` to rebuild the bundled assets.
 
 ### Privacy
 
 Npcink Device Inventory stores device asset data in the local WordPress database. Depending on how the site owner configures and uses the plugin, stored data may include device names, assigned users or locations, departments, status values, IP addresses, hardware identifiers, hardware details, and change history.
 
 The plugin does not transmit this data to Npcink or any third-party server during normal plugin operation. Site administrators are responsible for informing users and employees about their own device inventory policies.
-

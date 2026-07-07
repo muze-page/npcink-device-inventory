@@ -1,3 +1,7 @@
+# Modernization AI Notes Archive
+
+> 历史归档：本文是早期现代化整改讨论记录，包含旧接口、旧目录和旧风险判断。当前产品结构、发布流程和验证命令以根目录 `README.md`、`README.txt` 和 `docs/release-readiness-checklist.md` 为准。
+
 我有一个 PHP 和 React 构建的设备管理项目，是 WordPress 上的插件。可以管理电脑设备，添加自定义设备，查看数据大盘和数据的导入导出功能。 现在，我需要对这个项目进行专家级别现代化的优化改造，请提供检查清单和优化的提示词
 
 # 项目架构

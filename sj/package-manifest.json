@@ -1,8 +1,10 @@
 {
+  "record_type": "wordpress_org_submission_package_manifest",
+  "note": "This manifest tracks the current release package metadata. Generate sj/npcink-device-inventory.zip with npm run build:submission before an actual WordPress.org upload. Verification fields are recorded package evidence and must be refreshed by rerunning check:submission for a new upload.",
   "plugin": {
     "name": "Npcink Device Inventory",
     "slug": "npcink-device-inventory",
-    "version": "2.7.0",
+    "version": "2.7.8",
     "requires_at_least": "6.5",
     "tested_up_to": "7.0",
     "requires_php": "7.4",
@@ -12,10 +14,10 @@
     "upload_file": "sj/npcink-device-inventory.zip",
     "source_file": "release/npcink-device-inventory.zip",
     "zip_root": "npcink-device-inventory/",
-    "sha256": "296d8677c4f5fad01fb1f18c9bef995b7e0ea3a54e34a834c01f50bbc45a130f",
-    "file_count": 54,
-    "uncompressed_bytes": 1470109,
-    "compressed_bytes": 464889
+    "sha256": "69ed044e8e6baef9999e5b32da50cd05effe4824ae2caf387865ab28c8709ead",
+    "file_count": 52,
+    "uncompressed_bytes": 1528886,
+    "compressed_bytes": 466485
   },
   "verification": {
     "plugin_check": {

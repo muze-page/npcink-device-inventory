@@ -65,7 +65,7 @@ assets/screenshot-4.png
 assets/screenshot-5.png
 ```
 
-插件代码文件放到 `trunk/` 和 `tags/2.7.0/`，不要把这些展示图片放进插件 zip 或 `trunk/assets/`。
+插件代码文件放到 `trunk/` 和当前版本对应的 `tags/<version>/`，不要把这些展示图片放进插件 zip 或 `trunk/assets/`。
 
 ## 来源
 

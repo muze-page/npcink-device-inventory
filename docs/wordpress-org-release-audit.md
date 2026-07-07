@@ -2,6 +2,8 @@
 
 Date: 2026-06-21
 
+> Historical note: this file records an older WordPress.org release audit. Current package contents and release commands are documented in `README.md` and `docs/release-readiness-checklist.md`.
+
 This document summarizes the WordPress.org plugin directory preparation work for
 Npcink Device Inventory.
 

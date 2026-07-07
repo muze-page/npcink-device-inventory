@@ -9,6 +9,10 @@ Npcink Device Inventory 是一个 WordPress 设备资产管理插件，用于小
 - `includes/`：插件加载器、激活/停用、数据库建表和增量迁移。
 - `vite-admin/`：后台 React 管理端，构建产物由插件后台加载。
 - `ele-rs/`：Rust/Tauri 设备采集与上传客户端。
+- `docs/`：数据模型、发布流程、验证记录和历史归档。
+- `scripts/`：发布包、桌面更新清单和本地备份恢复验证脚本。
+- `tests/`：离线夹具和回归验证脚本。
+- `sj/`：WordPress.org 提交资料、展示素材和审核沟通文案归档。
 
 设备上传客户端以 `ele-rs/` 为准。
 

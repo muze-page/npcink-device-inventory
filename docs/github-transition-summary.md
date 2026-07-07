@@ -4,6 +4,8 @@
 
 日期：2026-06-21
 
+> 历史归档：本文记录迁移到 GitHub 管理入口时的状态。当前发布命令和包结构以 `README.md` 与 `docs/release-readiness-checklist.md` 为准。
+
 项目后续以 GitHub 为主要管理入口。本地仓库当前默认 remote：
 
 ```text

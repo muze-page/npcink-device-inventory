@@ -2,6 +2,8 @@
 
 日期：2026-06-21
 
+> 历史归档：本文记录 WordPress.org 首发准备阶段的当时状态，不代表当前 release 流程。当前版本、发布命令和提交包状态以根目录 `README.md`、`README.txt`、`docs/release-readiness-checklist.md` 和 `sj/README.md` 为准。
+
 本文档归纳 `Npcink Device Inventory` 当前 WordPress.org 发布准备工作的完成状态，并明确下一阶段重点。结论是：发布前资料准备已经完成，下一阶段应进入正式提交与审核跟进，不建议继续大改功能代码。
 
 ## 当前结论
@@ -29,9 +31,9 @@ sj/npcink-device-inventory.zip
 包信息：
 
 - 插件 slug：`npcink-device-inventory`
-- 插件版本：`2.7.0`
+- 插件版本：历史首发候选为 `2.7.0`；当前版本以主插件文件和 `README.txt` 为准。
 - zip 根目录：`npcink-device-inventory/`
-- SHA-256：`f94739d08938e1f1ee89dad0aaa36c25b652cc4a0b2493bdc8cfcae77bf527c8`
+- SHA-256：历史首发候选包记录为 `f94739d08938e1f1ee89dad0aaa36c25b652cc4a0b2493bdc8cfcae77bf527c8`；当前包重新以 `npm run build:submission && npm run check:submission` 生成和验证。
 
 主要处理：
 
@@ -47,12 +49,10 @@ sj/npcink-device-inventory.zip
 
 ```bash
 npm run build --prefix vite-admin
-npm run build --prefix vite-search
 composer phpcs
 composer phpstan
-npm run build:release
-cp release/npcink-device-inventory.zip sj/npcink-device-inventory.zip
-npm run check:release
+npm run build:submission
+npm run check:submission
 wp --path='/Users/muze/Local Sites/npcink-device-inventory/app/public' plugin check /Users/muze/gitee/npcink-device-inventory/release/npcink-device-inventory
 ```
 
@@ -63,7 +63,6 @@ Plugin Check / PCP: No errors found
 phpcs: passed
 phpstan: passed
 vite-admin build: passed
-vite-search build: passed
 ```
 
 本地 REST 冒烟验证也已确认未签名公共查询和上传请求返回 `403`。
@@ -218,7 +217,7 @@ sj/review-notes-for-plugin-team.md
 发布时：
 
 - 插件代码放到 `trunk/`。
-- 当前版本打 tag 到 `tags/2.7.0/`。
+- 当前版本打 tag 到 `tags/<version>/`。
 - 展示图片放到 SVN 顶层 `assets/`。
 - 不要把 zip 文件提交到 SVN。
 - 不要把展示图片放进 `trunk/assets/`。
@@ -248,6 +247,6 @@ sj/review-notes-for-plugin-team.md
 
 ## 当前行动建议
 
-现在最合适的动作是提交 `sj/npcink-device-inventory.zip`，进入 WordPress.org 审核流程。
+如果再次准备 WordPress.org 提交，最合适的动作是先重新运行 `npm run build:submission && npm run check:submission`，再提交新生成的 `sj/npcink-device-inventory.zip`。
 
 在审核反馈回来之前，应把当前包和资料视为冻结版本。需要改动时，只围绕审核反馈做最小必要修正，并重新跑构建、PCP、包 hash 和资料同步。

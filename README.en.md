@@ -9,6 +9,10 @@ Npcink Device Inventory is a WordPress plugin for small-team device asset manage
 - `includes/`: plugin loader, activation/deactivation, schema creation, and migrations.
 - `vite-admin/`: React admin app loaded by the WordPress admin page.
 - `ele-rs/`: Rust/Tauri hardware collector and uploader.
+- `docs/`: data contracts, release workflows, verification records, and historical notes.
+- `scripts/`: release packaging, desktop update manifest, and local backup/restore verification scripts.
+- `tests/`: offline fixtures and regression checks.
+- `sj/`: WordPress.org submission materials, directory assets, and review-response archive.
 
 New uploader work should use `ele-rs/`.
 
@@ -75,7 +79,6 @@ Build the WordPress plugin zip:
 cd /path/to/npcink-device-inventory
 npm ci --prefix vite-admin
 npm run build:release
-cp release/npcink-device-inventory.zip sj/npcink-device-inventory.zip
 npm run check:release
 ```
 
@@ -86,5 +89,12 @@ release/npcink-device-inventory.zip
 ```
 
 The plugin zip contains only WordPress runtime files, language files, licenses/readmes, and built `vite-admin/dist` assets. It excludes `ele-rs/`, `node_modules`, Rust `target`, and local release caches.
+
+For a WordPress.org submission package, run the explicit submission workflow:
+
+```bash
+npm run build:submission
+npm run check:submission
+```
 
 Use the `Build preview packages` GitHub Actions workflow for preview artifacts. Pushing a `v*` tag triggers the release workflow.

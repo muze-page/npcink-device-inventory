@@ -2,6 +2,8 @@
 
 日期：2026-06-21
 
+> 历史归档：本文记录当时 WordPress.org 首发候选包的验证结果。当前提交前验证请以 `docs/release-readiness-checklist.md` 为准，并重新运行 `npm run build:submission && npm run check:submission`。
+
 ## 包信息
 
 - 文件：`sj/npcink-device-inventory.zip`
