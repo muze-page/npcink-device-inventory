@@ -13,6 +13,7 @@
 
 - `git status --short --branch`: clean after the v2.7.7 release candidate commit was pushed.
 - `node --check scripts/check-desktop-update-manifests.mjs`: passed.
+- `node --check scripts/check-desktop-update-transition.mjs`: passed.
 - `TAG_NAME=v2.7.7 node scripts/build-desktop-update-manifests.mjs <fixture> && npm run check:desktop-manifests -- <fixture>`: passed; generated manifest version `0.1.4`.
 - `npm run build:release`: passed; generated `release/npcink-device-inventory.zip`.
 - `npm run check:release`: passed; package hash `d96cb1b2fb9c24291e3b0138e4ff94e5b4857afbd93c1e8118dfc107d323bc65`.
@@ -61,9 +62,10 @@ Artifacts:
 This step requires installing the previous official desktop release package on
 real macOS and Windows machines before checking for updates.
 
-- macOS previous official version installed: pending
-- macOS update check entry used: pending
-- macOS update result: pending
+- macOS previous official version verified: passed from the `v2.7.6` DMG copied to a temporary app bundle; `CFBundleShortVersionString` was `0.1.3`.
+- macOS update transition preflight: passed with `npm run check:desktop-update-transition -- --previous-app=<0.1.3 app> --artifacts=<v2.7.7 assets>`; verified `0.1.3 -> 0.1.4`.
+- macOS update check entry used: attempted through the running `0.1.3` Tauri app; GUI automation could not click because macOS denied Accessibility access to `osascript` (`-25211`).
+- macOS update result: pending real app GUI click-through.
 - Windows previous official version installed: pending
 - Windows update check entry used: pending
 - Windows update result: pending
@@ -81,13 +83,14 @@ real macOS and Windows machines before checking for updates.
 - macOS DMG signing/notarization: not added; internal testing only.
 - Windows code signing: not added; internal testing only.
 - Public GitHub Release access: required for desktop updater.
+- macOS update GUI automation: not available from this environment without Accessibility access; manual click-through is still required.
 - Plugin Check annotations: direct database call caching warnings remain in
   `includes/v3/rest/class-npcink-device-inventory-backup-restore-controller.php`;
   they did not fail the release workflow.
-- Any release blocker: none from local checks, preview builds, release workflow, release asset manifest checks, eval-lab quality gate, or local macOS upload smoke.
+- Any release blocker: none from local checks, preview builds, release workflow, release asset manifest checks, eval-lab quality gate, desktop update transition preflight, or local macOS upload smoke.
 
 ## Decision
 
-- Release candidate status: tagged release artifacts passed; local macOS upload smoke passed.
-- Follow-up required before external use: real macOS and Windows update smoke from previous official 0.1.3 packages, plus Windows upload smoke against a WordPress site.
+- Release candidate status: tagged release artifacts passed; desktop update transition preflight passed; local macOS upload smoke passed.
+- Follow-up required before external use: real macOS GUI update click-through from previous official 0.1.3 package, Windows update smoke from previous official 0.1.3 package, plus Windows upload smoke against a WordPress site.
 - Follow-up allowed after tag: code signing/notarization, installer trust hardening, and caching cleanup for Plugin Check warnings.

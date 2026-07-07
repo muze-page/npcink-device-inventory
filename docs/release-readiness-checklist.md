@@ -89,6 +89,14 @@ npm run check:desktop-manifests -- artifacts
 
 正式桌面更新发布前，还要人工确认本机安装的是上一版正式 Release 包，而不是本地开发构建包；不要复用相同桌面版本号发布不同内容。
 
+在真实 GUI 更新 smoke 前，可以先用上一版 app bundle 和本次 release 资产做升级路径预检：
+
+```bash
+npm run check:desktop-update-transition -- --previous-app="/path/to/Npcink Device Agent.app" --artifacts="/path/to/downloaded/release-assets"
+```
+
+该检查确认上一版 app 的 `CFBundleShortVersionString` 小于本次 `latest.json` / `latest-desktop.json` 版本，并确认 macOS Tauri updater 包、签名和 DMG 下载地址都指向 GitHub Release。它不能替代真实 app 内“检查更新 / 下载安装并重启”的 GUI smoke。
+
 ## 本地后台冒烟
 
 在本地 WordPress 后台打开：
