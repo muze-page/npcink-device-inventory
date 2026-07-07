@@ -169,6 +169,11 @@ class Npcink_Device_Inventory_Assets_Controller
 		if (!is_array($params)) {
 			return Npcink_Device_Inventory_V3_Response::error('invalid_json', 'Request body must be valid JSON.', 400);
 		}
+		$department = isset($params['department']) ? $params['department'] : '';
+		$department_check = $this->validate_department($department);
+		if (is_wp_error($department_check)) {
+			return $department_check;
+		}
 
 		$asset = $this->assets->create(
 			array(
@@ -177,7 +182,7 @@ class Npcink_Device_Inventory_Assets_Controller
 				'asset_number' => isset($params['assetNumber']) ? $params['assetNumber'] : '',
 				'name' => isset($params['name']) ? $params['name'] : '',
 				'owner_name' => isset($params['ownerName']) ? $params['ownerName'] : '',
-				'department' => isset($params['department']) ? $params['department'] : '',
+				'department' => $department,
 				'status' => isset($params['status']) ? $params['status'] : 'active',
 				'category' => isset($params['category']) ? $params['category'] : '',
 				'purchase_price' => isset($params['purchasePrice']) ? $params['purchasePrice'] : 0,
@@ -228,6 +233,12 @@ class Npcink_Device_Inventory_Assets_Controller
 		foreach ($field_map as $input_field => $storage_field) {
 			if (array_key_exists($input_field, $params)) {
 				$update_data[$storage_field] = $params[$input_field];
+			}
+		}
+		if (array_key_exists('department', $params)) {
+			$department_check = $this->validate_department($params['department']);
+			if (is_wp_error($department_check)) {
+				return $department_check;
 			}
 		}
 
@@ -363,6 +374,48 @@ class Npcink_Device_Inventory_Assets_Controller
 			isset($params['payload']) && is_array($params['payload']) ? $params['payload'] : array()
 		);
 		return rest_ensure_response(array('data' => array('success' => true)));
+	}
+
+	private function validate_department($department)
+	{
+		$department = trim(sanitize_text_field((string) $department));
+		if ($department === '') {
+			return true;
+		}
+		if (in_array($department, $this->configured_departments(), true)) {
+			return true;
+		}
+		return Npcink_Device_Inventory_V3_Response::error(
+			'invalid_department',
+			'请选择设置中已有的部门。',
+			422
+		);
+	}
+
+	private function configured_departments()
+	{
+		$options = Npcink_Device_Inventory_V3_Tables::options();
+		$departments = Npcink_Device_Inventory_V3_Tables::normalize_departments(
+			isset($options['departments']) ? $options['departments'] : array()
+		);
+		$raw_options = get_option(Npcink_Device_Inventory_V3_Tables::OPTION);
+		if ($departments || (is_array($raw_options) && array_key_exists('departments', $raw_options))) {
+			return $departments;
+		}
+		return $this->asset_departments();
+	}
+
+	private function asset_departments()
+	{
+		global $wpdb;
+		$table = Npcink_Device_Inventory_V3_Tables::assets();
+		$rows = $wpdb->get_col(
+			$wpdb->prepare('SELECT DISTINCT department FROM %i WHERE department <> %s ORDER BY department ASC', $table, '')
+		);
+		if (!is_array($rows)) {
+			return array();
+		}
+		return Npcink_Device_Inventory_V3_Tables::normalize_departments($rows);
 	}
 
 	private function asset_from_request($request)

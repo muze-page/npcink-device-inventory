@@ -298,6 +298,9 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 		if (array_key_exists('countAvailableAssetsOnly', $settings)) {
 			$options['count_available_assets_only'] = (bool) $settings['countAvailableAssetsOnly'];
 		}
+		if (array_key_exists('departments', $settings)) {
+			$options['departments'] = Npcink_Device_Inventory_V3_Tables::normalize_departments($settings['departments']);
+		}
 		if (array_key_exists('deleteDataOnUninstall', $settings)) {
 			$options['delete_data_on_uninstall'] = (bool) $settings['deleteDataOnUninstall'];
 		}

@@ -1,6 +1,6 @@
 import axios, { type AxiosRequestConfig } from "axios";
 import { message } from "antd";
-import { RestNonce, RestUrl } from "@/utils/index";
+import { AjaxUrl, RestNonce, RestUrl } from "@/utils/index";
 
 // REST API 实例
 export const restInstance = axios.create({
@@ -26,6 +26,62 @@ export const ensureRestNonce = async (): Promise<string | null> => {
   }
 
   return null;
+};
+
+type RefreshRestNonceResponse = {
+  success?: boolean;
+  data?: {
+    rest_nonce?: string;
+  };
+};
+
+let restNonceRefreshPromise: Promise<string | null> | null = null;
+let lastNonceFailureToastAt = 0;
+
+const setRestNonce = (nonce: string) => {
+  restInstance.defaults.headers.common["X-WP-Nonce"] = nonce;
+};
+
+const refreshRestNonce = async (): Promise<string | null> => {
+  if (!AjaxUrl) {
+    return null;
+  }
+
+  if (!restNonceRefreshPromise) {
+    const form = new URLSearchParams();
+    form.append("action", "npcink_device_inventory_refresh_rest_nonce");
+
+    restNonceRefreshPromise = axios
+      .post<RefreshRestNonceResponse>(AjaxUrl, form, {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        },
+        withCredentials: true,
+      })
+      .then((response) => {
+        const nonce = response.data?.data?.rest_nonce;
+        if (response.data?.success && nonce) {
+          setRestNonce(nonce);
+          return nonce;
+        }
+        return null;
+      })
+      .catch(() => null)
+      .finally(() => {
+        restNonceRefreshPromise = null;
+      });
+  }
+
+  return restNonceRefreshPromise;
+};
+
+const shouldShowNonceFailureToast = () => {
+  const now = Date.now();
+  if (now - lastNonceFailureToastAt < 3000) {
+    return false;
+  }
+  lastNonceFailureToastAt = now;
+  return true;
 };
 
 const responseInterceptor = (response: any) => {
@@ -105,11 +161,29 @@ const errorInterceptor = (error: any) => {
     const isEnglishText =
       typeof rawText === "string" && /^[\x00-\x7F]+$/.test(rawText);
 
-    if (rawText && !isEnglishText) {
-      // Prefer REST-provided localized messages.
-      errorMessage = rawText;
+    if (code === "rest_cookie_invalid_nonce") {
+      const config = error.config as RequestConfig | undefined;
+      if (config && !config.nonceRetryAttempted) {
+        config.nonceRetryAttempted = true;
+        return refreshRestNonce().then((newNonce) => {
+          if (!newNonce) {
+            if (shouldShowNonceFailureToast()) {
+              message.error(friendlyErrorCodeMap.rest_cookie_invalid_nonce);
+            }
+            return Promise.reject(error);
+          }
+
+          config.headers = config.headers || {};
+          (config.headers as Record<string, string>)["X-WP-Nonce"] = newNonce;
+          return restInstance.request(config);
+        });
+      }
+      errorMessage = friendlyErrorCodeMap.rest_cookie_invalid_nonce;
     } else if (code && friendlyErrorCodeMap[code]) {
       errorMessage = friendlyErrorCodeMap[code];
+    } else if (rawText && !isEnglishText) {
+      // Prefer REST-provided localized messages.
+      errorMessage = rawText;
     } else if (rawText && friendlyErrorTextMap[rawText]) {
       errorMessage = friendlyErrorTextMap[rawText];
     } else if (rawText) {
@@ -136,7 +210,12 @@ const errorInterceptor = (error: any) => {
     errorMessage = error.message || "未知错误";
   }
 
-  message.error(errorMessage);
+  if (
+    error.response?.data?.code !== "rest_cookie_invalid_nonce" ||
+    shouldShowNonceFailureToast()
+  ) {
+    message.error(errorMessage);
+  }
   if (import.meta.env.DEV) {
     console.error("请求错误:", error);
   }
@@ -164,4 +243,5 @@ export const addParamIfDefined = (
 
 export type RequestConfig = AxiosRequestConfig & {
   showSuccessMessage?: boolean;
+  nonceRetryAttempted?: boolean;
 };

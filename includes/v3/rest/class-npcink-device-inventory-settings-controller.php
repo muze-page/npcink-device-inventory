@@ -128,6 +128,9 @@ class Npcink_Device_Inventory_Settings_Controller
 		if (array_key_exists('countAvailableAssetsOnly', $params)) {
 			$options['count_available_assets_only'] = (bool) $params['countAvailableAssetsOnly'];
 		}
+		if (array_key_exists('departments', $params)) {
+			$options['departments'] = Npcink_Device_Inventory_V3_Tables::normalize_departments($params['departments']);
+		}
 		if (array_key_exists('deleteDataOnUninstall', $params)) {
 			$options['delete_data_on_uninstall'] = (bool) $params['deleteDataOnUninstall'];
 		}
@@ -301,9 +304,35 @@ class Npcink_Device_Inventory_Settings_Controller
 			'depreciationPeriodMonths' => intval($options['depreciation_period_months']),
 			'defaultResidualRate' => floatval($options['default_residual_rate']),
 			'countAvailableAssetsOnly' => !empty($options['count_available_assets_only']),
+			'departments' => $this->settings_departments($options),
 			'deleteDataOnUninstall' => !empty($options['delete_data_on_uninstall']),
 			'clientTokens' => $tokens,
 		);
+	}
+
+	private function settings_departments($options)
+	{
+		$departments = Npcink_Device_Inventory_V3_Tables::normalize_departments(
+			isset($options['departments']) ? $options['departments'] : array()
+		);
+		$raw_options = get_option(Npcink_Device_Inventory_V3_Tables::OPTION);
+		if ($departments || (is_array($raw_options) && array_key_exists('departments', $raw_options))) {
+			return $departments;
+		}
+		return $this->asset_departments();
+	}
+
+	private function asset_departments()
+	{
+		global $wpdb;
+		$table = Npcink_Device_Inventory_V3_Tables::assets();
+		$rows = $wpdb->get_col(
+			$wpdb->prepare('SELECT DISTINCT department FROM %i WHERE department <> %s ORDER BY department ASC', $table, '')
+		);
+		if (!is_array($rows)) {
+			return array();
+		}
+		return Npcink_Device_Inventory_V3_Tables::normalize_departments($rows);
 	}
 
 	private function public_query_page_state($options, $known_page_id = 0)

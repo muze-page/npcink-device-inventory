@@ -181,6 +181,7 @@ export interface InventorySettings {
   depreciationPeriodMonths: number;
   defaultResidualRate: number;
   countAvailableAssetsOnly: boolean;
+  departments: string[];
   deleteDataOnUninstall: boolean;
   clientTokens: ClientToken[];
 }

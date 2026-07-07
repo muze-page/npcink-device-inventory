@@ -51,8 +51,27 @@ class Npcink_Device_Inventory_V3_Tables
 			'depreciation_period_months' => 36,
 			'default_residual_rate' => 5,
 			'count_available_assets_only' => true,
+			'departments' => array(),
 			'delete_data_on_uninstall' => false,
 		);
+	}
+
+	public static function normalize_departments($departments)
+	{
+		if (!is_array($departments)) {
+			return array();
+		}
+		$normalized = array();
+		foreach ($departments as $department) {
+			$value = sanitize_text_field((string) $department);
+			$value = trim($value);
+			if ($value === '' || in_array($value, $normalized, true)) {
+				continue;
+			}
+			$normalized[] = substr($value, 0, 80);
+		}
+		sort($normalized, SORT_NATURAL | SORT_FLAG_CASE);
+		return $normalized;
 	}
 
 	public static function options()

@@ -14,6 +14,7 @@ type DataLocal = {
   site?: string;
   rest_url?: string;
   rest_nonce?: string;
+  ajax_url?: string;
   locale?: string;
   labels?: AdminLabels;
   initial_assets?: InitialAssetsPayload | null;
@@ -31,6 +32,7 @@ const localizedData = getLocalizedData();
 export const Site = localizedData.site || "";
 export const RestUrl = localizedData.rest_url || (Site ? `${Site}/wp-json/npcink-device-inventory/v1` : "/wp-json/npcink-device-inventory/v1");
 export const RestNonce = localizedData.rest_nonce || "";
+export const AjaxUrl = localizedData.ajax_url || "";
 export const Locale = localizedData.locale || "zh_CN";
 export const InitialAssets = localizedData.initial_assets || null;
 

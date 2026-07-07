@@ -21,6 +21,9 @@ if (!class_exists('Npcink_Device_Inventory_Admin_Menu')) {
             //加载 CSS 和 JS 资源
             add_action('admin_enqueue_scripts', array(__CLASS__, 'load_admin_script'));
 
+            //刷新后台 SPA 使用的 REST nonce
+            add_action('wp_ajax_npcink_device_inventory_refresh_rest_nonce', array(__CLASS__, 'refresh_rest_nonce'));
+
             //对js文件进行module接入
             add_filter('script_loader_tag', array(__CLASS__, 'refund_type_script'), 10, 2);
         }
@@ -117,12 +120,33 @@ if (!class_exists('Npcink_Device_Inventory_Admin_Menu')) {
 	                    'site' => home_url(),
 	                    'rest_url' => esc_url_raw(rest_url('npcink-device-inventory/v1')),
 	                    'rest_nonce' => wp_create_nonce('wp_rest'),
+	                    'ajax_url' => esc_url_raw(admin_url('admin-ajax.php')),
 	                    'locale' => function_exists('determine_locale') ? determine_locale() : get_locale(),
 	                    'labels' => self::admin_labels(),
 	                    'initial_assets' => self::initial_assets_payload(),
 	                )
 	            );
 	        }
+
+        public static function refresh_rest_nonce()
+        {
+            // 不校验第二个 Ajax nonce；否则它会和 REST nonce 一起过期，无法自愈。
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(
+                    array(
+                        'code' => 'forbidden',
+                        'message' => 'Administrator permission is required.',
+                    ),
+                    403
+                );
+            }
+
+            wp_send_json_success(
+                array(
+                    'rest_nonce' => wp_create_nonce('wp_rest'),
+                )
+            );
+        }
 
         private static function initial_assets_payload()
         {
