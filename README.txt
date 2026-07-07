@@ -4,7 +4,7 @@ Tags: inventory, assets, device management, rest api, admin
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.7.7
+Stable tag: 2.7.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -77,6 +77,12 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 
 == Changelog ==
 
+= 2.7.8 =
+* Require an access code before public asset query can be enabled and add rate limiting to the public query endpoint.
+* Reduce high-cost asset list JSON and observation searches for ordinary keywords while keeping IP, MAC, and serial-style extended searches.
+* Remove the duplicate in-page desktop update panel and keep update checks in the native menu / top settings surface.
+* Add release regression fixtures for public query hardening and asset search performance guardrails.
+
 = 2.7.7 =
 * Add desktop update manifest validation to the tagged release workflow.
 * Document the release candidate verification flow for plugin and desktop preview artifacts.
@@ -119,6 +125,9 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 * Moved desktop uploads to signed v3 device observations.
 
 == Upgrade Notice ==
+
+= 2.7.8 =
+This release hardens public asset query access, reduces expensive asset search paths, and adds regression gates for the new release checks.
 
 = 2.7.7 =
 This release validates the 0.1.3 to 0.1.4 desktop updater path and adds release manifest guardrails.
