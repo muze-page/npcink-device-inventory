@@ -4,7 +4,7 @@ Tags: inventory, assets, device management, rest api, admin
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.7.6
+Stable tag: 2.7.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -77,6 +77,11 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 
 == Changelog ==
 
+= 2.7.7 =
+* Add desktop update manifest validation to the tagged release workflow.
+* Document the release candidate verification flow for plugin and desktop preview artifacts.
+* Bump the desktop uploader to 0.1.4 for the next signed updater validation path.
+
 = 2.7.6 =
 * Bump the desktop uploader to 0.1.3 to verify the signed GitHub Release updater flow from 0.1.2.
 
@@ -114,6 +119,9 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 * Moved desktop uploads to signed v3 device observations.
 
 == Upgrade Notice ==
+
+= 2.7.7 =
+This release validates the 0.1.3 to 0.1.4 desktop updater path and adds release manifest guardrails.
 
 = 2.7.6 =
 This release is a desktop updater validation release for the 0.1.2 to 0.1.3 upgrade path.
