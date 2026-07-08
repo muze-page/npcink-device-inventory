@@ -19,6 +19,7 @@ This folder keeps product contracts, release procedures, verification records, a
 
 ## Packaging And Distribution
 
+- `wordpress-org-update-index-repair-2026-07-08.md`: WordPress.org update index repair record for the v2.7.8 auto-update issue.
 - `release-and-dependency-upgrade-summary-2026-07-04.md`: release and dependency upgrade summary.
 - `backup-restore-and-release-packaging-history-2026-07-06.md`: backup/restore and package workflow history.
 - `desktop-updater-release-history-2026-07-06.md`: desktop updater release history.
