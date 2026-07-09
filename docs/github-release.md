@@ -71,6 +71,13 @@ automatically. Do not use a tag until the preview artifacts have been checked.
 The macOS DMG is intentionally present in this release flow for Apple Silicon
 internal testing even before Developer ID signing and notarization are added.
 
+For ordinary plugin-only patch releases, the product policy is plugin-first:
+reuse the latest known-good desktop artifacts when the desktop uploader has no
+functional change. As of v2.7.9, the tagged release workflow still rebuilds
+desktop artifacts for every `v*` tag, so future workflow work should add a
+plugin-only release path before assuming desktop artifacts can be skipped in CI.
+See `plugin-first-release-strategy-2026-07-09.md`.
+
 The tagged release workflow also builds Tauri updater artifacts and signs them.
 Before running a release, configure this GitHub Actions secret:
 
