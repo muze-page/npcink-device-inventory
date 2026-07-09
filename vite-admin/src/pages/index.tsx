@@ -4125,6 +4125,9 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
   const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [showHandledIssues, setShowHandledIssues] = useState(false);
+  const [selectedIssueKeys, setSelectedIssueKeys] = useState<Set<string>>(new Set());
+  const [departmentAssignOpen, setDepartmentAssignOpen] = useState(false);
+  const [departmentAssignForm] = Form.useForm<{ department: string }>();
   const auditAssetsQuery = useQuery(
     ["v3-hardware-audit-assets"],
     () => fetchAllAssets({ assetScope: "computer" }),
@@ -4337,6 +4340,42 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
     () => filteredIssuePool.filter((issue) => showHandledIssues || !handledIssueKeys.has(issue.key)),
     [filteredIssuePool, handledIssueKeys, showHandledIssues]
   );
+  const assignableDepartmentOptions = useMemo(
+    () => departmentOptions.filter((department) => department !== DEFAULT_DEPARTMENT),
+    [departmentOptions]
+  );
+  const assignableDepartmentSelectOptions = useMemo(
+    () => assignableDepartmentOptions.map((department) => ({ label: department, value: department })),
+    [assignableDepartmentOptions]
+  );
+  const assignableIssueKeys = useMemo(
+    () =>
+      new Set(
+        visibleIssues
+          .filter((issue) => issue.type === "部门待分配" && !handledIssueKeys.has(issue.key))
+          .map((issue) => issue.key)
+      ),
+    [handledIssueKeys, visibleIssues]
+  );
+  const selectedDepartmentIssues = useMemo(
+    () => visibleIssues.filter((issue) => selectedIssueKeys.has(issue.key) && assignableIssueKeys.has(issue.key)),
+    [assignableIssueKeys, selectedIssueKeys, visibleIssues]
+  );
+  const selectedDepartmentAssets = useMemo(() => {
+    const assetsByUuid = new Map<string, { asset: Asset; issueKeys: string[] }>();
+    selectedDepartmentIssues.forEach((issue) => {
+      const existing = assetsByUuid.get(issue.asset.uuid);
+      if (existing) {
+        existing.issueKeys.push(issue.key);
+        return;
+      }
+      assetsByUuid.set(issue.asset.uuid, { asset: issue.asset, issueKeys: [issue.key] });
+    });
+    return Array.from(assetsByUuid.values());
+  }, [selectedDepartmentIssues]);
+  const selectedDepartmentPreview = selectedDepartmentAssets
+    .slice(0, 5)
+    .map((item) => item.asset.assetNumber || item.asset.name || item.asset.uuid);
   const unresolvedIssues = hardwareIssues.filter((issue) => !handledIssueKeys.has(issue.key));
   const issueCounts = countBy(filteredIssuePool, (issue) => issue.type);
   const issueGroups = useMemo(() => {
@@ -4460,6 +4499,52 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
       },
     }
   );
+  const departmentAssignMutation = useMutation(
+    async (department: string) => {
+      for (const item of selectedDepartmentAssets) {
+        await updateAsset(item.asset.uuid, { department } as AssetInput);
+        await createAssetEvent(item.asset.uuid, {
+          eventType: "bulk_updated",
+          message: "批量分配部门",
+          payload: {
+            source: "analysis_department_assignment",
+            changedFields: [
+              {
+                field: "department",
+                label: "部门",
+                oldValue: item.asset.department || DEFAULT_DEPARTMENT,
+                newValue: department,
+              },
+            ],
+            issueKeys: item.issueKeys,
+            selectedCount: selectedDepartmentAssets.length,
+          },
+        });
+      }
+      return selectedDepartmentAssets.length;
+    },
+    {
+      onSuccess: (updatedCount) => {
+        if (updatedCount === 0) {
+          return;
+        }
+        setDepartmentAssignOpen(false);
+        departmentAssignForm.resetFields();
+        setSelectedIssueKeys(new Set());
+        queryClient.invalidateQueries(["v3-hardware-audit-assets"]);
+        queryClient.invalidateQueries(["v3-analysis-summary-assets"]);
+        queryClient.invalidateQueries(["v3-asset-value-analysis"]);
+        queryClient.invalidateQueries(["v3-assets"]);
+        queryClient.invalidateQueries(["v3-events"]);
+        queryClient.invalidateQueries(["v3-analysis-issue-states"]);
+        selectedDepartmentAssets.forEach((item) => {
+          queryClient.invalidateQueries(["v3-asset", item.asset.uuid]);
+          queryClient.invalidateQueries(["v3-asset-events", item.asset.uuid]);
+        });
+        message.success(`已为 ${updatedCount} 台资产分配部门`);
+      },
+    }
+  );
 
   const markIssueHandled = (issue: HardwareIssue) => {
     const note = window.prompt("处理说明", `已处理：${issue.type} - ${issue.message}`);
@@ -4484,6 +4569,20 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
       message: `恢复未处理：${issue.type} - ${issue.message}`,
     });
   };
+
+  useEffect(() => {
+    setSelectedIssueKeys((previous) => {
+      const next = new Set(Array.from(previous).filter((key) => assignableIssueKeys.has(key)));
+      return next.size === previous.size ? previous : next;
+    });
+  }, [assignableIssueKeys]);
+
+  useEffect(() => {
+    if (!departmentAssignOpen) {
+      return;
+    }
+    departmentAssignForm.setFieldsValue({ department: assignableDepartmentOptions[0] || "" });
+  }, [assignableDepartmentOptions, departmentAssignForm, departmentAssignOpen]);
 
   useEffect(() => {
     if (!focus?.version) {
@@ -4953,12 +5052,37 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
             </div>
           </div>
         </div>
+        <div className="npcink-v3-batch-actions">
+          <Space wrap>
+            <Text type="secondary">
+              已选 {selectedDepartmentIssues.length} 条部门待分配问题，涉及 {selectedDepartmentAssets.length} 台资产
+            </Text>
+            <Button
+              type="primary"
+              disabled={!selectedDepartmentAssets.length || !assignableDepartmentOptions.length}
+              onClick={() => setDepartmentAssignOpen(true)}
+            >
+              批量分配部门
+            </Button>
+            <Button disabled={!selectedIssueKeys.size} onClick={() => setSelectedIssueKeys(new Set())}>
+              清空选择
+            </Button>
+          </Space>
+        </div>
         <Table
           rowKey="key"
           size="small"
-          pagination={{ pageSize: 6, showSizeChanger: false }}
+          pagination={{ pageSize: 6, showSizeChanger: false, onChange: () => setSelectedIssueKeys(new Set()) }}
           dataSource={visibleIssues}
-          loading={auditAssetsQuery.isLoading || issueRecordMutation.isLoading}
+          loading={auditAssetsQuery.isLoading || issueRecordMutation.isLoading || departmentAssignMutation.isLoading}
+          rowSelection={{
+            selectedRowKeys: Array.from(selectedIssueKeys),
+            onChange: (keys) => setSelectedIssueKeys(new Set(keys.map(String))),
+            getCheckboxProps: (issue) => ({
+              disabled: !assignableIssueKeys.has(issue.key),
+              title: assignableIssueKeys.has(issue.key) ? "选择后可批量分配部门" : "仅未处理的部门待分配问题可批量分配",
+            }),
+          }}
           columns={[
             {
               title: "状态",
@@ -5073,6 +5197,63 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
           await updateAssetMutation.mutateAsync({ uuid: editingAsset.uuid, input });
         }}
       />
+      <Modal
+        title="批量分配部门"
+        open={departmentAssignOpen}
+        okText="分配部门"
+        cancelText="取消"
+        confirmLoading={departmentAssignMutation.isLoading}
+        okButtonProps={{
+          disabled: !selectedDepartmentAssets.length || !assignableDepartmentOptions.length,
+        }}
+        onCancel={() => {
+          setDepartmentAssignOpen(false);
+          departmentAssignForm.resetFields();
+        }}
+        onOk={async () => {
+          const values = await departmentAssignForm.validateFields();
+          await departmentAssignMutation.mutateAsync(values.department);
+        }}
+        destroyOnClose
+      >
+        <Space direction="vertical" size={12} style={{ width: "100%" }}>
+          <Alert
+            type="info"
+            showIcon
+            message={`将为 ${selectedDepartmentAssets.length} 台已勾选资产分配具体部门。`}
+            description={
+              selectedDepartmentPreview.length
+                ? `预览：${selectedDepartmentPreview.join("、")}${selectedDepartmentAssets.length > selectedDepartmentPreview.length ? " 等" : ""}`
+                : "请先在问题表中勾选部门待分配资产。"
+            }
+          />
+          <Form form={departmentAssignForm} layout="vertical" preserve={false}>
+            <Form.Item
+              name="department"
+              label="目标部门"
+              rules={[
+                { required: true, message: "请选择具体部门" },
+                {
+                  validator: async (_, value) => {
+                    if (value === DEFAULT_DEPARTMENT) {
+                      throw new Error("请选择具体部门");
+                    }
+                  },
+                },
+              ]}
+            >
+              <Select
+                showSearch
+                options={assignableDepartmentSelectOptions}
+                placeholder={assignableDepartmentOptions.length ? "选择具体部门" : "请先到设置中添加具体部门"}
+                popupMatchSelectWidth={false}
+                disabled={!assignableDepartmentOptions.length}
+                filterOption={(input, option) => String(option?.label || "").toLowerCase().includes(input.toLowerCase())}
+              />
+            </Form.Item>
+          </Form>
+        </Space>
+      </Modal>
     </div>
   );
 };
