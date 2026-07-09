@@ -94,6 +94,20 @@ export interface AssetEvent {
   asset?: AssetReference;
 }
 
+export interface IssueState {
+  issueKey: string;
+  state: "handled" | "open";
+  eventType: string;
+  message: string;
+  createdAt: string;
+  asset?: AssetReference | null;
+}
+
+export interface IssueStates {
+  handledIssueKeys: string[];
+  items: IssueState[];
+}
+
 export interface Pagination {
   page: number;
   pageSize: number;

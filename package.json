@@ -6,6 +6,7 @@
     "build:release": "node scripts/build-release-package.mjs",
     "build:submission": "node scripts/build-release-package.mjs --submission",
     "check:backup-restore": "php tests/backup-restore-fixtures.php",
+    "check:issue-states": "php tests/issue-state-fixtures.php",
     "check:public-query": "php tests/public-query-fixtures.php",
     "check:asset-search": "php tests/asset-search-fixtures.php",
     "check:desktop-manifests": "node scripts/check-desktop-update-manifests.mjs",

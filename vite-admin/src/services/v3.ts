@@ -14,6 +14,7 @@ import type {
   CreatedPublicQueryPage,
   EventListParams,
   InventorySettings,
+  IssueStates,
   ObservationListParams,
   PaginatedResult,
 } from "@/type/v3";
@@ -127,6 +128,14 @@ export const getEvents = async (
     showSuccessMessage: false,
   } as RequestConfig);
   return response.data;
+};
+
+export const getIssueStates = async (): Promise<IssueStates> => {
+  const response = await restInstance.get<DataEnvelope<IssueStates>>(
+    "/analysis/issue-states",
+    { showSuccessMessage: false } as RequestConfig
+  );
+  return unwrapData(response.data);
 };
 
 export const getObservations = async (

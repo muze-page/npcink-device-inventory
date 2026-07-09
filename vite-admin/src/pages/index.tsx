@@ -23,6 +23,7 @@ import {
   Typography,
   message,
 } from "antd";
+import type { SelectProps } from "antd";
 import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import { InitialAssets, RestUrl, Site } from "@/utils/index";
 import {
@@ -39,6 +40,7 @@ import {
   getAssets,
   getClientTokenPackageConfig,
   getEvents,
+  getIssueStates,
   getObservations,
   getSettings,
   restoreBackup,
@@ -225,7 +227,6 @@ const BACKUP_RESTORE_PLAN_LABELS: Record<keyof BackupRestoreSummary["planned"], 
 };
 
 const SAVED_FILTER_STORAGE_KEY = "npcink-device-inventory.savedFilters";
-const HANDLED_ISSUES_STORAGE_KEY = "npcink-device-inventory.handledIssues";
 const WORKSPACE_TAB_STORAGE_KEY = "npcink-device-inventory.workspaceTab";
 const ANALYSIS_TAB_STORAGE_KEY = "npcink-device-inventory.analysisTab.v2";
 const ASSET_LAYOUT_MODE_STORAGE_KEY = "npcink-device-inventory.assetLayoutMode";
@@ -795,20 +796,6 @@ const saveFilters = (filters: SavedAssetFilter[]) => {
   window.localStorage.setItem(SAVED_FILTER_STORAGE_KEY, JSON.stringify(filters));
 };
 
-const loadHandledIssueKeys = () => {
-  try {
-    const value = window.localStorage.getItem(HANDLED_ISSUES_STORAGE_KEY);
-    const parsed = value ? JSON.parse(value) : [];
-    return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
-  } catch {
-    return new Set<string>();
-  }
-};
-
-const saveHandledIssueKeys = (keys: Set<string>) => {
-  window.localStorage.setItem(HANDLED_ISSUES_STORAGE_KEY, JSON.stringify(Array.from(keys)));
-};
-
 const ASSET_EXPORT_FIELDS: Array<{
   key: AssetExportFieldKey;
   label: string;
@@ -960,7 +947,9 @@ const buildAssetImportInput = (
     name: includeBasic ? valueOrExisting("name", existing?.name || "") : existing?.name || "",
     assetType: includeBasic ? normalizeAssetType(valueOrExisting("assetType", existing?.assetType || "pc")) : existing?.assetType || "pc",
     ownerName: includeBasic ? valueOrExisting("ownerName", existing?.ownerName || "") : existing?.ownerName || "",
-    department: includeBasic ? valueOrExisting("department", existing?.department || "") : existing?.department || "",
+    department: includeBasic
+      ? valueOrExisting("department", existing?.department || DEFAULT_DEPARTMENT)
+      : existing?.department || DEFAULT_DEPARTMENT,
     status: includeBasic ? normalizeAssetStatus(valueOrExisting("status", existing?.status || "active")) : existing?.status || "active",
     category: includeBasic ? valueOrExisting("category", existing?.category || "") : existing?.category || "",
     purchasePrice: includeFinance && purchasePriceText ? parseNumberValue(purchasePriceText) : existing?.purchasePrice || 0,
@@ -1547,21 +1536,39 @@ const fieldText = (value: unknown) => {
   return JSON.stringify(value);
 };
 
+const DEFAULT_DEPARTMENT = "未分配";
+
 const normalizeDepartmentList = (departments: unknown) => {
-  if (!Array.isArray(departments)) {
-    return [];
-  }
-  return Array.from(
-    new Set(
-      departments
+  const normalized = Array.isArray(departments)
+    ? departments
         .map((department) => String(department || "").trim().slice(0, 80))
         .filter(Boolean)
-    )
-  ).sort((a, b) => a.localeCompare(b, "zh-CN"));
+    : [];
+  if (!normalized.includes(DEFAULT_DEPARTMENT)) {
+    normalized.push(DEFAULT_DEPARTMENT);
+  }
+  return Array.from(new Set(normalized)).sort((a, b) => a.localeCompare(b, "zh-CN"));
 };
 
 const departmentSelectOptions = (departments: string[]) =>
   normalizeDepartmentList(departments).map((department) => ({ label: department, value: department }));
+
+const departmentTagRender: SelectProps<string[]>["tagRender"] = ({ label, value, closable, onClose }) => {
+  const protectedDepartment = String(value) === DEFAULT_DEPARTMENT;
+  return (
+    <Tag
+      closable={!protectedDepartment && closable}
+      onClose={onClose}
+      onMouseDown={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      }}
+      title={protectedDepartment ? "系统兜底部门，不能删除" : undefined}
+    >
+      {label}
+    </Tag>
+  );
+};
 
 const isAllowedDepartment = (departments: string[], value: unknown) => {
   const department = String(value || "").trim();
@@ -2038,7 +2045,7 @@ const changeTypeLabel = (event: AssetEvent) => {
   if (event.eventType === "observation_received") {
     return "采集";
   }
-  if (event.eventType === "issue_handled") {
+  if (event.eventType === "issue_handled" || event.eventType === "issue_reopened") {
     return "盘点";
   }
   return optionLabel(EVENT_TYPE_OPTIONS, event.eventType);
@@ -2151,7 +2158,7 @@ const AssetFormModal = ({ asset, open, departmentOptions = [], onClose, onSubmit
       assetNumber: asset?.assetNumber || "",
       name: asset?.name || "",
       ownerName: asset?.ownerName || "",
-      department: asset?.department || "",
+      department: asset?.department || DEFAULT_DEPARTMENT,
       category: asset?.category || "",
       status: asset?.status || "active",
       purchasePrice: asset?.purchasePrice || 0,
@@ -2214,7 +2221,7 @@ const AssetFormModal = ({ asset, open, departmentOptions = [], onClose, onSubmit
             <Form.Item
               name="department"
               label="部门"
-              extra={normalizedDepartmentOptions.length ? "只能选择设置中维护的部门。" : "请先到设置 > 部门管理添加部门。"}
+              extra="只能选择设置中维护的部门；未选择时会归入未分配。"
               rules={[
                 {
                   validator: async (_, value) => {
@@ -2226,12 +2233,10 @@ const AssetFormModal = ({ asset, open, departmentOptions = [], onClose, onSubmit
               ]}
             >
               <Select
-                allowClear
                 showSearch
                 options={departmentSelectOptions(normalizedDepartmentOptions)}
-                placeholder={normalizedDepartmentOptions.length ? "选择部门" : "暂无可选部门"}
+                placeholder="选择部门"
                 popupMatchSelectWidth={false}
-                disabled={!normalizedDepartmentOptions.length}
                 filterOption={(input, option) => String(option?.label || "").toLowerCase().includes(input.toLowerCase())}
               />
             </Form.Item>
@@ -3034,7 +3039,7 @@ const AssetSettingsPanel = ({ asset, departmentOptions = [], onUpdated, onArchiv
       assetNumber: asset.assetNumber,
       name: asset.name,
       ownerName: asset.ownerName,
-      department: asset.department,
+      department: asset.department || DEFAULT_DEPARTMENT,
       status: asset.status,
       purchasePrice: asset.purchasePrice,
       residualValue: asset.residualValue,
@@ -3059,7 +3064,7 @@ const AssetSettingsPanel = ({ asset, departmentOptions = [], onUpdated, onArchiv
             <Form.Item
               name="department"
               label="部门"
-              extra={normalizedDepartmentOptions.length ? "只能选择设置中维护的部门。" : "请先到设置 > 部门管理添加部门。"}
+              extra="只能选择设置中维护的部门；未选择时会归入未分配。"
               rules={[
                 {
                   validator: async (_, value) => {
@@ -3072,11 +3077,9 @@ const AssetSettingsPanel = ({ asset, departmentOptions = [], onUpdated, onArchiv
             >
               <Select
                 showSearch
-                allowClear
                 options={departmentSelectOptions(normalizedDepartmentOptions)}
-                placeholder={normalizedDepartmentOptions.length ? "选择部门" : "暂无可选部门"}
+                placeholder="选择部门"
                 popupMatchSelectWidth={false}
-                disabled={!normalizedDepartmentOptions.length}
                 filterOption={(input, option) => String(option?.label || "").toLowerCase().includes(input.toLowerCase())}
               />
             </Form.Item>
@@ -4118,17 +4121,21 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
   const [hardwareRankType, setHardwareRankType] = useState<HardwareRankType>("board");
   const [departmentView, setDepartmentView] = useState<AnalysisViewMode>("chart");
   const [hardwareQueryView, setHardwareQueryView] = useState<AnalysisViewMode>("table");
-  const [hardwareQuery, setHardwareQuery] = useState<HardwareQueryState>({ memoryGb: "32 GB" });
+  const [hardwareQuery, setHardwareQuery] = useState<HardwareQueryState>({});
   const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [showHandledIssues, setShowHandledIssues] = useState(false);
-  const [handledIssueKeys, setHandledIssueKeys] = useState<Set<string>>(loadHandledIssueKeys);
   const auditAssetsQuery = useQuery(
     ["v3-hardware-audit-assets"],
     () => fetchAllAssets({ assetScope: "computer" }),
     { staleTime: 60_000 }
   );
   const settingsQuery = useQuery(["v3-settings"], getSettings, { staleTime: 60_000 });
+  const issueStatesQuery = useQuery(["v3-analysis-issue-states"], getIssueStates, { staleTime: 30_000 });
+  const handledIssueKeys = useMemo(
+    () => new Set(issueStatesQuery.data?.handledIssueKeys || []),
+    [issueStatesQuery.data?.handledIssueKeys]
+  );
   const allAuditAssets = auditAssetsQuery.data || [];
   const countAvailableAssetsOnly = settingsQuery.data?.countAvailableAssetsOnly ?? true;
   const auditAssets = useMemo(
@@ -4422,9 +4429,9 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
     },
   ];
   const issueRecordMutation = useMutation(
-    ({ issue, message: recordMessage }: { issue: HardwareIssue; message: string }) =>
+    ({ issue, message: recordMessage, eventType }: { issue: HardwareIssue; message: string; eventType: "issue_handled" | "issue_reopened" }) =>
       createAssetEvent(issue.asset.uuid, {
-        eventType: "issue_handled",
+        eventType,
         message: recordMessage,
         payload: {
           issueKey: issue.key,
@@ -4434,15 +4441,10 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
       }),
     {
       onSuccess: (_, variables) => {
-        setHandledIssueKeys((previous) => {
-          const next = new Set(previous);
-          next.add(variables.issue.key);
-          saveHandledIssueKeys(next);
-          return next;
-        });
         queryClient.invalidateQueries(["v3-asset-events", variables.issue.asset.uuid]);
         queryClient.invalidateQueries(["v3-events"]);
-        message.success("异常已记录为已处理");
+        queryClient.invalidateQueries(["v3-analysis-issue-states"]);
+        message.success(variables.eventType === "issue_reopened" ? "异常已恢复为未处理" : "异常已记录为已处理");
       },
     }
   );
@@ -4464,27 +4466,23 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
     if (!note) {
       return;
     }
-    issueRecordMutation.mutate({ issue, message: note });
+    issueRecordMutation.mutate({ issue, message: note, eventType: "issue_handled" });
   };
 
   const markIssueLocalOnly = (issue: HardwareIssue) => {
-    setHandledIssueKeys((previous) => {
-      const next = new Set(previous);
-      next.add(issue.key);
-      saveHandledIssueKeys(next);
-      return next;
+    issueRecordMutation.mutate({
+      issue,
+      eventType: "issue_handled",
+      message: `已标记处理：${issue.type} - ${issue.message}`,
     });
-    message.success("已标记处理");
   };
 
   const restoreIssue = (issue: HardwareIssue) => {
-    setHandledIssueKeys((previous) => {
-      const next = new Set(previous);
-      next.delete(issue.key);
-      saveHandledIssueKeys(next);
-      return next;
+    issueRecordMutation.mutate({
+      issue,
+      eventType: "issue_reopened",
+      message: `恢复未处理：${issue.type} - ${issue.message}`,
     });
-    message.success("已恢复为未处理");
   };
 
   useEffect(() => {
@@ -5215,7 +5213,11 @@ const AnalysisSummaryWorkspace = ({ onOpenTab }: AnalysisSummaryWorkspaceProps) 
     () => fetchAllAssets({ assetScope: "all", includeDeleted: true }),
     { staleTime: 60_000 }
   );
-  const handledIssueKeys = useMemo(() => loadHandledIssueKeys(), []);
+  const issueStatesQuery = useQuery(["v3-analysis-issue-states"], getIssueStates, { staleTime: 30_000 });
+  const handledIssueKeys = useMemo(
+    () => new Set(issueStatesQuery.data?.handledIssueKeys || []),
+    [issueStatesQuery.data?.handledIssueKeys]
+  );
   const assets = assetsQuery.data || [];
   const countAvailableAssetsOnly = settingsQuery.data?.countAvailableAssetsOnly ?? true;
   const depreciationPeriodMonths = settingsQuery.data?.depreciationPeriodMonths ?? 36;
@@ -5263,7 +5265,7 @@ const AnalysisSummaryWorkspace = ({ onOpenTab }: AnalysisSummaryWorkspaceProps) 
     .filter((date): date is Date => Boolean(date))
     .map((date) => date.getTime());
   const latestObservedAt = latestObservedTimes.length ? formatDate(new Date(Math.max(...latestObservedTimes)).toISOString()) : "-";
-  const isLoading = assetsQuery.isLoading || settingsQuery.isLoading;
+  const isLoading = assetsQuery.isLoading || settingsQuery.isLoading || issueStatesQuery.isLoading;
   const summaryTone = highRiskIssues.length > 0
     ? "danger"
     : unresolvedIssues.length > 0 || missingValuationCount > 0
@@ -5408,6 +5410,8 @@ interface AssetValueWorkspaceProps {
 }
 
 const AssetValueWorkspace = ({ focus }: AssetValueWorkspaceProps) => {
+  const queryClient = useQueryClient();
+  const [editingValuationAsset, setEditingValuationAsset] = useState<Asset | null>(null);
   const [valueViews, setValueViews] = useState<Record<"department" | "category" | "status", AnalysisViewMode>>({
     department: "chart",
     category: "chart",
@@ -5422,6 +5426,10 @@ const AssetValueWorkspace = ({ focus }: AssetValueWorkspaceProps) => {
   );
   const assets = assetsQuery.data || [];
   const countAvailableAssetsOnly = settingsQuery.data?.countAvailableAssetsOnly ?? true;
+  const departmentOptions = useMemo(
+    () => normalizeDepartmentList(settingsQuery.data?.departments || []),
+    [settingsQuery.data?.departments]
+  );
   const valueAssets = assets.filter((asset) => shouldCountAsset(asset, countAvailableAssetsOnly));
   const depreciationPeriodMonths = settingsQuery.data?.depreciationPeriodMonths ?? 36;
   const defaultResidualRate = settingsQuery.data?.defaultResidualRate ?? 5;
@@ -5585,6 +5593,19 @@ const AssetValueWorkspace = ({ focus }: AssetValueWorkspaceProps) => {
     { title: "当前估值", dataIndex: "current", width: 150, render: formatMoney },
     { title: "估值率", dataIndex: "currentRate", width: 110, render: formatPercentValue },
   ];
+  const updateValuationAssetMutation = useMutation(
+    ({ uuid, input }: { uuid: string; input: AssetInput }) => updateAsset(uuid, input),
+    {
+      onSuccess: (asset) => {
+        setEditingValuationAsset(null);
+        queryClient.invalidateQueries(["v3-asset-value-analysis"]);
+        queryClient.invalidateQueries(["v3-analysis-summary-assets"]);
+        queryClient.invalidateQueries(["v3-assets"]);
+        queryClient.invalidateQueries(["v3-asset", asset.uuid]);
+        message.success("估值基础已更新");
+      },
+    }
+  );
   useEffect(() => {
     if (focus?.valueSection !== "valuation") {
       return;
@@ -5685,8 +5706,22 @@ const AssetValueWorkspace = ({ focus }: AssetValueWorkspaceProps) => {
                 { title: "状态", dataIndex: "status", width: 90, render: statusLabel },
                 { title: "部门", dataIndex: "department", width: 120, render: (value: string) => value || "-" },
                 { title: "责任人", dataIndex: "ownerName", width: 120, render: (value: string) => value || "-" },
+                {
+                  title: "操作",
+                  width: 88,
+                  render: (_, asset) => (
+                    <Button
+                      size="small"
+                      type="link"
+                      className="npcink-v3-link"
+                      onClick={() => setEditingValuationAsset(asset)}
+                    >
+                      编辑
+                    </Button>
+                  ),
+                },
               ]}
-              scroll={{ x: 620 }}
+              scroll={{ x: 720 }}
               locale={{ emptyText: <Empty description="暂无缺估值基础资产" /> }}
             />
           </div>
@@ -5868,6 +5903,21 @@ const AssetValueWorkspace = ({ focus }: AssetValueWorkspaceProps) => {
             ),
           },
         ]}
+      />
+      <AssetFormModal
+        asset={editingValuationAsset}
+        open={Boolean(editingValuationAsset)}
+        departmentOptions={departmentOptions}
+        onClose={() => setEditingValuationAsset(null)}
+        onSubmit={async (input) => {
+          if (!editingValuationAsset) {
+            return;
+          }
+          await updateValuationAssetMutation.mutateAsync({
+            uuid: editingValuationAsset.uuid,
+            input,
+          });
+        }}
       />
     </div>
   );
@@ -6327,7 +6377,10 @@ const SettingsWorkspace = () => {
 
   useEffect(() => {
     if (settingsQuery.data) {
-      form.setFieldsValue(settingsQuery.data);
+      form.setFieldsValue({
+        ...settingsQuery.data,
+        departments: normalizeDepartmentList(settingsQuery.data.departments),
+      });
     }
   }, [form, settingsQuery.data]);
 
@@ -6471,15 +6524,16 @@ const SettingsWorkspace = () => {
               <Form.Item
                 name="departments"
                 label="部门列表"
-                extra="设备详情、批量修改和表格导入只能选择这里维护的部门；输入后回车添加。"
+                extra="未分配是系统兜底部门，不能删除；设备详情、批量修改和表格导入只能选择这里维护的部门。"
                 className="npcink-v3-settings-wide"
               >
                 <Select
                   mode="tags"
-                  allowClear
                   showSearch
                   tokenSeparators={[",", "，", "\n"]}
                   options={departmentSelectOptions(form.getFieldValue("departments") || [])}
+                  tagRender={departmentTagRender}
+                  onChange={(value) => form.setFieldValue("departments", normalizeDepartmentList(value))}
                   placeholder="输入部门名称后回车，例如：财务部"
                   popupMatchSelectWidth={false}
                 />

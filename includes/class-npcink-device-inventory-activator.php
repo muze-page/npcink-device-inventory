@@ -108,7 +108,7 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 				'depreciation_period_months' => 36,
 				'default_residual_rate' => 5,
 				'count_available_assets_only' => true,
-				'departments' => array(),
+				'departments' => array('未分配'),
 				'delete_data_on_uninstall' => false,
 			)
 		);

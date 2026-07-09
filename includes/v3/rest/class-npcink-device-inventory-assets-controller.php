@@ -123,6 +123,16 @@ class Npcink_Device_Inventory_Assets_Controller
 
 		register_rest_route(
 			'npcink-device-inventory/v1',
+			'/analysis/issue-states',
+			array(
+				'methods' => WP_REST_Server::READABLE,
+				'callback' => array($this, 'get_issue_states'),
+				'permission_callback' => array($this, 'admin_permissions_check'),
+			)
+		);
+
+		register_rest_route(
+			'npcink-device-inventory/v1',
 			'/observations',
 			array(
 				'methods' => WP_REST_Server::READABLE,
@@ -340,6 +350,53 @@ class Npcink_Device_Inventory_Assets_Controller
 		);
 	}
 
+	public function get_issue_states($request)
+	{
+		$rows = $this->events->list_issue_state_events();
+		$items_by_key = array();
+		foreach ($rows as $row) {
+			$event = $this->format_event($row);
+			$payload = isset($event['payload']) && is_array($event['payload']) ? $event['payload'] : array();
+			$issue_key = isset($payload['issueKey']) ? sanitize_text_field((string) $payload['issueKey']) : '';
+			if ($issue_key === '' || isset($items_by_key[$issue_key])) {
+				continue;
+			}
+			$event_type = isset($event['eventType']) ? (string) $event['eventType'] : '';
+			$items_by_key[$issue_key] = array(
+				'issueKey' => $issue_key,
+				'state' => $event_type === 'issue_handled' ? 'handled' : 'open',
+				'eventType' => $event_type,
+				'message' => isset($event['message']) ? (string) $event['message'] : '',
+				'createdAt' => isset($event['createdAt']) ? (string) $event['createdAt'] : '',
+				'asset' => isset($event['asset']) ? $event['asset'] : null,
+			);
+		}
+
+		$items = array_values($items_by_key);
+		$handled_issue_keys = array_values(
+			array_map(
+				function ($item) {
+					return $item['issueKey'];
+				},
+				array_filter(
+					$items,
+					function ($item) {
+						return isset($item['state']) && $item['state'] === 'handled';
+					}
+				)
+			)
+		);
+
+		return rest_ensure_response(
+			array(
+				'data' => array(
+					'handledIssueKeys' => $handled_issue_keys,
+					'items' => $items,
+				),
+			)
+		);
+	}
+
 	public function get_all_observations($request)
 	{
 		$result = $this->observations->list_all(
@@ -394,15 +451,11 @@ class Npcink_Device_Inventory_Assets_Controller
 
 	private function configured_departments()
 	{
-		$options = Npcink_Device_Inventory_V3_Tables::options();
-		$departments = Npcink_Device_Inventory_V3_Tables::normalize_departments(
-			isset($options['departments']) ? $options['departments'] : array()
-		);
 		$raw_options = get_option(Npcink_Device_Inventory_V3_Tables::OPTION);
-		if ($departments || (is_array($raw_options) && array_key_exists('departments', $raw_options))) {
-			return $departments;
+		if (is_array($raw_options) && array_key_exists('departments', $raw_options)) {
+			return Npcink_Device_Inventory_V3_Tables::normalize_departments_with_default($raw_options['departments']);
 		}
-		return $this->asset_departments();
+		return Npcink_Device_Inventory_V3_Tables::normalize_departments_with_default($this->asset_departments());
 	}
 
 	private function asset_departments()

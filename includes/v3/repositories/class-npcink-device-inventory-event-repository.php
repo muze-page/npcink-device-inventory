@@ -173,6 +173,46 @@ class Npcink_Device_Inventory_Event_Repository
 		return $result;
 	}
 
+	public function list_issue_state_events()
+	{
+		global $wpdb;
+		$events_table = Npcink_Device_Inventory_V3_Tables::events();
+		$assets_table = Npcink_Device_Inventory_V3_Tables::assets();
+		$cache_key = $this->build_cache_key(
+			'issue-states',
+			array(
+				'version' => $this->get_list_cache_version(),
+			)
+		);
+		$cached = wp_cache_get($cache_key, self::CACHE_GROUP);
+		if ($cached !== false) {
+			return $cached;
+		}
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned event table query is wrapped in the object cache.
+		$items = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT e.*, a.uuid AS asset_uuid, a.asset_number, a.name AS asset_name, a.asset_type, a.status, a.department, a.owner_name
+			FROM %i e
+			LEFT JOIN %i a ON a.id = e.asset_id
+			WHERE e.event_type IN (%s, %s)
+			ORDER BY e.created_at DESC, e.id DESC
+			LIMIT %d",
+				$events_table,
+				$assets_table,
+				'issue_handled',
+				'issue_reopened',
+				5000
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+
+		$result = $items ?: array();
+		wp_cache_set($cache_key, $result, self::CACHE_GROUP, self::CACHE_TTL);
+		return $result;
+	}
+
 	private function build_cache_key($prefix, $parts)
 	{
 		$encoded = wp_json_encode($parts);

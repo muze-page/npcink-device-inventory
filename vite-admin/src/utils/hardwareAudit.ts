@@ -1,5 +1,7 @@
 import type { Asset, AssetObservation, JsonRecord } from "@/type/v3";
 
+const DEFAULT_DEPARTMENT = "未分配";
+
 export interface HardwareIssue {
   key: string;
   level: "error" | "warning" | "info";
@@ -305,13 +307,13 @@ export const detectHardwareIssues = (assets: Asset[]) => {
         message: `${boardKey} 与其他资产重复`,
       });
     }
-    if (!asset.department) {
+    if (!asset.department || asset.department === DEFAULT_DEPARTMENT) {
       issues.push({
         key: `${asset.uuid}-missing-department`,
         level: "info",
-        type: "部门缺失",
+        type: "部门待分配",
         asset,
-        message: `${assetLabel} 未设置部门`,
+        message: `${assetLabel} 需要分配到具体部门`,
       });
     }
     if (!asset.ownerName) {

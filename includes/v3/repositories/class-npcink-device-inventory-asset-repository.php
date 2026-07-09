@@ -348,7 +348,7 @@ class Npcink_Device_Inventory_Asset_Repository
 			'asset_number' => $asset_number,
 			'name' => sanitize_text_field($data['name']),
 			'owner_name' => sanitize_text_field($data['owner_name']),
-			'department' => sanitize_text_field($data['department']),
+			'department' => Npcink_Device_Inventory_V3_Tables::normalize_department($data['department']),
 			'status' => sanitize_key($data['status']),
 			'category' => sanitize_text_field($data['category']),
 			'purchase_price' => floatval($data['purchase_price']),
@@ -397,6 +397,8 @@ class Npcink_Device_Inventory_Asset_Repository
 			$value = $data[$field];
 			if ($field === 'metadata_json' && is_array($value)) {
 				$value = Npcink_Device_Inventory_V3_Sanitizer::json_encode($value);
+			} elseif ($field === 'department') {
+				$value = Npcink_Device_Inventory_V3_Tables::normalize_department($value);
 			} elseif ($format === '%s') {
 				$value = sanitize_text_field($value);
 			} elseif ($format === '%f') {

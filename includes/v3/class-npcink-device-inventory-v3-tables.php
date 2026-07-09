@@ -6,6 +6,7 @@ if (!defined('ABSPATH')) {
 
 class Npcink_Device_Inventory_V3_Tables
 {
+	public const DEFAULT_DEPARTMENT = '未分配';
 	public const OPTION = 'npcink_device_inventory_v3_options';
 	public const ASSETS = 'npcink_assets';
 	public const IDENTITIES = 'npcink_asset_identities';
@@ -51,9 +52,19 @@ class Npcink_Device_Inventory_V3_Tables
 			'depreciation_period_months' => 36,
 			'default_residual_rate' => 5,
 			'count_available_assets_only' => true,
-			'departments' => array(),
+			'departments' => array(self::DEFAULT_DEPARTMENT),
 			'delete_data_on_uninstall' => false,
 		);
+	}
+
+	public static function normalize_department($department)
+	{
+		$value = sanitize_text_field((string) $department);
+		$value = trim($value);
+		if ($value === '') {
+			return self::DEFAULT_DEPARTMENT;
+		}
+		return substr($value, 0, 80);
 	}
 
 	public static function normalize_departments($departments)
@@ -69,6 +80,16 @@ class Npcink_Device_Inventory_V3_Tables
 				continue;
 			}
 			$normalized[] = substr($value, 0, 80);
+		}
+		sort($normalized, SORT_NATURAL | SORT_FLAG_CASE);
+		return $normalized;
+	}
+
+	public static function normalize_departments_with_default($departments)
+	{
+		$normalized = self::normalize_departments($departments);
+		if (!in_array(self::DEFAULT_DEPARTMENT, $normalized, true)) {
+			$normalized[] = self::DEFAULT_DEPARTMENT;
 		}
 		sort($normalized, SORT_NATURAL | SORT_FLAG_CASE);
 		return $normalized;

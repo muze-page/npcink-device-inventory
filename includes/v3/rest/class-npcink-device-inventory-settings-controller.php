@@ -129,7 +129,7 @@ class Npcink_Device_Inventory_Settings_Controller
 			$options['count_available_assets_only'] = (bool) $params['countAvailableAssetsOnly'];
 		}
 		if (array_key_exists('departments', $params)) {
-			$options['departments'] = Npcink_Device_Inventory_V3_Tables::normalize_departments($params['departments']);
+			$options['departments'] = Npcink_Device_Inventory_V3_Tables::normalize_departments_with_default($params['departments']);
 		}
 		if (array_key_exists('deleteDataOnUninstall', $params)) {
 			$options['delete_data_on_uninstall'] = (bool) $params['deleteDataOnUninstall'];
@@ -312,14 +312,11 @@ class Npcink_Device_Inventory_Settings_Controller
 
 	private function settings_departments($options)
 	{
-		$departments = Npcink_Device_Inventory_V3_Tables::normalize_departments(
-			isset($options['departments']) ? $options['departments'] : array()
-		);
 		$raw_options = get_option(Npcink_Device_Inventory_V3_Tables::OPTION);
-		if ($departments || (is_array($raw_options) && array_key_exists('departments', $raw_options))) {
-			return $departments;
+		if (is_array($raw_options) && array_key_exists('departments', $raw_options)) {
+			return Npcink_Device_Inventory_V3_Tables::normalize_departments_with_default($raw_options['departments']);
 		}
-		return $this->asset_departments();
+		return Npcink_Device_Inventory_V3_Tables::normalize_departments_with_default($this->asset_departments());
 	}
 
 	private function asset_departments()

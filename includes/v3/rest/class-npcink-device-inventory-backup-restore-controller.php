@@ -299,7 +299,7 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 			$options['count_available_assets_only'] = (bool) $settings['countAvailableAssetsOnly'];
 		}
 		if (array_key_exists('departments', $settings)) {
-			$options['departments'] = Npcink_Device_Inventory_V3_Tables::normalize_departments($settings['departments']);
+			$options['departments'] = Npcink_Device_Inventory_V3_Tables::normalize_departments_with_default($settings['departments']);
 		}
 		if (array_key_exists('deleteDataOnUninstall', $settings)) {
 			$options['delete_data_on_uninstall'] = (bool) $settings['deleteDataOnUninstall'];
@@ -600,7 +600,7 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 			'asset_number' => $this->backup_text($asset, array('assetNumber'), 'text'),
 			'name' => $this->backup_text($asset, array('name'), 'text'),
 			'owner_name' => $this->backup_text($asset, array('ownerName'), 'text'),
-			'department' => $this->backup_text($asset, array('department'), 'text'),
+			'department' => Npcink_Device_Inventory_V3_Tables::normalize_department($this->backup_text($asset, array('department'), 'text')),
 			'status' => $this->backup_text($asset, array('status'), 'key', 'active'),
 			'category' => $this->backup_text($asset, array('category'), 'text'),
 			'purchase_price' => isset($asset['purchasePrice']) ? floatval($asset['purchasePrice']) : 0,
