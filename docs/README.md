@@ -11,6 +11,7 @@ This folder keeps product contracts, release procedures, verification records, a
 
 ## Current Release Records
 
+- `release-verification-2026-07-09-v2.7.9.md`: v2.7.9 release verification record.
 - `release-verification-2026-07-07-v2.7.8.md`: v2.7.8 release verification record.
 - `release-verification-2026-07-07-v2.7.7.md`: v2.7.7 release verification record.
 - `post-v2.7.7-hardening-and-v2.7.8-release-summary-2026-07-07.md`: public query and search hardening release summary.

@@ -4,7 +4,7 @@ Tags: inventory, assets, device management, rest api, admin
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.7.8
+Stable tag: 2.7.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -77,6 +77,11 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 
 == Changelog ==
 
+= 2.7.9 =
+* Improve the admin analysis workspace with clearer department controls and denser review surfaces.
+* Add WordPress.org update-index repair documentation for the v2.7.8 package transition.
+* Refresh project documentation and submission materials for the current release workflow.
+
 = 2.7.8 =
 * Require an access code before public asset query can be enabled and add rate limiting to the public query endpoint.
 * Reduce high-cost asset list JSON and observation searches for ordinary keywords while keeping IP, MAC, and serial-style extended searches.
@@ -125,6 +130,9 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 * Moved desktop uploads to signed v3 device observations.
 
 == Upgrade Notice ==
+
+= 2.7.9 =
+This release improves admin analysis controls and refreshes the release documentation for the WordPress.org update-index transition.
 
 = 2.7.8 =
 This release hardens public asset query access, reduces expensive asset search paths, and adds regression gates for the new release checks.
