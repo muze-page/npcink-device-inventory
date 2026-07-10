@@ -3702,6 +3702,15 @@
   margin: 0 auto;
 }
 
+.npcink-v3-data-governance {
+  width: min(100%, 960px);
+  margin: 16px auto 0;
+}
+
+.npcink-v3-data-governance .ant-collapse-content-box {
+  padding: 16px;
+}
+
 .npcink-v3-tool-panel {
   display: flex;
   align-items: center;
