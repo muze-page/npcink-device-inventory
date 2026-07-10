@@ -31,6 +31,7 @@ This folder keeps product contracts, release procedures, verification records, a
 
 ## Product And Implementation History
 
+- `simple-device-management-analysis-boundary-2026-07-10.md`: current product positioning, analysis scope, and explicit stop-expansion boundary for simple device management.
 - `analysis-remediation-development-notes-2026-07-10.md`: analysis remediation decisions, business semantics, implementation boundaries, and next-stage guidance after v2.8.0.
 - `project-history-summary-2026-06-30.md`: project-level history summary.
 - `device-inventory-product-and-release-history-2026-07-04.md`: product and release history.
