@@ -11,6 +11,7 @@ export interface HardwareIssue {
 }
 
 export type CollectionFreshness = "fresh" | "aging" | "stale" | "missing";
+export type CollectionAgeBand = "fresh" | "aging" | "stale_31_60" | "stale_61_90" | "stale_90_plus" | "missing";
 
 export const toNumber = (value: unknown) => {
   const number = typeof value === "number" ? value : Number(value || 0);
@@ -231,9 +232,17 @@ const daysSince = (value?: string, now = Date.now()) => {
   return Math.max(Math.floor((now - date.getTime()) / 86400000), 0);
 };
 
-export const collectionFreshness = (asset: Asset, now = Date.now()): CollectionFreshness => {
+export const collectionAgeDays = (asset: Asset, now = Date.now()): number | null => {
   const days = daysSince(latestObservationTime(asset), now);
   if (!Number.isFinite(days)) {
+    return null;
+  }
+  return days;
+};
+
+export const collectionAgeBand = (asset: Asset, now = Date.now()): CollectionAgeBand => {
+  const days = collectionAgeDays(asset, now);
+  if (days === null) {
     return "missing";
   }
   if (days <= 7) {
@@ -241,6 +250,20 @@ export const collectionFreshness = (asset: Asset, now = Date.now()): CollectionF
   }
   if (days <= 30) {
     return "aging";
+  }
+  if (days <= 60) {
+    return "stale_31_60";
+  }
+  if (days <= 90) {
+    return "stale_61_90";
+  }
+  return "stale_90_plus";
+};
+
+export const collectionFreshness = (asset: Asset, now = Date.now()): CollectionFreshness => {
+  const band = collectionAgeBand(asset, now);
+  if (band === "fresh" || band === "aging" || band === "missing") {
+    return band;
   }
   return "stale";
 };

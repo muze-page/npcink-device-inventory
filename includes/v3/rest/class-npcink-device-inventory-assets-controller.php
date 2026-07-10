@@ -133,6 +133,16 @@ class Npcink_Device_Inventory_Assets_Controller
 
 		register_rest_route(
 			'npcink-device-inventory/v1',
+			'/analysis/trends',
+			array(
+				'methods' => WP_REST_Server::READABLE,
+				'callback' => array($this, 'get_analysis_trends'),
+				'permission_callback' => array($this, 'admin_permissions_check'),
+			)
+		);
+
+		register_rest_route(
+			'npcink-device-inventory/v1',
 			'/observations',
 			array(
 				'methods' => WP_REST_Server::READABLE,
@@ -392,6 +402,67 @@ class Npcink_Device_Inventory_Assets_Controller
 				'data' => array(
 					'handledIssueKeys' => $handled_issue_keys,
 					'items' => $items,
+				),
+			)
+		);
+	}
+
+	public function get_analysis_trends($request)
+	{
+		$days = 30;
+		$today = current_time('Y-m-d');
+		$start_date = date('Y-m-d', strtotime($today . ' -' . ($days - 1) . ' days'));
+		$end_date = date('Y-m-d', strtotime($today . ' +1 day'));
+		$start_at = $start_date . ' 00:00:00';
+		$end_at = $end_date . ' 00:00:00';
+		$collection_by_day = array();
+		foreach ($this->observations->daily_counts_between($start_at, $end_at) as $row) {
+			$day = isset($row['day']) ? sanitize_text_field((string) $row['day']) : '';
+			if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $day)) {
+				continue;
+			}
+			$collection_by_day[$day] = intval(isset($row['count']) ? $row['count'] : 0);
+		}
+
+		$issue_states_by_day = array();
+		foreach ($this->events->daily_issue_state_counts_between($start_at, $end_at) as $row) {
+			$day = isset($row['day']) ? sanitize_text_field((string) $row['day']) : '';
+			$event_type = isset($row['event_type']) ? sanitize_key((string) $row['event_type']) : '';
+			if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $day) || !in_array($event_type, array('issue_handled', 'issue_reopened'), true)) {
+				continue;
+			}
+			if (!isset($issue_states_by_day[$day])) {
+				$issue_states_by_day[$day] = array('handled' => 0, 'reopened' => 0);
+			}
+			$issue_states_by_day[$day][$event_type === 'issue_handled' ? 'handled' : 'reopened'] += intval(isset($row['count']) ? $row['count'] : 0);
+		}
+
+		$collection = array();
+		$issue_states = array();
+		for ($offset = 0; $offset < $days; $offset++) {
+			$day = date('Y-m-d', strtotime($start_date . ' +' . $offset . ' days'));
+			$handled = isset($issue_states_by_day[$day]['handled']) ? intval($issue_states_by_day[$day]['handled']) : 0;
+			$reopened = isset($issue_states_by_day[$day]['reopened']) ? intval($issue_states_by_day[$day]['reopened']) : 0;
+			$collection[] = array(
+				'date' => $day,
+				'count' => isset($collection_by_day[$day]) ? intval($collection_by_day[$day]) : 0,
+			);
+			$issue_states[] = array(
+				'date' => $day,
+				'handled' => $handled,
+				'reopened' => $reopened,
+				'net' => $handled - $reopened,
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'data' => array(
+					'days' => $days,
+					'startDate' => $start_date,
+					'endDate' => date('Y-m-d', strtotime($end_date . ' -1 day')),
+					'collection' => $collection,
+					'issueStates' => $issue_states,
 				),
 			)
 		);

@@ -60,6 +60,12 @@ const steps = [
     cwd: repoRoot,
   },
   {
+    title: "Analysis trend fixtures",
+    command: "npm",
+    args: ["run", "check:analysis-trends"],
+    cwd: repoRoot,
+  },
+  {
     title: "Public query fixtures",
     command: "npm",
     args: ["run", "check:public-query"],

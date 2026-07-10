@@ -108,6 +108,22 @@ export interface IssueStates {
   items: IssueState[];
 }
 
+export interface AnalysisTrends {
+  days: number;
+  startDate: string;
+  endDate: string;
+  collection: Array<{
+    date: string;
+    count: number;
+  }>;
+  issueStates: Array<{
+    date: string;
+    handled: number;
+    reopened: number;
+    net: number;
+  }>;
+}
+
 export interface Pagination {
   page: number;
   pageSize: number;

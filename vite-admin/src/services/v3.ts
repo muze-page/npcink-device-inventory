@@ -7,6 +7,7 @@ import type {
   AssetInput,
   AssetListParams,
   AssetObservation,
+  AnalysisTrends,
   BackupRestoreResult,
   ClientToken,
   ClientTokenPackageConfig,
@@ -133,6 +134,14 @@ export const getEvents = async (
 export const getIssueStates = async (): Promise<IssueStates> => {
   const response = await restInstance.get<DataEnvelope<IssueStates>>(
     "/analysis/issue-states",
+    { showSuccessMessage: false } as RequestConfig
+  );
+  return unwrapData(response.data);
+};
+
+export const getAnalysisTrends = async (): Promise<AnalysisTrends> => {
+  const response = await restInstance.get<DataEnvelope<AnalysisTrends>>(
+    "/analysis/trends",
     { showSuccessMessage: false } as RequestConfig
   );
   return unwrapData(response.data);

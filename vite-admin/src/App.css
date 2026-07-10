@@ -518,6 +518,91 @@
   color: #667085;
 }
 
+.npcink-v3-summary-trends {
+  display: grid;
+  gap: 14px;
+  padding: 18px 0 2px;
+}
+
+.npcink-v3-summary-trend-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.npcink-v3-summary-trend-grid > div {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+}
+
+.npcink-v3-summary-trend-grid > div + div {
+  padding-left: 24px;
+  border-left: 1px solid #d9dee7;
+}
+
+.npcink-v3-summary-trend-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.npcink-v3-summary-trend-head span {
+  color: #475467;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.npcink-v3-summary-trend-head strong {
+  color: #1f5fd5;
+  font-size: 16px;
+}
+
+.npcink-v3-summary-trend-head strong.is-danger {
+  color: #c24141;
+}
+
+.npcink-v3-summary-trend-bars {
+  display: flex;
+  align-items: flex-end;
+  min-height: 84px;
+  gap: 3px;
+  padding: 8px 2px 0;
+  border-bottom: 1px solid #d9dee7;
+}
+
+.npcink-v3-summary-trend-bars > i {
+  display: flex;
+  flex: 1 1 0;
+  height: 72px;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  min-width: 2px;
+  font-style: normal;
+}
+
+.npcink-v3-summary-trend-bars > i > b {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  background: #2f6fed;
+  border-radius: 3px 3px 0 0;
+}
+
+.npcink-v3-summary-trend-bars.is-issue > i > b {
+  width: calc(50% - 1px);
+}
+
+.npcink-v3-summary-trend-bars.is-issue > i > b.is-handled {
+  background: #159f70;
+}
+
+.npcink-v3-summary-trend-bars.is-issue > i > b.is-reopened {
+  background: #d9534f;
+}
+
 .npcink-v3-missing-valuation {
   display: grid;
   gap: 12px;
@@ -3834,6 +3919,7 @@
   .npcink-v3-analysis-split,
   .npcink-v3-summary-kpi-strip,
   .npcink-v3-summary-operations,
+  .npcink-v3-summary-trend-grid,
   .npcink-v3-value-main-grid,
   .npcink-v3-value-rate-strip,
   .npcink-v3-drawer-summary {
@@ -3843,6 +3929,13 @@
   .npcink-v3-analysis-summary-hero {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .npcink-v3-summary-trend-grid > div + div {
+    padding-top: 14px;
+    padding-left: 0;
+    border-top: 1px solid #d9dee7;
+    border-left: 0;
   }
 
   .npcink-v3-analysis-summary-hero strong {

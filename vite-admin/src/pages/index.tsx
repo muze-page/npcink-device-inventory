@@ -38,6 +38,7 @@ import {
   getAssetEvents,
   getAssetIdentities,
   getAssetObservations,
+  getAnalysisTrends,
   getAssets,
   getClientTokenPackageConfig,
   getEvents,
@@ -67,6 +68,8 @@ import type {
 } from "@/type/v3";
 import {
   assetHardwareContext,
+  collectionAgeBand,
+  collectionAgeDays,
   collectionFreshness,
   detectHardwareIssues,
   firstText,
@@ -78,6 +81,7 @@ import {
   hardwareSummary,
   issueGroup,
   toNumber,
+  type CollectionAgeBand,
   type HardwareIssue,
 } from "@/utils/hardwareAudit";
 
@@ -108,6 +112,15 @@ const STATUS_OPTIONS = [
   { label: "报废", value: "retired" },
   { label: "已归档", value: "deleted" },
 ];
+
+const COLLECTION_AGE_BAND_LABELS: Record<CollectionAgeBand, string> = {
+  fresh: "7 天内",
+  aging: "8-30 天",
+  stale_31_60: "31-60 天",
+  stale_61_90: "61-90 天",
+  stale_90_plus: "超过 90 天",
+  missing: "未接入",
+};
 
 const EDITABLE_STATUS_OPTIONS = STATUS_OPTIONS.filter((item) => item.value !== "deleted");
 const AVAILABLE_ASSET_STATUSES = new Set(["active", "inactive"]);
@@ -524,7 +537,7 @@ const sortedEntries = (record: Record<string, number>) =>
   Object.entries(record).sort((a, b) => b[1] - a[1]);
 
 const csvCell = (value: unknown) => {
-  const text = fieldText(value);
+  const text = fieldText(value).replace(/^([=+\-@])/, "'$1");
   return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 };
 
@@ -1062,6 +1075,24 @@ const issuesToCsv = (issues: HardwareIssue[], handledIssueKeys: Set<string>) => 
     issue.asset.department,
     issue.message,
   ]);
+  return [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
+};
+
+const overdueCollectionToCsv = (assets: Asset[]) => {
+  const headers = ["部门", "资产编号", "资产名称", "使用人", "状态", "最后采集", "距今天数", "逾期分级"];
+  const rows = assets.map((asset) => {
+    const band = collectionAgeBand(asset);
+    return [
+      asset.department || DEFAULT_DEPARTMENT,
+      asset.assetNumber,
+      asset.name,
+      asset.ownerName,
+      statusLabel(asset.status),
+      formatDate(asset.latestObservation?.observedAt || ""),
+      collectionAgeDays(asset) ?? "-",
+      COLLECTION_AGE_BAND_LABELS[band],
+    ];
+  });
   return [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
 };
 
@@ -4068,9 +4099,10 @@ const ChangeWorkspace = () => {
 
 interface HardwareAuditWorkspaceProps {
   focus?: AnalysisFocusTarget;
+  onOpenSettings: () => void;
 }
 
-const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
+const HardwareAuditWorkspace = ({ focus, onOpenSettings }: HardwareAuditWorkspaceProps) => {
   const queryClient = useQueryClient();
   const [selectedIssueGroup, setSelectedIssueGroup] = useState<string>("全部");
   const [selectedIssueType, setSelectedIssueType] = useState<string>();
@@ -4401,6 +4433,25 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
     ),
     [auditAssets]
   );
+  const collectionAgeBandCounts = useMemo(
+    () => auditAssets.reduce<Record<CollectionAgeBand, number>>(
+      (counts, asset) => {
+        counts[collectionAgeBand(asset)] += 1;
+        return counts;
+      },
+      { fresh: 0, aging: 0, stale_31_60: 0, stale_61_90: 0, stale_90_plus: 0, missing: 0 }
+    ),
+    [auditAssets]
+  );
+  const overdueCollectionAssets = useMemo(
+    () =>
+      auditAssets.filter((asset) => {
+        const band = collectionAgeBand(asset);
+        const isOverdue = band === "stale_31_60" || band === "stale_61_90" || band === "stale_90_plus" || band === "missing";
+        return isOverdue && (!selectedIssueDepartment || (asset.department || DEFAULT_DEPARTMENT) === selectedIssueDepartment);
+      }),
+    [auditAssets, selectedIssueDepartment]
+  );
   const issueCounts = countBy(filteredIssuePool, (issue) => issue.type);
   const issueGroups = useMemo(() => {
     const counts = countBy(hardwareIssues, (issue) => issueGroup(issue.type));
@@ -4427,7 +4478,7 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
     {
       label: "采集新鲜度",
       value: `${collectionFreshnessCounts.fresh} / ${auditTotal}`,
-      note: `7 天内 · 观察 ${collectionFreshnessCounts.aging} · 过期 ${collectionFreshnessCounts.stale}`,
+      note: `31-60 天 ${collectionAgeBandCounts.stale_31_60} · 61-90 天 ${collectionAgeBandCounts.stale_61_90} · 90+ ${collectionAgeBandCounts.stale_90_plus} · 未接入 ${collectionAgeBandCounts.missing}`,
       tone: collectionFreshnessCounts.stale || collectionFreshnessCounts.missing ? "warning" : "primary",
     },
     {
@@ -4643,7 +4694,7 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
       key: "collection",
       title: "跟进过期采集",
       count: collectionFreshnessCounts.stale + collectionFreshnessCounts.missing,
-      description: `超过 30 天 ${collectionFreshnessCounts.stale} 台，未接入 ${collectionFreshnessCounts.missing} 台。`,
+      description: `31-60 天 ${collectionAgeBandCounts.stale_31_60}，61-90 天 ${collectionAgeBandCounts.stale_61_90}，90+ ${collectionAgeBandCounts.stale_90_plus}，未接入 ${collectionAgeBandCounts.missing}。`,
       action: "查看采集状态",
       tone: "warning",
       onClick: () => focusIssueTask("采集状态"),
@@ -4707,13 +4758,33 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
             {auditAssetsQuery.isLoading ? "统计中" : `纳入 ${auditTotal} / 全部 ${allAuditAssets.length} 台`}
           </Tag>
           <Tag>{hardwareScopeText}</Tag>
+          <Select
+            allowClear
+            showSearch
+            placeholder="导出部门"
+            value={selectedIssueDepartment}
+            onChange={setSelectedIssueDepartment}
+            className="npcink-v3-filter"
+            options={issueDepartmentOptions}
+            filterOption={(input, option) => String(option?.label || "").toLowerCase().includes(input.toLowerCase())}
+          />
+          <Button
+            disabled={!overdueCollectionAssets.length}
+            onClick={() => {
+              downloadCsvFile(`collection-overdue-${Date.now()}.csv`, overdueCollectionToCsv(overdueCollectionAssets));
+              message.success(`已导出 ${overdueCollectionAssets.length} 台逾期采集设备`);
+            }}
+          >
+            导出逾期清单
+          </Button>
+          <Button onClick={onOpenSettings}>客户端接入</Button>
         </Space>
       </div>
       <AnalysisBlock
         id="npcink-v3-hardware-health"
         eyebrow="01"
         title="健康概览"
-        description="用采集覆盖、资料缺口和重复风险判断今天是否需要处理。"
+        description="逾期设备可按部门导出；令牌、安装配置和重新采集入口统一留在客户端接入。"
         className="npcink-v3-hardware-health-overview"
       >
         <div className="npcink-v3-insight-grid">
@@ -5493,6 +5564,7 @@ const AnalysisSummaryWorkspace = ({ onOpenTab }: AnalysisSummaryWorkspaceProps) 
     { staleTime: 60_000 }
   );
   const issueStatesQuery = useQuery(["v3-analysis-issue-states"], getIssueStates, { staleTime: 30_000 });
+  const trendsQuery = useQuery(["v3-analysis-trends"], getAnalysisTrends, { staleTime: 60_000 });
   const handledIssueKeys = useMemo(
     () => new Set(issueStatesQuery.data?.handledIssueKeys || []),
     [issueStatesQuery.data?.handledIssueKeys]
@@ -5517,6 +5589,16 @@ const AnalysisSummaryWorkspace = ({ onOpenTab }: AnalysisSummaryWorkspaceProps) 
   const freshCollectionCount = computerAssets.filter((asset) => collectionFreshness(asset) === "fresh").length;
   const staleCollectionCount = computerAssets.filter((asset) => collectionFreshness(asset) === "stale").length;
   const missingCollectionCount = computerAssets.filter((asset) => collectionFreshness(asset) === "missing").length;
+  const collectionAgeBandCounts = useMemo(
+    () => computerAssets.reduce<Record<CollectionAgeBand, number>>(
+      (counts, asset) => {
+        counts[collectionAgeBand(asset)] += 1;
+        return counts;
+      },
+      { fresh: 0, aging: 0, stale_31_60: 0, stale_61_90: 0, stale_90_plus: 0, missing: 0 }
+    ),
+    [computerAssets]
+  );
   const totalPurchase = scopedAssets.reduce((total, asset) => total + moneyValue(asset.purchasePrice), 0);
   const totalCurrent = scopedAssets.reduce(
     (total, asset) => total + assetCurrentValue(asset, depreciationPeriodMonths, defaultResidualRate),
@@ -5613,9 +5695,9 @@ const AnalysisSummaryWorkspace = ({ onOpenTab }: AnalysisSummaryWorkspaceProps) 
     {
       key: "collection",
       title: "恢复过期采集",
-      count: staleCollectionCount,
+      count: staleCollectionCount + missingCollectionCount,
       meta: `超过 30 天 ${staleCollectionCount} 台`,
-      description: `7 天内 ${freshCollectionCount} 台，观察期 ${computerAssets.length - freshCollectionCount - staleCollectionCount - missingCollectionCount} 台。`,
+      description: `31-60 天 ${collectionAgeBandCounts.stale_31_60}，61-90 天 ${collectionAgeBandCounts.stale_61_90}，90+ ${collectionAgeBandCounts.stale_90_plus}，未接入 ${missingCollectionCount}。`,
       tone: "warning",
       tab: "hardware" as const,
       focus: { hardwareSection: "issues" as const, hardwareIssueGroup: "采集状态" },
@@ -5669,6 +5751,12 @@ const AnalysisSummaryWorkspace = ({ onOpenTab }: AnalysisSummaryWorkspaceProps) 
   const summaryCopy = actionItems.length
     ? "按优先待办处理后，再使用部门风险和专项工作台核对整改范围。"
     : "采集、异常和估值基础处于可接受状态，可以直接查看库存和价值分布。";
+  const collectionTrend = trendsQuery.data?.collection || [];
+  const issueStateTrend = trendsQuery.data?.issueStates || [];
+  const collectionTrendMax = Math.max(...collectionTrend.map((item) => item.count), 1);
+  const issueStateTrendMax = Math.max(...issueStateTrend.map((item) => Math.max(item.handled, item.reopened)), 1);
+  const recentCollectionCount = collectionTrend.reduce((total, item) => total + item.count, 0);
+  const recentIssueStateNet = issueStateTrend.reduce((total, item) => total + item.net, 0);
 
   return (
     <div className="npcink-v3-section">
@@ -5769,6 +5857,44 @@ const AnalysisSummaryWorkspace = ({ onOpenTab }: AnalysisSummaryWorkspaceProps) 
           </div>
         </section>
       </div>
+
+      <section className="npcink-v3-summary-trends">
+        <div className="npcink-v3-summary-section-head">
+          <Text strong>近 30 天运行变化</Text>
+          <Text type="secondary">采集量按客户端采集时间统计；问题状态净变化 = 确认已核查 - 恢复待处理。</Text>
+        </div>
+        <div className="npcink-v3-summary-trend-grid">
+          <div>
+            <div className="npcink-v3-summary-trend-head">
+              <span>采集接收</span>
+              <strong>{trendsQuery.isLoading ? "-" : `${recentCollectionCount} 次`}</strong>
+            </div>
+            <div className="npcink-v3-summary-trend-bars" aria-label="近 30 天采集量">
+              {collectionTrend.map((item) => (
+                <i key={item.date} title={`${item.date}：${item.count} 次采集`}>
+                  <b style={{ height: `${Math.max((item.count / collectionTrendMax) * 100, item.count ? 8 : 0)}%` }} />
+                </i>
+              ))}
+              {!collectionTrend.length && !trendsQuery.isLoading ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无采集趋势" /> : null}
+            </div>
+          </div>
+          <div>
+            <div className="npcink-v3-summary-trend-head">
+              <span>问题状态净变化</span>
+              <strong className={recentIssueStateNet < 0 ? "is-danger" : ""}>{trendsQuery.isLoading ? "-" : `${recentIssueStateNet >= 0 ? "+" : ""}${recentIssueStateNet}`}</strong>
+            </div>
+            <div className="npcink-v3-summary-trend-bars is-issue" aria-label="近 30 天问题状态变化">
+              {issueStateTrend.map((item) => (
+                <i key={item.date} title={`${item.date}：确认 ${item.handled}，恢复 ${item.reopened}，净变化 ${item.net >= 0 ? "+" : ""}${item.net}`}>
+                  <b className="is-handled" style={{ height: `${Math.max((item.handled / issueStateTrendMax) * 100, item.handled ? 8 : 0)}%` }} />
+                  <b className="is-reopened" style={{ height: `${Math.max((item.reopened / issueStateTrendMax) * 100, item.reopened ? 8 : 0)}%` }} />
+                </i>
+              ))}
+              {!issueStateTrend.length && !trendsQuery.isLoading ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无问题状态变化" /> : null}
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
@@ -6293,7 +6419,11 @@ const AssetValueWorkspace = ({ focus }: AssetValueWorkspaceProps) => {
 
 const ANALYSIS_TAB_KEYS: AnalysisTabKey[] = ["summary", "hardware", "value"];
 
-const AnalysisWorkspace = () => {
+interface AnalysisWorkspaceProps {
+  onOpenSettings: () => void;
+}
+
+const AnalysisWorkspace = ({ onOpenSettings }: AnalysisWorkspaceProps) => {
   const [activeTab, setActiveTab] = useState<AnalysisTabKey>(() =>
     loadStoredTab(ANALYSIS_TAB_STORAGE_KEY, ANALYSIS_TAB_KEYS, "summary")
   );
@@ -6333,7 +6463,7 @@ const AnalysisWorkspace = () => {
       {activeTab === "summary" ? (
         <AnalysisSummaryWorkspace onOpenTab={openAnalysisTab} />
       ) : activeTab === "hardware" ? (
-        <HardwareAuditWorkspace focus={focusTarget} />
+        <HardwareAuditWorkspace focus={focusTarget} onOpenSettings={onOpenSettings} />
       ) : (
         <AssetValueWorkspace focus={focusTarget} />
       )}
@@ -7744,6 +7874,10 @@ const InventoryAdmin = () => {
   const [activeTab, setActiveTab] = useState<(typeof WORKSPACE_TAB_KEYS)[number]>(() =>
     loadStoredTab(WORKSPACE_TAB_STORAGE_KEY, WORKSPACE_TAB_KEYS, "computer")
   );
+  const openWorkspaceTab = (tab: (typeof WORKSPACE_TAB_KEYS)[number]) => {
+    setActiveTab(tab);
+    saveStoredTab(WORKSPACE_TAB_STORAGE_KEY, tab);
+  };
 
   return (
     <div className="npcink-v3-app">
@@ -7754,8 +7888,7 @@ const InventoryAdmin = () => {
           const nextKey = WORKSPACE_TAB_KEYS.includes(key as (typeof WORKSPACE_TAB_KEYS)[number])
             ? (key as (typeof WORKSPACE_TAB_KEYS)[number])
             : "computer";
-          setActiveTab(nextKey);
-          saveStoredTab(WORKSPACE_TAB_STORAGE_KEY, nextKey);
+          openWorkspaceTab(nextKey);
         }}
         items={[
           {
@@ -7776,7 +7909,7 @@ const InventoryAdmin = () => {
           {
             key: "analysis",
             label: "分析",
-            children: <AnalysisWorkspace />,
+            children: <AnalysisWorkspace onOpenSettings={() => openWorkspaceTab("settings")} />,
           },
           {
             key: "tools",

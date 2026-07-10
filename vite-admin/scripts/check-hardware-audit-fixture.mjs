@@ -30,7 +30,7 @@ try {
     logLevel: "silent",
   });
 
-  const { collectionFreshness, detectHardwareIssues, issueGroup } = await import(pathToFileURL(outFile).href);
+  const { collectionAgeBand, collectionFreshness, detectHardwareIssues, issueGroup } = await import(pathToFileURL(outFile).href);
   const assets = JSON.parse(await readFile(fixturePath, "utf8"));
   const issues = detectHardwareIssues(assets);
   const whitespaceOwnerIssues = detectHardwareIssues([
@@ -97,6 +97,9 @@ try {
   const freshnessNow = Date.parse("2026-07-10T00:00:00Z");
   const freshSample = { ...assets[1], latestObservation: { ...assets[1].latestObservation, observedAt: "2026-07-03T00:00:00Z" } };
   const agingSample = { ...assets[1], latestObservation: { ...assets[1].latestObservation, observedAt: "2026-07-02T00:00:00Z" } };
+  const stale31To60Sample = { ...assets[1], latestObservation: { ...assets[1].latestObservation, observedAt: "2026-06-09T00:00:00Z" } };
+  const stale61To90Sample = { ...assets[1], latestObservation: { ...assets[1].latestObservation, observedAt: "2026-05-10T00:00:00Z" } };
+  const stale90PlusSample = { ...assets[1], latestObservation: { ...assets[1].latestObservation, observedAt: "2026-04-10T00:00:00Z" } };
   const staleSample = { ...assets[1], latestObservation: { ...assets[1].latestObservation, observedAt: "2026-06-09T00:00:00Z" } };
   const missingSample = { ...assets[1], latestObservation: undefined };
   const freshnessClassificationFailed =
@@ -104,8 +107,15 @@ try {
     collectionFreshness(agingSample, freshnessNow) !== "aging" ||
     collectionFreshness(staleSample, freshnessNow) !== "stale" ||
     collectionFreshness(missingSample, freshnessNow) !== "missing";
+  const ageBandClassificationFailed =
+    collectionAgeBand(freshSample, freshnessNow) !== "fresh" ||
+    collectionAgeBand(agingSample, freshnessNow) !== "aging" ||
+    collectionAgeBand(stale31To60Sample, freshnessNow) !== "stale_31_60" ||
+    collectionAgeBand(stale61To90Sample, freshnessNow) !== "stale_61_90" ||
+    collectionAgeBand(stale90PlusSample, freshnessNow) !== "stale_90_plus" ||
+    collectionAgeBand(missingSample, freshnessNow) !== "missing";
 
-  if (missingTypes.length || missingGroups.length || !activeMissingOwner || inactiveMissingOwner || !whitespaceMissingOwner || placeholderDuplicateIssues.length || freshnessClassificationFailed) {
+  if (missingTypes.length || missingGroups.length || !activeMissingOwner || inactiveMissingOwner || !whitespaceMissingOwner || placeholderDuplicateIssues.length || freshnessClassificationFailed || ageBandClassificationFailed) {
     console.error("Hardware audit fixture check failed.");
     if (missingTypes.length) {
       console.error(`Missing issue types: ${missingTypes.join(", ")}`);
@@ -127,6 +137,9 @@ try {
     }
     if (freshnessClassificationFailed) {
       console.error("Collection freshness must preserve the 7-day, 30-day, and missing-data boundaries.");
+    }
+    if (ageBandClassificationFailed) {
+      console.error("Collection age bands must preserve the 31-60, 61-90, and 90-plus day boundaries.");
     }
     console.error(`Detected types: ${Array.from(issueTypes).join(", ")}`);
     process.exit(1);

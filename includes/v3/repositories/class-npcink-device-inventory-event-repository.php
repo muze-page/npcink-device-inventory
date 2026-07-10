@@ -213,6 +213,44 @@ class Npcink_Device_Inventory_Event_Repository
 		return $result;
 	}
 
+	public function daily_issue_state_counts_between($start_at, $end_at)
+	{
+		global $wpdb;
+		$start_at = sanitize_text_field((string) $start_at);
+		$end_at = sanitize_text_field((string) $end_at);
+		$cache_key = $this->build_cache_key(
+			'daily-issue-state-counts',
+			array(
+				'start_at' => $start_at,
+				'end_at' => $end_at,
+				'version' => $this->get_list_cache_version(),
+			)
+		);
+		$cached = wp_cache_get($cache_key, self::CACHE_GROUP);
+		if ($cached !== false) {
+			return $cached;
+		}
+
+		$table = Npcink_Device_Inventory_V3_Tables::events();
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin-owned event aggregate is bounded by the requested date range and cached by repository version.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT DATE(created_at) AS day, event_type, COUNT(*) AS count FROM %i WHERE created_at >= %s AND created_at < %s AND event_type IN (%s, %s) GROUP BY DATE(created_at), event_type ORDER BY day ASC',
+				$table,
+				$start_at,
+				$end_at,
+				'issue_handled',
+				'issue_reopened'
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+
+		$result = $rows ?: array();
+		wp_cache_set($cache_key, $result, self::CACHE_GROUP, self::CACHE_TTL);
+		return $result;
+	}
+
 	private function build_cache_key($prefix, $parts)
 	{
 		$encoded = wp_json_encode($parts);
