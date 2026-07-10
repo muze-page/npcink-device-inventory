@@ -30,7 +30,7 @@ try {
     logLevel: "silent",
   });
 
-  const { detectHardwareIssues, issueGroup } = await import(pathToFileURL(outFile).href);
+  const { collectionFreshness, detectHardwareIssues, issueGroup } = await import(pathToFileURL(outFile).href);
   const assets = JSON.parse(await readFile(fixturePath, "utf8"));
   const issues = detectHardwareIssues(assets);
   const whitespaceOwnerIssues = detectHardwareIssues([
@@ -71,8 +71,41 @@ try {
   const whitespaceMissingOwner = whitespaceOwnerIssues.some(
     (issue) => issue.key === "fixture-active-whitespace-owner-missing-owner"
   );
+  const placeholderIssues = detectHardwareIssues([
+    {
+      ...assets[1],
+      uuid: "fixture-placeholder-one",
+      assetNumber: "PLACEHOLDER-001",
+      latestObservation: {
+        ...assets[1].latestObservation,
+        summary: { ...assets[1].latestObservation.summary, primary_ip: "127.0.0.1" },
+        hardware: { ...assets[1].latestObservation.hardware, baseboard: { serial: "Default string" } },
+      },
+    },
+    {
+      ...assets[1],
+      uuid: "fixture-placeholder-two",
+      assetNumber: "PLACEHOLDER-002",
+      latestObservation: {
+        ...assets[1].latestObservation,
+        summary: { ...assets[1].latestObservation.summary, primary_ip: "127.0.0.1" },
+        hardware: { ...assets[1].latestObservation.hardware, baseboard: { serial: "Default string" } },
+      },
+    },
+  ]);
+  const placeholderDuplicateIssues = placeholderIssues.filter((issue) => issue.type === "重复 IP" || issue.type === "疑似重复设备");
+  const freshnessNow = Date.parse("2026-07-10T00:00:00Z");
+  const freshSample = { ...assets[1], latestObservation: { ...assets[1].latestObservation, observedAt: "2026-07-03T00:00:00Z" } };
+  const agingSample = { ...assets[1], latestObservation: { ...assets[1].latestObservation, observedAt: "2026-07-02T00:00:00Z" } };
+  const staleSample = { ...assets[1], latestObservation: { ...assets[1].latestObservation, observedAt: "2026-06-09T00:00:00Z" } };
+  const missingSample = { ...assets[1], latestObservation: undefined };
+  const freshnessClassificationFailed =
+    collectionFreshness(freshSample, freshnessNow) !== "fresh" ||
+    collectionFreshness(agingSample, freshnessNow) !== "aging" ||
+    collectionFreshness(staleSample, freshnessNow) !== "stale" ||
+    collectionFreshness(missingSample, freshnessNow) !== "missing";
 
-  if (missingTypes.length || missingGroups.length || !activeMissingOwner || inactiveMissingOwner || !whitespaceMissingOwner) {
+  if (missingTypes.length || missingGroups.length || !activeMissingOwner || inactiveMissingOwner || !whitespaceMissingOwner || placeholderDuplicateIssues.length || freshnessClassificationFailed) {
     console.error("Hardware audit fixture check failed.");
     if (missingTypes.length) {
       console.error(`Missing issue types: ${missingTypes.join(", ")}`);
@@ -88,6 +121,12 @@ try {
     }
     if (!whitespaceMissingOwner) {
       console.error("Whitespace-only owner names must report 责任人缺失 for active assets.");
+    }
+    if (placeholderDuplicateIssues.length) {
+      console.error("Loopback IP and default hardware strings must not create duplicate-risk issues.");
+    }
+    if (freshnessClassificationFailed) {
+      console.error("Collection freshness must preserve the 7-day, 30-day, and missing-data boundaries.");
     }
     console.error(`Detected types: ${Array.from(issueTypes).join(", ")}`);
     process.exit(1);

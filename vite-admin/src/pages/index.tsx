@@ -67,6 +67,7 @@ import type {
 } from "@/type/v3";
 import {
   assetHardwareContext,
+  collectionFreshness,
   detectHardwareIssues,
   firstText,
   formatBytes,
@@ -261,7 +262,12 @@ const statusLabel = (value: string) =>
   STATUS_OPTIONS.find((item) => item.value === value)?.label || value || "-";
 
 const shouldCountAsset = (asset: Pick<Asset, "status">, countAvailableAssetsOnly: boolean) =>
-  !countAvailableAssetsOnly || AVAILABLE_ASSET_STATUSES.has(asset.status);
+  asset.status !== "deleted" && (!countAvailableAssetsOnly || AVAILABLE_ASSET_STATUSES.has(asset.status));
+
+const analysisScopeText = (countAvailableAssetsOnly: boolean) =>
+  countAvailableAssetsOnly
+    ? "统计范围：在用、闲置（不含已删除）"
+    : "统计范围：全部业务状态（不含已删除）";
 
 const assetTypeLabel = (value: string) =>
   ASSET_TYPES.find((item) => item.value === value)?.label || value || "-";
@@ -516,9 +522,6 @@ const countBy = <T,>(items: T[], getKey: (item: T) => string) =>
 
 const sortedEntries = (record: Record<string, number>) =>
   Object.entries(record).sort((a, b) => b[1] - a[1]);
-
-const percentText = (value: number, total: number) =>
-  total > 0 ? `${Math.round((value / total) * 100)}%` : "0%";
 
 const csvCell = (value: unknown) => {
   const text = fieldText(value);
@@ -1102,6 +1105,7 @@ interface AnalysisBarDatum {
 }
 
 interface AnalysisBlockProps {
+  id?: string;
   title: string;
   description?: string;
   eyebrow?: string;
@@ -1264,8 +1268,8 @@ const ViewModeToggle = ({
   </div>
 );
 
-const AnalysisBlock = ({ title, description, eyebrow, actions, children, className = "" }: AnalysisBlockProps) => (
-  <section className={`npcink-v3-analysis-block${className ? ` ${className}` : ""}`}>
+const AnalysisBlock = ({ id, title, description, eyebrow, actions, children, className = "" }: AnalysisBlockProps) => (
+  <section id={id} className={`npcink-v3-analysis-block${className ? ` ${className}` : ""}`}>
     <div className="npcink-v3-analysis-block-head">
       <div>
         {eyebrow ? <span>{eyebrow}</span> : null}
@@ -1318,55 +1322,7 @@ const StatusStack = ({ row }: { row: Record<string, number | string> }) => {
   );
 };
 
-const AnalysisBarChart = ({
-  rows,
-  loading,
-  emptyText,
-  valueFormatter = (value) => String(value),
-}: {
-  rows: AnalysisBarDatum[];
-  loading?: boolean;
-  emptyText: string;
-  valueFormatter?: (value: number) => string;
-}) => {
-  if (loading) {
-    return <div className="npcink-v3-chart-placeholder">统计中</div>;
-  }
-  if (!rows.length) {
-    return <Empty description={emptyText} />;
-  }
-  const maxValue = Math.max(...rows.map((row) => row.value), 1);
-  return (
-    <div className="npcink-v3-analysis-bars">
-      {rows.map((row) => (
-        <div key={row.key} className="npcink-v3-analysis-bar-row">
-          <div className="npcink-v3-analysis-bar-head">
-            <span>{row.label}</span>
-            <strong>{row.valueText || valueFormatter(row.value)}</strong>
-          </div>
-          <div className="npcink-v3-analysis-bar-track">
-            <i
-              style={{
-                width: `${Math.max(4, Math.round((row.value / maxValue) * 100))}%`,
-                background: row.accent,
-              }}
-            />
-          </div>
-          {row.caption ? <em>{row.caption}</em> : null}
-        </div>
-      ))}
-    </div>
-  );
-};
-
 const DONUT_BREAKDOWN_COLORS = ["#2f6fed", "#22a06b", "#8b5cf6", "#06b6d4", "#6366f1", "#14b8a6", "#a855f7", "#0ea5e9"];
-const ISSUE_GROUP_COLORS: Record<string, string> = {
-  采集状态: "#f59e0b",
-  重复风险: "#ef4444",
-  资料缺失: "#64748b",
-  硬件缺失: "#8b5cf6",
-  维护状态: "#d97706",
-};
 
 const stablePaletteColor = (key: string) => {
   const normalizedKey = String(key || "");
@@ -1382,8 +1338,6 @@ const stablePaletteColor = (key: string) => {
 
 const donutRowColor = (row: AnalysisBarDatum, index: number) =>
   row.accent || stablePaletteColor(row.key || row.label || String(index));
-
-const issueTypeColor = (type: string) => ISSUE_GROUP_COLORS[issueGroup(type)] || stablePaletteColor(type);
 
 const AnalysisDonutBreakdown = ({
   rows,
@@ -4426,6 +4380,17 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
     .slice(0, 5)
     .map((item) => item.asset.assetNumber || item.asset.name || item.asset.uuid);
   const unresolvedIssues = hardwareIssues.filter((issue) => !handledIssueKeys.has(issue.key));
+  const unresolvedAssetCount = new Set(unresolvedIssues.map((issue) => issue.asset.uuid)).size;
+  const collectionFreshnessCounts = useMemo(
+    () => auditAssets.reduce<Record<"fresh" | "aging" | "stale" | "missing", number>>(
+      (counts, asset) => {
+        counts[collectionFreshness(asset)] += 1;
+        return counts;
+      },
+      { fresh: 0, aging: 0, stale: 0, missing: 0 }
+    ),
+    [auditAssets]
+  );
   const issueCounts = countBy(filteredIssuePool, (issue) => issue.type);
   const issueGroups = useMemo(() => {
     const counts = countBy(hardwareIssues, (issue) => issueGroup(issue.type));
@@ -4438,64 +4403,22 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
       })),
     ];
   }, [handledIssueKeys, hardwareIssues, unresolvedIssues.length]);
-  const resolvedIssuesCount = Math.max(hardwareIssues.length - unresolvedIssues.length, 0);
-  const resolvedIssuesRate = hardwareIssues.length > 0 ? (resolvedIssuesCount / hardwareIssues.length) * 100 : 0;
-  const issueProgressBackground = hardwareIssues.length > 0
-    ? `conic-gradient(#22a06b 0 ${resolvedIssuesRate}%, #f59e0b ${resolvedIssuesRate}% 100%)`
-    : "conic-gradient(#e5e7eb 0 100%)";
-  const unresolvedIssueTypeRows = useMemo<AnalysisBarDatum[]>(
-    () =>
-      sortedEntries(countBy(unresolvedIssues, (issue) => issue.type))
-        .map(([type, count]) => ({
-          key: type,
-          label: type,
-          value: count,
-          valueText: `${count} 条`,
-          caption: issueGroup(type),
-          accent: issueTypeColor(type),
-        })),
-    [unresolvedIssues]
-  );
-  const unresolvedIssueDepartmentRows = useMemo<AnalysisBarDatum[]>(
-    () =>
-      sortedEntries(countBy(unresolvedIssues, (issue) => issue.asset.department || "未分配"))
-        .map(([department, count]) => ({
-          key: department,
-          label: department,
-          value: count,
-          valueText: `${count} 条`,
-        })),
-    [unresolvedIssues]
-  );
-  const unresolvedIssueLevelRows = useMemo<AnalysisBarDatum[]>(
-    () => {
-      const counts = countBy(unresolvedIssues, (issue) => issue.level);
-      return [
-        { key: "error", label: "高", value: counts.error || 0, accent: "#ef4444" },
-        { key: "warning", label: "中", value: counts.warning || 0, accent: "#f59e0b" },
-        { key: "info", label: "低", value: counts.info || 0, accent: "#2f6fed" },
-      ]
-        .filter((row) => row.value > 0)
-        .map((row) => ({
-          ...row,
-          valueText: `${row.value} 条 · ${percentText(row.value, unresolvedIssues.length)}`,
-        }));
-    },
-    [unresolvedIssues]
-  );
-  const hardwareScopeText = countAvailableAssetsOnly ? "统计范围：在用、闲置" : "统计范围：全部状态";
-  const collectedAssetsCount = auditAssets.filter((asset) => Boolean(asset.latestObservation?.observedAt)).length;
-  const duplicateRiskIssues = hardwareIssues.filter((issue) => issueGroup(issue.type) === "重复风险").length;
+  const hardwareScopeText = analysisScopeText(countAvailableAssetsOnly);
+  const duplicateRiskIssues = unresolvedIssues.filter((issue) => issueGroup(issue.type) === "重复风险").length;
+  const duplicateRiskGroups = new Set(
+    unresolvedIssues
+      .filter((issue) => issueGroup(issue.type) === "重复风险")
+      .map((issue) => `${issue.type}:${issue.message}`)
+  ).size;
   const missingProfileIssues = hardwareIssues.filter((issue) => issueGroup(issue.type) === "资料缺失").length;
   const missingHardwareIssues = hardwareIssues.filter((issue) => issueGroup(issue.type) === "硬件缺失").length;
-  const staleCollectionIssues = hardwareIssues.filter((issue) => issueGroup(issue.type) === "采集状态").length;
   const maintenanceIssues = hardwareIssues.filter((issue) => issueGroup(issue.type) === "维护状态").length;
   const hardwareInsightItems = [
     {
-      label: "采集覆盖",
-      value: `${collectedAssetsCount} / ${auditTotal}`,
-      note: `${formatPercentValue(auditTotal ? (collectedAssetsCount / auditTotal) * 100 : 0)} 已接入上传`,
-      tone: "primary",
+      label: "采集新鲜度",
+      value: `${collectionFreshnessCounts.fresh} / ${auditTotal}`,
+      note: `7 天内 · 观察 ${collectionFreshnessCounts.aging} · 过期 ${collectionFreshnessCounts.stale}`,
+      tone: collectionFreshnessCounts.stale || collectionFreshnessCounts.missing ? "warning" : "primary",
     },
     {
       label: "资料缺口",
@@ -4505,15 +4428,15 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
     },
     {
       label: "重复风险",
-      value: String(duplicateRiskIssues),
-      note: "编号、IP 或主板序列号重复",
+      value: `${duplicateRiskGroups} 组`,
+      note: `${duplicateRiskIssues} 条问题行，已忽略采集占位值`,
       tone: duplicateRiskIssues > 0 ? "danger" : "default",
     },
     {
-      label: "待跟进",
-      value: String(staleCollectionIssues + maintenanceIssues),
-      note: `采集 ${staleCollectionIssues}，维护 ${maintenanceIssues}`,
-      tone: staleCollectionIssues + maintenanceIssues > 0 ? "warning" : "default",
+      label: "待办资产",
+      value: String(unresolvedAssetCount),
+      note: `${unresolvedIssues.length} 条问题行 · 维护 ${maintenanceIssues}`,
+      tone: unresolvedAssetCount > 0 ? "warning" : "default",
     },
   ];
   const issueRecordMutation = useMutation(
@@ -4642,20 +4565,12 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
     }
   );
 
-  const markIssueHandled = (issue: HardwareIssue) => {
-    const note = window.prompt("处理说明", `已处理：${issue.type} - ${issue.message}`);
+  const confirmIssueReviewed = (issue: HardwareIssue) => {
+    const note = window.prompt("确认已核查", `已核查：${issue.type} - ${issue.message}`);
     if (!note) {
       return;
     }
     issueRecordMutation.mutate({ issue, message: note, eventType: "issue_handled" });
-  };
-
-  const markIssueLocalOnly = (issue: HardwareIssue) => {
-    issueRecordMutation.mutate({
-      issue,
-      eventType: "issue_handled",
-      message: `已标记处理：${issue.type} - ${issue.message}`,
-    });
   };
 
   const restoreIssue = (issue: HardwareIssue) => {
@@ -4665,6 +4580,74 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
       message: `恢复未处理：${issue.type} - ${issue.message}`,
     });
   };
+
+  const focusIssueTask = (group: string, type?: string) => {
+    setSelectedIssueGroup(group);
+    setSelectedIssueType(type);
+    setSelectedIssueKeys(new Set());
+  };
+
+  const openBulkAssignment = (type: "部门待分配" | "责任人缺失") => {
+    const keys = unresolvedIssues.filter((issue) => issue.type === type).map((issue) => issue.key);
+    setSelectedIssueGroup(issueGroup(type));
+    setSelectedIssueType(type);
+    setSelectedIssueKeys(new Set(keys));
+    if (type === "部门待分配") {
+      setDepartmentAssignOpen(true);
+      return;
+    }
+    setOwnerAssignOpen(true);
+  };
+
+  const issueTaskItems = [
+    {
+      key: "department",
+      title: "补齐部门归属",
+      type: "部门待分配",
+      count: unresolvedIssues.filter((issue) => issue.type === "部门待分配").length,
+      description: "直接分配具体部门，修正后问题会自动消失。",
+      action: "批量分配部门",
+      tone: "warning",
+      onClick: () => openBulkAssignment("部门待分配"),
+    },
+    {
+      key: "owner",
+      title: "补齐在用设备责任人",
+      type: "责任人缺失",
+      count: unresolvedIssues.filter((issue) => issue.type === "责任人缺失").length,
+      description: "仅处理在用设备，闲置资产不要求填写使用人。",
+      action: "批量分配责任人",
+      tone: "warning",
+      onClick: () => openBulkAssignment("责任人缺失"),
+    },
+    {
+      key: "duplicate",
+      title: "核查重复标识",
+      count: duplicateRiskGroups,
+      description: "按重复组下钻，不把同一占位值拆成多条待办。",
+      action: "查看重复组",
+      tone: "danger",
+      onClick: () => focusIssueTask("重复风险"),
+    },
+    {
+      key: "collection",
+      title: "跟进过期采集",
+      count: collectionFreshnessCounts.stale + collectionFreshnessCounts.missing,
+      description: `超过 30 天 ${collectionFreshnessCounts.stale} 台，未接入 ${collectionFreshnessCounts.missing} 台。`,
+      action: "查看采集状态",
+      tone: "warning",
+      onClick: () => focusIssueTask("采集状态"),
+    },
+    {
+      key: "hardware",
+      title: "补充硬件信息",
+      count: unresolvedIssues.filter((issue) => issueGroup(issue.type) === "硬件缺失").length,
+      description: "对缺失字段逐台核对采集来源或人工资料。",
+      action: "查看缺失项",
+      tone: "default",
+      onClick: () => focusIssueTask("硬件缺失"),
+    },
+  ].filter((item) => item.count > 0);
 
   useEffect(() => {
     setSelectedIssueKeys((previous) => {
@@ -4693,6 +4676,11 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
         document.getElementById("npcink-v3-hardware-issues")?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     }
+    if (focus.hardwareSection === "collection") {
+      window.requestAnimationFrame(() => {
+        document.getElementById("npcink-v3-hardware-health")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
   }, [focus?.hardwareIssueGroup, focus?.hardwareSection, focus?.version]);
 
   return (
@@ -4711,6 +4699,7 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
         </Space>
       </div>
       <AnalysisBlock
+        id="npcink-v3-hardware-health"
         eyebrow="01"
         title="健康概览"
         description="用采集覆盖、资料缺口和重复风险判断今天是否需要处理。"
@@ -4847,8 +4836,8 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
 
       <AnalysisBlock
         eyebrow="04"
-        title="组合筛选"
-        description="作为辅助查询工具，按硬件、部门和状态筛出机器。"
+        title="高级硬件筛选"
+        description="用于按硬件、部门和状态定位机器；日常处理优先使用上方待办队列。"
         className="npcink-v3-hardware-auxiliary"
         actions={
           <Space wrap>
@@ -5029,7 +5018,7 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
       <AnalysisBlock
         eyebrow="02"
         title="排障工作区"
-        description={`主工作区：当前显示 ${visibleIssues.length} 条，未处理 ${unresolvedIssues.length} / 全部 ${hardwareIssues.length}。`}
+        description={`当前显示 ${visibleIssues.length} 条问题行，涉及 ${new Set(visibleIssues.map((issue) => issue.asset.uuid)).size} 台资产；未处理 ${unresolvedIssues.length} / 全部 ${hardwareIssues.length}。`}
         className="npcink-v3-hardware-main"
         actions={
           <Space wrap>
@@ -5078,106 +5067,35 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
             </button>
           ))}
         </div>
-        <div className="npcink-v3-issue-troubleshoot">
-          <div className="npcink-v3-audit-block">
-            <div className="npcink-v3-audit-block-head">
-              <div>
-                <Text strong>问题类型</Text>
-                <Text type="secondary">按未处理数量排序，优先处理数量最高的类型。</Text>
-              </div>
-            </div>
-            <AnalysisDonutBreakdown
-              rows={unresolvedIssueTypeRows}
-              loading={auditAssetsQuery.isLoading}
-              emptyText="暂无未处理问题"
-              totalLabel="未处理"
-              totalText={`${unresolvedIssueTypeRows.reduce((total, row) => total + row.value, 0)} 条`}
-              valueFormatter={(value) => `${value} 条`}
-            />
-          </div>
-          <div className="npcink-v3-audit-block">
-            <div className="npcink-v3-audit-block-head">
-              <div>
-                <Text strong>部门问题</Text>
-                <Text type="secondary">定位问题集中的部门，便于批量核对。</Text>
-              </div>
-            </div>
-            <AnalysisDonutBreakdown
-              rows={unresolvedIssueDepartmentRows}
-              loading={auditAssetsQuery.isLoading}
-              emptyText="暂无部门问题"
-              totalLabel="未处理"
-              totalText={`${unresolvedIssueDepartmentRows.reduce((total, row) => total + row.value, 0)} 条`}
-              valueFormatter={(value) => `${value} 条`}
-            />
-          </div>
-          <div className="npcink-v3-audit-block">
-            <div className="npcink-v3-audit-block-head">
-              <div>
-                <Text strong>处理进度</Text>
-                <Text type="secondary">进度用环形图，级别明细保留条形图。</Text>
-              </div>
-            </div>
-            <div className="npcink-v3-issue-progress">
-              <div className="npcink-v3-issue-progress-donut" style={{ background: issueProgressBackground }}>
-                <div>
-                  <span>已处理</span>
-                  <strong>{formatPercentValue(resolvedIssuesRate)}</strong>
-                </div>
-              </div>
-              <div className="npcink-v3-issue-progress-meta">
-                <div>
-                  <span className="npcink-v3-value-swatch is-custom" />
-                  <Text type="secondary">已处理</Text>
-                  <strong>{resolvedIssuesCount}</strong>
-                </div>
-                <div>
-                  <span className="npcink-v3-value-swatch is-warning" />
-                  <Text type="secondary">未处理</Text>
-                  <strong>{unresolvedIssues.length}</strong>
-                </div>
-              </div>
-            </div>
-            <div className="npcink-v3-issue-levels">
-              <AnalysisBarChart
-                rows={unresolvedIssueLevelRows}
-                loading={auditAssetsQuery.isLoading}
-                emptyText="暂无未处理级别"
-                valueFormatter={(value) => `${value} 条`}
-              />
-            </div>
-          </div>
+        <div className="npcink-v3-issue-task-list">
+          {issueTaskItems.map((item) => (
+            <button key={item.key} type="button" className={`is-${item.tone}`} onClick={item.onClick}>
+              <span>{item.title}</span>
+              <strong>{item.count}</strong>
+              <em>{item.description}</em>
+              <i>{item.action}</i>
+            </button>
+          ))}
         </div>
-        <div className="npcink-v3-batch-actions">
-          <Space wrap>
-            <Text type="secondary">
-              已选 {selectedDepartmentIssues.length + selectedOwnerIssues.length} 条可处理问题
-            </Text>
-            {selectedDepartmentIssues.length ? <Tag>部门 {selectedDepartmentAssets.length} 台</Tag> : null}
-            {selectedOwnerIssues.length ? <Tag>责任人 {selectedOwnerAssets.length} 台</Tag> : null}
-            <Button
-              type="primary"
-              disabled={!selectedDepartmentAssets.length || !assignableDepartmentOptions.length}
-              onClick={() => setDepartmentAssignOpen(true)}
-            >
-              批量分配部门
-            </Button>
-            <Button
-              type="primary"
-              disabled={!selectedOwnerAssets.length}
-              onClick={() => setOwnerAssignOpen(true)}
-            >
-              批量分配责任人
-            </Button>
-            <Button disabled={!selectedIssueKeys.size} onClick={() => setSelectedIssueKeys(new Set())}>
-              清空选择
-            </Button>
-          </Space>
+        <div className="npcink-v3-issue-table-head">
+          <div>
+            <Text strong>问题明细</Text>
+            <Text type="secondary">当前 {visibleIssues.length} 条问题行，涉及 {new Set(visibleIssues.map((issue) => issue.asset.uuid)).size} 台资产。</Text>
+          </div>
+          {selectedIssueKeys.size ? (
+            <Space wrap>
+              {selectedDepartmentAssets.length ? <Tag>部门 {selectedDepartmentAssets.length} 台</Tag> : null}
+              {selectedOwnerAssets.length ? <Tag>责任人 {selectedOwnerAssets.length} 台</Tag> : null}
+              {selectedDepartmentAssets.length ? <Button type="primary" onClick={() => setDepartmentAssignOpen(true)}>分配部门</Button> : null}
+              {selectedOwnerAssets.length ? <Button type="primary" onClick={() => setOwnerAssignOpen(true)}>分配责任人</Button> : null}
+              <Button onClick={() => setSelectedIssueKeys(new Set())}>清空选择</Button>
+            </Space>
+          ) : null}
         </div>
         <Table
           rowKey="key"
           size="small"
-          pagination={{ pageSize: 6, showSizeChanger: false, onChange: () => setSelectedIssueKeys(new Set()) }}
+          pagination={{ pageSize: 12, showSizeChanger: false, onChange: () => setSelectedIssueKeys(new Set()) }}
           dataSource={visibleIssues}
           loading={
             auditAssetsQuery.isLoading ||
@@ -5185,7 +5103,7 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
             departmentAssignMutation.isLoading ||
             ownerAssignMutation.isLoading
           }
-          rowSelection={{
+          rowSelection={assignableIssueKeys.size ? {
             selectedRowKeys: Array.from(selectedIssueKeys),
             onChange: (keys) => setSelectedIssueKeys(new Set(keys.map(String))),
             getCheckboxProps: (issue) => ({
@@ -5196,7 +5114,7 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
                   ? "选择后可批量分配责任人"
                   : "仅未处理的部门待分配、责任人缺失问题可批量处理",
             }),
-          }}
+          } : undefined}
           columns={[
             {
               title: "状态",
@@ -5257,18 +5175,9 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
                     type="link"
                     className="npcink-v3-link"
                     disabled={handledIssueKeys.has(issue.key)}
-                    onClick={() => markIssueHandled(issue)}
+                    onClick={() => confirmIssueReviewed(issue)}
                   >
-                    记录处理
-                  </Button>
-                  <Button
-                    size="small"
-                    type="link"
-                    className="npcink-v3-link"
-                    disabled={handledIssueKeys.has(issue.key)}
-                    onClick={() => markIssueLocalOnly(issue)}
-                  >
-                    标记
+                    确认已核查
                   </Button>
                   {handledIssueKeys.has(issue.key) ? (
                     <Button
@@ -5277,7 +5186,7 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
                       className="npcink-v3-link"
                       onClick={() => restoreIssue(issue)}
                     >
-                      恢复
+                      恢复待处理
                     </Button>
                   ) : null}
                 </Space>
@@ -5559,7 +5468,7 @@ const AnalysisSummaryWorkspace = ({ onOpenTab }: AnalysisSummaryWorkspaceProps) 
   const settingsQuery = useQuery(["v3-settings"], getSettings, { staleTime: 60_000 });
   const assetsQuery = useQuery(
     ["v3-analysis-summary-assets"],
-    () => fetchAllAssets({ assetScope: "all", includeDeleted: true }),
+    () => fetchAllAssets({ assetScope: "all" }),
     { staleTime: 60_000 }
   );
   const issueStatesQuery = useQuery(["v3-analysis-issue-states"], getIssueStates, { staleTime: 30_000 });
@@ -5584,6 +5493,9 @@ const AnalysisSummaryWorkspace = ({ onOpenTab }: AnalysisSummaryWorkspaceProps) 
   const highRiskIssues = unresolvedIssues.filter((issue) => issue.level === "error");
   const collectedAssetsCount = computerAssets.filter((asset) => Boolean(asset.latestObservation?.observedAt)).length;
   const collectionRate = computerAssets.length ? (collectedAssetsCount / computerAssets.length) * 100 : 0;
+  const freshCollectionCount = computerAssets.filter((asset) => collectionFreshness(asset) === "fresh").length;
+  const staleCollectionCount = computerAssets.filter((asset) => collectionFreshness(asset) === "stale").length;
+  const missingCollectionCount = computerAssets.filter((asset) => collectionFreshness(asset) === "missing").length;
   const totalPurchase = scopedAssets.reduce((total, asset) => total + moneyValue(asset.purchasePrice), 0);
   const totalCurrent = scopedAssets.reduce(
     (total, asset) => total + assetCurrentValue(asset, depreciationPeriodMonths, defaultResidualRate),
@@ -5609,11 +5521,6 @@ const AnalysisSummaryWorkspace = ({ onOpenTab }: AnalysisSummaryWorkspaceProps) 
     highRiskIssues.length ? highRiskIssues : unresolvedIssues,
     (issue) => issueGroup(issue.type)
   ))[0]?.[0];
-  const latestObservedTimes = computerAssets
-    .map((asset) => parseDateValue(asset.latestObservation?.observedAt || ""))
-    .filter((date): date is Date => Boolean(date))
-    .map((date) => date.getTime());
-  const latestObservedAt = latestObservedTimes.length ? formatDate(new Date(Math.max(...latestObservedTimes)).toISOString()) : "-";
   const isLoading = assetsQuery.isLoading || settingsQuery.isLoading || issueStatesQuery.isLoading;
   const summaryTone = highRiskIssues.length > 0
     ? "danger"
@@ -5623,7 +5530,7 @@ const AnalysisSummaryWorkspace = ({ onOpenTab }: AnalysisSummaryWorkspaceProps) 
   const summaryHeadline = highRiskIssues.length > 0
     ? `先处理 ${highRiskIssues.length} 条高风险资产异常`
     : unresolvedIssues.length > 0
-      ? `还有 ${unresolvedIssues.length} 条资产问题待处理`
+      ? `还有 ${unresolvedIssues.length} 条待处理问题`
       : missingValuationCount > 0
         ? `补齐 ${missingValuationCount} 条资产估值基础`
         : "当前资产台账没有明显阻塞项";
@@ -5652,11 +5559,11 @@ const AnalysisSummaryWorkspace = ({ onOpenTab }: AnalysisSummaryWorkspaceProps) 
     },
     {
       key: "collection",
-      title: "核对采集覆盖",
-      meta: `${collectedAssetsCount} / ${computerAssets.length} 台`,
-      description: `覆盖率 ${formatPercentValue(collectionRate)}，最近采集 ${latestObservedAt}`,
-      tone: collectionRate >= 90 || computerAssets.length === 0 ? "primary" : "warning",
-      action: "查看采集",
+      title: "核对采集新鲜度",
+      meta: `${freshCollectionCount} 台在 7 天内`,
+      description: `已接入 ${formatPercentValue(collectionRate)}，超 30 天 ${staleCollectionCount}，未接入 ${missingCollectionCount}`,
+      tone: staleCollectionCount || missingCollectionCount ? "warning" : "primary",
+      action: "查看采集状态",
       tab: "hardware" as const,
       focus: {
         hardwareSection: "collection" as const,
@@ -5701,12 +5608,15 @@ const AnalysisSummaryWorkspace = ({ onOpenTab }: AnalysisSummaryWorkspaceProps) 
           <Button onClick={() => onOpenTab("hardware", { hardwareSection: "collection" })}>硬件健康</Button>
         </Space>
       </div>
+      <div className="npcink-v3-analysis-scope-note">
+        {analysisScopeText(countAvailableAssetsOnly)} · 电脑 {computerAssets.length} 台 · 自定义设备 {scopedAssets.length - computerAssets.length} 条
+      </div>
 
       <div className="npcink-v3-summary-kpi-strip">
         {[
-          { label: "采集覆盖", value: isLoading ? "-" : formatPercentValue(collectionRate), meta: `${collectedAssetsCount} / ${computerAssets.length} 台电脑`, tone: collectionRate >= 90 || computerAssets.length === 0 ? "primary" : "warning" },
-          { label: "未处理异常", value: isLoading ? "-" : String(unresolvedIssues.length), meta: highRiskIssues.length ? `${highRiskIssues.length} 条高风险` : "按问题类型下钻", tone: highRiskIssues.length ? "danger" : unresolvedIssues.length ? "warning" : "primary" },
-          { label: "估值可信度", value: isLoading ? "-" : formatPercentValue(valuationConfidenceRate), meta: missingValuationCount ? `${missingValuationCount} 条缺基础` : "基础完整", tone: missingValuationCount ? "warning" : "primary" },
+          { label: "采集新鲜度", value: isLoading ? "-" : `${freshCollectionCount} / ${computerAssets.length}`, meta: `超 30 天 ${staleCollectionCount} · 未接入 ${missingCollectionCount}`, tone: staleCollectionCount || missingCollectionCount ? "warning" : "primary" },
+          { label: "待处理问题", value: isLoading ? "-" : String(unresolvedIssues.length), meta: `${new Set(unresolvedIssues.map((issue) => issue.asset.uuid)).size} 台受影响`, tone: highRiskIssues.length ? "danger" : unresolvedIssues.length ? "warning" : "primary" },
+          { label: "估值覆盖度", value: isLoading ? "-" : formatPercentValue(valuationConfidenceRate), meta: missingValuationCount ? `${missingValuationCount} 条缺基础` : "基础完整", tone: missingValuationCount ? "warning" : "primary" },
           { label: "闲置/维护价值", value: isLoading ? "-" : formatMoney(idleAndMaintenanceValue), meta: `${idleAssets.length} 闲置 / ${maintenanceAssets.length} 维护`, tone: idleAndMaintenanceValue > 0 ? "warning" : "default" },
         ].map((item) => (
           <div key={item.label} className={`is-${item.tone}`}>
@@ -5762,15 +5672,15 @@ const AssetValueWorkspace = ({ focus }: AssetValueWorkspaceProps) => {
   const queryClient = useQueryClient();
   const [editingValuationAsset, setEditingValuationAsset] = useState<Asset | null>(null);
   const [valueViews, setValueViews] = useState<Record<"department" | "category" | "status", AnalysisViewMode>>({
-    department: "chart",
-    category: "chart",
+    department: "table",
+    category: "table",
     status: "chart",
   });
   const [assetTypeMetric, setAssetTypeMetric] = useState<AssetTypeValueMetric>("current");
   const settingsQuery = useQuery(["v3-settings"], getSettings, { staleTime: 60_000 });
   const assetsQuery = useQuery(
     ["v3-asset-value-analysis"],
-    () => fetchAllAssets({ assetScope: "all", includeDeleted: true }),
+    () => fetchAllAssets({ assetScope: "all" }),
     { staleTime: 60_000 }
   );
   const assets = assetsQuery.data || [];
@@ -5788,7 +5698,7 @@ const AssetValueWorkspace = ({ focus }: AssetValueWorkspaceProps) => {
   const totalDepreciation = Math.max(totalPurchase - totalCurrent, 0);
   const currentRate = totalPurchase > 0 ? (totalCurrent / totalPurchase) * 100 : 0;
   const depreciationRate = totalPurchase > 0 ? (totalDepreciation / totalPurchase) * 100 : 0;
-  const valueScopeText = countAvailableAssetsOnly ? "统计范围：在用、闲置" : "统计范围：全部状态";
+  const valueScopeText = analysisScopeText(countAvailableAssetsOnly);
   const purchasePricedCount = valueAssets.filter((asset) => moneyValue(asset.purchasePrice) > 0).length;
   const explicitResidualCount = valueAssets.filter((asset) => moneyValue(asset.residualValue) > 0).length;
   const depreciationEstimatedCount = valueAssets.filter((asset) => (
@@ -5823,7 +5733,7 @@ const AssetValueWorkspace = ({ focus }: AssetValueWorkspaceProps) => {
     {
       label: "缺估值基础",
       value: String(missingValuationCount),
-      note: `估值可信度 ${formatPercentValue(valuationConfidenceRate)}`,
+      note: `估值覆盖度 ${formatPercentValue(valuationConfidenceRate)}`,
       tone: missingValuationCount > 0 ? "danger" : "default",
     },
   ];
@@ -6007,7 +5917,7 @@ const AssetValueWorkspace = ({ focus }: AssetValueWorkspaceProps) => {
           <div>
             <span>资产数量</span>
             <strong>{valueAssets.length} 条</strong>
-            <em>{countAvailableAssetsOnly ? "不含维护、报废、归档" : "包含全部状态"}</em>
+            <em>{analysisScopeText(countAvailableAssetsOnly)}</em>
           </div>
           <div>
             <span>估值率</span>
@@ -6081,7 +5991,7 @@ const AssetValueWorkspace = ({ focus }: AssetValueWorkspaceProps) => {
       </div>
 
       <AnalysisBlock
-        eyebrow="04"
+        eyebrow="03"
         title="类型对比"
         description="电脑设备和自定义设备分开看，避免混在一个总数里。"
         actions={
@@ -6117,8 +6027,8 @@ const AssetValueWorkspace = ({ focus }: AssetValueWorkspaceProps) => {
       </AnalysisBlock>
 
       <AnalysisBlock
-        eyebrow="03"
-        title="估值可信度"
+        eyebrow="04"
+        title="估值覆盖度"
         description="区分直接录入、折旧估算和缺少基础价格的数据。"
         actions={
           <Tag color={missingValuationCount > 0 ? "orange" : "green"}>
@@ -6247,7 +6157,7 @@ const AssetValueWorkspace = ({ focus }: AssetValueWorkspaceProps) => {
                 <p>折价率 = 已折价 / 总采购价。</p>
                 <p>当前折旧年限：{depreciationPeriodMonths} 个月。</p>
                 <p>当前默认残值率：{formatPercentValue(defaultResidualRate)}。</p>
-                <p>{countAvailableAssetsOnly ? "当前只统计在用、闲置资产；维护、报废、归档不纳入。" : "当前统计全部状态资产。"}</p>
+                <p>{analysisScopeText(countAvailableAssetsOnly)}。</p>
               </div>
             ),
           },

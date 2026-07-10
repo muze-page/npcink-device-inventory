@@ -10,6 +10,8 @@ export interface HardwareIssue {
   message: string;
 }
 
+export type CollectionFreshness = "fresh" | "aging" | "stale" | "missing";
+
 export const toNumber = (value: unknown) => {
   const number = typeof value === "number" ? value : Number(value || 0);
   return Number.isFinite(number) ? number : 0;
@@ -218,7 +220,7 @@ export const observationChanges = (observations: AssetObservation[]) => {
 
 const latestObservationTime = (asset: Asset) => asset.latestObservation?.observedAt || "";
 
-const daysSince = (value?: string) => {
+const daysSince = (value?: string, now = Date.now()) => {
   if (!value) {
     return Number.POSITIVE_INFINITY;
   }
@@ -226,7 +228,21 @@ const daysSince = (value?: string) => {
   if (Number.isNaN(date.getTime())) {
     return Number.POSITIVE_INFINITY;
   }
-  return Math.floor((Date.now() - date.getTime()) / 86400000);
+  return Math.max(Math.floor((now - date.getTime()) / 86400000), 0);
+};
+
+export const collectionFreshness = (asset: Asset, now = Date.now()): CollectionFreshness => {
+  const days = daysSince(latestObservationTime(asset), now);
+  if (!Number.isFinite(days)) {
+    return "missing";
+  }
+  if (days <= 7) {
+    return "fresh";
+  }
+  if (days <= 30) {
+    return "aging";
+  }
+  return "stale";
 };
 
 const ignoredAuditFields = (asset: Asset) => {
@@ -234,14 +250,43 @@ const ignoredAuditFields = (asset: Asset) => {
   return Array.isArray(audit.ignoredFields) ? new Set(audit.ignoredFields.map(String)) : new Set<string>();
 };
 
-const duplicateMap = (assets: Asset[], getValue: (asset: Asset) => string) => {
+const normalizeDuplicateValue = (value: string) => value.trim().replace(/\s+/g, " ").toLowerCase();
+
+const PLACEHOLDER_DUPLICATE_VALUES = new Set([
+  "default",
+  "default string",
+  "n/a",
+  "na",
+  "none",
+  "null",
+  "unknown",
+  "to be filled by o.e.m.",
+]);
+
+const isDuplicateCandidate = (value: string, kind: "number" | "ip" | "board") => {
+  const normalized = normalizeDuplicateValue(value);
+  if (!normalized || normalized === "-" || PLACEHOLDER_DUPLICATE_VALUES.has(normalized)) {
+    return false;
+  }
+  if (kind === "ip" && ["127.0.0.1", "0.0.0.0", "::1", "localhost"].includes(normalized)) {
+    return false;
+  }
+  return true;
+};
+
+const duplicateMap = (
+  assets: Asset[],
+  kind: "number" | "ip" | "board",
+  getValue: (asset: Asset) => string
+) => {
   const result = new Map<string, Asset[]>();
   assets.forEach((asset) => {
-    const value = getValue(asset).trim();
-    if (!value || value === "-") {
+    const value = getValue(asset);
+    if (!isDuplicateCandidate(value, kind)) {
       return;
     }
-    result.set(value, [...(result.get(value) || []), asset]);
+    const key = normalizeDuplicateValue(value);
+    result.set(key, [...(result.get(key) || []), asset]);
   });
   return result;
 };
@@ -268,9 +313,9 @@ export const issueGroup = (type: string) => {
 };
 
 export const detectHardwareIssues = (assets: Asset[]) => {
-  const byNumber = duplicateMap(assets, (asset) => asset.assetNumber);
-  const byIp = duplicateMap(assets, (asset) => assetHardwareContext(asset).extracted.primaryIp);
-  const byBoard = duplicateMap(assets, hardwareBoardSerial);
+  const byNumber = duplicateMap(assets, "number", (asset) => asset.assetNumber);
+  const byIp = duplicateMap(assets, "ip", (asset) => assetHardwareContext(asset).extracted.primaryIp);
+  const byBoard = duplicateMap(assets, "board", hardwareBoardSerial);
   const issues: HardwareIssue[] = [];
 
   assets.forEach((asset) => {
@@ -278,27 +323,30 @@ export const detectHardwareIssues = (assets: Asset[]) => {
     const context = assetHardwareContext(asset);
     const assetLabel = asset.assetNumber || asset.name || asset.uuid;
     const extracted = context.extracted;
-    if (asset.assetNumber && (byNumber.get(asset.assetNumber)?.length || 0) > 1) {
+    const numberKey = normalizeDuplicateValue(asset.assetNumber);
+    if (isDuplicateCandidate(asset.assetNumber, "number") && (byNumber.get(numberKey)?.length || 0) > 1) {
       issues.push({
         key: `${asset.uuid}-duplicate-number`,
         level: "error",
         type: "重复编号",
         asset,
-        message: `${asset.assetNumber} 已关联 ${byNumber.get(asset.assetNumber)?.length || 0} 条资产`,
+        message: `${asset.assetNumber} 已关联 ${byNumber.get(numberKey)?.length || 0} 条资产`,
       });
     }
     const ip = context.extracted.primaryIp;
-    if (ip && !ignored.has("primary_ip") && (byIp.get(ip)?.length || 0) > 1) {
+    const ipKey = normalizeDuplicateValue(ip);
+    if (isDuplicateCandidate(ip, "ip") && !ignored.has("primary_ip") && (byIp.get(ipKey)?.length || 0) > 1) {
       issues.push({
         key: `${asset.uuid}-duplicate-ip`,
         level: "warning",
         type: "重复 IP",
         asset,
-        message: `${ip} 同时出现在 ${byIp.get(ip)?.length || 0} 条资产`,
+        message: `${ip} 同时出现在 ${byIp.get(ipKey)?.length || 0} 条资产`,
       });
     }
     const boardKey = hardwareBoardSerial(asset);
-    if (boardKey && !ignored.has("baseboard") && (byBoard.get(boardKey)?.length || 0) > 1) {
+    const boardDuplicateKey = normalizeDuplicateValue(boardKey);
+    if (isDuplicateCandidate(boardKey, "board") && !ignored.has("baseboard") && (byBoard.get(boardDuplicateKey)?.length || 0) > 1) {
       issues.push({
         key: `${asset.uuid}-duplicate-board`,
         level: "warning",
@@ -369,7 +417,7 @@ export const detectHardwareIssues = (assets: Asset[]) => {
         asset,
         message: `${assetLabel} 目前只有手动硬件信息`,
       });
-    } else if (daysSince(latestObservationTime(asset)) > 30) {
+    } else if (collectionFreshness(asset) === "stale") {
       issues.push({
         key: `${asset.uuid}-stale-observation`,
         level: "warning",

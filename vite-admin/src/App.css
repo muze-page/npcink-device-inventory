@@ -257,6 +257,13 @@
   line-height: 1.55;
 }
 
+.npcink-v3-analysis-scope-note {
+  margin: -4px 0 14px;
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .npcink-v3-summary-kpi-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2219,76 +2226,82 @@
   font-style: normal;
 }
 
-.npcink-v3-issue-troubleshoot {
+.npcink-v3-issue-task-list {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr) minmax(260px, 0.9fr);
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
   margin-bottom: 14px;
 }
 
-.npcink-v3-issue-troubleshoot .npcink-v3-audit-block {
-  padding: 14px;
-}
-
-.npcink-v3-issue-progress {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 14px;
-}
-
-.npcink-v3-issue-progress-donut {
+.npcink-v3-issue-task-list button {
   display: grid;
-  flex: 0 0 116px;
-  width: 116px;
-  height: 116px;
-  place-items: center;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.05);
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  min-width: 0;
+  padding: 12px;
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid #e1e7f0;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
-.npcink-v3-issue-progress-donut > div {
-  display: grid;
-  width: 76px;
-  height: 76px;
-  place-items: center;
-  padding: 8px;
-  text-align: center;
+.npcink-v3-issue-task-list button:hover {
   background: #ffffff;
-  border-radius: 50%;
-  box-shadow: 0 0 0 1px rgba(217, 222, 231, 0.9);
+  border-color: #91caff;
 }
 
-.npcink-v3-issue-progress-donut span {
+.npcink-v3-issue-task-list button.is-warning {
+  background: #fffaf0;
+  border-color: #f8d494;
+}
+
+.npcink-v3-issue-task-list button.is-danger {
+  background: #fff4f4;
+  border-color: #f5b4b4;
+}
+
+.npcink-v3-issue-task-list span,
+.npcink-v3-issue-task-list strong {
+  color: #1f2937;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.npcink-v3-issue-task-list strong {
+  color: #1f5fd5;
+  font-size: 18px;
+}
+
+.npcink-v3-issue-task-list em,
+.npcink-v3-issue-task-list i {
+  min-width: 0;
+  overflow: hidden;
   color: #667085;
   font-size: 12px;
+  font-style: normal;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.npcink-v3-issue-task-list i {
+  color: #1f5fd5;
   font-weight: 600;
+  text-align: right;
 }
 
-.npcink-v3-issue-progress-donut strong {
-  color: #111827;
-  font-size: 15px;
-  line-height: 1.2;
-}
-
-.npcink-v3-issue-progress-meta {
-  display: grid;
-  flex: 1 1 auto;
-  gap: 8px;
-  min-width: 0;
-}
-
-.npcink-v3-issue-progress-meta > div {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+.npcink-v3-issue-table-head {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 0;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 2px 0 10px;
 }
 
-.npcink-v3-issue-progress-meta strong {
-  color: #111827;
-  font-weight: 600;
+.npcink-v3-issue-table-head > div:first-child {
+  display: grid;
+  gap: 2px;
 }
 
 .npcink-v3-issue-levels {
@@ -3672,8 +3685,9 @@
     flex-direction: column;
   }
 
-  .npcink-v3-issue-troubleshoot {
-    grid-template-columns: 1fr;
+  .npcink-v3-issue-table-head {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 
@@ -3797,15 +3811,6 @@
 
   .npcink-v3-value-type-cards {
     grid-template-columns: 1fr;
-  }
-
-  .npcink-v3-issue-progress {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .npcink-v3-issue-progress-donut {
-    margin: 0 auto;
   }
 
   .npcink-v3-scope-bar {
