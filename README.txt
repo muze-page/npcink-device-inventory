@@ -4,7 +4,7 @@ Tags: inventory, assets, device management, rest api, admin
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.7.9
+Stable tag: 2.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -77,6 +77,13 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 
 == Changelog ==
 
+= 2.8.0 =
+* Keep the undeletable Unassigned department as the fallback for new and restored assets.
+* Persist handled and reopened analysis issue states through asset events.
+* Add selected-asset department and owner assignment workflows with auditable change records.
+* Report missing owners only for active assets so idle inventory is not treated as incomplete.
+* Add direct valuation-data editing and focused regression coverage for the analysis workspace.
+
 = 2.7.9 =
 * Improve the admin analysis workspace with clearer department controls and denser review surfaces.
 * Add WordPress.org update-index repair documentation for the v2.7.8 package transition.
@@ -130,6 +137,9 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 * Moved desktop uploads to signed v3 device observations.
 
 == Upgrade Notice ==
+
+= 2.8.0 =
+This release completes the analysis remediation loop for fallback departments, issue states, department assignment, and active-asset ownership.
 
 = 2.7.9 =
 This release improves admin analysis controls and refreshes the release documentation for the WordPress.org update-index transition.

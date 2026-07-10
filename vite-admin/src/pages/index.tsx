@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppleFilled, DesktopOutlined, PlusOutlined, SearchOutlined, WindowsFilled } from "@ant-design/icons";
 import {
   Alert,
+  AutoComplete,
   Button,
   Checkbox,
   Collapse,
@@ -2215,8 +2216,8 @@ const AssetFormModal = ({ asset, open, departmentOptions = [], onClose, onSubmit
                 <Select options={ASSET_TYPES} />
               </Form.Item>
             ) : null}
-            <Form.Item name="ownerName" label="使用人员">
-              <Input placeholder="人员、部门或位置" />
+            <Form.Item name="ownerName" label="使用人 / 责任人">
+              <Input placeholder="姓名或工号" />
             </Form.Item>
             <Form.Item
               name="department"
@@ -2677,7 +2678,7 @@ const BulkEditModal = ({ open, count, loading, departmentOptions = [], onClose, 
           />
         </Form.Item>
         <Form.Item name="ownerName" label="使用人 / 责任人">
-          <Input placeholder="统一修改使用人" />
+          <Input placeholder="统一修改使用人 / 责任人" />
         </Form.Item>
         <Form.Item name="status" label="状态">
           <Select allowClear options={EDITABLE_STATUS_OPTIONS} placeholder="统一修改状态" />
@@ -3053,8 +3054,8 @@ const AssetSettingsPanel = ({ asset, departmentOptions = [], onUpdated, onArchiv
         <div className="npcink-v3-settings-section">
           <h4>基础信息</h4>
           <div className="npcink-v3-settings-grid">
-            <Form.Item name="ownerName" label="姓名">
-              <Input />
+            <Form.Item name="ownerName" label="使用人 / 责任人">
+              <Input placeholder="姓名或工号" />
             </Form.Item>
             <Form.Item name="assetNumber" label="编号">
               <Input />
@@ -3252,8 +3253,8 @@ const CustomAssetSettingsPanel = ({ asset, onUpdated, onArchive }: AssetSettings
             <Form.Item name="status" label="当前状态">
               <Select options={EDITABLE_STATUS_OPTIONS} />
             </Form.Item>
-            <Form.Item name="ownerName" label="使用人员">
-              <Input placeholder="使用人或使用位置" />
+            <Form.Item name="ownerName" label="使用人 / 责任人">
+              <Input placeholder="姓名或工号" />
             </Form.Item>
             <Form.Item name="purpose" label="设备用途">
               <Input placeholder="例如：机房备用电源" />
@@ -3386,7 +3387,7 @@ const CustomAssetDetail = ({
                   <div>
                     {infoItem("采购人员", info.purchaser)}
                     {infoItem("设备编号", info.number, "primary")}
-                    {infoItem("使用人员", info.usage, "primary")}
+                    {infoItem("使用人 / 责任人", info.usage, "primary")}
                     {infoItem("设备用途", info.purpose)}
                   </div>
                 </div>
@@ -4127,7 +4128,9 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
   const [showHandledIssues, setShowHandledIssues] = useState(false);
   const [selectedIssueKeys, setSelectedIssueKeys] = useState<Set<string>>(new Set());
   const [departmentAssignOpen, setDepartmentAssignOpen] = useState(false);
+  const [ownerAssignOpen, setOwnerAssignOpen] = useState(false);
   const [departmentAssignForm] = Form.useForm<{ department: string }>();
+  const [ownerAssignForm] = Form.useForm<{ ownerName: string }>();
   const auditAssetsQuery = useQuery(
     ["v3-hardware-audit-assets"],
     () => fetchAllAssets({ assetScope: "computer" }),
@@ -4140,6 +4143,15 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
     [issueStatesQuery.data?.handledIssueKeys]
   );
   const allAuditAssets = auditAssetsQuery.data || [];
+  const ownerNameOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(allAuditAssets.map((asset) => String(asset.ownerName || "").trim()).filter(Boolean))
+      )
+        .sort((a, b) => a.localeCompare(b, "zh-CN"))
+        .map((ownerName) => ({ label: ownerName, value: ownerName })),
+    [allAuditAssets]
+  );
   const countAvailableAssetsOnly = settingsQuery.data?.countAvailableAssetsOnly ?? true;
   const auditAssets = useMemo(
     () => allAuditAssets.filter((asset) => shouldCountAsset(asset, countAvailableAssetsOnly)),
@@ -4348,7 +4360,7 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
     () => assignableDepartmentOptions.map((department) => ({ label: department, value: department })),
     [assignableDepartmentOptions]
   );
-  const assignableIssueKeys = useMemo(
+  const assignableDepartmentIssueKeys = useMemo(
     () =>
       new Set(
         visibleIssues
@@ -4357,9 +4369,27 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
       ),
     [handledIssueKeys, visibleIssues]
   );
+  const assignableOwnerIssueKeys = useMemo(
+    () =>
+      new Set(
+        visibleIssues
+          .filter(
+            (issue) =>
+              issue.type === "责任人缺失" &&
+              issue.asset.status === "active" &&
+              !handledIssueKeys.has(issue.key)
+          )
+          .map((issue) => issue.key)
+      ),
+    [handledIssueKeys, visibleIssues]
+  );
+  const assignableIssueKeys = useMemo(
+    () => new Set([...assignableDepartmentIssueKeys, ...assignableOwnerIssueKeys]),
+    [assignableDepartmentIssueKeys, assignableOwnerIssueKeys]
+  );
   const selectedDepartmentIssues = useMemo(
-    () => visibleIssues.filter((issue) => selectedIssueKeys.has(issue.key) && assignableIssueKeys.has(issue.key)),
-    [assignableIssueKeys, selectedIssueKeys, visibleIssues]
+    () => visibleIssues.filter((issue) => selectedIssueKeys.has(issue.key) && assignableDepartmentIssueKeys.has(issue.key)),
+    [assignableDepartmentIssueKeys, selectedIssueKeys, visibleIssues]
   );
   const selectedDepartmentAssets = useMemo(() => {
     const assetsByUuid = new Map<string, { asset: Asset; issueKeys: string[] }>();
@@ -4374,6 +4404,25 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
     return Array.from(assetsByUuid.values());
   }, [selectedDepartmentIssues]);
   const selectedDepartmentPreview = selectedDepartmentAssets
+    .slice(0, 5)
+    .map((item) => item.asset.assetNumber || item.asset.name || item.asset.uuid);
+  const selectedOwnerIssues = useMemo(
+    () => visibleIssues.filter((issue) => selectedIssueKeys.has(issue.key) && assignableOwnerIssueKeys.has(issue.key)),
+    [assignableOwnerIssueKeys, selectedIssueKeys, visibleIssues]
+  );
+  const selectedOwnerAssets = useMemo(() => {
+    const assetsByUuid = new Map<string, { asset: Asset; issueKeys: string[] }>();
+    selectedOwnerIssues.forEach((issue) => {
+      const existing = assetsByUuid.get(issue.asset.uuid);
+      if (existing) {
+        existing.issueKeys.push(issue.key);
+        return;
+      }
+      assetsByUuid.set(issue.asset.uuid, { asset: issue.asset, issueKeys: [issue.key] });
+    });
+    return Array.from(assetsByUuid.values());
+  }, [selectedOwnerIssues]);
+  const selectedOwnerPreview = selectedOwnerAssets
     .slice(0, 5)
     .map((item) => item.asset.assetNumber || item.asset.name || item.asset.uuid);
   const unresolvedIssues = hardwareIssues.filter((issue) => !handledIssueKeys.has(issue.key));
@@ -4542,6 +4591,53 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
           queryClient.invalidateQueries(["v3-asset-events", item.asset.uuid]);
         });
         message.success(`已为 ${updatedCount} 台资产分配部门`);
+      },
+    }
+  );
+  const ownerAssignMutation = useMutation(
+    async (ownerName: string) => {
+      const normalizedOwnerName = ownerName.trim();
+      for (const item of selectedOwnerAssets) {
+        await updateAsset(item.asset.uuid, { ownerName: normalizedOwnerName } as AssetInput);
+        await createAssetEvent(item.asset.uuid, {
+          eventType: "bulk_updated",
+          message: "批量分配责任人",
+          payload: {
+            source: "analysis_owner_assignment",
+            changedFields: [
+              {
+                field: "ownerName",
+                label: "使用人 / 责任人",
+                oldValue: item.asset.ownerName || "",
+                newValue: normalizedOwnerName,
+              },
+            ],
+            issueKeys: item.issueKeys,
+            selectedCount: selectedOwnerAssets.length,
+          },
+        });
+      }
+      return selectedOwnerAssets.length;
+    },
+    {
+      onSuccess: (updatedCount) => {
+        if (updatedCount === 0) {
+          return;
+        }
+        setOwnerAssignOpen(false);
+        ownerAssignForm.resetFields();
+        setSelectedIssueKeys(new Set());
+        queryClient.invalidateQueries(["v3-hardware-audit-assets"]);
+        queryClient.invalidateQueries(["v3-analysis-summary-assets"]);
+        queryClient.invalidateQueries(["v3-asset-value-analysis"]);
+        queryClient.invalidateQueries(["v3-assets"]);
+        queryClient.invalidateQueries(["v3-events"]);
+        queryClient.invalidateQueries(["v3-analysis-issue-states"]);
+        selectedOwnerAssets.forEach((item) => {
+          queryClient.invalidateQueries(["v3-asset", item.asset.uuid]);
+          queryClient.invalidateQueries(["v3-asset-events", item.asset.uuid]);
+        });
+        message.success(`已为 ${updatedCount} 台资产分配责任人`);
       },
     }
   );
@@ -5055,14 +5151,23 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
         <div className="npcink-v3-batch-actions">
           <Space wrap>
             <Text type="secondary">
-              已选 {selectedDepartmentIssues.length} 条部门待分配问题，涉及 {selectedDepartmentAssets.length} 台资产
+              已选 {selectedDepartmentIssues.length + selectedOwnerIssues.length} 条可处理问题
             </Text>
+            {selectedDepartmentIssues.length ? <Tag>部门 {selectedDepartmentAssets.length} 台</Tag> : null}
+            {selectedOwnerIssues.length ? <Tag>责任人 {selectedOwnerAssets.length} 台</Tag> : null}
             <Button
               type="primary"
               disabled={!selectedDepartmentAssets.length || !assignableDepartmentOptions.length}
               onClick={() => setDepartmentAssignOpen(true)}
             >
               批量分配部门
+            </Button>
+            <Button
+              type="primary"
+              disabled={!selectedOwnerAssets.length}
+              onClick={() => setOwnerAssignOpen(true)}
+            >
+              批量分配责任人
             </Button>
             <Button disabled={!selectedIssueKeys.size} onClick={() => setSelectedIssueKeys(new Set())}>
               清空选择
@@ -5074,13 +5179,22 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
           size="small"
           pagination={{ pageSize: 6, showSizeChanger: false, onChange: () => setSelectedIssueKeys(new Set()) }}
           dataSource={visibleIssues}
-          loading={auditAssetsQuery.isLoading || issueRecordMutation.isLoading || departmentAssignMutation.isLoading}
+          loading={
+            auditAssetsQuery.isLoading ||
+            issueRecordMutation.isLoading ||
+            departmentAssignMutation.isLoading ||
+            ownerAssignMutation.isLoading
+          }
           rowSelection={{
             selectedRowKeys: Array.from(selectedIssueKeys),
             onChange: (keys) => setSelectedIssueKeys(new Set(keys.map(String))),
             getCheckboxProps: (issue) => ({
               disabled: !assignableIssueKeys.has(issue.key),
-              title: assignableIssueKeys.has(issue.key) ? "选择后可批量分配部门" : "仅未处理的部门待分配问题可批量分配",
+              title: assignableDepartmentIssueKeys.has(issue.key)
+                ? "选择后可批量分配部门"
+                : assignableOwnerIssueKeys.has(issue.key)
+                  ? "选择后可批量分配责任人"
+                  : "仅未处理的部门待分配、责任人缺失问题可批量处理",
             }),
           }}
           columns={[
@@ -5249,6 +5363,60 @@ const HardwareAuditWorkspace = ({ focus }: HardwareAuditWorkspaceProps) => {
                 popupMatchSelectWidth={false}
                 disabled={!assignableDepartmentOptions.length}
                 filterOption={(input, option) => String(option?.label || "").toLowerCase().includes(input.toLowerCase())}
+              />
+            </Form.Item>
+          </Form>
+        </Space>
+      </Modal>
+      <Modal
+        title="批量分配责任人"
+        open={ownerAssignOpen}
+        okText="分配责任人"
+        cancelText="取消"
+        confirmLoading={ownerAssignMutation.isLoading}
+        okButtonProps={{ disabled: !selectedOwnerAssets.length }}
+        onCancel={() => {
+          setOwnerAssignOpen(false);
+          ownerAssignForm.resetFields();
+        }}
+        onOk={async () => {
+          const values = await ownerAssignForm.validateFields();
+          await ownerAssignMutation.mutateAsync(values.ownerName.trim());
+        }}
+        destroyOnClose
+      >
+        <Space direction="vertical" size={12} style={{ width: "100%" }}>
+          <Alert
+            type="info"
+            showIcon
+            message={`将为 ${selectedOwnerAssets.length} 台已勾选的在用资产分配责任人。`}
+            description={
+              selectedOwnerPreview.length
+                ? `预览：${selectedOwnerPreview.join("、")}${selectedOwnerAssets.length > selectedOwnerPreview.length ? " 等" : ""}`
+                : "请先在问题表中勾选责任人缺失资产。"
+            }
+          />
+          <Form form={ownerAssignForm} layout="vertical" preserve={false}>
+            <Form.Item
+              name="ownerName"
+              label="使用人 / 责任人"
+              rules={[
+                { required: true, message: "请输入责任人" },
+                {
+                  validator: async (_, value) => {
+                    if (!String(value || "").trim()) {
+                      throw new Error("请输入责任人");
+                    }
+                  },
+                },
+              ]}
+            >
+              <AutoComplete
+                options={ownerNameOptions}
+                placeholder="输入姓名或从已有责任人中选择"
+                filterOption={(input, option) =>
+                  String(option?.label || "").toLowerCase().includes(input.toLowerCase())
+                }
               />
             </Form.Item>
           </Form>

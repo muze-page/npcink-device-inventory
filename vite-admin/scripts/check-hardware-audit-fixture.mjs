@@ -33,6 +33,14 @@ try {
   const { detectHardwareIssues, issueGroup } = await import(pathToFileURL(outFile).href);
   const assets = JSON.parse(await readFile(fixturePath, "utf8"));
   const issues = detectHardwareIssues(assets);
+  const whitespaceOwnerIssues = detectHardwareIssues([
+    {
+      ...assets[1],
+      uuid: "fixture-active-whitespace-owner",
+      assetNumber: "OWNER-WS-001",
+      ownerName: "   ",
+    },
+  ]);
   const issueTypes = new Set(issues.map((issue) => issue.type));
   const groups = new Set(issues.map((issue) => issueGroup(issue.type)));
 
@@ -58,14 +66,28 @@ try {
 
   const missingTypes = expectedTypes.filter((type) => !issueTypes.has(type));
   const missingGroups = expectedGroups.filter((group) => !groups.has(group));
+  const activeMissingOwner = issues.some((issue) => issue.key === "fixture-missing-hardware-missing-owner");
+  const inactiveMissingOwner = issues.some((issue) => issue.key === "fixture-inactive-unassigned-missing-owner");
+  const whitespaceMissingOwner = whitespaceOwnerIssues.some(
+    (issue) => issue.key === "fixture-active-whitespace-owner-missing-owner"
+  );
 
-  if (missingTypes.length || missingGroups.length) {
+  if (missingTypes.length || missingGroups.length || !activeMissingOwner || inactiveMissingOwner || !whitespaceMissingOwner) {
     console.error("Hardware audit fixture check failed.");
     if (missingTypes.length) {
       console.error(`Missing issue types: ${missingTypes.join(", ")}`);
     }
     if (missingGroups.length) {
       console.error(`Missing issue groups: ${missingGroups.join(", ")}`);
+    }
+    if (!activeMissingOwner) {
+      console.error("Active asset without an owner must report 责任人缺失.");
+    }
+    if (inactiveMissingOwner) {
+      console.error("Inactive asset without an owner must not report 责任人缺失.");
+    }
+    if (!whitespaceMissingOwner) {
+      console.error("Whitespace-only owner names must report 责任人缺失 for active assets.");
     }
     console.error(`Detected types: ${Array.from(issueTypes).join(", ")}`);
     process.exit(1);

@@ -167,5 +167,59 @@
     },
     "createdAt": "2026-06-25 10:00:00",
     "updatedAt": "2026-06-25 10:00:00"
+  },
+  {
+    "id": 5,
+    "uuid": "fixture-inactive-unassigned",
+    "assetType": "pc",
+    "assetNumber": "IDLE-001",
+    "name": "闲置待分配样本",
+    "ownerName": "",
+    "department": "未分配",
+    "status": "inactive",
+    "category": "computer",
+    "purchasePrice": 0,
+    "residualValue": 0,
+    "metadata": {},
+    "latestObservation": {
+      "summary": {
+        "platform": "Windows",
+        "primary_ip": "10.0.0.11",
+        "cpu": "Intel Core i5",
+        "graphics": "Intel UHD",
+        "memory_bytes": 17179869184,
+        "disk_bytes": 549755813888
+      },
+      "hardware": {
+        "cpu": {
+          "brand": "Intel Core i5"
+        },
+        "baseboard": {
+          "serial": "BOARD-IDLE"
+        },
+        "graphics": {
+          "controllers": [
+            {
+              "model": "Intel UHD"
+            }
+          ]
+        },
+        "memory": [
+          {
+            "size": 17179869184
+          }
+        ],
+        "disks": [
+          {
+            "name": "NVMe SSD",
+            "size": 549755813888
+          }
+        ]
+      },
+      "observedAt": "2026-06-25 10:00:00",
+      "source": "fixture"
+    },
+    "createdAt": "2026-06-25 10:00:00",
+    "updatedAt": "2026-06-25 10:00:00"
   }
 ]

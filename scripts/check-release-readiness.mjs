@@ -48,6 +48,12 @@ const steps = [
     cwd: repoRoot,
   },
   {
+    title: "Analysis issue state fixtures",
+    command: "npm",
+    args: ["run", "check:issue-states"],
+    cwd: repoRoot,
+  },
+  {
     title: "Public query fixtures",
     command: "npm",
     args: ["run", "check:public-query"],

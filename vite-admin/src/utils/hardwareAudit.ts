@@ -316,7 +316,7 @@ export const detectHardwareIssues = (assets: Asset[]) => {
         message: `${assetLabel} 需要分配到具体部门`,
       });
     }
-    if (!asset.ownerName) {
+    if (asset.status === "active" && !String(asset.ownerName || "").trim()) {
       issues.push({
         key: `${asset.uuid}-missing-owner`,
         level: "info",
