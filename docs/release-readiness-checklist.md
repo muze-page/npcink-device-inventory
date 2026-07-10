@@ -14,6 +14,7 @@ npm run check:release
 
 该命令面向日常 GitHub release 包，只检查 `release/npcink-device-inventory.zip`，并要求仓库中不存在陈旧的 `sj/npcink-device-inventory.zip`。它会依次执行：
 
+- `npm run check:release-scope`，验证插件与桌面发布范围判定的路径规则。
 - `npm run check:hardware-audit`，验证硬件盘点规则 fixture。
 - `npm run lint`，验证后台 React/TypeScript 代码。
 - `npm run build`，生成后台生产资源。
@@ -74,7 +75,8 @@ node scripts/check-wordpress-org-review-rules.mjs release/npcink-device-inventor
 
 ## 桌面更新清单检查
 
-tag release workflow 会在生成 `latest.json` 和 `latest-desktop.json` 后执行：
+只有桌面范围的 tag release 才会生成新的 `latest.json` 和
+`latest-desktop.json`，随后执行：
 
 ```bash
 npm run check:desktop-manifests -- artifacts
@@ -88,6 +90,11 @@ npm run check:desktop-manifests -- artifacts
 - updater 平台条目都有签名。
 - 下载地址和 release 地址都是 GitHub Release URL。
 - URL 中不得出现空格或 `%20`，避免 GitHub Release 资产名空格变点号后下载失败。
+
+纯插件 release 不构建桌面制品，但会把上一份 `latest.json` 和
+`latest-desktop.json` 原样带到新 Release。这样 `releases/latest/download/`
+仍能为现有桌面客户端提供最后一次桌面发布的更新信息；不要在插件
+release 中重新生成或手动修改这两个文件。
 
 正式桌面更新发布前，还要人工确认本机安装的是上一版正式 Release 包，而不是本地开发构建包；不要复用相同桌面版本号发布不同内容。
 

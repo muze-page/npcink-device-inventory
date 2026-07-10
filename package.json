@@ -9,6 +9,7 @@
     "check:issue-states": "php tests/issue-state-fixtures.php",
     "check:public-query": "php tests/public-query-fixtures.php",
     "check:asset-search": "php tests/asset-search-fixtures.php",
+    "check:release-scope": "node scripts/check-release-scope.mjs",
     "check:desktop-manifests": "node scripts/check-desktop-update-manifests.mjs",
     "check:desktop-update-transition": "node scripts/check-desktop-update-transition.mjs",
     "check:wporg-review": "node scripts/check-wordpress-org-review-rules.mjs release/npcink-device-inventory.zip",

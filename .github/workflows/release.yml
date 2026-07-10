@@ -9,8 +9,32 @@ permissions:
   contents: write
 
 jobs:
-  wordpress-plugin:
+  release_plan:
+    name: Release scope
+    runs-on: ubuntu-latest
+    outputs:
+      desktop: ${{ steps.scope.outputs.desktop }}
+      mode: ${{ steps.scope.outputs.mode }}
+      previous_tag: ${{ steps.scope.outputs.previous_tag }}
+      reason: ${{ steps.scope.outputs.reason }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check release scope rules
+        run: node scripts/check-release-scope.mjs
+
+      - name: Determine release scope
+        id: scope
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node scripts/detect-release-scope.mjs
+
+  wordpress_plugin:
     name: WordPress plugin zip
+    needs: release_plan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -67,8 +91,10 @@ jobs:
           path: release/npcink-device-inventory.zip
           if-no-files-found: error
 
-  desktop-agent:
+  desktop_agent:
     name: Desktop agent (${{ matrix.os }})
+    needs: release_plan
+    if: needs.release_plan.outputs.desktop == 'true'
     runs-on: ${{ matrix.os }}
     env:
       CARGO_HTTP_MULTIPLEXING: "false"
@@ -146,10 +172,53 @@ jobs:
             ele-rs/src-tauri/target/release/bundle/nsis/*.exe.sig
           if-no-files-found: error
 
-  github-release:
-    name: GitHub Release
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: [wordpress-plugin, desktop-agent]
+  github_release_plugin:
+    name: GitHub Release (plugin only)
+    needs: [release_plan, wordpress_plugin]
+    if: needs.release_plan.outputs.desktop != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download plugin artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: npcink-device-inventory-plugin
+          path: artifacts
+
+      - name: Reuse desktop update manifests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIOUS_TAG: ${{ needs.release_plan.outputs.previous_tag }}
+        run: |
+          mkdir -p artifacts/desktop-manifests
+          test -n "${PREVIOUS_TAG}"
+          gh release download "${PREVIOUS_TAG}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --pattern latest.json \
+            --pattern latest-desktop.json \
+            --dir artifacts/desktop-manifests
+          test -f artifacts/desktop-manifests/latest.json
+          test -f artifacts/desktop-manifests/latest-desktop.json
+
+      - name: Create plugin release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          mapfile -t release_assets < <(find artifacts -type f | sort)
+          if gh release view "${TAG_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release upload "${TAG_NAME}" "${release_assets[@]}" --repo "${GITHUB_REPOSITORY}" --clobber
+          else
+            gh release create "${TAG_NAME}" "${release_assets[@]}" --repo "${GITHUB_REPOSITORY}" --generate-notes --title "${TAG_NAME}"
+          fi
+
+  github_release_desktop:
+    name: GitHub Release (plugin and desktop)
+    needs: [release_plan, wordpress_plugin, desktop_agent]
+    if: >-
+      always() &&
+      needs.release_plan.outputs.desktop == 'true' &&
+      needs.wordpress_plugin.result == 'success' &&
+      needs.desktop_agent.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -168,10 +237,14 @@ jobs:
       - name: Check desktop update manifests
         run: npm run check:desktop-manifests -- artifacts
 
-      - name: Create release
+      - name: Create desktop release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG_NAME: ${{ github.ref_name }}
         run: |
           mapfile -t release_assets < <(find artifacts -type f | sort)
-          gh release create "${TAG_NAME}" "${release_assets[@]}" --repo "${GITHUB_REPOSITORY}" --generate-notes --title "${TAG_NAME}"
+          if gh release view "${TAG_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release upload "${TAG_NAME}" "${release_assets[@]}" --repo "${GITHUB_REPOSITORY}" --clobber
+          else
+            gh release create "${TAG_NAME}" "${release_assets[@]}" --repo "${GITHUB_REPOSITORY}" --generate-notes --title "${TAG_NAME}"
+          fi

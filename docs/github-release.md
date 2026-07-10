@@ -65,18 +65,25 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The `Build release packages` workflow runs only for `v*` tags and uploads the
-WordPress plugin zip, macOS DMG, and Windows installer to a GitHub Release
-automatically. Do not use a tag until the preview artifacts have been checked.
-The macOS DMG is intentionally present in this release flow for Apple Silicon
-internal testing even before Developer ID signing and notarization are added.
+The `Build release packages` workflow runs only for `v*` tags. It compares the
+tag with the previous release tag before selecting its scope:
+
+- plugin-only changes build and publish `npcink-device-inventory.zip`, then
+  reuse the previous desktop `latest.json` and `latest-desktop.json` unchanged;
+- desktop source, desktop manifest, release-scope, or release-workflow changes
+  build the full plugin and desktop artifact set, then generate new desktop
+  manifests.
+
+The first tag after a release-workflow change takes the full desktop path. Do
+not use a tag until the applicable preview artifacts have been checked. The
+macOS DMG is intentionally present in full desktop releases for Apple Silicon
+internal testing even before Developer ID signing and notarization.
 
 For ordinary plugin-only patch releases, the product policy is plugin-first:
 reuse the latest known-good desktop artifacts when the desktop uploader has no
-functional change. As of v2.7.9, the tagged release workflow still rebuilds
-desktop artifacts for every `v*` tag, so future workflow work should add a
-plugin-only release path before assuming desktop artifacts can be skipped in CI.
-See `plugin-first-release-strategy-2026-07-09.md`.
+functional change. The workflow preserves desktop updater availability by
+carrying forward the existing update manifests on each plugin-only Release. See
+`plugin-first-release-strategy-2026-07-09.md`.
 
 The tagged release workflow also builds Tauri updater artifacts and signs them.
 Before running a release, configure this GitHub Actions secret:

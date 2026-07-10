@@ -46,53 +46,37 @@ behavior;
 
 If none of those apply, reuse the latest known-good desktop artifacts.
 
-## Current Workflow State
+## Implemented Workflow Shape
 
-As of v2.7.9, `.github/workflows/release.yml` still builds all release artifacts
-for every `v*` tag:
+The tagged workflow now compares the current `v*` tag with the nearest previous
+`v*` tag before building artifacts.
 
-- WordPress plugin zip;
-- macOS DMG and signed updater package;
-- Windows installer and signature;
-- `latest.json` and `latest-desktop.json`.
+It runs a full desktop release when there is no earlier release tag, or when the
+diff includes one of these desktop release paths:
 
-That means a plugin-only tag currently still republishes desktop artifacts even
-when `ele-rs/package.json` remains on the same desktop version. In v2.7.9 this
-was harmless because the desktop version stayed `0.1.5`, but it was unnecessary
-work for a plugin-only release.
+- `ele-rs/`;
+- desktop update-manifest build or validation scripts;
+- release-scope detection scripts;
+- `.github/workflows/release.yml`.
 
-The preview workflow already has a better shape for this distinction because it
-can build only `plugin`, only desktop targets, or `all`.
+A full desktop release builds the plugin zip, macOS updater package and DMG,
+Windows installer and signature, then generates new `latest.json` and
+`latest-desktop.json`.
 
-## Desired Workflow Shape
+A plugin-only release always builds and validates `npcink-device-inventory.zip`,
+but skips both desktop runners. Before creating the GitHub Release it downloads
+`latest.json` and `latest-desktop.json` from the previous release tag and uploads
+those exact files alongside the new plugin zip. This is required because
+`releases/latest` moves to the new plugin release: omitting the two manifests
+would break existing desktop clients even though their binaries did not change.
 
-Future workflow work should make tagged releases explicitly support a
-plugin-only path.
+The reused manifests continue to point at the last desktop release and its
+signed artifacts. Plugin-only releases therefore do not rebuild, republish, or
+retarget desktop binaries.
 
-The preferred behavior:
-
-- default tagged releases to the WordPress plugin package;
-- build desktop artifacts only when requested or when desktop paths changed;
-- keep existing desktop release assets visible as the active desktop download
-when a plugin-only release is published;
-- avoid changing `latest.json` and `latest-desktop.json` unless the desktop app
-or updater artifacts actually change.
-
-One practical implementation path:
-
-1. Add a release mode input for manual release workflows, or split plugin and
-   desktop release workflows.
-2. Add path-based detection for `ele-rs/`, desktop manifest scripts, updater
-   signing config, and workflow files.
-3. Let the GitHub Release job attach new plugin artifacts while preserving or
-   referencing the latest desktop artifacts when the release is plugin-only.
-4. Keep a separate desktop release checklist for releases that intentionally
-   change `ele-rs/package.json` or updater behavior.
-
-This change should be implemented carefully because the current release job
-builds desktop update manifests from the artifacts it downloads. A plugin-only
-release must not generate desktop manifests that point to missing desktop
-artifacts.
+The first tag after this workflow change intentionally takes the full desktop
+path because the release workflow itself changed. This validates the new full
+path before later plugin-only tags use the lightweight route.
 
 ## Release Checklist Adjustment
 
@@ -104,7 +88,10 @@ npm run check:release
 composer eval:project:quality-gate
 ```
 
-Run desktop checks only when desktop triggers apply:
+`npm run check:release` 包含 `check:release-scope`，用于验证插件和桌面
+发布范围的路径规则。
+
+Run desktop checks only when the tag diff contains a desktop release path:
 
 ```bash
 npm --prefix ele-rs run build

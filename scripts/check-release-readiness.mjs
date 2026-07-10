@@ -18,6 +18,12 @@ const builtAssetFiles = [
 
 const steps = [
   {
+    title: "Release scope fixtures",
+    command: "npm",
+    args: ["run", "check:release-scope"],
+    cwd: repoRoot,
+  },
+  {
     title: "Frontend hardware audit fixture",
     command: "npm",
     args: ["run", "check:hardware-audit"],
