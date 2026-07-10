@@ -30,7 +30,7 @@ try {
     logLevel: "silent",
   });
 
-  const { collectionAgeBand, collectionFreshness, detectHardwareIssues, issueGroup } = await import(pathToFileURL(outFile).href);
+  const { collectionAgeBand, collectionFreshness, collectionOverdueLevel, detectHardwareIssues, issueGroup } = await import(pathToFileURL(outFile).href);
   const assets = JSON.parse(await readFile(fixturePath, "utf8"));
   const issues = detectHardwareIssues(assets);
   const whitespaceOwnerIssues = detectHardwareIssues([
@@ -54,20 +54,19 @@ try {
     "内存缺失",
     "硬盘缺失",
     "未接入采集",
-    "待维护",
   ];
   const expectedGroups = [
     "重复风险",
     "资料缺失",
     "硬件缺失",
     "采集状态",
-    "维护状态",
   ];
 
   const missingTypes = expectedTypes.filter((type) => !issueTypes.has(type));
   const missingGroups = expectedGroups.filter((group) => !groups.has(group));
   const activeMissingOwner = issues.some((issue) => issue.key === "fixture-missing-hardware-missing-owner");
   const inactiveMissingOwner = issues.some((issue) => issue.key === "fixture-inactive-unassigned-missing-owner");
+  const maintenanceIssueCreated = issues.some((issue) => issue.type === "待维护");
   const whitespaceMissingOwner = whitespaceOwnerIssues.some(
     (issue) => issue.key === "fixture-active-whitespace-owner-missing-owner"
   );
@@ -114,8 +113,88 @@ try {
     collectionAgeBand(stale61To90Sample, freshnessNow) !== "stale_61_90" ||
     collectionAgeBand(stale90PlusSample, freshnessNow) !== "stale_90_plus" ||
     collectionAgeBand(missingSample, freshnessNow) !== "missing";
+  const atCollectionAge = (days) => new Date(freshnessNow - days * 86400000).toISOString();
+  const collection179Days = { ...assets[1], latestObservation: { ...assets[1].latestObservation, observedAt: atCollectionAge(179) } };
+  const collection180Days = { ...assets[1], latestObservation: { ...assets[1].latestObservation, observedAt: atCollectionAge(180) } };
+  const collection270Days = { ...assets[1], latestObservation: { ...assets[1].latestObservation, observedAt: atCollectionAge(270) } };
+  const collectionThresholdFailed =
+    collectionOverdueLevel(collection179Days, freshnessNow) !== null ||
+    collectionOverdueLevel(collection180Days, freshnessNow) !== "warning" ||
+    collectionOverdueLevel(collection270Days, freshnessNow) !== "error" ||
+    detectHardwareIssues([collection179Days], freshnessNow).some((issue) => issue.type === "长期未采集") ||
+    detectHardwareIssues([collection180Days], freshnessNow).find((issue) => issue.type === "长期未采集")?.level !== "warning" ||
+    detectHardwareIssues([collection270Days], freshnessNow).find((issue) => issue.type === "长期未采集")?.level !== "error";
+  const duplicateNumberIssue = issues.find((issue) => issue.key === "fixture-missing-hardware-duplicate-number");
+  const boardOnlyDuplicateAssets = [
+    {
+      ...assets[1],
+      uuid: "fixture-board-only-one",
+      assetNumber: "BOARD-ONLY-001",
+      latestObservation: {
+        ...assets[1].latestObservation,
+        hardware: {
+          ...assets[1].latestObservation.hardware,
+          uuid: { hardware: "HARDWARE-ONE", macs: ["aa:bb:cc:dd:ee:01"] },
+          baseboard: { serial: "BOARD-SHARED" },
+        },
+      },
+    },
+    {
+      ...assets[1],
+      uuid: "fixture-board-only-two",
+      assetNumber: "BOARD-ONLY-002",
+      latestObservation: {
+        ...assets[1].latestObservation,
+        hardware: {
+          ...assets[1].latestObservation.hardware,
+          uuid: { hardware: "HARDWARE-TWO", macs: ["aa:bb:cc:dd:ee:02"] },
+          baseboard: { serial: "BOARD-SHARED" },
+        },
+      },
+    },
+  ];
+  const strongIdentityDuplicateAssets = [
+    {
+      ...boardOnlyDuplicateAssets[0],
+      uuid: "fixture-strong-identity-one",
+      assetNumber: "IDENTITY-001",
+      latestObservation: {
+        ...boardOnlyDuplicateAssets[0].latestObservation,
+        hardware: {
+          ...boardOnlyDuplicateAssets[0].latestObservation.hardware,
+          uuid: { hardware: "HARDWARE-SHARED", macs: ["aa:bb:cc:dd:ee:ff"] },
+        },
+      },
+    },
+    {
+      ...boardOnlyDuplicateAssets[1],
+      uuid: "fixture-strong-identity-two",
+      assetNumber: "IDENTITY-002",
+      latestObservation: {
+        ...boardOnlyDuplicateAssets[1].latestObservation,
+        hardware: {
+          ...boardOnlyDuplicateAssets[1].latestObservation.hardware,
+          uuid: { hardware: "HARDWARE-SHARED", macs: ["aa:bb:cc:dd:ee:ff"] },
+        },
+      },
+    },
+  ];
+  const boardOnlyDuplicateIssues = detectHardwareIssues(boardOnlyDuplicateAssets, freshnessNow).filter(
+    (issue) => issue.type === "疑似重复设备"
+  );
+  const strongIdentityDuplicateIssue = detectHardwareIssues(strongIdentityDuplicateAssets, freshnessNow).find(
+    (issue) => issue.key === "fixture-strong-identity-one-duplicate-identity"
+  );
+  const duplicateRelationFailed =
+    duplicateNumberIssue?.duplicateGroupKey !== "number:dup-001" ||
+    !duplicateNumberIssue.relatedAssets?.some((asset) => asset.uuid === "fixture-duplicate-hardware") ||
+    boardOnlyDuplicateIssues.length > 0 ||
+    strongIdentityDuplicateIssue?.duplicateGroupKey !== "identity:fixture-strong-identity-one,fixture-strong-identity-two" ||
+    !strongIdentityDuplicateIssue.relatedAssets?.some((asset) => asset.uuid === "fixture-strong-identity-two") ||
+    !strongIdentityDuplicateIssue.message.includes("主 MAC 地址") ||
+    !strongIdentityDuplicateIssue.message.includes("主板序列号 BOARD-SHARED 也相同");
 
-  if (missingTypes.length || missingGroups.length || !activeMissingOwner || inactiveMissingOwner || !whitespaceMissingOwner || placeholderDuplicateIssues.length || freshnessClassificationFailed || ageBandClassificationFailed) {
+  if (missingTypes.length || missingGroups.length || !activeMissingOwner || inactiveMissingOwner || maintenanceIssueCreated || !whitespaceMissingOwner || placeholderDuplicateIssues.length || freshnessClassificationFailed || ageBandClassificationFailed || collectionThresholdFailed || duplicateRelationFailed) {
     console.error("Hardware audit fixture check failed.");
     if (missingTypes.length) {
       console.error(`Missing issue types: ${missingTypes.join(", ")}`);
@@ -129,6 +208,9 @@ try {
     if (inactiveMissingOwner) {
       console.error("Inactive asset without an owner must not report 责任人缺失.");
     }
+    if (maintenanceIssueCreated) {
+      console.error("Maintenance status is a lifecycle state and must not create a pending issue.");
+    }
     if (!whitespaceMissingOwner) {
       console.error("Whitespace-only owner names must report 责任人缺失 for active assets.");
     }
@@ -140,6 +222,12 @@ try {
     }
     if (ageBandClassificationFailed) {
       console.error("Collection age bands must preserve the 31-60, 61-90, and 90-plus day boundaries.");
+    }
+    if (collectionThresholdFailed) {
+      console.error("Long-uncollected reminders must start at 180 days and become high risk at 270 days.");
+    }
+    if (duplicateRelationFailed) {
+      console.error("Board serial alone must not create a duplicate issue; strong identity matches must retain related assets and a stable group key.");
     }
     console.error(`Detected types: ${Array.from(issueTypes).join(", ")}`);
     process.exit(1);

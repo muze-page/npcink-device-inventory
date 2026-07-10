@@ -41,7 +41,10 @@ Identity claims for matching uploads and imports to assets.
 
 Examples:
 
+- `device_uuid_v1` (canonical motherboard-backed computer identity)
+- `stable_device_id_v3`
 - `stable_device_id_v2`
+- `legacy_device_id_v1`
 - `hardware_uuid`
 - `system_serial`
 - `baseboard_serial`

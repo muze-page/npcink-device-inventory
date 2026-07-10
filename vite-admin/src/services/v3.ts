@@ -15,6 +15,10 @@ import type {
   CreatedPublicQueryPage,
   EventListParams,
   InventorySettings,
+  IdentityAudit,
+
+  DeviceIdentityReconciliation,
+  DeviceIdentityReconciliationApplyResult,
   IssueStates,
   ObservationListParams,
   PaginatedResult,
@@ -142,6 +146,37 @@ export const getIssueStates = async (): Promise<IssueStates> => {
 export const getAnalysisTrends = async (): Promise<AnalysisTrends> => {
   const response = await restInstance.get<DataEnvelope<AnalysisTrends>>(
     "/analysis/trends",
+    { showSuccessMessage: false } as RequestConfig
+  );
+  return unwrapData(response.data);
+};
+
+export const getIdentityAudit = async (): Promise<IdentityAudit> => {
+  const response = await restInstance.get<{
+    data: Omit<IdentityAudit, "pagination">;
+    pagination: IdentityAudit["pagination"];
+  }>("/analysis/identity-audit", { showSuccessMessage: false } as RequestConfig);
+  return { ...response.data.data, pagination: response.data.pagination };
+};
+
+export const getDeviceIdentityReconciliation = async (
+  page = 1,
+  pageSize = 50
+): Promise<DeviceIdentityReconciliation> => {
+  const response = await restInstance.get<{
+    data: Omit<DeviceIdentityReconciliation, "pagination">;
+    pagination: DeviceIdentityReconciliation["pagination"];
+  }>("/analysis/device-identity-reconciliation", {
+    params: { page, pageSize },
+    showSuccessMessage: false,
+  } as RequestConfig);
+  return { ...response.data.data, pagination: response.data.pagination };
+};
+
+export const applyDeviceIdentityReconciliation = async (): Promise<DeviceIdentityReconciliationApplyResult> => {
+  const response = await restInstance.post<DataEnvelope<DeviceIdentityReconciliationApplyResult>>(
+    "/analysis/device-identity-reconciliation",
+    { confirm: true },
     { showSuccessMessage: false } as RequestConfig
   );
   return unwrapData(response.data);

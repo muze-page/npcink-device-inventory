@@ -17,6 +17,9 @@ class Npcink_Device_Inventory_V3_Rest
 		require_once $base . 'repositories/class-npcink-device-inventory-observation-repository.php';
 		require_once $base . 'repositories/class-npcink-device-inventory-event-repository.php';
 		require_once $base . 'services/class-npcink-device-inventory-identity-extractor.php';
+		require_once $base . 'services/class-npcink-device-inventory-device-identity-service.php';
+		require_once $base . 'services/class-npcink-device-inventory-identity-audit-service.php';
+		require_once $base . 'services/class-npcink-device-inventory-device-identity-reconciliation-service.php';
 		require_once $base . 'services/class-npcink-device-inventory-event-service.php';
 		require_once $base . 'services/class-npcink-device-inventory-observation-ingest-service.php';
 		require_once $base . 'services/class-npcink-device-inventory-token-auth-service.php';
@@ -40,10 +43,13 @@ class Npcink_Device_Inventory_V3_Rest
 		$events = new Npcink_Device_Inventory_Event_Repository();
 		$event_service = new Npcink_Device_Inventory_Event_Service($events);
 		$extractor = new Npcink_Device_Inventory_Identity_Extractor();
+		$device_identity = new Npcink_Device_Inventory_Device_Identity_Service();
+		$identity_audit = new Npcink_Device_Inventory_Identity_Audit_Service($observations);
+		$identity_reconciliation = new Npcink_Device_Inventory_Device_Identity_Reconciliation_Service($observations, $identities, $event_service, $device_identity);
 		$auth = new Npcink_Device_Inventory_Token_Auth_Service();
-		$ingest = new Npcink_Device_Inventory_Observation_Ingest_Service($assets, $identities, $observations, $event_service, $extractor);
+		$ingest = new Npcink_Device_Inventory_Observation_Ingest_Service($assets, $identities, $observations, $event_service, $extractor, $device_identity);
 
-		$assets_controller = new Npcink_Device_Inventory_Assets_Controller($assets, $identities, $observations, $events, $event_service);
+		$assets_controller = new Npcink_Device_Inventory_Assets_Controller($assets, $identities, $observations, $events, $event_service, $identity_audit, $identity_reconciliation);
 		$device_observations_controller = new Npcink_Device_Inventory_Device_Observations_Controller($ingest, $auth);
 		$settings_controller = new Npcink_Device_Inventory_Settings_Controller();
 		$backup_restore_controller = new Npcink_Device_Inventory_Backup_Restore_Controller();

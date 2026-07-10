@@ -39,6 +39,9 @@ import {
   getAssetIdentities,
   getAssetObservations,
   getAnalysisTrends,
+  applyDeviceIdentityReconciliation,
+  getDeviceIdentityReconciliation,
+  getIdentityAudit,
   getAssets,
   getClientTokenPackageConfig,
   getEvents,
@@ -63,6 +66,8 @@ import type {
   ClientToken,
   CreatedClientToken,
   InventorySettings,
+  IdentityAuditGroup,
+  DeviceIdentityReconciliationItem,
   JsonRecord,
   PaginatedResult,
 } from "@/type/v3";
@@ -71,6 +76,7 @@ import {
   collectionAgeBand,
   collectionAgeDays,
   collectionFreshness,
+  collectionOverdueLevel,
   detectHardwareIssues,
   firstText,
   formatBytes,
@@ -4117,6 +4123,7 @@ const HardwareAuditWorkspace = ({ focus, onOpenSettings }: HardwareAuditWorkspac
   const [selectedIssueKeys, setSelectedIssueKeys] = useState<Set<string>>(new Set());
   const [departmentAssignOpen, setDepartmentAssignOpen] = useState(false);
   const [ownerAssignOpen, setOwnerAssignOpen] = useState(false);
+  const [identityAuditOpen, setIdentityAuditOpen] = useState(false);
   const [departmentAssignForm] = Form.useForm<{ department: string }>();
   const [ownerAssignForm] = Form.useForm<{ ownerName: string }>();
   const auditAssetsQuery = useQuery(
@@ -4126,6 +4133,10 @@ const HardwareAuditWorkspace = ({ focus, onOpenSettings }: HardwareAuditWorkspac
   );
   const settingsQuery = useQuery(["v3-settings"], getSettings, { staleTime: 60_000 });
   const issueStatesQuery = useQuery(["v3-analysis-issue-states"], getIssueStates, { staleTime: 30_000 });
+  const identityAuditQuery = useQuery(["v3-analysis-identity-audit"], getIdentityAudit, {
+    enabled: identityAuditOpen,
+    staleTime: 30_000,
+  });
   const handledIssueKeys = useMemo(
     () => new Set(issueStatesQuery.data?.handledIssueKeys || []),
     [issueStatesQuery.data?.handledIssueKeys]
@@ -4433,22 +4444,10 @@ const HardwareAuditWorkspace = ({ focus, onOpenSettings }: HardwareAuditWorkspac
     ),
     [auditAssets]
   );
-  const collectionAgeBandCounts = useMemo(
-    () => auditAssets.reduce<Record<CollectionAgeBand, number>>(
-      (counts, asset) => {
-        counts[collectionAgeBand(asset)] += 1;
-        return counts;
-      },
-      { fresh: 0, aging: 0, stale_31_60: 0, stale_61_90: 0, stale_90_plus: 0, missing: 0 }
-    ),
-    [auditAssets]
-  );
   const overdueCollectionAssets = useMemo(
     () =>
       auditAssets.filter((asset) => {
-        const band = collectionAgeBand(asset);
-        const isOverdue = band === "stale_31_60" || band === "stale_61_90" || band === "stale_90_plus" || band === "missing";
-        return isOverdue && (!selectedIssueDepartment || (asset.department || DEFAULT_DEPARTMENT) === selectedIssueDepartment);
+        return collectionOverdueLevel(asset) && (!selectedIssueDepartment || (asset.department || DEFAULT_DEPARTMENT) === selectedIssueDepartment);
       }),
     [auditAssets, selectedIssueDepartment]
   );
@@ -4469,17 +4468,20 @@ const HardwareAuditWorkspace = ({ focus, onOpenSettings }: HardwareAuditWorkspac
   const duplicateRiskGroups = new Set(
     unresolvedIssues
       .filter((issue) => issueGroup(issue.type) === "重复风险")
-      .map((issue) => `${issue.type}:${issue.message}`)
+      .map((issue) => issue.duplicateGroupKey || `${issue.type}:${issue.message}`)
   ).size;
+  const collectionReminderIssues = unresolvedIssues.filter((issue) => issue.type === "长期未采集");
+  const collectionWarningIssueCount = collectionReminderIssues.filter((issue) => issue.level === "warning").length;
+  const collectionDangerIssueCount = collectionReminderIssues.filter((issue) => issue.level === "error").length;
+  const unconnectedCollectionIssueCount = unresolvedIssues.filter((issue) => issue.type === "未接入采集").length;
   const missingProfileIssues = hardwareIssues.filter((issue) => issueGroup(issue.type) === "资料缺失").length;
   const missingHardwareIssues = hardwareIssues.filter((issue) => issueGroup(issue.type) === "硬件缺失").length;
-  const maintenanceIssues = hardwareIssues.filter((issue) => issueGroup(issue.type) === "维护状态").length;
   const hardwareInsightItems = [
     {
       label: "采集新鲜度",
       value: `${collectionFreshnessCounts.fresh} / ${auditTotal}`,
-      note: `31-60 天 ${collectionAgeBandCounts.stale_31_60} · 61-90 天 ${collectionAgeBandCounts.stale_61_90} · 90+ ${collectionAgeBandCounts.stale_90_plus} · 未接入 ${collectionAgeBandCounts.missing}`,
-      tone: collectionFreshnessCounts.stale || collectionFreshnessCounts.missing ? "warning" : "primary",
+      note: `提醒：180-269 天 ${collectionWarningIssueCount} · 270+ 天 ${collectionDangerIssueCount} · 未接入 ${unconnectedCollectionIssueCount}`,
+      tone: collectionDangerIssueCount ? "danger" : collectionWarningIssueCount || unconnectedCollectionIssueCount ? "warning" : "primary",
     },
     {
       label: "资料缺口",
@@ -4496,7 +4498,7 @@ const HardwareAuditWorkspace = ({ focus, onOpenSettings }: HardwareAuditWorkspac
     {
       label: "待办资产",
       value: String(unresolvedAssetCount),
-      note: `${unresolvedIssues.length} 条问题行 · 维护 ${maintenanceIssues}`,
+      note: `${unresolvedIssues.length} 条问题行 · 维护状态仅在资产状态中展示`,
       tone: unresolvedAssetCount > 0 ? "warning" : "default",
     },
   ];
@@ -4693,8 +4695,8 @@ const HardwareAuditWorkspace = ({ focus, onOpenSettings }: HardwareAuditWorkspac
     {
       key: "collection",
       title: "跟进过期采集",
-      count: collectionFreshnessCounts.stale + collectionFreshnessCounts.missing,
-      description: `31-60 天 ${collectionAgeBandCounts.stale_31_60}，61-90 天 ${collectionAgeBandCounts.stale_61_90}，90+ ${collectionAgeBandCounts.stale_90_plus}，未接入 ${collectionAgeBandCounts.missing}。`,
+      count: collectionWarningIssueCount + collectionDangerIssueCount + unconnectedCollectionIssueCount,
+      description: `180-269 天 ${collectionWarningIssueCount}，270+ 天 ${collectionDangerIssueCount}，未接入 ${unconnectedCollectionIssueCount}。`,
       action: "查看采集状态",
       tone: "warning",
       onClick: () => focusIssueTask("采集状态"),
@@ -4777,6 +4779,7 @@ const HardwareAuditWorkspace = ({ focus, onOpenSettings }: HardwareAuditWorkspac
           >
             导出逾期清单
           </Button>
+          <Button onClick={() => setIdentityAuditOpen(true)}>身份兼容审计</Button>
           <Button onClick={onOpenSettings}>客户端接入</Button>
         </Space>
       </div>
@@ -5243,10 +5246,36 @@ const HardwareAuditWorkspace = ({ focus, onOpenSettings }: HardwareAuditWorkspac
               width: 180,
               render: (_, issue) => (
                 <Space direction="vertical" size={2}>
-                  <Text strong>{issue.asset.assetNumber || issue.asset.name || issue.asset.uuid}</Text>
+                  <Space size={4}>
+                    <Tag color="blue">当前</Tag>
+                    <Text strong>{issue.asset.assetNumber || issue.asset.name || issue.asset.uuid}</Text>
+                  </Space>
                   <Text type="secondary">{[issue.asset.ownerName, issue.asset.department].filter(Boolean).join(" / ") || "-"}</Text>
                 </Space>
               ),
+            },
+            {
+              title: "可能重复设备",
+              width: 220,
+              render: (_, issue) => issue.relatedAssets?.length ? (
+                <Space direction="vertical" size={2}>
+                  <Text type="secondary">同一重复组</Text>
+                  <Space wrap size={[0, 2]}>
+                    {issue.relatedAssets.map((asset) => (
+                      <Button
+                        key={asset.uuid}
+                        size="small"
+                        type="link"
+                        className="npcink-v3-link"
+                        onClick={() => setSelectedUuid(asset.uuid)}
+                      >
+                        <Tag color="orange">可能重复</Tag>
+                        {asset.assetNumber || asset.name || asset.uuid}
+                      </Button>
+                    ))}
+                  </Space>
+                </Space>
+              ) : "-",
             },
             { title: "说明", dataIndex: "message", width: 260 },
             {
@@ -5285,11 +5314,75 @@ const HardwareAuditWorkspace = ({ focus, onOpenSettings }: HardwareAuditWorkspac
               ),
             },
           ]}
-          scroll={{ x: 1000 }}
+          scroll={{ x: 1220 }}
           locale={{ emptyText: <Empty description="暂无异常发现" /> }}
         />
       </div>
       </AnalysisBlock>
+      <Modal
+        title="身份兼容审计"
+        open={identityAuditOpen}
+        footer={<Button onClick={() => setIdentityAuditOpen(false)}>关闭</Button>}
+        width={980}
+        onCancel={() => setIdentityAuditOpen(false)}
+      >
+        <Space direction="vertical" size={14} style={{ width: "100%" }}>
+          <Alert
+            type="info"
+            showIcon
+            message="只读审计：UUID 相同但主 MAC 不同的资产不会自动合并。"
+            description="审计只读取每台资产的最新采集快照；不会修改资产、身份或历史采集记录。"
+          />
+          <Space wrap>
+            <Tag>已审计 {identityAuditQuery.data?.summary.auditedAssets ?? "-"} 台</Tag>
+            <Tag color="orange">UUID / MAC 冲突 {identityAuditQuery.data?.summary.uuidMacConflictGroups ?? "-"} 组</Tag>
+            <Tag color="red">同组合身份 {identityAuditQuery.data?.summary.sameCompositeGroups ?? "-"} 组</Tag>
+            <Tag>身份资料不足 {identityAuditQuery.data?.summary.insufficientIdentityAssets ?? "-"} 台</Tag>
+          </Space>
+          <Table<IdentityAuditGroup>
+            rowKey="groupKey"
+            size="small"
+            loading={identityAuditQuery.isLoading || identityAuditQuery.isFetching}
+            dataSource={identityAuditQuery.data?.groups || []}
+            pagination={false}
+            scroll={{ x: 900 }}
+            columns={[
+              {
+                title: "结果",
+                width: 128,
+                render: (_, group) => (
+                  <Tag color={group.classification === "uuid_mac_conflict" ? "orange" : "red"}>
+                    {group.classification === "uuid_mac_conflict" ? "历史标识冲突" : "同组合身份"}
+                  </Tag>
+                ),
+              },
+              { title: "硬件 UUID", dataIndex: "hardwareUuid", width: 280 },
+              {
+                title: "资产 / 主 MAC",
+                width: 380,
+                render: (_, group) => (
+                  <Space direction="vertical" size={2}>
+                    {group.assets.map((asset) => (
+                      <Space key={asset.uuid} size={4} wrap>
+                        <Button type="link" size="small" className="npcink-v3-link" onClick={() => setSelectedUuid(asset.uuid)}>
+                          {asset.assetNumber || asset.name || asset.uuid}
+                        </Button>
+                        <Text type="secondary">{asset.primaryMac || "未采集 MAC"}</Text>
+                      </Space>
+                    ))}
+                  </Space>
+                ),
+              },
+              {
+                title: "规模",
+                width: 110,
+                render: (_, group) => `${group.assetCount} 台 / ${group.distinctMacCount} 个 MAC`,
+              },
+            ]}
+            locale={{ emptyText: <Empty description="未发现身份冲突组" /> }}
+          />
+        </Space>
+      </Modal>
       <DetailDrawer
         uuid={selectedUuid}
         open={Boolean(selectedUuid)}
@@ -5584,21 +5677,15 @@ const AnalysisSummaryWorkspace = ({ onOpenTab }: AnalysisSummaryWorkspaceProps) 
     [handledIssueKeys, hardwareIssues]
   );
   const highRiskIssues = unresolvedIssues.filter((issue) => issue.level === "error");
+  const collectionReminderIssues = unresolvedIssues.filter((issue) => issue.type === "长期未采集");
+  const collectionWarningIssueCount = collectionReminderIssues.filter((issue) => issue.level === "warning").length;
+  const collectionDangerIssueCount = collectionReminderIssues.filter((issue) => issue.level === "error").length;
+  const unconnectedCollectionIssueCount = unresolvedIssues.filter((issue) => issue.type === "未接入采集").length;
   const collectedAssetsCount = computerAssets.filter((asset) => Boolean(asset.latestObservation?.observedAt)).length;
   const collectionRate = computerAssets.length ? (collectedAssetsCount / computerAssets.length) * 100 : 0;
   const freshCollectionCount = computerAssets.filter((asset) => collectionFreshness(asset) === "fresh").length;
   const staleCollectionCount = computerAssets.filter((asset) => collectionFreshness(asset) === "stale").length;
   const missingCollectionCount = computerAssets.filter((asset) => collectionFreshness(asset) === "missing").length;
-  const collectionAgeBandCounts = useMemo(
-    () => computerAssets.reduce<Record<CollectionAgeBand, number>>(
-      (counts, asset) => {
-        counts[collectionAgeBand(asset)] += 1;
-        return counts;
-      },
-      { fresh: 0, aging: 0, stale_31_60: 0, stale_61_90: 0, stale_90_plus: 0, missing: 0 }
-    ),
-    [computerAssets]
-  );
   const totalPurchase = scopedAssets.reduce((total, asset) => total + moneyValue(asset.purchasePrice), 0);
   const totalCurrent = scopedAssets.reduce(
     (total, asset) => total + assetCurrentValue(asset, depreciationPeriodMonths, defaultResidualRate),
@@ -5695,10 +5782,10 @@ const AnalysisSummaryWorkspace = ({ onOpenTab }: AnalysisSummaryWorkspaceProps) 
     {
       key: "collection",
       title: "恢复过期采集",
-      count: staleCollectionCount + missingCollectionCount,
-      meta: `超过 30 天 ${staleCollectionCount} 台`,
-      description: `31-60 天 ${collectionAgeBandCounts.stale_31_60}，61-90 天 ${collectionAgeBandCounts.stale_61_90}，90+ ${collectionAgeBandCounts.stale_90_plus}，未接入 ${missingCollectionCount}。`,
-      tone: "warning",
+      count: collectionWarningIssueCount + collectionDangerIssueCount + unconnectedCollectionIssueCount,
+      meta: `180-269 天 ${collectionWarningIssueCount} 台 · 270+ 天 ${collectionDangerIssueCount} 台`,
+      description: `未接入 ${unconnectedCollectionIssueCount} 台；180 天内仅展示采集新鲜度，不生成待处理提醒。`,
+      tone: collectionDangerIssueCount ? "danger" : "warning",
       tab: "hardware" as const,
       focus: { hardwareSection: "issues" as const, hardwareIssueGroup: "采集状态" },
     },
@@ -6714,10 +6801,138 @@ const BackupRestoreModal = ({ open, onClose, onImported }: BackupRestoreModalPro
   );
 };
 
+const reconciliationStatus = (status: DeviceIdentityReconciliationItem["status"]) => {
+  const labels = {
+    ready: { color: "green", label: "可写入" },
+    already: { color: "blue", label: "已统一" },
+    collision: { color: "red", label: "需人工核查" },
+    insufficient: { color: "orange", label: "采集信息不足" },
+  } as const;
+  return labels[status];
+};
+
+const reconciliationReason = (reason: string) => {
+  const labels: Record<string, string> = {
+    missing_baseboard_serial: "缺少有效的主板序列号",
+    insufficient_board_signals: "缺少主板厂商/型号或硬件 UUID",
+    same_device_uuid_in_multiple_assets: "多个资产算出同一设备 UUID，不自动合并",
+    device_uuid_owned_by_another_asset: "该设备 UUID 已属于另一资产，不自动覆盖",
+    already_reconciled: "已写入当前设备 UUID",
+  };
+  return labels[reason] || reason || "-";
+};
+
+const DeviceIdentityReconciliationModal = ({
+  open,
+  onClose,
+  onApplied,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onApplied: () => void;
+}) => {
+  const [confirmed, setConfirmed] = useState(false);
+  const [page, setPage] = useState(1);
+  const queryClient = useQueryClient();
+  const reconciliationQuery = useQuery(
+    ["v3-device-identity-reconciliation", page],
+    () => getDeviceIdentityReconciliation(page),
+    { enabled: open }
+  );
+  const applyMutation = useMutation(applyDeviceIdentityReconciliation, {
+    onSuccess: (result) => {
+      message.success(`已写入 ${result.written} 台设备的统一 UUID`);
+      setConfirmed(false);
+      queryClient.invalidateQueries(["v3-device-identity-reconciliation"]);
+      onApplied();
+    },
+  });
+  const summary = reconciliationQuery.data?.summary;
+
+  return (
+    <Modal
+      title="设备身份梳理"
+      open={open}
+      width={1060}
+      onCancel={onClose}
+      footer={(
+        <Space>
+          <Button onClick={onClose}>关闭</Button>
+          <Button
+            type="primary"
+            loading={applyMutation.isLoading}
+            disabled={!confirmed || !summary?.ready}
+            onClick={() => applyMutation.mutate()}
+          >
+            确认写入 {summary?.ready || 0} 台
+          </Button>
+        </Space>
+      )}
+    >
+      <Space direction="vertical" size={14} style={{ width: "100%" }}>
+        <Alert
+          type="info"
+          showIcon
+          message="主板决定设备身份；更换主板即视为新电脑。"
+          description="系统从最新采集快照重新计算 device_uuid_v1，只写入唯一、无冲突的结果；不会删除旧标识，也不会自动合并、覆盖或删除资产。"
+        />
+        <Space wrap>
+          <Tag>已扫描 {summary?.auditedAssets ?? "-"} 台</Tag>
+          <Tag color="green">可写入 {summary?.ready ?? "-"}</Tag>
+          <Tag color="blue">已统一 {summary?.already ?? "-"}</Tag>
+          <Tag color="red">需核查 {summary?.collisions ?? "-"}</Tag>
+          <Tag color="orange">信息不足 {summary?.insufficient ?? "-"}</Tag>
+        </Space>
+        <Table<DeviceIdentityReconciliationItem>
+          rowKey="assetUuid"
+          size="small"
+          loading={reconciliationQuery.isLoading || reconciliationQuery.isFetching}
+          dataSource={reconciliationQuery.data?.items || []}
+          pagination={{
+            current: page,
+            pageSize: reconciliationQuery.data?.pagination.pageSize || 50,
+            total: reconciliationQuery.data?.pagination.totalItems || 0,
+            showSizeChanger: false,
+            onChange: setPage,
+          }}
+          scroll={{ x: 920, y: 360 }}
+          columns={[
+            {
+              title: "结果",
+              width: 130,
+              render: (_, item) => {
+                const status = reconciliationStatus(item.status);
+                return <Tag color={status.color}>{status.label}</Tag>;
+              },
+            },
+            {
+              title: "资产",
+              width: 210,
+              render: (_, item) => (
+                <Space direction="vertical" size={1}>
+                  <Text strong>{item.assetNumber || item.name || item.assetUuid}</Text>
+                  <Text type="secondary">{item.department || "未分配部门"}</Text>
+                </Space>
+              ),
+            },
+            { title: "新的设备 UUID", dataIndex: "deviceUuid", width: 300, render: (value: string) => value || "-" },
+            { title: "说明", width: 240, render: (_, item) => reconciliationReason(item.reason) },
+          ]}
+        />
+        <Checkbox checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)}>
+          我已导出当前 JSON 备份，并确认只写入可唯一确定的设备 UUID
+        </Checkbox>
+      </Space>
+    </Modal>
+  );
+};
+
 const DataToolsWorkspace = () => {
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [backupImportModalOpen, setBackupImportModalOpen] = useState(false);
+
+  const [deviceIdentityReconciliationOpen, setDeviceIdentityReconciliationOpen] = useState(false);
   const [backupLoading, setBackupLoading] = useState(false);
   const [backupSections, setBackupSections] = useState<BackupExportSection[]>(DEFAULT_BACKUP_EXPORT_SECTIONS);
   const queryClient = useQueryClient();
@@ -6760,6 +6975,13 @@ const DataToolsWorkspace = () => {
         </div>
       </div>
       <div className="npcink-v3-data-tools">
+        <div className="npcink-v3-tool-panel">
+		  <div>
+			<Title level={4}>设备身份梳理</Title>
+			<Text type="secondary">按主板指纹重算统一设备 UUID；先预览，仅把无冲突结果写入身份表，不合并资产。</Text>
+		  </div>
+		  <Button type="primary" onClick={() => setDeviceIdentityReconciliationOpen(true)}>预览并梳理</Button>
+		</div>
         <div className="npcink-v3-tool-panel">
           <div>
             <Title level={4}>资产表格导入</Title>
@@ -6838,6 +7060,16 @@ const DataToolsWorkspace = () => {
           queryClient.invalidateQueries(["v3-events"]);
           queryClient.invalidateQueries(["v3-observations"]);
           queryClient.invalidateQueries(["v3-settings"]);
+        }}
+      />
+      <DeviceIdentityReconciliationModal
+        open={deviceIdentityReconciliationOpen}
+        onClose={() => setDeviceIdentityReconciliationOpen(false)}
+        onApplied={() => {
+          queryClient.invalidateQueries(["v3-assets"]);
+          queryClient.invalidateQueries(["v3-assets-import-index"]);
+          queryClient.invalidateQueries(["v3-analysis-identity-audit"]);
+          queryClient.invalidateQueries(["v3-observations"]);
         }}
       />
     </div>

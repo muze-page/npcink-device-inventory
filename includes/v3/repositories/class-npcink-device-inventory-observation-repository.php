@@ -313,6 +313,38 @@ class Npcink_Device_Inventory_Observation_Repository
 		return $result;
 	}
 
+	public function list_latest_identity_rows()
+	{
+		global $wpdb;
+		$cache_key = $this->build_cache_key(
+			'latest-identity-rows',
+			array('version' => $this->get_list_cache_version())
+		);
+		$cached = wp_cache_get($cache_key, self::CACHE_GROUP);
+		if ($cached !== false) {
+			return $cached;
+		}
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Read-only audit uses each non-deleted asset's latest plugin-owned observation and is cached by repository version.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT a.id AS asset_id, a.uuid AS asset_uuid, a.asset_number, a.name AS asset_name, a.department, a.owner_name, a.created_at AS asset_created_at, o.source, o.schema_version, o.observed_at, o.raw_json, o.hardware_json
+				FROM %i a
+				INNER JOIN %i o ON o.id = a.latest_observation_id
+				WHERE a.status <> %s
+				ORDER BY o.observed_at DESC, o.id DESC',
+				Npcink_Device_Inventory_V3_Tables::assets(),
+				Npcink_Device_Inventory_V3_Tables::observations(),
+				'deleted'
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$result = $rows ?: array();
+		wp_cache_set($cache_key, $result, self::CACHE_GROUP, self::CACHE_TTL);
+		return $result;
+	}
+
 	public function daily_counts_between($start_at, $end_at)
 	{
 		global $wpdb;

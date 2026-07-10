@@ -124,6 +124,73 @@ export interface AnalysisTrends {
   }>;
 }
 
+export interface IdentityAuditAsset {
+  uuid: string;
+  assetNumber: string;
+  name: string;
+  department: string;
+  ownerName: string;
+  primaryMac: string;
+  stableDeviceIdV3: string;
+  legacyDeviceIdV1: string;
+  observedAt: string;
+  source: string;
+  schemaVersion: number;
+}
+
+export interface IdentityAuditGroup {
+  groupKey: string;
+  hardwareUuid: string;
+  classification: "uuid_mac_conflict" | "same_composite_identity";
+  assetCount: number;
+  distinctMacCount: number;
+  assets: IdentityAuditAsset[];
+}
+
+export interface IdentityAudit {
+  summary: {
+    auditedAssets: number;
+    uuidMacConflictGroups: number;
+    sameCompositeGroups: number;
+    insufficientIdentityAssets: number;
+  };
+  groups: IdentityAuditGroup[];
+  pagination: Pagination;
+}
+
+export type DeviceIdentityReconciliationStatus = "ready" | "already" | "collision" | "insufficient";
+
+export interface DeviceIdentityReconciliationItem {
+  assetId: number;
+  assetUuid: string;
+  assetNumber: string;
+  name: string;
+  department: string;
+  observedAt: string;
+  deviceUuid: string;
+  status: DeviceIdentityReconciliationStatus;
+  reason: string;
+}
+
+export interface DeviceIdentityReconciliation {
+  summary: {
+    auditedAssets: number;
+    ready: number;
+    already: number;
+    collisions: number;
+    insufficient: number;
+  };
+  items: DeviceIdentityReconciliationItem[];
+  pagination: Pagination;
+}
+
+export interface DeviceIdentityReconciliationApplyResult {
+  written: number;
+  already: number;
+  collisions: number;
+  insufficient: number;
+}
+
 export interface Pagination {
   page: number;
   pageSize: number;

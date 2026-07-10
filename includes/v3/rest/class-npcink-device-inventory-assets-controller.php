@@ -11,23 +11,56 @@ class Npcink_Device_Inventory_Assets_Controller
 	private $observations;
 	private $events;
 	private $event_service;
+	private $identity_audit;
+	private $identity_reconciliation;
 
 	public function __construct(
 		Npcink_Device_Inventory_Asset_Repository $assets,
 		Npcink_Device_Inventory_Identity_Repository $identities,
 		Npcink_Device_Inventory_Observation_Repository $observations,
 		Npcink_Device_Inventory_Event_Repository $events,
-		Npcink_Device_Inventory_Event_Service $event_service
+		Npcink_Device_Inventory_Event_Service $event_service,
+		?Npcink_Device_Inventory_Identity_Audit_Service $identity_audit = null,
+		?Npcink_Device_Inventory_Device_Identity_Reconciliation_Service $identity_reconciliation = null
 	) {
 		$this->assets = $assets;
 		$this->identities = $identities;
 		$this->observations = $observations;
 		$this->events = $events;
 		$this->event_service = $event_service;
+		$this->identity_audit = $identity_audit;
+		$this->identity_reconciliation = $identity_reconciliation;
 	}
 
 	public function register_routes()
 	{
+		register_rest_route(
+			'npcink-device-inventory/v1',
+			'/analysis/identity-audit',
+			array(
+				'methods' => WP_REST_Server::READABLE,
+				'callback' => array($this, 'get_identity_audit'),
+				'permission_callback' => array($this, 'admin_permissions_check'),
+			)
+		);
+
+		register_rest_route(
+			'npcink-device-inventory/v1',
+			'/analysis/device-identity-reconciliation',
+			array(
+				array(
+					'methods' => WP_REST_Server::READABLE,
+					'callback' => array($this, 'get_device_identity_reconciliation'),
+					'permission_callback' => array($this, 'admin_permissions_check'),
+				),
+				array(
+					'methods' => WP_REST_Server::CREATABLE,
+					'callback' => array($this, 'apply_device_identity_reconciliation'),
+					'permission_callback' => array($this, 'admin_permissions_check'),
+				),
+			)
+		);
+
 		register_rest_route(
 			'npcink-device-inventory/v1',
 			'/assets',
@@ -466,6 +499,59 @@ class Npcink_Device_Inventory_Assets_Controller
 				),
 			)
 		);
+	}
+
+	public function get_identity_audit($request)
+	{
+		if (!$this->identity_audit) {
+			return Npcink_Device_Inventory_V3_Response::error('identity_audit_unavailable', 'Identity audit is unavailable.', 503);
+		}
+		$result = $this->identity_audit->report($request->get_param('page') ?: 1, $request->get_param('pageSize') ?: 20);
+		return rest_ensure_response(
+			array(
+				'data' => array(
+					'summary' => $result['summary'],
+					'groups' => $result['groups'],
+				),
+				'pagination' => array(
+					'page' => $result['page'],
+					'pageSize' => $result['pageSize'],
+					'totalItems' => $result['total'],
+					'totalPages' => max(1, intval(ceil($result['total'] / $result['pageSize']))),
+				),
+			)
+		);
+	}
+
+	public function get_device_identity_reconciliation($request)
+	{
+		if (!$this->identity_reconciliation) {
+			return Npcink_Device_Inventory_V3_Response::error('identity_reconciliation_unavailable', 'Device identity reconciliation is unavailable.', 503);
+		}
+		$result = $this->identity_reconciliation->preview($request->get_param('page') ?: 1, $request->get_param('pageSize') ?: 50);
+		return rest_ensure_response(
+			array(
+				'data' => array('summary' => $result['summary'], 'items' => $result['items']),
+				'pagination' => array(
+					'page' => $result['page'],
+					'pageSize' => $result['pageSize'],
+					'totalItems' => $result['total'],
+					'totalPages' => max(1, intval(ceil($result['total'] / $result['pageSize']))),
+				),
+			)
+		);
+	}
+
+	public function apply_device_identity_reconciliation($request)
+	{
+		if (!$this->identity_reconciliation) {
+			return Npcink_Device_Inventory_V3_Response::error('identity_reconciliation_unavailable', 'Device identity reconciliation is unavailable.', 503);
+		}
+		$params = $request->get_json_params();
+		if (!is_array($params) || empty($params['confirm'])) {
+			return Npcink_Device_Inventory_V3_Response::error('confirmation_required', 'Explicit confirmation is required before writing device identities.', 422);
+		}
+		return rest_ensure_response(array('data' => $this->identity_reconciliation->apply()));
 	}
 
 	public function get_all_observations($request)

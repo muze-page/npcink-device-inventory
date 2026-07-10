@@ -58,6 +58,41 @@ class Npcink_Device_Inventory_Identity_Repository
 		return null;
 	}
 
+	public function find_asset_id_by_identity($type, $value)
+	{
+		return $this->find_asset_id_by_identities(
+			array(
+				array(
+					'type' => $type,
+					'value' => $value,
+				),
+			)
+		);
+	}
+
+	public function find_asset_ids_by_identity_values($type, $values)
+	{
+		global $wpdb;
+		$type = sanitize_key($type);
+		$values = array_values(array_unique(array_filter(array_map('sanitize_text_field', is_array($values) ? $values : array()))));
+		if ($type === '' || empty($values)) {
+			return array();
+		}
+
+		$placeholders = implode(', ', array_fill(0, count($values), '%s'));
+		$sql = "SELECT identity_value, asset_id FROM %i WHERE identity_type = %s AND identity_value IN ({$placeholders})";
+		$args = array_merge(array($sql, Npcink_Device_Inventory_V3_Tables::identities(), $type), $values);
+		$prepared = call_user_func_array(array($wpdb, 'prepare'), $args);
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Reconciliation performs one bounded lookup for explicitly supplied identity values.
+		$rows = $wpdb->get_results($prepared, ARRAY_A);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$result = array();
+		foreach ($rows ?: array() as $row) {
+			$result[(string) $row['identity_value']] = intval($row['asset_id']);
+		}
+		return $result;
+	}
+
 	public function list_for_asset($asset_id)
 	{
 		global $wpdb;

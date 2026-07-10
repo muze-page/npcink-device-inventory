@@ -92,6 +92,9 @@ fn build_observation_v3(upload_note: &str, data: &Value) -> Result<Value> {
     let stable_id = crate::collector::stable_device_id_v2(data).context(
         "missing stable device identity; check hardware UUID, serial number, or MAC data",
     )?;
+    let stable_id_v3 = crate::collector::stable_device_id_v3(data);
+    let legacy_id_v1 = crate::collector::legacy_device_id_v1(data);
+    let device_uuid_v1 = crate::collector::device_uuid_v1(data);
     let collector = object_at(data, "/collector");
     let collected_at = string_at(data, "/collector/collected_at");
     let system = value_at(data, "/system");
@@ -106,6 +109,8 @@ fn build_observation_v3(upload_note: &str, data: &Value) -> Result<Value> {
         "_npcink_device": {
             "schema_version": 3,
             "stable_device_id_v2": stable_id,
+            "stable_device_id_v3": stable_id_v3,
+            "device_uuid_v1": device_uuid_v1,
             "collector": {
                 "name": collector_string(&collector, "name", env!("CARGO_PKG_NAME")),
                 "version": collector_string(&collector, "version", env!("CARGO_PKG_VERSION")),
@@ -117,6 +122,9 @@ fn build_observation_v3(upload_note: &str, data: &Value) -> Result<Value> {
         "asset": {
             "identity": {
                 "stable_device_id_v2": stable_id,
+                "stable_device_id_v3": stable_id_v3,
+                "legacy_device_id_v1": legacy_id_v1,
+                "device_uuid_v1": device_uuid_v1,
                 "hardware_uuid": string_at(data, "/uuid/hardware"),
                 "primary_mac": primary_mac,
                 "macs": macs,

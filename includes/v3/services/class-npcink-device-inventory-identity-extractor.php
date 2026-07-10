@@ -21,9 +21,14 @@ class Npcink_Device_Inventory_Identity_Extractor
 		$baseboard = $this->array_path($hardware, array('baseboard'));
 		$bios = $this->array_path($hardware, array('bios'));
 
-		$this->append($identities, 'stable_device_id_v2', isset($meta['stable_device_id_v2']) ? $meta['stable_device_id_v2'] : '', 100);
-		$this->append($identities, 'stable_device_id_v2', isset($identity['stable_device_id_v2']) ? $identity['stable_device_id_v2'] : '', 100);
-		$this->append($identities, 'hardware_uuid', isset($identity['hardware_uuid']) ? $identity['hardware_uuid'] : '', 95);
+		$this->append($identities, 'device_uuid_v1', isset($meta['device_uuid_v1']) ? $meta['device_uuid_v1'] : '', 100);
+		$this->append($identities, 'device_uuid_v1', isset($identity['device_uuid_v1']) ? $identity['device_uuid_v1'] : '', 100);
+		$this->append($identities, 'stable_device_id_v3', isset($meta['stable_device_id_v3']) ? $meta['stable_device_id_v3'] : '', 100);
+		$this->append($identities, 'stable_device_id_v3', isset($identity['stable_device_id_v3']) ? $identity['stable_device_id_v3'] : '', 100);
+		$this->append($identities, 'stable_device_id_v2', isset($meta['stable_device_id_v2']) ? $meta['stable_device_id_v2'] : '', 80);
+		$this->append($identities, 'stable_device_id_v2', isset($identity['stable_device_id_v2']) ? $identity['stable_device_id_v2'] : '', 80);
+		$this->append($identities, 'legacy_device_id_v1', isset($identity['legacy_device_id_v1']) ? $identity['legacy_device_id_v1'] : '', 70);
+		$this->append($identities, 'hardware_uuid', isset($identity['hardware_uuid']) ? $identity['hardware_uuid'] : '', 40);
 		$this->append($identities, 'system_uuid', isset($system['uuid']) ? $system['uuid'] : '', 90);
 		$this->append($identities, 'system_serial', isset($system['serial']) ? $system['serial'] : '', 85);
 		$this->append($identities, 'baseboard_serial', isset($baseboard['serial']) ? $baseboard['serial'] : '', 80);

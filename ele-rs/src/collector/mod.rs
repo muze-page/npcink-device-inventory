@@ -644,6 +644,111 @@ pub fn stable_device_id_v2(data: &Value) -> Option<String> {
     None
 }
 
+/// Versioned composite identity for the v3 asset registry. Unlike the legacy
+/// single-signal rule, a usable physical MAC is required to prevent a reused
+/// SMBIOS UUID from merging unrelated machines.
+pub fn stable_device_id_v3(data: &Value) -> Option<String> {
+    let mac = data
+        .pointer("/uuid/macs")
+        .and_then(Value::as_array)
+        .and_then(|items| {
+            items
+                .iter()
+                .filter_map(Value::as_str)
+                .find_map(normalize_identity_mac)
+        })?;
+    let candidates = [
+        (
+            "hardware_uuid",
+            data.pointer("/uuid/hardware").and_then(Value::as_str),
+        ),
+        (
+            "system_uuid",
+            data.pointer("/system/uuid").and_then(Value::as_str),
+        ),
+        (
+            "system_serial",
+            data.pointer("/system/serial").and_then(Value::as_str),
+        ),
+        (
+            "baseboard_serial",
+            data.pointer("/baseboard/serial").and_then(Value::as_str),
+        ),
+        (
+            "bios_serial",
+            data.pointer("/bios/serial").and_then(Value::as_str),
+        ),
+    ];
+    for (kind, value) in candidates {
+        if let Some(value) = value.and_then(normalize_identity_value) {
+            let source = format!("{kind}:{value}|primary_mac:{mac}");
+            let digest = Sha256::digest(source.as_bytes());
+            let full = format!("{:x}", digest);
+            return Some(format!("v3-{}", &full[..29]));
+        }
+    }
+    None
+}
+
+/// Canonical business identity: this represents the motherboard-backed device.
+/// Replacing the motherboard deliberately changes this value and creates a new
+/// managed computer; replaceable peripherals do not participate.
+pub fn device_uuid_v1(data: &Value) -> Option<String> {
+    let baseboard = data.pointer("/baseboard")?.as_object()?;
+    let serial = baseboard
+        .get("serial")
+        .or_else(|| baseboard.get("serialNumber"))
+        .and_then(Value::as_str)
+        .and_then(normalize_device_identity_value)?;
+    let manufacturer = baseboard
+        .get("manufacturer")
+        .and_then(Value::as_str)
+        .and_then(normalize_device_identity_value);
+    let model = baseboard
+        .get("product")
+        .or_else(|| baseboard.get("model"))
+        .and_then(Value::as_str)
+        .and_then(normalize_device_identity_value);
+    let hardware_uuid = data
+        .pointer("/uuid/hardware")
+        .and_then(Value::as_str)
+        .or_else(|| data.pointer("/system/uuid").and_then(Value::as_str))
+        .and_then(normalize_device_identity_value);
+    if hardware_uuid.is_none() && (manufacturer.is_none() || model.is_none()) {
+        return None;
+    }
+    let source = format!(
+        "baseboard_manufacturer={}|baseboard_model={}|baseboard_serial={serial}|hardware_uuid={}",
+        manufacturer.unwrap_or_default(),
+        model.unwrap_or_default(),
+        hardware_uuid.unwrap_or_default()
+    );
+    let digest = Sha256::digest(source.as_bytes());
+    let full = format!("{:x}", digest);
+    Some(format!("device-v1-{}", &full[..29]))
+}
+
+/// Preserves the V1 UUID calculation as a migration-only compatibility signal.
+pub fn legacy_device_id_v1(data: &Value) -> Option<String> {
+    let hardware_uuid = data
+        .pointer("/uuid/hardware")
+        .and_then(Value::as_str)?
+        .trim();
+    let primary_mac = data
+        .pointer("/uuid/macs")
+        .and_then(Value::as_array)
+        .and_then(|items| items.first())
+        .and_then(Value::as_str)?
+        .trim();
+    if hardware_uuid.is_empty() || primary_mac.is_empty() {
+        return None;
+    }
+    Some(format!(
+        "{:x}",
+        md5::compute(format!("{hardware_uuid}{primary_mac}"))
+    ))
+}
+
 fn stable_id_from_source(kind: &str, value: &str) -> String {
     let source = format!("{kind}:{value}");
     let digest = Sha256::digest(source.as_bytes());
@@ -673,6 +778,38 @@ fn normalize_identity_value(value: &str) -> Option<String> {
         "system serial number",
     ];
     if invalid.contains(&value.as_str()) {
+        return None;
+    }
+    Some(value)
+}
+
+/// Normalization for the cross-end `device_uuid_v1` contract. This deliberately
+/// collapses whitespace so Windows, macOS and the PHP ingest service hash the
+/// same motherboard facts.
+fn normalize_device_identity_value(value: &str) -> Option<String> {
+    let value = value
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .to_lowercase();
+    if value.is_empty() {
+        return None;
+    }
+    let invalid = [
+        "default string",
+        "to be filled by o.e.m.",
+        "to be filled by oem",
+        "none",
+        "null",
+        "not specified",
+        "not available",
+        "not present",
+        "unknown",
+        "system serial number",
+        "00000000-0000-0000-0000-000000000000",
+        "03000200-0400-0500-0006-000700080009",
+    ];
+    if invalid.contains(&value.as_str()) || value.chars().all(|character| character == '0') {
         return None;
     }
     Some(value)
@@ -923,4 +1060,57 @@ fn is_virtual_iface(iface: &str) -> bool {
     ["virtual", "vmware", "vbox", "docker"]
         .iter()
         .any(|needle| lower.contains(needle))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{device_uuid_v1, legacy_device_id_v1, stable_device_id_v2, stable_device_id_v3};
+    use serde_json::json;
+
+    #[test]
+    fn v3_identity_keeps_shared_uuid_devices_separate_by_mac() {
+        let first = json!({"uuid": {"hardware": "HW-SHARED", "macs": ["aa:bb:cc:dd:ee:01"]}});
+        let second = json!({"uuid": {"hardware": "HW-SHARED", "macs": ["aa:bb:cc:dd:ee:02"]}});
+        assert_eq!(stable_device_id_v2(&first), stable_device_id_v2(&second));
+        assert_ne!(stable_device_id_v3(&first), stable_device_id_v3(&second));
+        assert_ne!(legacy_device_id_v1(&first), legacy_device_id_v1(&second));
+    }
+
+    #[test]
+    fn v3_identity_requires_a_usable_mac() {
+        let data = json!({"uuid": {"hardware": "HW-ONLY", "macs": ["00:00:00:00:00:00"]}});
+        assert_eq!(stable_device_id_v3(&data), None);
+    }
+
+    #[test]
+    fn device_uuid_ignores_replaceable_hardware_but_changes_with_the_board() {
+        let first = json!({
+            "uuid": {"hardware": "HW-ONE"},
+            "baseboard": {"manufacturer": "Npcink", "product": "Board A", "serial": "BOARD-ONE"},
+            "diskLayout": [{"serialNum": "DISK-ONE"}],
+        });
+        let replaced_disk = json!({
+            "uuid": {"hardware": "HW-ONE"},
+            "baseboard": {"manufacturer": "Npcink", "product": "Board A", "serial": "BOARD-ONE"},
+            "diskLayout": [{"serialNum": "DISK-TWO"}],
+        });
+        let replaced_board = json!({
+            "uuid": {"hardware": "HW-TWO"},
+            "baseboard": {"manufacturer": "Npcink", "product": "Board B", "serial": "BOARD-TWO"},
+        });
+        assert_eq!(device_uuid_v1(&first), device_uuid_v1(&replaced_disk));
+        assert_ne!(device_uuid_v1(&first), device_uuid_v1(&replaced_board));
+    }
+
+    #[test]
+    fn device_uuid_matches_the_cross_end_contract_fixture() {
+        let data = json!({
+            "uuid": {"hardware": " BOARD-UUID "},
+            "baseboard": {"manufacturer": " Example  Inc ", "product": "Board Pro", "serial": "BOARD-001"},
+        });
+        assert_eq!(
+            device_uuid_v1(&data).as_deref(),
+            Some("device-v1-8c8a3dad23be3fc4e958ca4c94cea")
+        );
+    }
 }

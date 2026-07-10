@@ -8,10 +8,18 @@ export interface HardwareIssue {
   type: string;
   asset: Asset;
   message: string;
+  /** Other assets in the same duplicate group, excluding the current asset. */
+  relatedAssets?: Asset[];
+  /** Stable key shared by every row in a duplicate group. */
+  duplicateGroupKey?: string;
 }
 
 export type CollectionFreshness = "fresh" | "aging" | "stale" | "missing";
 export type CollectionAgeBand = "fresh" | "aging" | "stale_31_60" | "stale_61_90" | "stale_90_plus" | "missing";
+export type CollectionOverdueLevel = "warning" | "error" | null;
+
+export const COLLECTION_WARNING_DAYS = 180;
+export const COLLECTION_DANGER_DAYS = 270;
 
 export const toNumber = (value: unknown) => {
   const number = typeof value === "number" ? value : Number(value || 0);
@@ -168,6 +176,31 @@ const hardwareBoardSerial = (asset: Asset) => {
   return firstText(baseboard.serial, baseboard.serialNumber);
 };
 
+const hardwareStrongIdentityKeys = (asset: Asset) => {
+  const { hardware } = assetHardwareContext(asset);
+  const uuid = getRecord(hardware.uuid);
+  const system = getRecord(hardware.system);
+  const net = Array.isArray(hardware.net) ? getArray(hardware.net) : [getRecord(hardware.net)];
+  const macs = [
+    ...(Array.isArray(uuid.macs) ? uuid.macs.map(String) : []),
+    ...net.map((item) => firstText(item.mac, item.macAddress)),
+  ];
+  const keys = new Set<string>();
+  [firstText(uuid.hardware), firstText(system.uuid)].forEach((value) => {
+    const normalized = normalizeDuplicateValue(value);
+    if (isStrongIdentityCandidate(normalized, "hardware_uuid")) {
+      keys.add(`hardware_uuid:${normalized}`);
+    }
+  });
+  macs.forEach((value) => {
+    const normalized = value.trim().toLowerCase().replace(/[^0-9a-f]/g, "");
+    if (isStrongIdentityCandidate(normalized, "mac_address")) {
+      keys.add(`mac_address:${normalized}`);
+    }
+  });
+  return Array.from(keys);
+};
+
 export const observationSnapshot = (observation?: AssetObservation) => {
   const summary = getRecord(observation?.summary);
   const hardware = getRecord(observation?.hardware);
@@ -268,6 +301,18 @@ export const collectionFreshness = (asset: Asset, now = Date.now()): CollectionF
   return "stale";
 };
 
+/**
+ * The collection-health dashboard can still show short-term freshness, but it
+ * becomes a remediation task only after the agreed operational thresholds.
+ */
+export const collectionOverdueLevel = (asset: Asset, now = Date.now()): CollectionOverdueLevel => {
+  const days = collectionAgeDays(asset, now);
+  if (days === null || days < COLLECTION_WARNING_DAYS) {
+    return null;
+  }
+  return days >= COLLECTION_DANGER_DAYS ? "error" : "warning";
+};
+
 const ignoredAuditFields = (asset: Asset) => {
   const audit = getRecord(getRecord(asset.metadata).audit);
   return Array.isArray(audit.ignoredFields) ? new Set(audit.ignoredFields.map(String)) : new Set<string>();
@@ -297,6 +342,13 @@ const isDuplicateCandidate = (value: string, kind: "number" | "ip" | "board") =>
   return true;
 };
 
+const isStrongIdentityCandidate = (value: string, kind: "hardware_uuid" | "mac_address") => {
+  if (!value || PLACEHOLDER_DUPLICATE_VALUES.has(value) || /^0+$/.test(value)) {
+    return false;
+  }
+  return kind !== "mac_address" || !/^f+$/.test(value);
+};
+
 const duplicateMap = (
   assets: Asset[],
   kind: "number" | "ip" | "board",
@@ -314,7 +366,63 @@ const duplicateMap = (
   return result;
 };
 
+const strongIdentityMap = (assets: Asset[]) => {
+  const result = new Map<string, Asset[]>();
+  assets.forEach((asset) => {
+    hardwareStrongIdentityKeys(asset).forEach((key) => {
+      result.set(key, [...(result.get(key) || []), asset]);
+    });
+  });
+  return result;
+};
+
+const strongIdentityRelations = (assets: Asset[], identityMap: Map<string, Asset[]>) => {
+  const relations = new Map<string, Map<string, Set<string>>>();
+  assets.forEach((asset) => relations.set(asset.uuid, new Map()));
+  identityMap.forEach((members, identityKey) => {
+    if (members.length < 2) {
+      return;
+    }
+    members.forEach((asset) => {
+      members.forEach((candidate) => {
+        if (candidate.uuid === asset.uuid) {
+          return;
+        }
+        const candidateKeys = relations.get(asset.uuid)?.get(candidate.uuid) || new Set<string>();
+        candidateKeys.add(identityKey);
+        relations.get(asset.uuid)?.set(candidate.uuid, candidateKeys);
+      });
+    });
+  });
+  return relations;
+};
+
+const strongIdentityGroupKey = (assetUuid: string, relations: Map<string, Map<string, Set<string>>>) => {
+  const visited = new Set<string>();
+  const pending = [assetUuid];
+  while (pending.length) {
+    const current = pending.pop();
+    if (!current || visited.has(current)) {
+      continue;
+    }
+    visited.add(current);
+    relations.get(current)?.forEach((_, candidateUuid) => pending.push(candidateUuid));
+  }
+  return `identity:${Array.from(visited).sort().join(",")}`;
+};
+
+const strongIdentityEvidence = (keys: Set<string>) => {
+  const labels = new Set<string>();
+  keys.forEach((key) => labels.add(key.startsWith("hardware_uuid:") ? "硬件 UUID" : "主 MAC 地址"));
+  return Array.from(labels).join("、");
+};
+
 const missingHardwareValue = (value: string) => !value || value.trim() === "-" || /^暂无/.test(value.trim());
+
+const assetReference = (asset: Asset) => asset.assetNumber || asset.name || asset.uuid;
+
+const relatedDuplicateAssets = (assets: Asset[] | undefined, currentAsset: Asset) =>
+  (assets || []).filter((candidate) => candidate.uuid !== currentAsset.uuid);
 
 export const issueGroup = (type: string) => {
   if (type.includes("重复")) {
@@ -335,10 +443,11 @@ export const issueGroup = (type: string) => {
   return "其他";
 };
 
-export const detectHardwareIssues = (assets: Asset[]) => {
+export const detectHardwareIssues = (assets: Asset[], now = Date.now()) => {
   const byNumber = duplicateMap(assets, "number", (asset) => asset.assetNumber);
   const byIp = duplicateMap(assets, "ip", (asset) => assetHardwareContext(asset).extracted.primaryIp);
-  const byBoard = duplicateMap(assets, "board", hardwareBoardSerial);
+  const identities = strongIdentityMap(assets);
+  const identityRelations = strongIdentityRelations(assets, identities);
   const issues: HardwareIssue[] = [];
 
   assets.forEach((asset) => {
@@ -348,35 +457,57 @@ export const detectHardwareIssues = (assets: Asset[]) => {
     const extracted = context.extracted;
     const numberKey = normalizeDuplicateValue(asset.assetNumber);
     if (isDuplicateCandidate(asset.assetNumber, "number") && (byNumber.get(numberKey)?.length || 0) > 1) {
+      const relatedAssets = relatedDuplicateAssets(byNumber.get(numberKey), asset);
       issues.push({
         key: `${asset.uuid}-duplicate-number`,
         level: "error",
         type: "重复编号",
         asset,
-        message: `${asset.assetNumber} 已关联 ${byNumber.get(numberKey)?.length || 0} 条资产`,
+        relatedAssets,
+        duplicateGroupKey: `number:${numberKey}`,
+        message: `当前资产与 ${relatedAssets.map(assetReference).join("、")} 的资产编号均为 ${asset.assetNumber}`,
       });
     }
     const ip = context.extracted.primaryIp;
     const ipKey = normalizeDuplicateValue(ip);
     if (isDuplicateCandidate(ip, "ip") && !ignored.has("primary_ip") && (byIp.get(ipKey)?.length || 0) > 1) {
+      const relatedAssets = relatedDuplicateAssets(byIp.get(ipKey), asset);
       issues.push({
         key: `${asset.uuid}-duplicate-ip`,
         level: "warning",
         type: "重复 IP",
         asset,
-        message: `${ip} 同时出现在 ${byIp.get(ipKey)?.length || 0} 条资产`,
+        relatedAssets,
+        duplicateGroupKey: `ip:${ipKey}`,
+        message: `当前资产与 ${relatedAssets.map(assetReference).join("、")} 的主 IP 均为 ${ip}`,
       });
     }
-    const boardKey = hardwareBoardSerial(asset);
-    const boardDuplicateKey = normalizeDuplicateValue(boardKey);
-    if (isDuplicateCandidate(boardKey, "board") && !ignored.has("baseboard") && (byBoard.get(boardDuplicateKey)?.length || 0) > 1) {
-      issues.push({
-        key: `${asset.uuid}-duplicate-board`,
-        level: "warning",
-        type: "疑似重复设备",
-        asset,
-        message: `${boardKey} 与其他资产重复`,
-      });
+    const identityMatches = identityRelations.get(asset.uuid);
+    if (identityMatches?.size) {
+      const confirmedMatches = Array.from(identityMatches.entries()).filter(([, keys]) =>
+        Array.from(keys).some((key) => key.startsWith("mac_address:"))
+      );
+      const relatedAssets = confirmedMatches
+        .map(([uuid]) => uuid)
+        .map((uuid) => assets.find((candidate) => candidate.uuid === uuid))
+        .filter((candidate): candidate is Asset => Boolean(candidate));
+      if (relatedAssets.length) {
+        const matchedIdentityKeys = new Set<string>();
+        confirmedMatches.forEach(([, keys]) => keys.forEach((key) => matchedIdentityKeys.add(key)));
+        const boardKey = hardwareBoardSerial(asset);
+        const boardAlsoMatches = isDuplicateCandidate(boardKey, "board") && relatedAssets.some(
+          (candidate) => normalizeDuplicateValue(hardwareBoardSerial(candidate)) === normalizeDuplicateValue(boardKey)
+        );
+        issues.push({
+          key: `${asset.uuid}-duplicate-identity`,
+          level: "error",
+          type: "疑似重复设备",
+          asset,
+          relatedAssets,
+          duplicateGroupKey: strongIdentityGroupKey(asset.uuid, identityRelations),
+          message: `当前设备可能与 ${relatedAssets.map(assetReference).join("、")} 重复（${strongIdentityEvidence(matchedIdentityKeys)}相同${boardAlsoMatches ? `；主板序列号 ${boardKey} 也相同` : ""}）`,
+        });
+      }
     }
     if (!asset.department || asset.department === DEFAULT_DEPARTMENT) {
       issues.push({
@@ -440,23 +571,18 @@ export const detectHardwareIssues = (assets: Asset[]) => {
         asset,
         message: `${assetLabel} 目前只有手动硬件信息`,
       });
-    } else if (collectionFreshness(asset) === "stale") {
-      issues.push({
-        key: `${asset.uuid}-stale-observation`,
-        level: "warning",
-        type: "长期未采集",
-        asset,
-        message: latestObservationTime(asset) ? `距上次采集 ${daysSince(latestObservationTime(asset))} 天` : "暂无采集记录",
-      });
-    }
-    if (asset.status === "maintenance") {
-      issues.push({
-        key: `${asset.uuid}-maintenance`,
-        level: "warning",
-        type: "待维护",
-        asset,
-        message: `${assetLabel} 当前处于维护状态`,
-      });
+    } else {
+      const overdueLevel = collectionOverdueLevel(asset, now);
+      const collectionDays = collectionAgeDays(asset, now);
+      if (overdueLevel) {
+        issues.push({
+          key: `${asset.uuid}-stale-observation`,
+          level: overdueLevel,
+          type: "长期未采集",
+          asset,
+          message: `距上次采集 ${collectionDays} 天（${overdueLevel === "error" ? "已达到 270 天高风险阈值" : "已达到 180 天提醒阈值"}）`,
+        });
+      }
     }
   });
 
