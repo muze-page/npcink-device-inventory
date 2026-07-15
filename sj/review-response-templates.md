@@ -51,10 +51,10 @@ README privacy section.
 ## 4. 如果审核询问公开 REST endpoint
 
 ```text
-The public query and upload REST endpoints are not open write/read endpoints.
-They require a client token id, timestamp, nonce, and HMAC signature. Unsigned
-requests return 403. Admin endpoints require a logged-in WordPress user with
-manage_options.
+The public query and upload REST endpoints are not unrestricted endpoints.
+Public query requires the site-specific access code and applies a short-window
+rate limit. Device upload requires a client token id, timestamp, nonce, and HMAC
+signature. Admin endpoints require a logged-in WordPress user with manage_options.
 ```
 
 ## 5. 如果审核询问商标或素材

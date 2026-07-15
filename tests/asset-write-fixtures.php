@@ -1,0 +1,345 @@
+<?php
+
+define('ABSPATH', __DIR__ . '/');
+
+class WP_Error
+{
+	private $code;
+	private $data;
+
+	public function __construct($code, $message = '', $data = array())
+	{
+		$this->code = $code;
+		$this->data = $data;
+	}
+
+	public function get_error_code()
+	{
+		return $this->code;
+	}
+
+	public function get_error_data()
+	{
+		return $this->data;
+	}
+}
+
+class WP_REST_Response
+{
+	private $data;
+
+	public function __construct($data)
+	{
+		$this->data = $data;
+	}
+
+	public function get_data()
+	{
+		return $this->data;
+	}
+}
+
+class Npcink_Asset_Write_Request implements ArrayAccess
+{
+	private $params;
+
+	public function __construct($params)
+	{
+		$this->params = $params;
+	}
+
+	public function get_json_params()
+	{
+		return $this->params;
+	}
+
+	public function get_param($key)
+	{
+		return isset($this->params[$key]) ? $this->params[$key] : null;
+	}
+
+	public function offsetExists($offset): bool
+	{
+		return isset($this->params[$offset]);
+	}
+
+	public function offsetGet($offset): mixed
+	{
+		return isset($this->params[$offset]) ? $this->params[$offset] : null;
+	}
+
+	public function offsetSet($offset, $value): void
+	{
+		$this->params[$offset] = $value;
+	}
+
+	public function offsetUnset($offset): void
+	{
+		unset($this->params[$offset]);
+	}
+}
+
+class Npcink_Asset_Write_Wpdb
+{
+	public $commands = array();
+	public $fail_command = '';
+
+	public function query($query)
+	{
+		$this->commands[] = $query;
+		if ($query === $this->fail_command) {
+			return false;
+		}
+		return true;
+	}
+
+	public function prepare($query, ...$args)
+	{
+		return $query;
+	}
+
+	public function get_col($query)
+	{
+		return array();
+	}
+}
+
+class Npcink_Device_Inventory_V3_Tables
+{
+	const OPTION = 'npcink_device_inventory_v3_options';
+
+	public static function assets()
+	{
+		return 'wp_npcink_assets';
+	}
+
+	public static function normalize_departments_with_default($departments)
+	{
+		return array_values(array_unique(array_merge(array('未分配'), self::normalize_departments($departments))));
+	}
+
+	public static function normalize_departments($departments)
+	{
+		return array_values(array_filter(array_map('trim', is_array($departments) ? $departments : array())));
+	}
+}
+
+class Npcink_Device_Inventory_Asset_Repository
+{
+	public $assets;
+	public $fail_updates = array();
+	public $updates = array();
+	public $cache_invalidations = 0;
+
+	public function __construct($assets = array())
+	{
+		$this->assets = $assets;
+	}
+
+	public function find_by_uuid($uuid)
+	{
+		return isset($this->assets[$uuid]) ? $this->assets[$uuid] : null;
+	}
+
+	public function update($uuid, $changes)
+	{
+		$this->updates[] = array($uuid, $changes);
+		if (in_array($uuid, $this->fail_updates, true) || !isset($this->assets[$uuid])) {
+			return null;
+		}
+		$this->assets[$uuid] = array_merge($this->assets[$uuid], $changes);
+		return $this->assets[$uuid];
+	}
+
+	public function invalidate_cache()
+	{
+		$this->cache_invalidations++;
+	}
+}
+
+class Npcink_Device_Inventory_Identity_Repository
+{
+	const CLAIM_CONFLICT = 'conflict';
+}
+
+class Npcink_Device_Inventory_Observation_Repository
+{
+}
+
+class Npcink_Device_Inventory_Event_Repository
+{
+}
+
+class Npcink_Device_Inventory_Event_Service
+{
+	public $records = array();
+	public $fail = false;
+
+	public function record($asset_id, $source, $type, $message, $payload = array())
+	{
+		$this->records[] = compact('asset_id', 'source', 'type', 'message', 'payload');
+		return !$this->fail;
+	}
+}
+
+class Npcink_Device_Inventory_Identity_Audit_Service
+{
+}
+
+class Npcink_Device_Inventory_Device_Identity_Reconciliation_Service
+{
+}
+
+function sanitize_text_field($value)
+{
+	return trim((string) $value);
+}
+
+function sanitize_textarea_field($value)
+{
+	return trim((string) $value);
+}
+
+function sanitize_key($value)
+{
+	return strtolower(preg_replace('/[^a-zA-Z0-9_\-]/', '', (string) $value));
+}
+
+function is_wp_error($value)
+{
+	return $value instanceof WP_Error;
+}
+
+function rest_ensure_response($value)
+{
+	return $value instanceof WP_REST_Response ? $value : new WP_REST_Response($value);
+}
+
+function current_user_can($capability)
+{
+	return true;
+}
+
+function current_time($type)
+{
+	return '2026-07-15';
+}
+
+function get_option($name, $fallback = false)
+{
+	return array('departments' => array('未分配', 'IT', '财务'));
+}
+
+function register_rest_route($namespace, $route, $args)
+{
+	return true;
+}
+
+require_once __DIR__ . '/../includes/v3/class-npcink-device-inventory-v3-response.php';
+require_once __DIR__ . '/../includes/v3/rest/class-npcink-device-inventory-assets-controller.php';
+
+function npcink_asset_write_assert($condition, $message)
+{
+	if (!$condition) {
+		fwrite(STDERR, "Asset write fixture failed: {$message}\n");
+		exit(1);
+	}
+}
+
+function npcink_asset_row($id, $uuid, $status = 'active')
+{
+	return array(
+		'id' => $id,
+		'uuid' => $uuid,
+		'asset_type' => 'computer',
+		'asset_number' => 'ASSET-' . $id,
+		'name' => 'Device ' . $id,
+		'owner_name' => '',
+		'department' => 'IT',
+		'status' => $status,
+		'category' => 'computer',
+		'purchase_price' => '0',
+		'residual_value' => '0',
+		'metadata_json' => '{}',
+		'created_at' => '2026-07-15 00:00:00',
+		'updated_at' => '2026-07-15 00:00:00',
+	);
+}
+
+function npcink_asset_write_controller($rows)
+{
+	$assets = new Npcink_Device_Inventory_Asset_Repository($rows);
+	$events = new Npcink_Device_Inventory_Event_Service();
+	$controller = new Npcink_Device_Inventory_Assets_Controller(
+		$assets,
+		new Npcink_Device_Inventory_Identity_Repository(),
+		new Npcink_Device_Inventory_Observation_Repository(),
+		new Npcink_Device_Inventory_Event_Repository(),
+		$events
+	);
+	return array($controller, $assets, $events);
+}
+
+$wpdb = new Npcink_Asset_Write_Wpdb();
+list($controller) = npcink_asset_write_controller(array());
+$invalid = $controller->create_item(new Npcink_Asset_Write_Request(array('status' => 'unknown')));
+npcink_asset_write_assert(is_wp_error($invalid) && $invalid->get_error_code() === 'invalid_asset_status', 'invalid status must fail validation');
+npcink_asset_write_assert($wpdb->commands === array(), 'validation failure must not start a transaction');
+
+$first_uuid = '11111111-1111-4111-8111-111111111111';
+$second_uuid = '22222222-2222-4222-8222-222222222222';
+$rows = array($first_uuid => npcink_asset_row(1, $first_uuid), $second_uuid => npcink_asset_row(2, $second_uuid));
+list($controller, $assets, $events) = npcink_asset_write_controller($rows);
+$response = $controller->batch_items(
+	new Npcink_Asset_Write_Request(
+		array(
+			'operation' => 'update',
+			'uuids' => array($first_uuid, $second_uuid, $first_uuid),
+			'changes' => array('department' => '财务'),
+			'context' => array('source' => 'analysis', 'message' => 'Apply reviewed department.'),
+		)
+	)
+);
+npcink_asset_write_assert($response instanceof WP_REST_Response, 'valid batch must return REST response');
+$data = $response->get_data();
+npcink_asset_write_assert($data['data']['updated'] === 2, 'duplicate UUIDs must be de-duplicated');
+npcink_asset_write_assert($wpdb->commands === array('START TRANSACTION', 'COMMIT'), 'successful batch must commit exactly once');
+npcink_asset_write_assert(count($events->records) === 2, 'successful batch must record one audit event per asset');
+npcink_asset_write_assert($events->records[0]['payload']['batchSize'] === 2, 'event must use de-duplicated batch size');
+npcink_asset_write_assert($events->records[0]['payload']['changedFields'][0]['oldValue'] === 'IT', 'event must preserve old value');
+npcink_asset_write_assert($events->records[0]['payload']['changedFields'][0]['newValue'] === '财务', 'event must preserve new value');
+
+$wpdb = new Npcink_Asset_Write_Wpdb();
+list($controller, $assets) = npcink_asset_write_controller(array($first_uuid => npcink_asset_row(1, $first_uuid)));
+$missing = $controller->batch_items(
+	new Npcink_Asset_Write_Request(
+		array(
+			'operation' => 'archive',
+			'uuids' => array($first_uuid, $second_uuid),
+		)
+	)
+);
+npcink_asset_write_assert(is_wp_error($missing) && $missing->get_error_code() === 'asset_not_found', 'missing batch asset must fail');
+npcink_asset_write_assert($wpdb->commands === array('START TRANSACTION', 'ROLLBACK'), 'partial batch must roll back');
+npcink_asset_write_assert($assets->cache_invalidations === 1, 'partial batch rollback must invalidate transactional asset cache entries');
+
+$wpdb = new Npcink_Asset_Write_Wpdb();
+list($controller, $assets, $events) = npcink_asset_write_controller(array($first_uuid => npcink_asset_row(1, $first_uuid)));
+$assets->fail_updates[] = $first_uuid;
+$deleted = $controller->delete_item(new Npcink_Asset_Write_Request(array('uuid' => $first_uuid)));
+npcink_asset_write_assert(is_wp_error($deleted) && $deleted->get_error_code() === 'asset_update_failed', 'failed archive write must return an error');
+npcink_asset_write_assert($wpdb->commands === array('START TRANSACTION', 'ROLLBACK'), 'failed archive write must roll back');
+npcink_asset_write_assert($events->records === array(), 'failed archive write must not create an audit event');
+npcink_asset_write_assert($assets->cache_invalidations === 1, 'failed archive rollback must invalidate transactional asset cache entries');
+
+$wpdb = new Npcink_Asset_Write_Wpdb();
+$wpdb->fail_command = 'COMMIT';
+list($controller, $assets) = npcink_asset_write_controller(array($first_uuid => npcink_asset_row(1, $first_uuid)));
+$commit_failed = $controller->batch_items(
+	new Npcink_Asset_Write_Request(array('operation' => 'archive', 'uuids' => array($first_uuid)))
+);
+npcink_asset_write_assert(is_wp_error($commit_failed) && $commit_failed->get_error_code() === 'transaction_commit_failed', 'commit failure must return an error');
+npcink_asset_write_assert($wpdb->commands === array('START TRANSACTION', 'COMMIT', 'ROLLBACK'), 'commit failure must close the transaction with rollback');
+npcink_asset_write_assert($assets->cache_invalidations === 1, 'commit failure rollback must invalidate transactional asset cache entries');
+
+echo "Asset write fixture checks passed.\n";

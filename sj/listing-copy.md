@@ -46,7 +46,7 @@ The plugin can store device asset fields such as device name, number, department
 
 #### Are public query and upload endpoints open to anonymous users?
 
-No. Public query and upload endpoints require a client authorization token and HMAC signature. Admin endpoints require a WordPress user with `manage_options`.
+They are not unrestricted. Public query requires the site-specific access code and is rate limited. Device upload requires a client authorization token and HMAC signature. Admin endpoints require a WordPress user with `manage_options`.
 
 #### What happens on uninstall?
 

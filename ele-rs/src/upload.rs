@@ -235,7 +235,7 @@ fn pick_primary_network(networks: &[Value]) -> Value {
         .find(|item| bool_field(item, "default"))
         .or_else(|| {
             networks.iter().find(|item| {
-                string_field(item, "mac") != ""
+                !string_field(item, "mac").is_empty()
                     && !bool_field(item, "virtual")
                     && !bool_field(item, "internal")
             })

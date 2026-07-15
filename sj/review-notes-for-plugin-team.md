@@ -25,12 +25,9 @@ identifiers, hardware details, and change history.
 
 ## REST Authorization
 
-The public query and upload endpoints require:
-
-- client token id
-- timestamp
-- nonce
-- HMAC signature
+The public query endpoint requires the site-specific access code and applies a
+short-window rate limit. The device upload endpoint requires a client token id,
+timestamp, nonce, and HMAC signature.
 
 Admin REST endpoints require a logged-in WordPress user with `manage_options`.
 

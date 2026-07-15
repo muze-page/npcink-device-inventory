@@ -1,3 +1,5 @@
+mod config;
+
 use anyhow::{Context, Result};
 use chrono::{DateTime, Local, Utc};
 use npcink_device_agent::{collector, upload};
@@ -14,8 +16,9 @@ use tauri::Emitter;
 use tauri_plugin_opener::OpenerExt;
 use zip::write::SimpleFileOptions;
 
+use config::{read_config, validate_config, write_config, AgentConfig, APP_DIR_NAME};
+
 const APP_NAME: &str = "Npcink Device Agent";
-const APP_DIR_NAME: &str = "npcink-device-agent";
 const APP_LOG_FILE: &str = "app.log";
 const APP_LOG_MAX_BYTES: u64 = 1024 * 1024;
 const DIAGNOSTICS_LOG_TAIL_BYTES: u64 = 256 * 1024;
@@ -25,33 +28,6 @@ const PROJECT_URL: &str = "https://github.com/muze-page/npcink-device-inventory"
 const MENU_CHECK_UPDATE: &str = "check_for_updates";
 const MENU_CHECK_UPDATE_EVENT: &str = "desktop-check-update";
 const MENU_OPEN_PROJECT: &str = "open_project_url";
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-#[serde(default)]
-struct AgentConfig {
-    site: String,
-    name: String,
-    token: String,
-    preset_locked: bool,
-    preset_label: String,
-}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-#[serde(default)]
-struct AgentPreset {
-    #[serde(rename = "siteUrl")]
-    site_url: String,
-    #[serde(rename = "uploadEndpoint")]
-    upload_endpoint: String,
-    #[serde(rename = "tokenValue")]
-    token_value: String,
-    #[serde(rename = "tokenId")]
-    token_id: String,
-    #[serde(rename = "tokenSecret")]
-    token_secret: String,
-    #[serde(rename = "tokenName")]
-    token_name: String,
-}
 
 #[derive(Debug, Serialize)]
 struct DeviceSnapshot {
@@ -101,10 +77,9 @@ fn get_saved_config() -> Result<AgentConfig, String> {
 #[tauri::command]
 fn save_config(config: AgentConfig) -> Result<(), String> {
     let log_message = format!(
-        "has_site={} has_token={} preset_locked={} preset_label={}",
+        "has_site={} has_token={} config_label={}",
         !config.site.trim().is_empty(),
         !config.token.trim().is_empty(),
-        config.preset_locked,
         empty_label(&config.preset_label),
     );
     match write_config(config) {
@@ -197,8 +172,7 @@ async fn submit_device_data(config: AgentConfig) -> Result<Value, String> {
     }
 }
 
-fn submit_device_data_inner(mut config: AgentConfig) -> Result<Value, String> {
-    apply_build_preset(&mut config);
+fn submit_device_data_inner(config: AgentConfig) -> Result<Value, String> {
     if let Err(error) = validate_config(&config) {
         write_app_log("warn", "upload.validation_failed", &error);
         return Err(error);
@@ -262,13 +236,15 @@ async fn generate_diagnostics_package(app: tauri::AppHandle) -> Result<Diagnosti
 
 #[tauri::command]
 fn open_path(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    let path = validate_diagnostics_directory(&path)?;
     app.opener()
-        .open_path(path, None::<&str>)
+        .open_path(path.to_string_lossy(), None::<&str>)
         .map_err(|error| error.to_string())
 }
 
 #[tauri::command]
 fn open_url(app: tauri::AppHandle, url: String) -> Result<(), String> {
+    validate_external_url(&url)?;
     app.opener()
         .open_url(url, None::<&str>)
         .map_err(|error| error.to_string())
@@ -370,20 +346,18 @@ fn setup_app_menu(app: &mut tauri::App) -> tauri::Result<()> {
         .build()?;
 
     app.set_menu(menu)?;
-    app.on_menu_event(|app_handle, event| {
-        match event.id().0.as_str() {
-            MENU_CHECK_UPDATE => {
-                if let Err(error) = app_handle.emit(MENU_CHECK_UPDATE_EVENT, ()) {
-                    eprintln!("failed to emit update check event: {error}");
-                }
+    app.on_menu_event(|app_handle, event| match event.id().0.as_str() {
+        MENU_CHECK_UPDATE => {
+            if let Err(error) = app_handle.emit(MENU_CHECK_UPDATE_EVENT, ()) {
+                eprintln!("failed to emit update check event: {error}");
             }
-            MENU_OPEN_PROJECT => {
-                if let Err(error) = app_handle.opener().open_url(PROJECT_URL, None::<&str>) {
-                    eprintln!("failed to open project url: {error}");
-                }
-            }
-            _ => {}
         }
+        MENU_OPEN_PROJECT => {
+            if let Err(error) = app_handle.opener().open_url(PROJECT_URL, None::<&str>) {
+                eprintln!("failed to open project url: {error}");
+            }
+        }
+        _ => {}
     });
     Ok(())
 }
@@ -404,77 +378,42 @@ fn about_metadata() -> AboutMetadata<'static> {
     }
 }
 
-fn validate_config(config: &AgentConfig) -> Result<(), String> {
-    if config.site.trim().is_empty() {
-        return Err("请填写站点地址或设备上传接口地址".to_string());
-    }
-    if config.token.is_empty() {
-        return Err("请填写上传授权码".to_string());
+fn validate_external_url(input: &str) -> Result<(), String> {
+    let url = url::Url::parse(input.trim()).map_err(|_| "更新地址格式无效".to_string())?;
+    let project_path = "/muze-page/npcink-device-inventory";
+    let allowed = url.scheme() == "https"
+        && url.host_str() == Some("github.com")
+        && (url.path() == project_path || url.path().starts_with(&format!("{project_path}/")))
+        && url.username().is_empty()
+        && url.password().is_none();
+    if !allowed {
+        return Err("只允许打开本项目的 GitHub HTTPS 地址".to_string());
     }
     Ok(())
 }
 
-fn read_config() -> Result<AgentConfig> {
-    let path = config_path()?;
-    if !path.exists() {
-        let mut config = AgentConfig::default();
-        apply_build_preset(&mut config);
-        return Ok(config);
+fn validate_diagnostics_directory(input: &str) -> Result<PathBuf, String> {
+    let candidate = PathBuf::from(input);
+    let name = candidate
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or("");
+    if !name.starts_with("NpcinkDiagnostics-") || !candidate.is_dir() {
+        return Err("只允许打开本应用生成的排障目录".to_string());
     }
-    let raw = fs::read_to_string(&path)
-        .with_context(|| format!("failed to read config {}", path.display()))?;
-    let mut config: AgentConfig = serde_json::from_str(&raw).context("failed to parse config")?;
-    apply_build_preset(&mut config);
-    Ok(config)
-}
-
-fn write_config(mut config: AgentConfig) -> Result<()> {
-    apply_build_preset(&mut config);
-    let path = config_path()?;
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)
-            .with_context(|| format!("failed to create config dir {}", parent.display()))?;
+    let candidate = candidate
+        .canonicalize()
+        .map_err(|_| "排障目录不存在".to_string())?;
+    let base = diagnostics_base_dir()
+        .and_then(|path| {
+            path.canonicalize()
+                .context("failed to resolve diagnostics base dir")
+        })
+        .map_err(|error| error.to_string())?;
+    if candidate.parent() != Some(base.as_path()) {
+        return Err("排障目录不在允许的位置".to_string());
     }
-    let raw = serde_json::to_string_pretty(&config).context("failed to encode config")?;
-    fs::write(&path, raw).with_context(|| format!("failed to write config {}", path.display()))
-}
-
-fn apply_build_preset(config: &mut AgentConfig) {
-    if let Some(preset) = build_preset() {
-        apply_preset(config, preset);
-    }
-}
-
-fn build_preset() -> Option<AgentPreset> {
-    let raw = option_env!("NPCINK_AGENT_PRESET")?.trim();
-    if raw.is_empty() {
-        return None;
-    }
-    serde_json::from_str(raw).ok()
-}
-
-fn apply_preset(config: &mut AgentConfig, preset: AgentPreset) {
-    config.site = if preset.upload_endpoint.trim().is_empty() {
-        preset.site_url
-    } else {
-        preset.upload_endpoint
-    };
-    config.token = if preset.token_value.trim().is_empty() {
-        format!("mda_{}_{}", preset.token_id, preset.token_secret)
-    } else {
-        preset.token_value
-    };
-    config.preset_locked = true;
-    config.preset_label = if preset.token_name.trim().is_empty() {
-        preset.token_id
-    } else {
-        preset.token_name
-    };
-}
-
-fn config_path() -> Result<PathBuf> {
-    let base = dirs::config_dir().context("failed to resolve config dir")?;
-    Ok(base.join(APP_DIR_NAME).join("config.json"))
+    Ok(candidate)
 }
 
 fn app_data_dir() -> Result<PathBuf> {
@@ -733,7 +672,6 @@ fn write_config_snapshot(out: &Path) -> Result<()> {
         &json!({
             "site": redact_url_for_log(&config.site),
             "name": config.name,
-            "preset_locked": config.preset_locked,
             "preset_label": config.preset_label,
             "token": if config.token.is_empty() { "missing" } else { "redacted" },
         }),
@@ -787,7 +725,6 @@ fn write_diagnostics_summary(
             "privilege": privilege_info,
             "config": {
                 "configured": !config.site.trim().is_empty() && !config.token.trim().is_empty(),
-                "preset_locked": config.preset_locked,
                 "preset_label": empty_label(&config.preset_label),
                 "site": redact_url_for_log(&config.site),
                 "token": if config.token.trim().is_empty() { "missing" } else { "redacted" },
@@ -1831,48 +1768,17 @@ mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
-    fn preset_prefers_upload_endpoint_and_full_token_value() {
-        let mut config = AgentConfig::default();
-        apply_preset(
-            &mut config,
-            AgentPreset {
-                site_url: "https://example.com/".to_string(),
-                upload_endpoint:
-                    "https://example.com/wp-json/npcink-device-inventory/v1/device-observations"
-                        .to_string(),
-                token_value: "mda_abc123def456_secret".to_string(),
-                token_id: "abc123def456".to_string(),
-                token_secret: "ignored".to_string(),
-                token_name: "Finance batch".to_string(),
-            },
+    fn external_url_is_limited_to_project_github_pages() {
+        assert!(validate_external_url(PROJECT_URL).is_ok());
+        assert!(validate_external_url(
+            "https://github.com/muze-page/npcink-device-inventory/releases/download/v1/app.zip"
+        )
+        .is_ok());
+        assert!(
+            validate_external_url("http://github.com/muze-page/npcink-device-inventory").is_err()
         );
-
-        assert_eq!(
-            config.site,
-            "https://example.com/wp-json/npcink-device-inventory/v1/device-observations"
-        );
-        assert_eq!(config.token, "mda_abc123def456_secret");
-        assert!(config.preset_locked);
-        assert_eq!(config.preset_label, "Finance batch");
-    }
-
-    #[test]
-    fn preset_falls_back_to_site_url_and_token_parts() {
-        let mut config = AgentConfig::default();
-        apply_preset(
-            &mut config,
-            AgentPreset {
-                site_url: "https://example.com/".to_string(),
-                token_id: "abc123def456".to_string(),
-                token_secret: "secret".to_string(),
-                ..AgentPreset::default()
-            },
-        );
-
-        assert_eq!(config.site, "https://example.com/");
-        assert_eq!(config.token, "mda_abc123def456_secret");
-        assert!(config.preset_locked);
-        assert_eq!(config.preset_label, "abc123def456");
+        assert!(validate_external_url("https://example.com/update.exe").is_err());
+        assert!(validate_external_url("file:///tmp/update.exe").is_err());
     }
 
     #[test]
@@ -1997,16 +1903,16 @@ mod tests {
         ));
         fs::create_dir_all(&out).unwrap();
         fs::write(
-            &out.join("recent-errors.log"),
+            out.join("recent-errors.log"),
             "command: log show\n--- stdout ---\nerror one\n",
         )
         .unwrap();
         fs::write(
-            &out.join("recent-diagnostic-reports.txt"),
+            out.join("recent-diagnostic-reports.txt"),
             "/tmp/report.crash\n/tmp/report.ips\n",
         )
         .unwrap();
-        fs::write(&out.join(APP_LOG_FILE), "{}\n").unwrap();
+        fs::write(out.join(APP_LOG_FILE), "{}\n").unwrap();
 
         let static_data = json!({
             "os": {

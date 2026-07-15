@@ -11,7 +11,6 @@ type AgentConfig = {
   site: string;
   name: string;
   token: string;
-  preset_locked?: boolean;
   preset_label?: string;
 };
 
@@ -234,11 +233,6 @@ app.innerHTML = `
                   <input id="name" name="name" placeholder="可选，例如：张三、财务电脑、前台备用机" />
                 </label>
 
-                <div class="preset-notice" id="presetNotice" hidden>
-                  <strong>已预置上传配置</strong>
-                  <span>只需填写备注即可提交设备信息。</span>
-                </div>
-
                 <div class="config-toolbar" id="configImportToolbar">
                   <div class="config-actions">
                     <button class="button config-button config-button-dark" id="importConfigButton" type="button">导入配置</button>
@@ -397,7 +391,6 @@ const siteInput = document.querySelector<HTMLInputElement>("#site")!;
 const nameInput = document.querySelector<HTMLInputElement>("#name")!;
 const tokenInput = document.querySelector<HTMLInputElement>("#token")!;
 const configStateText = document.querySelector<HTMLElement>("#configStateText")!;
-const presetNotice = document.querySelector<HTMLElement>("#presetNotice")!;
 const configImportToolbar = document.querySelector<HTMLElement>("#configImportToolbar")!;
 const manualConfigButton = document.querySelector<HTMLButtonElement>("#manualConfigButton")!;
 const configForm = document.querySelector<HTMLFormElement>("#configForm")!;
@@ -989,7 +982,6 @@ const parseImportedConfig = (raw: string): AgentConfig => {
     site,
     name: nameInput.value.trim(),
     token,
-    preset_locked: false,
     preset_label: stringValue(payload.tokenName) || tokenId,
   };
 };
@@ -998,18 +990,16 @@ const getConfig = (): AgentConfig => ({
   site: siteInput.value.trim(),
   name: nameInput.value.trim(),
   token: tokenInput.value,
-  preset_locked: Boolean(activeConfig.preset_locked),
   preset_label: activeConfig.preset_label || "",
 });
 
 const hasUploadConfig = (config: AgentConfig = getConfig()) =>
-  Boolean(config.preset_locked || (config.site && config.token));
+  Boolean(config.site && config.token);
 
 const updateInteractiveState = () => {
-  const presetLocked = Boolean(activeConfig.preset_locked);
   nameInput.disabled = isSubmitting;
-  siteInput.disabled = isSubmitting || presetLocked;
-  tokenInput.disabled = isSubmitting || presetLocked;
+  siteInput.disabled = isSubmitting;
+  tokenInput.disabled = isSubmitting;
   collectButton.disabled = isCollecting || isSubmitting;
   submitButton.disabled = isCollecting || isSubmitting;
   importConfigButton.disabled = isSubmitting;
@@ -1140,9 +1130,6 @@ const configLabel = (config: AgentConfig = getConfig()) => {
   if (config.preset_label) {
     return config.preset_label;
   }
-  if (config.preset_locked) {
-    return "预置配置";
-  }
   if (config.site && config.token) {
     return "手动配置";
   }
@@ -1189,12 +1176,10 @@ const resetSubmittedState = () => {
 };
 
 const markManualConfigEdited = () => {
-  if (!activeConfig.preset_locked) {
-    activeConfig = {
-      ...activeConfig,
-      preset_label: "",
-    };
-  }
+  activeConfig = {
+    ...activeConfig,
+    preset_label: "",
+  };
   resetSubmittedState();
   renderConfigStatus();
 };
@@ -1314,12 +1299,6 @@ const renderConfigStatus = (config: AgentConfig = getConfig()) => {
   const canSubmit = hasUploadConfig(config);
   submitButton.hidden = !canSubmit;
 
-  if (config.preset_locked) {
-    configStateText.textContent = config.preset_label
-      ? `已预置：${config.preset_label}`
-      : "已预置";
-    return;
-  }
   if (config.site && config.token) {
     configStateText.textContent = config.preset_label
       ? `已导入：${config.preset_label}`
@@ -1799,18 +1778,7 @@ const renderConfig = (config: AgentConfig) => {
   siteInput.value = config.site || "";
   nameInput.value = config.name || "";
   tokenInput.value = config.token || "";
-  const hasPreset = Boolean(config.preset_locked);
-  presetNotice.hidden = !hasPreset;
-  configImportToolbar.hidden = hasPreset;
-  if (hasPreset) {
-    const label = config.preset_label ? `当前预设：${config.preset_label}` : "已预置上传配置";
-    presetNotice.querySelector("strong")!.textContent = label;
-  }
-  if (hasPreset) {
-    closeManualConfigDialog();
-  }
-  siteInput.disabled = hasPreset;
-  tokenInput.disabled = hasPreset;
+  configImportToolbar.hidden = false;
   renderConfigStatus(config);
   updateInteractiveState();
   renderAll();

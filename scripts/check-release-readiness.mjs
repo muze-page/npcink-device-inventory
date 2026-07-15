@@ -18,6 +18,12 @@ const builtAssetFiles = [
 
 const steps = [
   {
+    title: "Version contract",
+    command: "npm",
+    args: ["run", "check:versions"],
+    cwd: repoRoot,
+  },
+  {
     title: "Release scope fixtures",
     command: "npm",
     args: ["run", "check:release-scope"],
@@ -48,33 +54,9 @@ const steps = [
     cwd: repoRoot,
   },
   {
-    title: "Backup restore fixtures",
+    title: "Plugin regression fixtures",
     command: "npm",
-    args: ["run", "check:backup-restore"],
-    cwd: repoRoot,
-  },
-  {
-    title: "Analysis issue state fixtures",
-    command: "npm",
-    args: ["run", "check:issue-states"],
-    cwd: repoRoot,
-  },
-  {
-    title: "Analysis trend fixtures",
-    command: "npm",
-    args: ["run", "check:analysis-trends"],
-    cwd: repoRoot,
-  },
-  {
-    title: "Public query fixtures",
-    command: "npm",
-    args: ["run", "check:public-query"],
-    cwd: repoRoot,
-  },
-  {
-    title: "Asset search fixtures",
-    command: "npm",
-    args: ["run", "check:asset-search"],
+    args: ["run", "check:fixtures"],
     cwd: repoRoot,
   },
   {
@@ -87,6 +69,12 @@ const steps = [
     title: "PHPCS",
     command: "composer",
     args: ["run", "phpcs"],
+    cwd: repoRoot,
+  },
+  {
+    title: "Desktop quality and dependency audit",
+    command: "npm",
+    args: ["run", "check:desktop-quality"],
     cwd: repoRoot,
   },
   {

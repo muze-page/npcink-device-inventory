@@ -269,8 +269,8 @@ fn normalize_windows_memory_modules(value: &Value) -> Value {
             .into_iter()
             .filter_map(|item| {
                 let size = value_u64_at(item, "Capacity")?;
-                let clock_speed =
-                    value_u64_at(item, "ConfiguredClockSpeed").or_else(|| value_u64_at(item, "Speed"));
+                let clock_speed = value_u64_at(item, "ConfiguredClockSpeed")
+                    .or_else(|| value_u64_at(item, "Speed"));
                 let smbios_type = value_u64_at(item, "SMBIOSMemoryType");
                 let form_factor = value_u64_at(item, "FormFactor");
                 Some(json!({
@@ -345,8 +345,14 @@ fn memory_form_factor_label(code: u64) -> String {
 
 #[cfg(target_os = "windows")]
 fn graphics_vendor(value: &Value) -> String {
-    let text = first_non_empty(&[value_text(value, "VideoProcessor"), value_text(value, "Name")]);
-    text.split_whitespace().next().unwrap_or_default().to_string()
+    let text = first_non_empty(&[
+        value_text(value, "VideoProcessor"),
+        value_text(value, "Name"),
+    ]);
+    text.split_whitespace()
+        .next()
+        .unwrap_or_default()
+        .to_string()
 }
 
 #[cfg(target_os = "windows")]

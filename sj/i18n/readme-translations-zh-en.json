@@ -16,7 +16,7 @@
         },
         {
           "question": "Are public query and upload endpoints open to anonymous users?",
-          "answer": "No. Public query and upload endpoints require a client authorization token and HMAC signature. Admin endpoints require a WordPress user with manage_options."
+          "answer": "They are not unrestricted. Public query requires the site-specific access code and is rate limited. Device upload requires a client authorization token and HMAC signature. Admin endpoints require a WordPress user with manage_options."
         },
         {
           "question": "What happens on uninstall?",
@@ -42,7 +42,7 @@
         },
         {
           "question": "公开查询和上传接口是否允许匿名访问？",
-          "answer": "不允许。公开查询和上传接口需要客户端授权码和 HMAC 签名。管理端接口需要具备 manage_options 权限的 WordPress 用户。"
+          "answer": "它们不是无限制开放的。公开查询需要站点专用访问码并受限流保护；设备上传需要客户端授权码和 HMAC 签名。管理端接口需要具备 manage_options 权限的 WordPress 用户。"
         },
         {
           "question": "卸载时会发生什么？",

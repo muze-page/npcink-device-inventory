@@ -9,25 +9,21 @@
 在仓库根目录运行：
 
 ```bash
+cargo install cargo-audit --locked # 首次运行一次
 npm run check:release
 ```
 
 该命令面向日常 GitHub release 包，只检查 `release/npcink-device-inventory.zip`，并要求仓库中不存在陈旧的 `sj/npcink-device-inventory.zip`。它会依次执行：
 
-- `npm run check:release-scope`，验证插件与桌面发布范围判定的路径规则。
-- `npm run check:hardware-audit`，验证硬件盘点规则 fixture。
-- `npm run lint`，验证后台 React/TypeScript 代码。
-- `npm run build`，生成后台生产资源。
-- `node scripts/check-wordpress-org-review-rules.mjs`，检查 WordPress.org 人工审核曾指出但 PCP 不一定拦截的问题。
-- `npm run check:backup-restore`，验证 JSON 备份恢复离线夹具。
-- `npm run check:public-query`，验证公开查询必须配置访问码、错误访问码拒绝、短窗口限流和正确访问码返回公开资产。
-- `npm run check:asset-search`，验证资产列表普通短关键词不会触发高成本 JSON / observation 扩展搜索，IP、MAC、长序列号类查询仍进入扩展搜索。
-- `composer run phpstan`，验证 PHP 静态类型。
-- `composer run phpcs`，验证 WordPress/PHP 编码规范。
+- `npm run check:versions`，确认插件、README、桌面 Node/Tauri/Cargo 版本契约一致；tag release 还要求 tag 与插件版本一致。
+- `npm run check:release-scope`，验证插件与桌面发布范围判定规则。
+- 后台硬件盘点 fixture、ESLint 和生产构建。
+- WordPress.org 人工审核规则检查。
+- `npm run check:fixtures`，集中执行备份恢复、问题状态、趋势、公开查询、搜索、资产写入、上传边界、迁移、身份占用和采集事务等 PHP 回归夹具。
+- PHPStan 与 PHPCS。
+- `npm run check:desktop-quality`，执行桌面前端构建、两个 Rust crate 的 fmt、Clippy、测试和 Cargo lockfile 漏洞审计。
 - `git diff --check`，检查空白字符问题。
-- `node scripts/check-release-package.mjs release/npcink-device-inventory.zip`。
-- `node scripts/check-wordpress-org-review-rules.mjs release/npcink-device-inventory.zip`。
-- 对比 zip 内的 `vite-admin/dist/index.html`、`index.css`、`index.js` 与本地刚构建的文件，避免源码已改但发布包仍是旧资源。
+- 发布 zip 结构和 WordPress.org 规则检查，并逐文件对比 zip 内后台构建产物，避免发布旧资源。
 
 如果 zip 不存在，先运行：
 
@@ -160,7 +156,7 @@ POST /wp-json/npcink-device-inventory/v1/device-observations    -> 401
 ## 提交前确认
 
 - 不提交本地旧数据备份目录。
-- 不提交临时截图。
+- 不提交临时截图；`sj/assets/screenshot-1.png` 到 `screenshot-5.png` 是明确标记为不得发布的历史对照文件，3.0 界面冻结后重新采集。
 - 不提交 `node_modules`、`vendor`、`.release-build` 或额外 zip。
 - 日常 GitHub release 使用 `release/npcink-device-inventory.zip`。
 - 上传 WordPress.org 前先运行 `npm run build:submission && npm run check:submission`，再使用 `sj/npcink-device-inventory.zip`。

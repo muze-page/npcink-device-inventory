@@ -4,7 +4,7 @@ Tags: inventory, assets, device management, rest api, admin
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.8.0
+Stable tag: 3.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -63,12 +63,6 @@ The project repository includes the built files and the corresponding React/Type
 
 Run `npm install && npm run build` inside `vite-admin` to rebuild the bundled assets.
 
-== Screenshots ==
-
-1. Admin asset inventory workspace.
-2. Asset detail drawer with overview, identities, observations, and events.
-3. Client token management modal.
-
 == Privacy ==
 
 Npcink Device Inventory stores device asset data in the local WordPress database. Depending on how the site owner configures and uses the plugin, stored data may include device names, assigned users or locations, departments, status values, IP addresses, hardware identifiers, hardware details, and event history.
@@ -76,6 +70,13 @@ Npcink Device Inventory stores device asset data in the local WordPress database
 The plugin does not transmit this data to Npcink or any third-party server during normal plugin operation. Site administrators are responsible for informing users and employees about their own device inventory policies.
 
 == Changelog ==
+
+= 3.0.0 =
+* Make device identity ownership atomic and roll back partial observation ingestion.
+* Move complete JSON backup export to one server-side snapshot with matching restore limits.
+* Add transactional batch asset writes, bounded uploads, deterministic issue states, and explicit schema migrations.
+* Remove reusable token-secret and desktop build-preset surfaces; enable desktop CSP and restricted system open commands.
+* Add regression fixtures, Rust security audits, and stricter local/CI release gates.
 
 = 2.8.0 =
 * Keep the undeletable Unassigned department as the fallback for new and restored assets.
@@ -137,6 +138,9 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 * Moved desktop uploads to signed v3 device observations.
 
 == Upgrade Notice ==
+
+= 3.0.0 =
+This development reset changes identity, backup, batch-write, desktop token, and migration contracts. Recreate desktop client import configurations from a newly generated token.
 
 = 2.8.0 =
 This release completes the analysis remediation loop for fallback departments, issue states, department assignment, and active-asset ownership.

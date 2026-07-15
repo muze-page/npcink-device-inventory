@@ -1,6 +1,6 @@
 # WordPress.org Plugin Assets
 
-这些文件用于 WordPress.org 插件目录展示页。
+这个目录同时保留可发布展示素材和旧截图。当前只允许发布 banner 与 icon；`screenshot-1.png` 到 `screenshot-5.png` 是 3.0 重构前的历史截图，内容已经失真，**不得上传到 WordPress.org SVN**。等管理界面冻结后再重新采集截图，并同步恢复 `README.txt` 的 Screenshots 区段。
 
 ## 文件
 
@@ -24,45 +24,15 @@
   - 尺寸：256 x 256
   - SHA-256：`43d5ecca4b3bb98f81c2620c1d047bb5ab83c5616a57bc980924ba9e7bec7a8c`
 
-- `screenshot-1.png`
-  - 电脑设备后台台账截图
-  - 尺寸：1440 x 940
-  - SHA-256：`d68512ea030a7957cb2ccc87e2f5ed5415d5cd5070ef7484206136d6392cab4a`
-
-- `screenshot-2.png`
-  - 自定义设备后台台账截图
-  - 尺寸：1440 x 940
-  - SHA-256：`2939c537e2d667a032d459cc058c7b23d471b1733526eb6821e97dfb577f85c4`
-
-- `screenshot-3.png`
-  - 硬件盘点后台截图
-  - 尺寸：1440 x 971
-  - SHA-256：`5e1af245bfeb4825e8140483afbbc0310956c1d10a6dcac5acd142fadf61b21e`
-
-- `screenshot-4.png`
-  - 插件设置和授权管理截图
-  - 尺寸：1440 x 940
-  - SHA-256：`50aa1829846aec0ea8fad622f3f096f601885378da65af083db181ad0196ca7a`
-
-- `screenshot-5.png`
-  - 公共查询页截图
-  - 尺寸：1440 x 1739
-  - SHA-256：`f945f73772a04450a10ecca4962941fddec41b72f90f47c2eef2fed758a29cb3`
-
 ## 上传位置
 
-这些图片不是插件 zip 的一部分。WordPress.org 插件审核通过并分配 SVN 仓库后，应放到 SVN 顶层 `assets/` 目录，例如：
+这些图片不是插件 zip 的一部分。WordPress.org 插件审核通过并分配 SVN 仓库后，只把以下四个当前素材放到 SVN 顶层 `assets/` 目录：
 
 ```text
 assets/banner-772x250.png
 assets/banner-1544x500.png
 assets/icon-128x128.png
 assets/icon-256x256.png
-assets/screenshot-1.png
-assets/screenshot-2.png
-assets/screenshot-3.png
-assets/screenshot-4.png
-assets/screenshot-5.png
 ```
 
 插件代码文件放到 `trunk/` 和当前版本对应的 `tags/<version>/`，不要把这些展示图片放进插件 zip 或 `trunk/assets/`。

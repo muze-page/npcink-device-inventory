@@ -19,9 +19,10 @@
 - [x] 包内不包含 `.DS_Store`。
 - [x] 包内不包含旧平台、支付、OS 图片素材。
 - [x] 包内不包含旧版本号 `2601083`。
-- [x] PCP / Plugin Check 为 `0 ERROR / 0 WARNING`。
-- [x] `README.txt` 包含 `== Screenshots ==` 说明。
-- [x] `sj/assets/` 包含 banner、icon、`screenshot-1.png` 到 `screenshot-5.png`。
+- [ ] 3.0.0 候选包在 GitHub `wordpress/plugin-check-action` 中通过；本地总门不伪造该结果。
+- [x] `README.txt` 暂不声明 Screenshots，避免 WordPress.org 使用重构前旧图。
+- [x] `sj/assets/` manifest 只把 banner 和 icon 标为可发布，旧截图标为 `stale_do_not_publish`。
+- [ ] 3.0 管理界面冻结后重新采集截图，再恢复 `README.txt` Screenshots 区段。
 - [x] `languages/npcink-device-inventory.pot` 已更新。
 - [x] 提交资料包含新用户快速开始文档。
 - [x] 提交资料包含桌面上传软件单独发布说明。
@@ -31,7 +32,7 @@
 - 插件使用自定义数据库表，因为它是设备资产台账系统，需要分页、筛选、导入导出、变更记录和设备上报数据存储。
 - 自定义表 SQL 已用插件内部表名、字段白名单、`$wpdb->prepare()` 和 scoped PHPCS 注释处理。
 - 插件正常运行不调用第三方服务。
-- 公开查询和上传 REST endpoint 需要 client token + HMAC 签名。
+- 公开查询 REST endpoint 需要独立访问码并受短窗口限流保护；设备上传 endpoint 需要 client token + HMAC 签名。
 - 管理端 REST endpoint 需要 WordPress 用户具备 `manage_options`。
 - 前端 React/TypeScript 源码随包提供，不依赖不可访问的外部仓库说明源码。
 

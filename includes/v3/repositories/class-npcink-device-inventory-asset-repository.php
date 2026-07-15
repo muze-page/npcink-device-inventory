@@ -430,6 +430,15 @@ class Npcink_Device_Inventory_Asset_Repository
 		return $this->find_by_uuid($uuid);
 	}
 
+	/**
+	 * Move subsequent reads past any rows cached by a rolled-back transaction.
+	 */
+	public function invalidate_cache()
+	{
+		$version = $this->get_list_cache_version();
+		wp_cache_set('list_version', $version + 1, self::CACHE_GROUP);
+	}
+
 	private function next_asset_number()
 	{
 		$options = Npcink_Device_Inventory_V3_Tables::options();

@@ -22,12 +22,24 @@ class Npcink_Device_Inventory_Backup_Restore_Conflict_Exception extends Exceptio
 
 class Npcink_Device_Inventory_Backup_Restore_Controller
 {
-	private const SCHEMA = 'npcink-device-inventory/v3-admin-export';
-	private const MAX_BACKUP_BYTES = 52428800;
-	private const MAX_SECTION_ROWS = 10000;
+	private $exporter;
+
+	public function __construct(?Npcink_Device_Inventory_Backup_Export_Service $exporter = null)
+	{
+		$this->exporter = $exporter ? $exporter : new Npcink_Device_Inventory_Backup_Export_Service();
+	}
 
 	public function register_routes()
 	{
+		register_rest_route(
+			'npcink-device-inventory/v1',
+			'/backup',
+			array(
+				'methods' => WP_REST_Server::READABLE,
+				'callback' => array($this, 'export_backup'),
+				'permission_callback' => array($this, 'admin_permissions_check'),
+			)
+		);
 		register_rest_route(
 			'npcink-device-inventory/v1',
 			'/backup-restore',
@@ -37,6 +49,16 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 				'permission_callback' => array($this, 'admin_permissions_check'),
 			)
 		);
+	}
+
+	public function export_backup($request)
+	{
+		$sections = $request instanceof WP_REST_Request ? $request->get_param('sections') : null;
+		$result = $this->exporter->export($sections);
+		if (is_wp_error($result)) {
+			return $result;
+		}
+		return rest_ensure_response(array('data' => $result));
 	}
 
 	public function admin_permissions_check()
@@ -50,12 +72,12 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 	public function restore_backup($request)
 	{
 		$content_length = $request instanceof WP_REST_Request ? intval($request->get_header('content-length')) : 0;
-		if ($content_length > self::MAX_BACKUP_BYTES) {
+		if ($content_length > Npcink_Device_Inventory_Backup_Export_Service::MAX_REQUEST_BYTES) {
 			return Npcink_Device_Inventory_V3_Response::error('backup_too_large', 'Backup JSON is too large.', 413);
 		}
 
 		$body = $request instanceof WP_REST_Request ? (string) $request->get_body() : '';
-		if ($body !== '' && strlen($body) > self::MAX_BACKUP_BYTES) {
+		if ($body !== '' && strlen($body) > Npcink_Device_Inventory_Backup_Export_Service::MAX_REQUEST_BYTES) {
 			return Npcink_Device_Inventory_V3_Response::error('backup_too_large', 'Backup JSON is too large.', 413);
 		}
 
@@ -65,6 +87,10 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 		}
 
 		$backup = $params['backup'];
+		$encoded_backup = wp_json_encode($backup);
+		if (!is_string($encoded_backup) || strlen($encoded_backup) > Npcink_Device_Inventory_Backup_Export_Service::MAX_BACKUP_BYTES) {
+			return Npcink_Device_Inventory_V3_Response::error('backup_too_large', 'Backup JSON is too large.', 413);
+		}
 		$dry_run = !empty($params['dryRun']);
 		$validation = $this->validate_backup($backup);
 		if (is_wp_error($validation)) {
@@ -108,7 +134,7 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 	private function validate_backup($backup)
 	{
 		$schema = isset($backup['schema']) ? (string) $backup['schema'] : '';
-		if ($schema !== self::SCHEMA) {
+		if ($schema !== Npcink_Device_Inventory_Backup_Export_Service::SCHEMA) {
 			return Npcink_Device_Inventory_V3_Response::error('unsupported_backup_schema', 'Unsupported backup schema.', 422);
 		}
 
@@ -128,7 +154,7 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 				return Npcink_Device_Inventory_V3_Response::error('invalid_backup_section', 'Backup sections must be arrays.', 422);
 			}
 			$row_count = $section === 'identities' ? $this->count_backup_identities($backup[$section]) : count($backup[$section]);
-			if ($row_count > self::MAX_SECTION_ROWS) {
+			if ($row_count > Npcink_Device_Inventory_Backup_Export_Service::MAX_SECTION_ROWS) {
 				return Npcink_Device_Inventory_V3_Response::error('backup_section_too_large', 'Backup section contains too many rows.', 413);
 			}
 		}
@@ -236,7 +262,9 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 			}
 
 			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Restore spans plugin-owned tables and needs transaction boundaries.
-			$wpdb->query('START TRANSACTION');
+			if ($wpdb->query('START TRANSACTION') === false) {
+				throw new Exception('Failed to start backup restore transaction.');
+			}
 			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 
 			if (isset($backup['assets']) && is_array($backup['assets'])) {
@@ -259,7 +287,9 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 			}
 
 			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- See transaction note above.
-			$wpdb->query('COMMIT');
+			if ($wpdb->query('COMMIT') === false) {
+				throw new Exception('Failed to commit backup restore transaction.');
+			}
 			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		} catch (Exception $exception) {
 			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- See transaction note above.

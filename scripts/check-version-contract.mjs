@@ -1,0 +1,44 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const pluginFile = await read("npcink-device-inventory.php");
+const readmeFile = await read("README.txt");
+const desktopPackage = JSON.parse(await read("ele-rs/package.json"));
+const tauriConfig = JSON.parse(await read("ele-rs/src-tauri/tauri.conf.json"));
+const collectorManifest = await read("ele-rs/Cargo.toml");
+const desktopManifest = await read("ele-rs/src-tauri/Cargo.toml");
+
+const pluginVersion = pluginFile.match(/^[ \t*]*Version:\s*([^\s]+)/m)?.[1] || "";
+const pluginConstant = pluginFile.match(/NPCINK_DEVICE_INVENTORY_VERSION',\s*'([^']+)'/)?.[1] || "";
+const stableTag = readmeFile.match(/^Stable tag:\s*([^\s]+)/m)?.[1] || "";
+assertEqual(pluginConstant, pluginVersion, "plugin version constant");
+assertEqual(stableTag, pluginVersion, "README stable tag");
+
+const desktopVersion = String(desktopPackage.version || "");
+assertEqual(String(tauriConfig.version || ""), desktopVersion, "Tauri config version");
+assertEqual(tomlVersion(collectorManifest), desktopVersion, "collector Cargo version");
+assertEqual(tomlVersion(desktopManifest), desktopVersion, "desktop Cargo version");
+
+const releaseTag = String(process.env.RELEASE_TAG || "").trim();
+if (releaseTag) {
+  assertEqual(releaseTag, `v${pluginVersion}`, "release tag");
+}
+
+console.log(`Version contract passed: plugin=${pluginVersion}, desktop=${desktopVersion}.`);
+
+async function read(relativePath) {
+  return readFile(path.join(repoRoot, relativePath), "utf8");
+}
+
+function tomlVersion(source) {
+  return source.match(/^version\s*=\s*"([^"]+)"/m)?.[1] || "";
+}
+
+function assertEqual(actual, expected, label) {
+  if (!actual || actual !== expected) {
+    console.error(`Version contract failed: ${label}=${actual || "missing"}, expected ${expected || "missing"}.`);
+    process.exit(1);
+  }
+}

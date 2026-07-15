@@ -189,14 +189,17 @@ class Npcink_Device_Inventory
 			return;
 		}
 
-		$installed_version = get_option('npcink_device_inventory_plugin_version');
 		$schema_revision = get_option('npcink_device_inventory_schema_revision');
-		if ($installed_version === $this->version && $schema_revision === '20260706_latest_observed') {
+		$installed_version = get_option('npcink_device_inventory_plugin_version');
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-npcink-device-inventory-activator.php';
+		if ($schema_revision === Npcink_Device_Inventory_Activator::SCHEMA_REVISION) {
+			if ($installed_version !== $this->version) {
+				update_option('npcink_device_inventory_plugin_version', $this->version);
+			}
 			return;
 		}
 
-		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-npcink-device-inventory-activator.php';
-		Npcink_Device_Inventory_Activator::upgrade_schema($installed_version, $this->version);
+		Npcink_Device_Inventory_Activator::upgrade_schema($schema_revision, $this->version);
 	}
 
 	/**

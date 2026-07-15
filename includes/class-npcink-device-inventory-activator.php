@@ -29,7 +29,11 @@ if (!defined('ABSPATH')) {
  */
 class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_Interface
 {
-	const SCHEMA_REVISION = '20260706_latest_observed';
+	const SCHEMA_REVISION = '20260715_atomic_identity';
+	const SCHEMA_REVISIONS = array(
+		'20260706_latest_observed',
+		self::SCHEMA_REVISION,
+	);
 
 	/**
 	 * 插件激活时运行的主要方法
@@ -39,31 +43,86 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 	public static function run()
 	{
 		$current_version = defined('NPCINK_DEVICE_INVENTORY_VERSION') ? NPCINK_DEVICE_INVENTORY_VERSION : '1.0.0';
-		self::upgrade_schema(null, $current_version);
+		self::upgrade_schema(get_option('npcink_device_inventory_schema_revision'), $current_version);
 	}
 
 	/**
 	 * 版本升级时执行数据库与索引增量迁移
 	 */
-	public static function upgrade_schema($installed_version, $current_version)
+	public static function upgrade_schema($installed_revision, $current_version)
 	{
-		// 新资产模型：资产、身份、采集快照、统一事件。
-		self::create_table_assets();
-		self::create_table_asset_identities();
-		self::create_table_asset_observations();
-		self::create_table_asset_events();
-		self::normalize_json_storage_columns();
-		$latest_observation_columns_ready = self::sync_latest_observation_columns();
-
 		self::create_default_v3_options();
+		foreach (self::pending_schema_revisions($installed_revision) as $revision) {
+			$migrated = self::run_schema_migration($revision);
+			if (!$migrated) {
+				return false;
+			}
+			update_option('npcink_device_inventory_schema_revision', $revision);
+		}
 
 		if (!empty($current_version)) {
 			update_option('npcink_device_inventory_plugin_version', $current_version);
 		}
 		update_option('npcink_device_inventory_data_model_version', '3');
-		if ($latest_observation_columns_ready) {
-			update_option('npcink_device_inventory_schema_revision', self::SCHEMA_REVISION);
+		return true;
+	}
+
+	/**
+	 * Return the ordered migrations that have not yet been committed.
+	 */
+	public static function pending_schema_revisions($installed_revision)
+	{
+		$installed_revision = is_string($installed_revision) ? $installed_revision : '';
+		$installed_index = array_search($installed_revision, self::SCHEMA_REVISIONS, true);
+		if ($installed_index === false) {
+			return self::SCHEMA_REVISIONS;
 		}
+		return array_slice(self::SCHEMA_REVISIONS, $installed_index + 1);
+	}
+
+	/**
+	 * Run one named schema migration. The revision option is updated by the caller only on success.
+	 */
+	private static function run_schema_migration($revision)
+	{
+		if ($revision === '20260706_latest_observed') {
+			// 新资产模型：资产、身份、采集快照、统一事件。
+			self::create_table_assets();
+			self::create_table_asset_identities();
+			self::create_table_asset_observations();
+			self::create_table_asset_events();
+			if (!self::normalize_json_storage_columns()) {
+				return false;
+			}
+			return self::sync_latest_observation_columns();
+		}
+
+		if ($revision === self::SCHEMA_REVISION) {
+			// Atomic identity claims depend on the unique identity key. dbDelta repairs it if needed.
+			self::create_table_asset_identities();
+			return self::identity_unique_key_ready();
+		}
+
+		return false;
+	}
+
+	/**
+	 * Verify the exact unique key required by atomic identity claims.
+	 */
+	private static function identity_unique_key_ready()
+	{
+		global $wpdb;
+		$table_name = $wpdb->prefix . self::$table_asset_identities_name;
+		$columns = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX SEPARATOR ',')
+				FROM INFORMATION_SCHEMA.STATISTICS
+				WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND INDEX_NAME = %s AND NON_UNIQUE = 0",
+				$table_name,
+				'identity'
+			)
+		);
+		return (string) $columns === 'identity_type,identity_value';
 	}
 
 	/**
@@ -263,13 +322,32 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 			list($table_name, $column_name, $comment) = $column;
 			$quoted_table = self::quote_internal_table_name($table_name);
 			if ($quoted_table === null || !preg_match('/^[A-Za-z0-9_]+$/', $column_name)) {
-				continue;
+				return false;
 			}
 
-			$wpdb->query(
-				"ALTER TABLE $quoted_table MODIFY `$column_name` LONGTEXT COMMENT '" . esc_sql($comment) . "'"
+			$column_type = $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = %s',
+					$table_name,
+					$column_name
+				)
 			);
+			if (strtolower((string) $column_type) === 'longtext') {
+				continue;
+			}
+			if ($column_type === null) {
+				return false;
+			}
+
+			if (
+				$wpdb->query(
+					"ALTER TABLE $quoted_table MODIFY `$column_name` LONGTEXT COMMENT '" . esc_sql($comment) . "'"
+				) === false
+			) {
+				return false;
+			}
 		}
+		return true;
 	}
 
 	/**
@@ -297,7 +375,7 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 			return false;
 		}
 
-		$wpdb->query(
+		$result = $wpdb->query(
 			"UPDATE $quoted_assets a
 			SET
 				a.updated_at = a.updated_at,
@@ -316,6 +394,6 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 					LIMIT 1
 				)"
 		);
-		return true;
+		return $result !== false;
 	}
 }

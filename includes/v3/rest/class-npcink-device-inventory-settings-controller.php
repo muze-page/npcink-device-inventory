@@ -54,16 +54,6 @@ class Npcink_Device_Inventory_Settings_Controller
 
 		register_rest_route(
 			'npcink-device-inventory/v1',
-			'/client-tokens/(?P<id>[a-z0-9]{12})/package-config',
-			array(
-				'methods' => WP_REST_Server::READABLE,
-				'callback' => array($this, 'get_token_package_config'),
-				'permission_callback' => array($this, 'admin_permissions_check'),
-			)
-		);
-
-		register_rest_route(
-			'npcink-device-inventory/v1',
 			'/settings/public-query-page',
 			array(
 				'methods' => WP_REST_Server::CREATABLE,
@@ -246,42 +236,6 @@ class Npcink_Device_Inventory_Settings_Controller
 		return rest_ensure_response(array('data' => $this->public_token($updated)));
 	}
 
-	public function get_token_package_config($request)
-	{
-		$id = sanitize_key((string) $request['id']);
-		$options = Npcink_Device_Inventory_V3_Tables::options();
-		$token = $this->find_token($options, $id);
-
-		if (!$token) {
-			return Npcink_Device_Inventory_V3_Response::error('token_not_found', 'Client token not found.', 404);
-		}
-
-		$secret = isset($token['secret']) ? (string) $token['secret'] : '';
-		if ($secret === '') {
-			return Npcink_Device_Inventory_V3_Response::error('token_secret_missing', 'Client token secret is missing.', 500);
-		}
-
-		$upload_endpoint = $this->build_client_upload_endpoint((string) $options['client_upload_base_url']);
-		$token_value = 'mda_' . (string) $token['id'] . '_' . $secret;
-
-		return rest_ensure_response(
-			array(
-				'data' => array(
-					'appName' => 'Npcink Device Agent',
-					'siteUrl' => home_url('/'),
-					'uploadEndpoint' => $upload_endpoint,
-					'tokenId' => (string) $token['id'],
-					'tokenSecret' => $secret,
-					'tokenValue' => $token_value,
-					'tokenName' => isset($token['name']) ? (string) $token['name'] : '',
-					'remarkOnly' => true,
-					'targets' => array('windows-exe', 'mac-dmg'),
-					'generatedAt' => current_time('mysql'),
-				),
-			)
-		);
-	}
-
 	private function public_options($options)
 	{
 		$tokens = array();
@@ -378,42 +332,6 @@ class Npcink_Device_Inventory_Settings_Controller
 			'enabled' => !empty($token['enabled']),
 			'createdAt' => isset($token['created_at']) ? (string) $token['created_at'] : '',
 		);
-	}
-
-	private function find_token($options, $id)
-	{
-		if (empty($options['client_tokens']) || !is_array($options['client_tokens'])) {
-			return null;
-		}
-
-		foreach ($options['client_tokens'] as $token) {
-			if (is_array($token) && isset($token['id']) && $token['id'] === $id) {
-				return $token;
-			}
-		}
-
-		return null;
-	}
-
-	private function build_client_upload_endpoint($input)
-	{
-		$base = trim((string) $input);
-		if ($base === '') {
-			$base = rest_url('npcink-device-inventory/v1');
-		}
-		$base = untrailingslashit($base);
-
-		if (substr($base, -20) === '/device-observations') {
-			return $base;
-		}
-		$namespace_path = '/npcink-device-inventory/v1';
-		if (substr($base, -strlen($namespace_path)) === $namespace_path) {
-			return $base . '/device-observations';
-		}
-		if (substr($base, -8) === '/wp-json') {
-			return $base . '/npcink-device-inventory/v1/device-observations';
-		}
-		return $base . '/wp-json/npcink-device-inventory/v1/device-observations';
 	}
 
 	private function random_secret()

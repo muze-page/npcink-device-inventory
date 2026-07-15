@@ -273,29 +273,6 @@ button {
   font-size: 13px;
 }
 
-.preset-notice {
-  display: grid;
-  gap: 3px;
-  margin: 0;
-  border-radius: 8px;
-  padding: 12px 14px;
-  color: rgba(255, 255, 255, 0.88);
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.preset-notice[hidden] {
-  display: none;
-}
-
-.preset-notice strong {
-  font-size: 14px;
-}
-
-.preset-notice span {
-  color: rgba(255, 255, 255, 0.68);
-  font-size: 13px;
-}
-
 .tip {
   margin: 8px 0 0;
   color: rgba(255, 255, 255, 0.68);

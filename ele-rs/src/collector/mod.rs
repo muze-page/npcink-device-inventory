@@ -314,7 +314,7 @@ fn max_number(values: &[f64]) -> Option<f64> {
 fn max_memory_used_percent(samples: &[Value]) -> Option<f64> {
     samples
         .iter()
-        .filter_map(|sample| runtime_memory_used_percent(sample))
+        .filter_map(runtime_memory_used_percent)
         .reduce(f64::max)
 }
 

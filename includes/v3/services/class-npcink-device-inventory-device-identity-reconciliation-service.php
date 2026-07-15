@@ -51,6 +51,7 @@ class Npcink_Device_Inventory_Device_Identity_Reconciliation_Service
 			'already' => 0,
 			'collisions' => 0,
 			'insufficient' => 0,
+			'failed' => 0,
 		);
 		foreach ($items as $item) {
 			if ($item['status'] === 'already') {
@@ -66,17 +67,17 @@ class Npcink_Device_Inventory_Device_Identity_Reconciliation_Service
 				continue;
 			}
 
-			$existing = $this->identities->find_asset_id_by_identity(Npcink_Device_Inventory_Device_Identity_Service::TYPE, $item['deviceUuid']);
-			if ($existing && intval($existing) !== intval($item['assetId'])) {
-				$result['collisions']++;
-				continue;
-			}
-			if ($this->identities->add(intval($item['assetId']), array(
-				'type' => Npcink_Device_Inventory_Device_Identity_Service::TYPE,
-				'value' => $item['deviceUuid'],
-				'confidence' => 100,
-				'source' => 'reconciliation',
-			))) {
+			$claim = $this->identities->claim(
+				intval($item['assetId']),
+				array(
+					'type' => Npcink_Device_Inventory_Device_Identity_Service::TYPE,
+					'value' => $item['deviceUuid'],
+					'confidence' => 100,
+					'source' => 'reconciliation',
+				),
+				true
+			);
+			if ($claim['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_INSERTED) {
 				$result['written']++;
 				$this->events->record(
 					intval($item['assetId']),
@@ -85,6 +86,12 @@ class Npcink_Device_Inventory_Device_Identity_Reconciliation_Service
 					'Canonical motherboard-backed device UUID written from the latest observation.',
 					array('identityType' => Npcink_Device_Inventory_Device_Identity_Service::TYPE, 'identityValue' => $item['deviceUuid'])
 				);
+			} elseif ($claim['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_OWNED) {
+				$result['already']++;
+			} elseif ($claim['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_CONFLICT) {
+				$result['collisions']++;
+			} else {
+				$result['failed']++;
 			}
 		}
 		return $result;

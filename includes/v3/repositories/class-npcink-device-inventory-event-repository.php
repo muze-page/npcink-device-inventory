@@ -196,13 +196,24 @@ class Npcink_Device_Inventory_Event_Repository
 			FROM %i e
 			LEFT JOIN %i a ON a.id = e.asset_id
 			WHERE e.event_type IN (%s, %s)
-			ORDER BY e.created_at DESC, e.id DESC
-			LIMIT %d",
+			AND JSON_VALID(e.payload_json)
+			AND COALESCE(JSON_UNQUOTE(JSON_EXTRACT(e.payload_json, '$.issueKey')), '') <> ''
+			AND NOT EXISTS (
+				SELECT 1
+				FROM %i newer
+				WHERE newer.event_type IN (%s, %s)
+				AND JSON_VALID(newer.payload_json)
+				AND JSON_UNQUOTE(JSON_EXTRACT(newer.payload_json, '$.issueKey')) = JSON_UNQUOTE(JSON_EXTRACT(e.payload_json, '$.issueKey'))
+				AND (newer.created_at > e.created_at OR (newer.created_at = e.created_at AND newer.id > e.id))
+			)
+			ORDER BY e.created_at DESC, e.id DESC",
 				$events_table,
 				$assets_table,
 				'issue_handled',
 				'issue_reopened',
-				5000
+				$events_table,
+				'issue_handled',
+				'issue_reopened'
 			),
 			ARRAY_A
 		);

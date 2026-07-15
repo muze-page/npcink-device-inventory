@@ -7,16 +7,18 @@ import type {
   AssetInput,
   AssetListParams,
   AssetObservation,
+  BatchAssetContext,
+  BatchAssetResult,
   AnalysisTrends,
+  BackupExportResult,
+  BackupExportSection,
   BackupRestoreResult,
   ClientToken,
-  ClientTokenPackageConfig,
   CreatedClientToken,
   CreatedPublicQueryPage,
   EventListParams,
   InventorySettings,
   IdentityAudit,
-
   DeviceIdentityReconciliation,
   DeviceIdentityReconciliationApplyResult,
   IssueStates,
@@ -70,6 +72,20 @@ export const archiveAsset = async (uuid: string): Promise<Asset> => {
   const response = await restInstance.delete<DataEnvelope<Asset>>(`/assets/${uuid}`, {
     showSuccessMessage: false,
   } as RequestConfig);
+  return unwrapData(response.data);
+};
+
+export const batchAssets = async (
+  operation: "archive" | "update",
+  uuids: string[],
+  changes?: AssetInput,
+  context?: BatchAssetContext
+): Promise<BatchAssetResult> => {
+  const response = await restInstance.post<DataEnvelope<BatchAssetResult>>(
+    "/assets/batch",
+    { operation, uuids, changes, context },
+    { showSuccessMessage: false } as RequestConfig
+  );
   return unwrapData(response.data);
 };
 
@@ -248,16 +264,6 @@ export const updateClientToken = async (
   return unwrapData(response.data);
 };
 
-export const getClientTokenPackageConfig = async (
-  id: string
-): Promise<ClientTokenPackageConfig> => {
-  const response = await restInstance.get<DataEnvelope<ClientTokenPackageConfig>>(
-    `/client-tokens/${id}/package-config`,
-    { showSuccessMessage: false } as RequestConfig
-  );
-  return unwrapData(response.data);
-};
-
 export const deleteClientToken = async (id: string): Promise<void> => {
   await restInstance.delete(`/client-tokens/${id}`, {
     showSuccessMessage: false,
@@ -272,6 +278,19 @@ export const restoreBackup = async (
     "/backup-restore",
     { backup, dryRun },
     { showSuccessMessage: false } as RequestConfig
+  );
+  return unwrapData(response.data);
+};
+
+export const exportBackup = async (
+  sections: BackupExportSection[]
+): Promise<BackupExportResult> => {
+  const response = await restInstance.get<DataEnvelope<BackupExportResult>>(
+    "/backup",
+    {
+      params: { sections: sections.join(",") },
+      showSuccessMessage: false,
+    } as RequestConfig
   );
   return unwrapData(response.data);
 };

@@ -64,7 +64,7 @@ class Npcink_Device_Inventory_V3_Tables
 		if ($value === '') {
 			return self::DEFAULT_DEPARTMENT;
 		}
-		return substr($value, 0, 80);
+		return self::truncate_text($value, 80);
 	}
 
 	public static function normalize_departments($departments)
@@ -76,10 +76,11 @@ class Npcink_Device_Inventory_V3_Tables
 		foreach ($departments as $department) {
 			$value = sanitize_text_field((string) $department);
 			$value = trim($value);
+			$value = self::truncate_text($value, 80);
 			if ($value === '' || in_array($value, $normalized, true)) {
 				continue;
 			}
-			$normalized[] = substr($value, 0, 80);
+			$normalized[] = $value;
 		}
 		sort($normalized, SORT_NATURAL | SORT_FLAG_CASE);
 		return $normalized;
@@ -102,5 +103,12 @@ class Npcink_Device_Inventory_V3_Tables
 			$options = array();
 		}
 		return array_merge(self::default_options(), $options);
+	}
+
+	private static function truncate_text($value, $length)
+	{
+		return function_exists('mb_substr')
+			? mb_substr((string) $value, 0, $length, 'UTF-8')
+			: substr((string) $value, 0, $length);
 	}
 }

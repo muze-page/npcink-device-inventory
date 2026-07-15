@@ -8,6 +8,11 @@ class Npcink_Device_Inventory_Identity_Repository
 {
 	const CACHE_GROUP = 'npcink_device_inventory_identities';
 	const CACHE_TTL = 60;
+	const CLAIM_INSERTED = 'inserted';
+	const CLAIM_OWNED = 'owned';
+	const CLAIM_CONFLICT = 'conflict';
+	const CLAIM_INVALID = 'invalid';
+	const CLAIM_ERROR = 'error';
 
 	public function find_asset_id_by_identities($identities)
 	{
@@ -124,21 +129,29 @@ class Npcink_Device_Inventory_Identity_Repository
 		return $items;
 	}
 
-	public function add($asset_id, $identity, $is_primary = false)
+	/**
+	 * Atomically claim a globally unique identity for an asset.
+	 *
+	 * The unique database key is the source of truth. Callers must inspect the
+	 * returned status instead of treating a duplicate write as success.
+	 */
+	public function claim($asset_id, $identity, $is_primary = false)
 	{
 		global $wpdb;
-		$type = sanitize_key($identity['type']);
-		$value = sanitize_text_field($identity['value']);
-		if ($type === '' || $value === '') {
-			return false;
+		$asset_id = intval($asset_id);
+		$type = isset($identity['type']) ? sanitize_key($identity['type']) : '';
+		$value = isset($identity['value']) ? sanitize_text_field($identity['value']) : '';
+		if ($asset_id <= 0 || $type === '' || $value === '') {
+			return $this->claim_result(self::CLAIM_INVALID, null, $type, $value);
 		}
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned identity table write invalidates repository object-cache version after success.
 		$result = $wpdb->query(
 			$wpdb->prepare(
-				'INSERT IGNORE INTO %i
+				'INSERT INTO %i
 				(asset_id, identity_type, identity_value, confidence, is_primary, source)
-				VALUES (%d, %s, %s, %f, %d, %s)',
+				VALUES (%d, %s, %s, %f, %d, %s)
+				ON DUPLICATE KEY UPDATE identity_value = identity_value',
 				Npcink_Device_Inventory_V3_Tables::identities(),
 				$asset_id,
 				$type,
@@ -150,20 +163,86 @@ class Npcink_Device_Inventory_Identity_Repository
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		if ($result !== false) {
-			$version = $this->get_list_cache_version();
-			wp_cache_set('list_version', $version + 1, self::CACHE_GROUP);
+		if ($result === false) {
+			return $this->claim_result(self::CLAIM_ERROR, null, $type, $value);
 		}
-		return $result !== false;
+		if ($result === 1) {
+			$this->bump_list_cache_version();
+			return $this->claim_result(self::CLAIM_INSERTED, $asset_id, $type, $value);
+		}
+
+		$owner_asset_id = $this->find_owner_uncached($type, $value);
+		if ($owner_asset_id === $asset_id) {
+			if ($is_primary) {
+				$this->mark_primary($asset_id, $type, $value);
+			}
+			return $this->claim_result(self::CLAIM_OWNED, $owner_asset_id, $type, $value);
+		}
+		if ($owner_asset_id > 0) {
+			return $this->claim_result(self::CLAIM_CONFLICT, $owner_asset_id, $type, $value);
+		}
+
+		return $this->claim_result(self::CLAIM_ERROR, null, $type, $value);
 	}
 
-	public function add_many($asset_id, $identities)
+	public function claim_many($asset_id, $identities)
 	{
-		$index = 0;
-		foreach ($identities as $identity) {
-			$this->add($asset_id, $identity, $index === 0);
-			$index++;
+		$results = array();
+		foreach (array_values(is_array($identities) ? $identities : array()) as $index => $identity) {
+			$results[] = $this->claim($asset_id, $identity, $index === 0);
 		}
+		return $results;
+	}
+
+	private function find_owner_uncached($type, $value)
+	{
+		global $wpdb;
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- The unique row must be read immediately after an atomic claim attempt; a cached miss would be incorrect.
+		$asset_id = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT asset_id FROM %i WHERE identity_type = %s AND identity_value = %s LIMIT 1',
+				Npcink_Device_Inventory_V3_Tables::identities(),
+				$type,
+				$value
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		return intval($asset_id);
+	}
+
+	private function mark_primary($asset_id, $type, $value)
+	{
+		global $wpdb;
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- This only promotes an identity already owned by the requested asset.
+		$result = $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE %i SET is_primary = 1 WHERE asset_id = %d AND identity_type = %s AND identity_value = %s AND is_primary = 0',
+				Npcink_Device_Inventory_V3_Tables::identities(),
+				$asset_id,
+				$type,
+				$value
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ($result === 1) {
+			$this->bump_list_cache_version();
+		}
+	}
+
+	private function claim_result($status, $owner_asset_id, $type, $value)
+	{
+		return array(
+			'status' => $status,
+			'ownerAssetId' => $owner_asset_id === null ? null : intval($owner_asset_id),
+			'identityType' => $type,
+			'identityValue' => $value,
+		);
+	}
+
+	private function bump_list_cache_version()
+	{
+		$version = $this->get_list_cache_version();
+		wp_cache_set('list_version', $version + 1, self::CACHE_GROUP);
 	}
 
 	private function build_cache_key($prefix, $parts)

@@ -29,6 +29,7 @@ import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
 import { InitialAssets, RestUrl, Site } from "@/utils/index";
 import {
   archiveAsset,
+  batchAssets,
   createAsset,
   createAssetEvent,
   createClientToken,
@@ -40,12 +41,9 @@ import {
   getAssetObservations,
   getAnalysisTrends,
   getAssets,
-  getClientTokenPackageConfig,
   getEvents,
   getIssueStates,
-  getObservations,
   getSettings,
-  restoreBackup,
   updateClientToken,
   updateSettings,
   updateAsset,
@@ -59,7 +57,6 @@ import type {
   AssetListParams,
   AssetReference,
   AssetObservation,
-  BackupRestoreSummary,
   ClientToken,
   CreatedClientToken,
   InventorySettings,
@@ -86,6 +83,7 @@ import {
   type HardwareIssue,
 } from "@/utils/hardwareAudit";
 import { DeviceIdentityReconciliationModal, IdentityAuditModal } from "@/components/advanced-data-governance";
+import { BackupManagementPanels, BackupRestoreModal } from "@/components/backup-management";
 
 const { Text, Title } = Typography;
 
@@ -184,8 +182,6 @@ const ASSET_IMPORT_FIELDS = [
 type AssetImportFieldKey = (typeof ASSET_IMPORT_FIELDS)[number]["value"];
 type AssetImportStrategy = "create-only" | "update-by-number" | "upsert-by-number";
 type AssetImportSection = "basic" | "finance" | "hardware";
-type BackupExportSection = "settings" | "assets" | "identities" | "events" | "observations";
-
 interface AssetImportPreviewRow {
   key: string;
   rowNumber: number;
@@ -221,27 +217,6 @@ type AssetExportFieldKey =
 type AssetExportScope = "current-filter" | "selected" | "computer" | "custom" | "all";
 
 const DEFAULT_ASSET_IMPORT_SECTIONS: AssetImportSection[] = ["basic", "finance", "hardware"];
-const DEFAULT_BACKUP_EXPORT_SECTIONS: BackupExportSection[] = ["settings", "assets", "identities", "events", "observations"];
-
-const BACKUP_RESTORE_SECTION_LABELS: Record<keyof BackupRestoreSummary["available"], string> = {
-  settings: "设置",
-  assets: "资产台账",
-  identities: "设备匹配标识",
-  events: "变更记录",
-  observations: "电脑采集快照",
-};
-
-const BACKUP_RESTORE_PLAN_LABELS: Record<keyof BackupRestoreSummary["planned"], string> = {
-  settings: "设置恢复",
-  assetsCreated: "新增资产",
-  assetsUpdated: "更新资产",
-  identitiesCreated: "新增设备匹配标识",
-  identitiesExisting: "已存在设备匹配标识",
-  observationsCreated: "新增电脑采集快照",
-  observationsExisting: "已存在电脑采集快照",
-  eventsCreated: "新增变更记录",
-  eventsExisting: "已存在变更记录",
-};
 
 const SAVED_FILTER_STORAGE_KEY = "npcink-device-inventory.savedFilters";
 const WORKSPACE_TAB_STORAGE_KEY = "npcink-device-inventory.workspaceTab";
@@ -555,10 +530,6 @@ const downloadTextFile = (filename: string, text: string, type = "text/csv;chars
 
 const downloadCsvFile = (filename: string, text: string) => {
   downloadTextFile(filename, `\uFEFF${text}`);
-};
-
-const downloadJsonFile = (filename: string, value: unknown) => {
-  downloadTextFile(filename, JSON.stringify(value, null, 2), "application/json;charset=utf-8");
 };
 
 const parseCsvLine = (line: string) => {
@@ -1033,38 +1004,6 @@ const buildImportPreviewRows = (
   });
 };
 
-const fetchAllEvents = async () => {
-  const first = await getEvents({ page: 1, pageSize: 100 });
-  const allEvents = [...first.data];
-  for (let nextPage = 2; nextPage <= (first.pagination.totalPages || 1); nextPage += 1) {
-    const next = await getEvents({ page: nextPage, pageSize: 100 });
-    allEvents.push(...next.data);
-  }
-  return allEvents;
-};
-
-const fetchAllObservations = async () => {
-  const first = await getObservations({ page: 1, pageSize: 100 });
-  const allObservations = [...first.data];
-  for (let nextPage = 2; nextPage <= (first.pagination.totalPages || 1); nextPage += 1) {
-    const next = await getObservations({ page: nextPage, pageSize: 100 });
-    allObservations.push(...next.data);
-  }
-  return allObservations;
-};
-
-const fetchAllIdentities = async (assets: Asset[]) => {
-  const results = await Promise.all(
-    assets.map(async (asset) => ({
-      assetUuid: asset.uuid,
-      assetNumber: asset.assetNumber,
-      assetName: asset.name,
-      identities: await getAssetIdentities(asset.uuid),
-    }))
-  );
-  return results.filter((item) => item.identities.length > 0);
-};
-
 const issuesToCsv = (issues: HardwareIssue[], handledIssueKeys: Set<string>) => {
   const headers = ["处理状态", "级别", "类型", "资产编号", "资产名称", "使用人", "部门", "说明"];
   const rows = issues.map((issue) => [
@@ -1462,6 +1401,17 @@ const bulkUpdateChanges = (asset: Asset, input: AssetInput) =>
 const buildClientTokenValue = (token: CreatedClientToken) =>
   `mda_${token.id}_${token.secret}`;
 
+const buildClientImportConfig = (token: CreatedClientToken, uploadEndpoint: string) =>
+  JSON.stringify(
+    {
+      uploadEndpoint,
+      tokenValue: buildClientTokenValue(token),
+      tokenName: token.name,
+    },
+    null,
+    2
+  );
+
 const buildClientUploadEndpoint = (input?: string) => {
   const base = (input || RestUrl).trim().replace(/\/+$/, "");
   if (!base) {
@@ -1481,22 +1431,6 @@ const buildClientUploadEndpoint = (input?: string) => {
 
 const buildClientSubmitCommand = (token: CreatedClientToken, uploadEndpoint: string) =>
   `npcink-device-agent submit --site "${uploadEndpoint}" --token "${buildClientTokenValue(token)}" --note "测试电脑"`;
-
-const writeClipboardText = async (text: string) => {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text);
-    return;
-  }
-  const textarea = document.createElement("textarea");
-  textarea.value = text;
-  textarea.setAttribute("readonly", "true");
-  textarea.style.position = "fixed";
-  textarea.style.left = "-9999px";
-  document.body.appendChild(textarea);
-  textarea.select();
-  document.execCommand("copy");
-  document.body.removeChild(textarea);
-};
 
 const compactJson = (value: JsonRecord) => {
   const entries = Object.entries(value || {});
@@ -2712,19 +2646,6 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
       },
     }
   );
-  const packageConfigMutation = useMutation(
-    async (token: ClientToken) => {
-      const config = await getClientTokenPackageConfig(token.id);
-      await writeClipboardText(JSON.stringify(config, null, 2));
-      return token;
-    },
-    {
-      onSuccess: () => {
-        message.success("上传配置已复制");
-      },
-    }
-  );
-
   const tokens = settingsQuery.data?.clientTokens || [];
   const uploadEndpoint = buildClientUploadEndpoint(settingsQuery.data?.clientUploadBaseUrl || RestUrl);
 
@@ -2762,29 +2683,9 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
     },
     {
       title: "操作",
-      width: 190,
+      width: 90,
       render: (_, token) => (
         <Space size={8}>
-          <Button
-            size="small"
-            loading={packageConfigMutation.isLoading && packageConfigMutation.variables?.id === token.id}
-            onClick={() =>
-              Modal.confirm({
-                title: "复制上传配置？",
-                content: (
-                  <Space direction="vertical" size={4}>
-                    <Text>配置包含客户端令牌密钥，可用于客户端导入或生成安装包。</Text>
-                    <Text type="secondary">Token ID：{token.id}</Text>
-                  </Space>
-                ),
-                okText: "复制",
-                cancelText: "取消",
-                onOk: () => packageConfigMutation.mutateAsync(token),
-              })
-            }
-          >
-            复制上传配置
-          </Button>
           <Button
             size="small"
             danger
@@ -2852,9 +2753,16 @@ const TokenModal = ({ open, onClose }: TokenModalProps) => {
           className="npcink-v3-secret"
           type="warning"
           showIcon
-          message="完整授权码包含上传权限"
+          message="密钥只在创建后显示一次"
           description={
             <Space direction="vertical" size={8} className="npcink-v3-client-snippet">
+              <Text type="secondary">请立即复制桌面客户端导入配置；关闭窗口后无法再次读取密钥。</Text>
+              <div className="npcink-v3-client-snippet-item">
+                <Text type="secondary">桌面客户端导入配置</Text>
+                <Text copyable code className="npcink-v3-client-snippet-code">
+                  {buildClientImportConfig(createdToken, uploadEndpoint)}
+                </Text>
+              </div>
               <div className="npcink-v3-client-snippet-item">
                 <Text type="secondary">完整授权码</Text>
                 <Text copyable code className="npcink-v3-client-snippet-code">
@@ -4527,27 +4435,13 @@ const HardwareAuditWorkspace = ({ focus, onOpenSettings }: HardwareAuditWorkspac
   );
   const departmentAssignMutation = useMutation(
     async (department: string) => {
-      for (const item of selectedDepartmentAssets) {
-        await updateAsset(item.asset.uuid, { department } as AssetInput);
-        await createAssetEvent(item.asset.uuid, {
-          eventType: "bulk_updated",
-          message: "批量分配部门",
-          payload: {
-            source: "analysis_department_assignment",
-            changedFields: [
-              {
-                field: "department",
-                label: "部门",
-                oldValue: item.asset.department || DEFAULT_DEPARTMENT,
-                newValue: department,
-              },
-            ],
-            issueKeys: item.issueKeys,
-            selectedCount: selectedDepartmentAssets.length,
-          },
-        });
-      }
-      return selectedDepartmentAssets.length;
+      const result = await batchAssets(
+        "update",
+        selectedDepartmentAssets.map((item) => item.asset.uuid),
+        { department },
+        { source: "analysis_department_assignment", message: "批量分配部门" }
+      );
+      return result.updated;
     },
     {
       onSuccess: (updatedCount) => {
@@ -4574,27 +4468,13 @@ const HardwareAuditWorkspace = ({ focus, onOpenSettings }: HardwareAuditWorkspac
   const ownerAssignMutation = useMutation(
     async (ownerName: string) => {
       const normalizedOwnerName = ownerName.trim();
-      for (const item of selectedOwnerAssets) {
-        await updateAsset(item.asset.uuid, { ownerName: normalizedOwnerName } as AssetInput);
-        await createAssetEvent(item.asset.uuid, {
-          eventType: "bulk_updated",
-          message: "批量分配责任人",
-          payload: {
-            source: "analysis_owner_assignment",
-            changedFields: [
-              {
-                field: "ownerName",
-                label: "使用人 / 责任人",
-                oldValue: item.asset.ownerName || "",
-                newValue: normalizedOwnerName,
-              },
-            ],
-            issueKeys: item.issueKeys,
-            selectedCount: selectedOwnerAssets.length,
-          },
-        });
-      }
-      return selectedOwnerAssets.length;
+      const result = await batchAssets(
+        "update",
+        selectedOwnerAssets.map((item) => item.asset.uuid),
+        { ownerName: normalizedOwnerName },
+        { source: "analysis_owner_assignment", message: "批量分配责任人" }
+      );
+      return result.updated;
     },
     {
       onSuccess: (updatedCount) => {
@@ -6484,249 +6364,6 @@ const AnalysisWorkspace = ({ onOpenSettings }: AnalysisWorkspaceProps) => {
   );
 };
 
-interface BackupRestoreModalProps {
-  open: boolean;
-  onClose: () => void;
-  onImported: () => void;
-}
-
-const BackupRestoreModal = ({ open, onClose, onImported }: BackupRestoreModalProps) => {
-  const [rawText, setRawText] = useState("");
-  const [backup, setBackup] = useState<unknown>(null);
-  const [summary, setSummary] = useState<BackupRestoreSummary | null>(null);
-  const [restoreConfirmed, setRestoreConfirmed] = useState(false);
-  const previewMutation = useMutation(
-    async (text: string) => {
-      const parsed = JSON.parse(text);
-      const result = await restoreBackup(parsed, true);
-      return { parsed, summary: result.summary };
-    },
-    {
-      onSuccess: (result) => {
-        setBackup(result.parsed);
-        setSummary(result.summary);
-        setRestoreConfirmed(false);
-        message.success("备份文件校验通过");
-      },
-      onError: (error) => {
-        setBackup(null);
-        setSummary(null);
-        setRestoreConfirmed(false);
-        message.error(error instanceof Error ? error.message : "备份文件校验失败");
-      },
-    }
-  );
-  const restoreMutation = useMutation(
-    async () => {
-      if (!backup) {
-        throw new Error("请先校验备份文件");
-      }
-      return restoreBackup(backup, false);
-    },
-    {
-      onSuccess: (result) => {
-        setSummary(result.summary);
-        message.success("JSON 备份导入完成");
-        setRawText("");
-        setBackup(null);
-        setSummary(null);
-        setRestoreConfirmed(false);
-        onImported();
-        onClose();
-      },
-      onError: (error) => {
-        setRestoreConfirmed(false);
-        message.error(error instanceof Error ? error.message : "JSON 备份导入失败");
-      },
-    }
-  );
-
-  useEffect(() => {
-    if (!open) {
-      setRawText("");
-      setBackup(null);
-      setSummary(null);
-      setRestoreConfirmed(false);
-      previewMutation.reset();
-      restoreMutation.reset();
-    }
-  }, [open]);
-
-  const parseSource = (text = rawText) => {
-    if (!text.trim()) {
-      message.warning("请选择或粘贴 JSON 备份文件");
-      return;
-    }
-    previewMutation.mutate(text);
-  };
-
-  const availableRows = summary
-    ? Object.entries(summary.available).map(([key, value]) => ({
-      key,
-      label: BACKUP_RESTORE_SECTION_LABELS[key as keyof BackupRestoreSummary["available"]],
-      count: value,
-    }))
-    : [];
-  const planRows = summary
-    ? Object.entries(summary.planned).map(([key, value]) => ({
-      key,
-      label: BACKUP_RESTORE_PLAN_LABELS[key as keyof BackupRestoreSummary["planned"]],
-      count: value,
-    })).filter((item) => item.count > 0)
-    : [];
-  const skipRows = summary
-    ? Object.entries(summary.skipped).map(([key, value]) => ({
-      key,
-      label: BACKUP_RESTORE_SECTION_LABELS[key as keyof BackupRestoreSummary["skipped"]],
-      count: value,
-    })).filter((item) => item.count > 0)
-    : [];
-  const hasConflicts = Boolean(summary?.conflicts.length);
-
-  return (
-    <Modal
-      title="导入 JSON 备份"
-      open={open}
-      onCancel={onClose}
-      width={860}
-      destroyOnClose
-      footer={[
-        <Button key="cancel" onClick={onClose}>
-          取消
-        </Button>,
-        <Button key="preview" loading={previewMutation.isLoading} onClick={() => parseSource()}>
-          校验并预览
-        </Button>,
-        <Button
-          key="restore"
-          type="primary"
-          danger
-          disabled={!backup || !summary || hasConflicts || !restoreConfirmed}
-          loading={restoreMutation.isLoading}
-          onClick={() => restoreMutation.mutate()}
-        >
-          导入备份
-        </Button>,
-      ]}
-    >
-      <Space direction="vertical" size={14} className="npcink-v3-detail-stack">
-        <Alert
-          type="warning"
-          showIcon
-          message="导入采用合并/更新策略"
-          description="会按资产 UUID 或资产编号更新/新增插件业务数据，不会清空正式站点现有数据。上传授权码、公开查询访问码、公开查询启用状态和客户端上传基础 URL 不会恢复。"
-        />
-        <input
-          type="file"
-          accept=".json,application/json"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (!file) {
-              return;
-            }
-            const reader = new FileReader();
-            reader.onload = () => {
-              const text = String(reader.result || "");
-              setRawText(text);
-              setBackup(null);
-              setSummary(null);
-              setRestoreConfirmed(false);
-              parseSource(text);
-            };
-            reader.readAsText(file);
-          }}
-        />
-        <Input.TextArea
-          rows={7}
-          value={rawText}
-          onChange={(event) => {
-            setRawText(event.target.value);
-            setBackup(null);
-            setSummary(null);
-            setRestoreConfirmed(false);
-          }}
-          placeholder="粘贴从本插件“JSON 备份导出”生成的备份内容"
-        />
-        {summary ? (
-          <Space direction="vertical" size={10} className="npcink-v3-detail-stack">
-            <div>
-              <Text strong>备份信息</Text>
-              <Text type="secondary" className="npcink-v3-export-range-note">
-                {summary.exportedAt ? `导出时间：${summary.exportedAt}` : "未记录导出时间"}
-              </Text>
-            </div>
-            <Table
-              rowKey="key"
-              size="small"
-              pagination={false}
-              dataSource={availableRows}
-              columns={[
-                { title: "数据区段", dataIndex: "label" },
-                { title: "可导入数量", dataIndex: "count", width: 140 },
-              ]}
-            />
-            <Table
-              rowKey="key"
-              size="small"
-              pagination={false}
-              dataSource={planRows}
-              locale={{ emptyText: "没有需要创建或更新的数据" }}
-              columns={[
-                { title: "导入计划", dataIndex: "label" },
-                { title: "数量", dataIndex: "count", width: 140 },
-              ]}
-            />
-            {skipRows.length ? (
-              <Table
-                rowKey="key"
-                size="small"
-                pagination={false}
-                dataSource={skipRows}
-                columns={[
-                  { title: "跳过区段", dataIndex: "label" },
-                  { title: "跳过数量", dataIndex: "count", width: 140 },
-                ]}
-              />
-            ) : null}
-            {hasConflicts ? (
-              <Alert
-                type="error"
-                showIcon
-                message="发现导入冲突"
-                description={(
-                  <Space direction="vertical" size={4}>
-                    {summary.conflicts.map((conflict) => (
-                      <Text key={conflict} type="danger">
-                        {conflict}
-                      </Text>
-                    ))}
-                  </Space>
-                )}
-              />
-            ) : null}
-            <div className="npcink-v3-checkbox-row">
-              {summary.warnings.map((warning) => (
-                <Tag color="orange" key={warning}>
-                  {warning}
-                </Tag>
-              ))}
-            </div>
-            <Checkbox
-              checked={restoreConfirmed}
-              disabled={hasConflicts}
-              onChange={(event) => setRestoreConfirmed(event.target.checked)}
-            >
-              我确认会按预览计划合并/更新正式站点数据，且已保留当前站点备份
-            </Checkbox>
-          </Space>
-        ) : (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="先选择或粘贴 JSON，再校验预览" />
-        )}
-      </Space>
-    </Modal>
-  );
-};
-
 const DataToolsWorkspace = ({
   onOpenAsset,
   onOpenSettings,
@@ -6739,38 +6376,7 @@ const DataToolsWorkspace = ({
   const [backupImportModalOpen, setBackupImportModalOpen] = useState(false);
   const [identityAuditOpen, setIdentityAuditOpen] = useState(false);
   const [deviceIdentityReconciliationOpen, setDeviceIdentityReconciliationOpen] = useState(false);
-  const [backupLoading, setBackupLoading] = useState(false);
-  const [backupSections, setBackupSections] = useState<BackupExportSection[]>(DEFAULT_BACKUP_EXPORT_SECTIONS);
   const queryClient = useQueryClient();
-
-  const exportBackup = async () => {
-    setBackupLoading(true);
-    try {
-      const assetsNeeded = backupSections.includes("assets") || backupSections.includes("identities");
-      const [settings, assets, events, observations] = await Promise.all([
-        backupSections.includes("settings") ? getSettings() : Promise.resolve(undefined),
-        assetsNeeded ? fetchAllAssets({ assetScope: "all", includeDeleted: true }) : Promise.resolve(undefined),
-        backupSections.includes("events") ? fetchAllEvents() : Promise.resolve(undefined),
-        backupSections.includes("observations") ? fetchAllObservations() : Promise.resolve(undefined),
-      ]);
-      const identities = backupSections.includes("identities") && assets
-        ? await fetchAllIdentities(assets)
-        : undefined;
-      downloadJsonFile(`npcink-device-inventory-backup-${Date.now()}.json`, {
-        schema: "npcink-device-inventory/v3-admin-export",
-        exportedAt: new Date().toISOString(),
-        sections: backupSections,
-        ...(settings ? { settings } : {}),
-        ...(assets ? { assets } : {}),
-        ...(identities ? { identities } : {}),
-        ...(events ? { events } : {}),
-        ...(observations ? { observations } : {}),
-      });
-      message.success("JSON 备份已导出");
-    } finally {
-      setBackupLoading(false);
-    }
-  };
 
   return (
     <div className="npcink-v3-section">
@@ -6827,44 +6433,7 @@ const DataToolsWorkspace = ({
                   </div>
                   <Button onClick={onOpenSettings}>打开客户端接入</Button>
                 </div>
-        <div className="npcink-v3-tool-panel">
-          <div>
-            <Title level={4}>JSON 备份导出</Title>
-            <Text type="secondary">
-              给管理员完整迁移或归档，默认导出全部业务数据，不按电脑/自定义设备拆分；不会导出令牌密钥或访问码明文。
-            </Text>
-            <Text type="secondary" className="npcink-v3-export-range-note">
-              电脑采集快照用于保留客户端上报的硬件历史；日常台账表格导出不需要。
-            </Text>
-            <Checkbox.Group
-              className="npcink-v3-checkbox-row"
-              value={backupSections}
-              onChange={(values) => setBackupSections(values as BackupExportSection[])}
-              options={[
-                { label: "设置", value: "settings" },
-                { label: "资产台账", value: "assets" },
-                { label: "设备匹配标识", value: "identities" },
-                { label: "变更记录", value: "events" },
-                { label: "电脑采集快照", value: "observations" },
-              ]}
-            />
-          </div>
-          <Button loading={backupLoading} disabled={!backupSections.length} onClick={exportBackup}>
-            导出 JSON 备份
-          </Button>
-        </div>
-        <div className="npcink-v3-tool-panel">
-          <div>
-            <Title level={4}>JSON 备份导入</Title>
-            <Text type="secondary">将本插件备份恢复到当前站点；导入前会校验文件并展示各区段数量。</Text>
-            <Text type="secondary" className="npcink-v3-export-range-note">
-              适合本地整理后迁移到正式站点；令牌、访问码和站点 URL 相关设置需重新配置。
-            </Text>
-          </div>
-          <Button danger onClick={() => setBackupImportModalOpen(true)}>
-            导入 JSON 备份
-          </Button>
-        </div>
+                <BackupManagementPanels onOpenImport={() => setBackupImportModalOpen(true)} />
               </div>
             ),
           },
@@ -7424,7 +6993,10 @@ const AssetWorkspace = ({
   });
   const batchArchiveMutation = useMutation(
     async (uuids: string[]) => {
-      await Promise.all(uuids.map((uuid) => archiveAsset(uuid)));
+      return batchAssets("archive", uuids, undefined, {
+        source: "asset_batch_archive",
+        message: "批量归档资产",
+      });
     },
     {
       onSuccess: () => {
@@ -7446,19 +7018,14 @@ const AssetWorkspace = ({
         return 0;
       }
 
-      for (const { asset, changes } of changedTargets) {
-        await updateAsset(asset.uuid, input);
-        await createAssetEvent(asset.uuid, {
-          eventType: "bulk_updated",
-          message: `批量修改：${changes.map((change) => change.label).join("、")}`,
-          payload: {
-            source: "asset_batch_edit",
-            changedFields: changes,
-            selectedCount: targets.length,
-          },
-        });
-      }
-      return changedTargets.length;
+      const labels = Array.from(new Set(changedTargets.flatMap(({ changes }) => changes.map((change) => change.label))));
+      const result = await batchAssets(
+        "update",
+        changedTargets.map(({ asset }) => asset.uuid),
+        input,
+        { source: "asset_batch_edit", message: `批量修改：${labels.join("、")}` }
+      );
+      return result.updated;
     },
     {
       onSuccess: (changedCount) => {

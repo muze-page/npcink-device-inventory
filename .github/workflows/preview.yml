@@ -43,6 +43,9 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
 
+      - name: Check version contract
+        run: npm run check:versions
+
       - name: PHP syntax check
         run: |
           php -v
@@ -57,10 +60,15 @@ jobs:
       - name: PHP static analysis
         run: composer phpstan
 
+      - name: Plugin regression fixtures
+        run: npm run check:fixtures
+
       - name: Build admin app
         working-directory: vite-admin
         run: |
-          npm install
+          npm ci
+          npm run check:hardware-audit
+          npm run lint
           npm run build
 
       - name: Package plugin
@@ -105,11 +113,21 @@ jobs:
 
       - name: Check Rust collector
         working-directory: ele-rs
-        run: cargo check
+        run: |
+          cargo fmt -- --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked
 
       - name: Check Tauri shell
         working-directory: ele-rs/src-tauri
-        run: cargo check
+        run: |
+          cargo fmt -- --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked
+
+      - name: Build desktop frontend
+        working-directory: ele-rs
+        run: npm run build
 
       - name: Build Tauri bundle
         working-directory: ele-rs
@@ -149,11 +167,21 @@ jobs:
 
       - name: Check Rust collector
         working-directory: ele-rs
-        run: cargo check
+        run: |
+          cargo fmt -- --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked
 
       - name: Check Tauri shell
         working-directory: ele-rs/src-tauri
-        run: cargo check
+        run: |
+          cargo fmt -- --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked
+
+      - name: Build desktop frontend
+        working-directory: ele-rs
+        run: npm run build
 
       - name: Build Tauri bundle
         working-directory: ele-rs

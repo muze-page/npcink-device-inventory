@@ -1,11 +1,13 @@
 {
   "plugin_slug": "npcink-device-inventory",
   "created_at": "2026-06-21",
+  "reviewed_at": "2026-07-15",
   "source_files": {
     "icon": "sj/img/LOGO.png",
     "banner": "sj/img/banner.png"
   },
-  "assets": [
+  "publication_status": "banners_and_icons_only",
+  "publishable_assets": [
     {
       "file": "sj/assets/banner-772x250.png",
       "purpose": "standard banner",
@@ -37,46 +39,33 @@
       "height": 256,
       "bytes": 63541,
       "sha256": "43d5ecca4b3bb98f81c2620c1d047bb5ab83c5616a57bc980924ba9e7bec7a8c"
-    },
+    }
+  ],
+  "archived_assets": [
     {
       "file": "sj/assets/screenshot-1.png",
-      "purpose": "admin computer device inventory screenshot",
-      "width": 1440,
-      "height": 940,
-      "bytes": 98366,
-      "sha256": "d68512ea030a7957cb2ccc87e2f5ed5415d5cd5070ef7484206136d6392cab4a"
+      "status": "stale_do_not_publish",
+      "reason": "captures a pre-3.0 admin surface"
     },
     {
       "file": "sj/assets/screenshot-2.png",
-      "purpose": "admin custom asset inventory screenshot",
-      "width": 1440,
-      "height": 940,
-      "bytes": 91919,
-      "sha256": "2939c537e2d667a032d459cc058c7b23d471b1733526eb6821e97dfb577f85c4"
+      "status": "stale_do_not_publish",
+      "reason": "captures a pre-3.0 admin surface"
     },
     {
       "file": "sj/assets/screenshot-3.png",
-      "purpose": "admin hardware audit screenshot",
-      "width": 1440,
-      "height": 971,
-      "bytes": 107043,
-      "sha256": "5e1af245bfeb4825e8140483afbbc0310956c1d10a6dcac5acd142fadf61b21e"
+      "status": "stale_do_not_publish",
+      "reason": "captures a pre-3.0 admin surface"
     },
     {
       "file": "sj/assets/screenshot-4.png",
-      "purpose": "admin settings and client token screenshot",
-      "width": 1440,
-      "height": 940,
-      "bytes": 95345,
-      "sha256": "50aa1829846aec0ea8fad622f3f096f601885378da65af083db181ad0196ca7a"
+      "status": "stale_do_not_publish",
+      "reason": "shows the removed reusable token configuration workflow"
     },
     {
       "file": "sj/assets/screenshot-5.png",
-      "purpose": "public device search page screenshot",
-      "width": 1440,
-      "height": 1739,
-      "bytes": 117345,
-      "sha256": "f945f73772a04450a10ecca4962941fddec41b72f90f47c2eef2fed758a29cb3"
+      "status": "stale_do_not_publish",
+      "reason": "shows an obsolete public-query authentication description"
     }
   ],
   "svn_assets_directory": "assets/"

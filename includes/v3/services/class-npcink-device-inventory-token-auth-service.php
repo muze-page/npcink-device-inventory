@@ -6,6 +6,9 @@ if (!defined('ABSPATH')) {
 
 class Npcink_Device_Inventory_Token_Auth_Service
 {
+	const RATE_LIMIT = 120;
+	const RATE_WINDOW_SECONDS = 300;
+
 	public function verify_request(WP_REST_Request $request)
 	{
 		$options = Npcink_Device_Inventory_V3_Tables::options();
@@ -51,8 +54,31 @@ class Npcink_Device_Inventory_Token_Auth_Service
 			return Npcink_Device_Inventory_V3_Response::error('invalid_signature', 'Device upload signature is invalid.', 401);
 		}
 
+		$rate_limit = $this->consume_rate_limit($token_id);
+		if (is_wp_error($rate_limit)) {
+			return $rate_limit;
+		}
+
 		set_transient($nonce_key, 1, 5 * MINUTE_IN_SECONDS);
 
+		return true;
+	}
+
+	private function consume_rate_limit($token_id)
+	{
+		$window = (int) floor(time() / self::RATE_WINDOW_SECONDS);
+		$key = 'npcink_v3_upload_rate_' . md5($token_id . ':' . $window);
+		$count = intval(get_transient($key));
+		if ($count >= self::RATE_LIMIT) {
+			$retry_after = self::RATE_WINDOW_SECONDS - (time() % self::RATE_WINDOW_SECONDS);
+			return Npcink_Device_Inventory_V3_Response::error(
+				'upload_rate_limited',
+				'Device upload rate limit exceeded.',
+				429,
+				array('retryAfter' => $retry_after)
+			);
+		}
+		set_transient($key, $count + 1, self::RATE_WINDOW_SECONDS + 5);
 		return true;
 	}
 }

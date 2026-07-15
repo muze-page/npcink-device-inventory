@@ -78,11 +78,22 @@ class WP_REST_Request
 	{
 		return isset($this->headers[strtolower($key)]) ? $this->headers[strtolower($key)] : '';
 	}
+
+	public function get_param($key)
+	{
+		return isset($this->params[$key]) ? $this->params[$key] : null;
+	}
+
+	public function set_param($key, $value)
+	{
+		$this->params[$key] = $value;
+	}
 }
 
 class WP_REST_Server
 {
 	const CREATABLE = 'POST';
+	const READABLE = 'GET';
 }
 
 class Npcink_Test_Wpdb
@@ -94,6 +105,10 @@ class Npcink_Test_Wpdb
 		'assets_by_number' => array(),
 		'identities' => array(),
 	);
+	public $export_rows = array();
+	public $count_overrides = array();
+	public $commands = array();
+	public $fail_command = '';
 	private $last_query = '';
 	private $last_args = array();
 
@@ -118,11 +133,24 @@ class Npcink_Test_Wpdb
 
 	public function get_var($query)
 	{
+		if (strpos($query, 'COUNT(*)') !== false) {
+			$table = isset($this->last_args[0]) ? (string) $this->last_args[0] : '';
+			if (isset($this->count_overrides[$table])) {
+				return $this->count_overrides[$table];
+			}
+			return isset($this->export_rows[$table]) ? count($this->export_rows[$table]) : 0;
+		}
 		if (strpos($query, 'identity_type') !== false) {
 			$key = (isset($this->last_args[1]) ? $this->last_args[1] : '') . "\0" . (isset($this->last_args[2]) ? $this->last_args[2] : '');
 			return isset($this->rows['identities'][$key]) ? $this->rows['identities'][$key] : null;
 		}
 		return null;
+	}
+
+	public function get_results($query, $format = null)
+	{
+		$table = isset($this->last_args[0]) ? (string) $this->last_args[0] : '';
+		return isset($this->export_rows[$table]) ? $this->export_rows[$table] : array();
 	}
 
 	public function insert($table, $data, $formats = array())
@@ -138,6 +166,10 @@ class Npcink_Test_Wpdb
 
 	public function query($query)
 	{
+		$this->commands[] = $query;
+		if ($this->fail_command !== '' && $query === $this->fail_command) {
+			return false;
+		}
 		return true;
 	}
 }
@@ -222,6 +254,7 @@ function register_rest_route($namespace, $route, $args)
 require_once __DIR__ . '/../includes/v3/class-npcink-device-inventory-v3-tables.php';
 require_once __DIR__ . '/../includes/v3/class-npcink-device-inventory-v3-response.php';
 require_once __DIR__ . '/../includes/v3/class-npcink-device-inventory-v3-sanitizer.php';
+require_once __DIR__ . '/../includes/v3/services/class-npcink-device-inventory-backup-export-service.php';
 require_once __DIR__ . '/../includes/v3/rest/class-npcink-device-inventory-backup-restore-controller.php';
 
 $wpdb = new Npcink_Test_Wpdb();
@@ -241,6 +274,14 @@ function npcink_restore($backup, $dry_run = true)
 	return $controller->restore_backup(npcink_request($backup, $dry_run));
 }
 
+function npcink_export($sections)
+{
+	$request = new WP_REST_Request();
+	$request->set_param('sections', implode(',', $sections));
+	$controller = new Npcink_Device_Inventory_Backup_Restore_Controller();
+	return $controller->export_backup($request);
+}
+
 function npcink_assert($condition, $message)
 {
 	if (!$condition) {
@@ -255,6 +296,102 @@ function npcink_data($response)
 	return $response->get_data();
 }
 
+$wpdb->export_rows = array(
+	'wp_npcink_assets' => array(
+		array(
+			'id' => 10,
+			'uuid' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+			'asset_type' => 'pc',
+			'asset_number' => 'RESTORE-FIXTURE-001',
+			'name' => 'Restore Fixture Asset',
+			'owner_name' => 'Fixture Owner',
+			'department' => '测试部',
+			'status' => 'active',
+			'category' => 'computer',
+			'purchase_price' => '1000.00',
+			'residual_value' => '100.00',
+			'metadata_json' => '{"fixture":true}',
+			'created_at' => '2026-07-06 00:00:00',
+			'updated_at' => '2026-07-06 00:00:00',
+		),
+	),
+	'wp_npcink_asset_identities' => array(
+		array(
+			'id' => 20,
+			'asset_id' => 10,
+			'asset_uuid' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+			'asset_number' => 'RESTORE-FIXTURE-001',
+			'identity_type' => 'device_uuid_v1',
+			'identity_value' => 'device-v1-backup-fixture',
+			'confidence' => '100.00',
+			'is_primary' => 1,
+			'source' => 'fixture',
+			'created_at' => '2026-07-06 00:00:00',
+		),
+	),
+	'wp_npcink_asset_events' => array(
+		array(
+			'id' => 30,
+			'asset_id' => 10,
+			'asset_uuid' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+			'asset_number' => 'RESTORE-FIXTURE-001',
+			'event_source' => 'fixture',
+			'event_type' => 'created',
+			'field_name' => null,
+			'old_value' => null,
+			'new_value' => null,
+			'message' => 'Fixture event',
+			'actor_user_id' => null,
+			'actor_name' => 'system',
+			'payload_json' => '{}',
+			'created_at' => '2026-07-06 00:00:00',
+		),
+	),
+	'wp_npcink_asset_observations' => array(
+		array(
+			'id' => 40,
+			'asset_id' => 10,
+			'asset_uuid' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+			'asset_number' => 'RESTORE-FIXTURE-001',
+			'source' => 'fixture',
+			'schema_version' => 3,
+			'observed_at' => '2026-07-06 00:00:00',
+			'received_at' => '2026-07-06 00:00:01',
+			'summary_json' => '{}',
+			'hardware_json' => '{}',
+			'raw_json' => '{}',
+		),
+	),
+);
+
+$export_response = npcink_export(array('settings', 'assets', 'identities', 'events', 'observations'));
+$export_result = npcink_data($export_response)['data'];
+$exported_backup = $export_result['backup'];
+npcink_assert(count($exported_backup['assets']) === 1, 'server export must include the asset snapshot');
+npcink_assert(count($exported_backup['identities'][0]['identities']) === 1, 'server export must group identities by asset');
+npcink_assert($export_result['meta']['counts']['observations'] === 1, 'server export must report restorable section counts');
+npcink_assert($wpdb->commands === array('START TRANSACTION WITH CONSISTENT SNAPSHOT', 'COMMIT'), 'all export sections must share one snapshot');
+
+$round_trip = npcink_restore($exported_backup, true);
+$round_trip_summary = npcink_data($round_trip)['data']['summary'];
+npcink_assert($round_trip_summary['available']['assets'] === 1, 'an exported backup must pass restore preview');
+npcink_assert($round_trip_summary['available']['identities'] === 1, 'restore preview must count exported nested identities');
+
+$wpdb->commands = array();
+$wpdb->fail_command = 'COMMIT';
+$commit_failed_export = npcink_export(array('assets'));
+npcink_assert($commit_failed_export instanceof WP_Error, 'export must report snapshot commit failures');
+npcink_assert($commit_failed_export->get_error_code() === 'backup_snapshot_failed', 'snapshot commit failures must use backup_snapshot_failed');
+npcink_assert($wpdb->commands === array('START TRANSACTION WITH CONSISTENT SNAPSHOT', 'COMMIT', 'ROLLBACK'), 'failed snapshot commits must attempt a rollback');
+$wpdb->fail_command = '';
+$wpdb->commands = array();
+$wpdb->count_overrides['wp_npcink_asset_events'] = 10001;
+$oversized_export = npcink_export(array('events'));
+npcink_assert($oversized_export instanceof WP_Error, 'export must reject a section that restore would reject');
+npcink_assert($oversized_export->get_error_code() === 'backup_section_too_large', 'oversized export must use backup_section_too_large');
+npcink_assert($wpdb->commands === array('START TRANSACTION WITH CONSISTENT SNAPSHOT', 'ROLLBACK'), 'oversized exports must close the snapshot without reading rows');
+unset($wpdb->count_overrides['wp_npcink_asset_events']);
+
 $base_backup = array(
 	'schema' => 'npcink-device-inventory/v3-admin-export',
 	'exportedAt' => '2026-07-06T00:00:00+00:00',
@@ -267,6 +404,15 @@ $base_backup = array(
 		),
 	),
 );
+
+$wpdb->commands = array();
+$wpdb->fail_command = 'COMMIT';
+$commit_failed_restore = npcink_restore($base_backup, false);
+npcink_assert($commit_failed_restore instanceof WP_Error, 'restore must report transaction commit failures');
+npcink_assert($commit_failed_restore->get_error_code() === 'backup_restore_failed', 'restore commit failures must use backup_restore_failed');
+npcink_assert($wpdb->commands === array('START TRANSACTION', 'COMMIT', 'ROLLBACK'), 'failed restore commits must attempt a rollback');
+$wpdb->fail_command = '';
+$wpdb->commands = array();
 
 $duplicate_asset = $base_backup;
 $duplicate_asset['assets'][] = array(

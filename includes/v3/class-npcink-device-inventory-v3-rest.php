@@ -23,6 +23,7 @@ class Npcink_Device_Inventory_V3_Rest
 		require_once $base . 'services/class-npcink-device-inventory-event-service.php';
 		require_once $base . 'services/class-npcink-device-inventory-observation-ingest-service.php';
 		require_once $base . 'services/class-npcink-device-inventory-token-auth-service.php';
+		require_once $base . 'services/class-npcink-device-inventory-backup-export-service.php';
 		require_once $base . 'rest/class-npcink-device-inventory-assets-controller.php';
 		require_once $base . 'rest/class-npcink-device-inventory-device-observations-controller.php';
 		require_once $base . 'rest/class-npcink-device-inventory-settings-controller.php';

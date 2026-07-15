@@ -45,87 +45,168 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 			return Npcink_Device_Inventory_V3_Response::error('missing_identity', 'No stable identity was found in the observation.', 422);
 		}
 
-		$identity_conflict = $canonical_device['value'] !== '' ? null : $this->identity_conflict($identities);
-		$asset_id = $identity_conflict ? null : $this->matching_asset_id($identities);
+		$legacy_conflict = $canonical_device['value'] !== '' ? null : $this->identity_conflict($identities);
+		$asset_id = $legacy_conflict ? null : $this->matching_asset_id($identities);
 		$mode = 'matched';
-		$asset = null;
+		$asset = $asset_id ? $this->assets->find_by_id($asset_id) : null;
+		$stored_identities = $legacy_conflict ? $this->without_conflicting_legacy_claims($identities) : $identities;
 
-		if ($asset_id) {
-			$asset = $this->assets->find_by_id($asset_id);
+		if (!$this->begin_transaction()) {
+			return Npcink_Device_Inventory_V3_Response::error('transaction_start_failed', 'Failed to start observation transaction.', 500);
 		}
 
+		$created = false;
 		if (!$asset) {
-			$mode = 'created';
 			$asset = $this->assets->create($this->build_asset_input($observation_payload));
 			if (!$asset) {
-				return Npcink_Device_Inventory_V3_Response::error('asset_create_failed', 'Failed to create asset.', 500);
+				return $this->rollback_error('asset_create_failed', 'Failed to create asset.');
 			}
-			$asset_id = intval($asset['id']);
-			$stored_identities = $identity_conflict ? $this->without_conflicting_legacy_claims($identities) : $identities;
-			$this->identities->add_many($asset_id, $stored_identities);
-			if ($identity_conflict) {
-				$mode = 'created_with_identity_conflict';
-				$this->events->record(
-					$asset_id,
-					'upload',
-					'identity_conflict',
-					'Asset created without conflicting legacy UUID claims.',
-					array(
-						'identities' => $stored_identities,
-						'identity_conflict' => $identity_conflict,
-					)
-				);
-			} else {
-				$this->events->record($asset_id, 'upload', 'created', 'Asset created from first observation.', array('identities' => $identities));
+			$created = true;
+			$mode = $legacy_conflict ? 'created_with_identity_conflict' : 'created';
+		}
+
+		$claim_results = $this->identities->claim_many(intval($asset['id']), $stored_identities);
+		$claim_error = $this->claim_error($claim_results);
+		if ($claim_error) {
+			$this->rollback_transaction();
+			return $claim_error;
+		}
+
+		$primary_claim = isset($claim_results[0]) ? $claim_results[0] : null;
+		if ($primary_claim && $primary_claim['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_CONFLICT) {
+			$this->rollback_transaction();
+			$asset = $this->assets->find_by_id($primary_claim['ownerAssetId']);
+			if (!$asset || !$this->begin_transaction()) {
+				return Npcink_Device_Inventory_V3_Response::error('identity_owner_unavailable', 'Identity owner could not be loaded.', 409);
 			}
-		} else {
-			$this->identities->add_many(intval($asset['id']), $identities);
-			$uploaded_owner = $this->uploaded_owner_name($observation_payload);
-			if ($uploaded_owner !== '' && trim((string) $asset['owner_name']) === '') {
-				$updated_asset = $this->assets->update(
-					$asset['uuid'],
-					array(
-						'owner_name' => $uploaded_owner,
-					)
-				);
-					if ($updated_asset) {
-						$this->events->record(
-							intval($asset['id']),
-							'upload',
-							'owner_filled',
-							'Asset owner filled from upload note.',
-							array(
-								'old_owner_name' => (string) $asset['owner_name'],
-								'new_owner_name' => $uploaded_owner,
-							)
-						);
-						$asset = $updated_asset;
-					}
+			$created = false;
+			$mode = 'matched_after_concurrent_claim';
+			$claim_results = $this->identities->claim_many(intval($asset['id']), $stored_identities);
+			$claim_error = $this->claim_error($claim_results);
+			if ($claim_error) {
+				$this->rollback_transaction();
+				return $claim_error;
 			}
+			$primary_claim = isset($claim_results[0]) ? $claim_results[0] : null;
+			if (!$primary_claim || $primary_claim['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_CONFLICT) {
+				return $this->rollback_error('identity_claim_conflict', 'Authoritative identity could not be claimed.', 409);
+			}
+		}
+
+		$claim_conflicts = array_values(
+			array_filter(
+				$claim_results,
+				function ($claim) {
+					return $claim['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_CONFLICT;
+				}
+			)
+		);
+
+		if ($created && !$this->events->record(intval($asset['id']), 'upload', 'created', 'Asset created from first observation.', array('identities' => $stored_identities))) {
+			return $this->rollback_error('event_create_failed', 'Failed to record asset creation.');
+		}
+
+		if ($legacy_conflict || !empty($claim_conflicts)) {
+			$conflict_payload = array(
+				'legacyConflict' => $legacy_conflict,
+				'claimConflicts' => $claim_conflicts,
+			);
+			if (!$this->events->record(intval($asset['id']), 'upload', 'identity_conflict', 'Conflicting secondary identities were not attached.', $conflict_payload)) {
+				return $this->rollback_error('event_create_failed', 'Failed to record identity conflict.');
+			}
+		}
+
+		$uploaded_owner = $this->uploaded_owner_name($observation_payload);
+		if (!$created && $uploaded_owner !== '' && trim((string) $asset['owner_name']) === '') {
+			$updated_asset = $this->assets->update($asset['uuid'], array('owner_name' => $uploaded_owner));
+			if (!$updated_asset) {
+				return $this->rollback_error('asset_update_failed', 'Failed to update asset owner.');
+			}
+			if (!$this->events->record(
+				intval($asset['id']),
+				'upload',
+				'owner_filled',
+				'Asset owner filled from upload note.',
+				array('old_owner_name' => (string) $asset['owner_name'], 'new_owner_name' => $uploaded_owner)
+			)) {
+				return $this->rollback_error('event_create_failed', 'Failed to record asset owner update.');
+			}
+			$asset = $updated_asset;
 		}
 
 		$observation = $this->observations->create(intval($asset['id']), $this->build_observation_input($observation_payload));
 		if (!$observation) {
-			return Npcink_Device_Inventory_V3_Response::error('observation_create_failed', 'Failed to store observation.', 500);
+			return $this->rollback_error('observation_create_failed', 'Failed to store observation.');
 		}
 
-		$this->events->record(
+		if (!$this->events->record(
 			intval($asset['id']),
 			'upload',
 			'observation_received',
 			'Device observation received.',
 			array('observation_id' => intval($observation['id']), 'mode' => $mode)
-		);
+		)) {
+			return $this->rollback_error('event_create_failed', 'Failed to record observation event.');
+		}
+
+		if (!$this->commit_transaction()) {
+			return $this->rollback_error('transaction_commit_failed', 'Failed to commit observation transaction.');
+		}
 
 		return array(
 			'data' => array(
 				'mode' => $mode,
-				'identityConflict' => $identity_conflict,
+				'identityConflicts' => array(
+					'legacy' => $legacy_conflict,
+					'claims' => $claim_conflicts,
+				),
 				'asset' => $this->format_asset($asset),
 				'observation' => $this->format_observation($observation),
 				'identities' => array_map(array($this, 'format_identity'), $this->identities->list_for_asset(intval($asset['id']))),
 			),
 		);
+	}
+
+	private function claim_error($claim_results)
+	{
+		foreach ($claim_results as $claim) {
+			if ($claim['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_INVALID) {
+				return Npcink_Device_Inventory_V3_Response::error('invalid_identity', 'Observation contains an invalid identity.', 422);
+			}
+			if ($claim['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_ERROR) {
+				return Npcink_Device_Inventory_V3_Response::error('identity_claim_failed', 'Failed to claim observation identity.', 500);
+			}
+		}
+		return null;
+	}
+
+	private function begin_transaction()
+	{
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- The ingest write set must be committed atomically.
+		return $wpdb->query('START TRANSACTION') !== false;
+	}
+
+	private function commit_transaction()
+	{
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- The ingest write set must be committed atomically.
+		return $wpdb->query('COMMIT') !== false;
+	}
+
+	private function rollback_transaction()
+	{
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Roll back every partial ingest write on failure.
+		$wpdb->query('ROLLBACK');
+		$this->assets->invalidate_cache();
+		$this->observations->invalidate_cache();
+	}
+
+	private function rollback_error($code, $message, $status = 500)
+	{
+		$this->rollback_transaction();
+		return Npcink_Device_Inventory_V3_Response::error($code, $message, $status);
 	}
 
 	private function matching_asset_id($identities)

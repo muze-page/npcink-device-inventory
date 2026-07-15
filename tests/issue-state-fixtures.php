@@ -27,9 +27,11 @@ class Npcink_Issue_State_Wpdb
 {
 	public $prefix = 'wp_';
 	public $rows = array();
+	public $last_query = '';
 
 	public function prepare($query, ...$args)
 	{
+		$this->last_query = $query;
 		return $query;
 	}
 
@@ -163,5 +165,7 @@ npcink_issue_state_assert(isset($payload['handledIssueKeys']) && is_array($paylo
 npcink_issue_state_assert(in_array('asset-002-missing-owner', $payload['handledIssueKeys'], true), 'handled issue should be included');
 npcink_issue_state_assert(!in_array('asset-001-missing-department', $payload['handledIssueKeys'], true), 'reopened issue should not be handled');
 npcink_issue_state_assert(isset($payload['items']) && count($payload['items']) === 2, 'latest state should collapse duplicate issue keys');
+npcink_issue_state_assert(strpos($wpdb->last_query, 'NOT EXISTS') !== false, 'issue state query must select the latest event per issue key');
+npcink_issue_state_assert(strpos($wpdb->last_query, 'LIMIT 5000') === false, 'issue state correctness must not depend on a history cap');
 
 echo "Issue state fixture checks passed.\n";

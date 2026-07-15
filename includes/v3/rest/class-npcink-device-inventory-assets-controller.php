@@ -6,6 +6,10 @@ if (!defined('ABSPATH')) {
 
 class Npcink_Device_Inventory_Assets_Controller
 {
+	const ASSET_TYPES = array('pc', 'computer', 'network', 'office', 'custom');
+	const ASSET_STATUSES = array('active', 'inactive', 'maintenance', 'retired', 'deleted');
+	const MAX_BATCH_SIZE = 100;
+
 	private $assets;
 	private $identities;
 	private $observations;
@@ -75,6 +79,16 @@ class Npcink_Device_Inventory_Assets_Controller
 					'callback' => array($this, 'create_item'),
 					'permission_callback' => array($this, 'admin_permissions_check'),
 				),
+			)
+		);
+
+		register_rest_route(
+			'npcink-device-inventory/v1',
+			'/assets/batch',
+			array(
+				'methods' => WP_REST_Server::CREATABLE,
+				'callback' => array($this, 'batch_items'),
+				'permission_callback' => array($this, 'admin_permissions_check'),
 			)
 		);
 
@@ -222,31 +236,23 @@ class Npcink_Device_Inventory_Assets_Controller
 		if (!is_array($params)) {
 			return Npcink_Device_Inventory_V3_Response::error('invalid_json', 'Request body must be valid JSON.', 400);
 		}
-		$department = isset($params['department']) ? $params['department'] : '';
-		$department_check = $this->validate_department($department);
-		if (is_wp_error($department_check)) {
-			return $department_check;
+		$input = $this->validate_asset_input($params, true);
+		if (is_wp_error($input)) {
+			return $input;
 		}
-
-		$asset = $this->assets->create(
-			array(
-				'uuid' => isset($params['uuid']) ? $params['uuid'] : '',
-				'asset_type' => isset($params['assetType']) ? $params['assetType'] : 'custom',
-				'asset_number' => isset($params['assetNumber']) ? $params['assetNumber'] : '',
-				'name' => isset($params['name']) ? $params['name'] : '',
-				'owner_name' => isset($params['ownerName']) ? $params['ownerName'] : '',
-				'department' => $department,
-				'status' => isset($params['status']) ? $params['status'] : 'active',
-				'category' => isset($params['category']) ? $params['category'] : '',
-				'purchase_price' => isset($params['purchasePrice']) ? $params['purchasePrice'] : 0,
-				'residual_value' => isset($params['residualValue']) ? $params['residualValue'] : 0,
-				'metadata' => isset($params['metadata']) && is_array($params['metadata']) ? $params['metadata'] : array(),
-			)
-		);
+		if (!$this->begin_transaction()) {
+			return Npcink_Device_Inventory_V3_Response::error('transaction_start_failed', 'Failed to start asset transaction.', 500);
+		}
+		$asset = $this->assets->create($input);
 		if (!$asset) {
-			return Npcink_Device_Inventory_V3_Response::error('asset_create_failed', 'Failed to create asset.', 500);
+			return $this->rollback_error('asset_create_failed', 'Failed to create asset.');
 		}
-		$this->event_service->record(intval($asset['id']), 'manual', 'created', 'Asset created in admin.');
+		if (!$this->event_service->record(intval($asset['id']), 'manual', 'created', 'Asset created in admin.')) {
+			return $this->rollback_error('event_create_failed', 'Failed to record asset creation.');
+		}
+		if (!$this->commit_transaction()) {
+			return $this->rollback_error('transaction_commit_failed', 'Failed to commit asset transaction.');
+		}
 		return rest_ensure_response(array('data' => $this->format_asset($asset)));
 	}
 
@@ -270,36 +276,26 @@ class Npcink_Device_Inventory_Assets_Controller
 			return Npcink_Device_Inventory_V3_Response::error('invalid_json', 'Request body must be valid JSON.', 400);
 		}
 
-		$update_data = array();
-		$field_map = array(
-			'assetType' => 'asset_type',
-			'assetNumber' => 'asset_number',
-			'name' => 'name',
-			'ownerName' => 'owner_name',
-			'department' => 'department',
-			'status' => 'status',
-			'category' => 'category',
-			'purchasePrice' => 'purchase_price',
-			'residualValue' => 'residual_value',
-			'metadata' => 'metadata_json',
-		);
-		foreach ($field_map as $input_field => $storage_field) {
-			if (array_key_exists($input_field, $params)) {
-				$update_data[$storage_field] = $params[$input_field];
-			}
+		$update_data = $this->validate_asset_input($params, false);
+		if (is_wp_error($update_data)) {
+			return $update_data;
 		}
-		if (array_key_exists('department', $params)) {
-			$department_check = $this->validate_department($params['department']);
-			if (is_wp_error($department_check)) {
-				return $department_check;
-			}
+		if (empty($update_data)) {
+			return Npcink_Device_Inventory_V3_Response::error('empty_asset_update', 'At least one asset field is required.', 422);
 		}
-
+		if (!$this->begin_transaction()) {
+			return Npcink_Device_Inventory_V3_Response::error('transaction_start_failed', 'Failed to start asset transaction.', 500);
+		}
 		$updated = $this->assets->update($asset['uuid'], $update_data);
 		if (!$updated) {
-			return Npcink_Device_Inventory_V3_Response::error('asset_update_failed', 'Failed to update asset.', 500);
+			return $this->rollback_error('asset_update_failed', 'Failed to update asset.');
 		}
-		$this->event_service->record(intval($asset['id']), 'manual', 'updated', 'Asset updated in admin.');
+		if (!$this->event_service->record(intval($asset['id']), 'manual', 'updated', 'Asset updated in admin.')) {
+			return $this->rollback_error('event_create_failed', 'Failed to record asset update.');
+		}
+		if (!$this->commit_transaction()) {
+			return $this->rollback_error('transaction_commit_failed', 'Failed to commit asset transaction.');
+		}
 		return rest_ensure_response(array('data' => $this->format_asset($updated)));
 	}
 
@@ -309,9 +305,97 @@ class Npcink_Device_Inventory_Assets_Controller
 		if (is_wp_error($asset)) {
 			return $asset;
 		}
+		if (!$this->begin_transaction()) {
+			return Npcink_Device_Inventory_V3_Response::error('transaction_start_failed', 'Failed to start asset transaction.', 500);
+		}
 		$updated = $this->assets->update($asset['uuid'], array('status' => 'deleted'));
-		$this->event_service->record(intval($asset['id']), 'manual', 'deleted', 'Asset marked as deleted.');
+		if (!$updated) {
+			return $this->rollback_error('asset_update_failed', 'Failed to archive asset.');
+		}
+		if (!$this->event_service->record(intval($asset['id']), 'manual', 'deleted', 'Asset marked as deleted.')) {
+			return $this->rollback_error('event_create_failed', 'Failed to record asset archive.');
+		}
+		if (!$this->commit_transaction()) {
+			return $this->rollback_error('transaction_commit_failed', 'Failed to commit asset transaction.');
+		}
 		return rest_ensure_response(array('data' => $this->format_asset($updated)));
+	}
+
+	public function batch_items($request)
+	{
+		$params = $request->get_json_params();
+		if (!is_array($params)) {
+			return Npcink_Device_Inventory_V3_Response::error('invalid_json', 'Request body must be valid JSON.', 400);
+		}
+		$operation = isset($params['operation']) ? sanitize_key((string) $params['operation']) : '';
+		if (!in_array($operation, array('archive', 'update'), true)) {
+			return Npcink_Device_Inventory_V3_Response::error('invalid_batch_operation', 'Batch operation must be archive or update.', 422);
+		}
+		$uuids = $this->validate_batch_uuids(isset($params['uuids']) ? $params['uuids'] : null);
+		if (is_wp_error($uuids)) {
+			return $uuids;
+		}
+		$changes = $operation === 'archive'
+			? array('status' => 'deleted')
+			: $this->validate_asset_input(isset($params['changes']) && is_array($params['changes']) ? $params['changes'] : array(), false);
+		if (is_wp_error($changes)) {
+			return $changes;
+		}
+		if (empty($changes)) {
+			return Npcink_Device_Inventory_V3_Response::error('empty_asset_update', 'At least one asset field is required.', 422);
+		}
+		$context = isset($params['context']) && is_array($params['context']) ? $params['context'] : array();
+		$context_source = isset($context['source']) ? sanitize_key((string) $context['source']) : 'asset_batch';
+		$context_message = isset($context['message']) ? sanitize_textarea_field((string) $context['message']) : '';
+		if ($this->text_length($context_source) > 64 || $this->text_length($context_message) > 500) {
+			return Npcink_Device_Inventory_V3_Response::error('invalid_batch_context', 'Batch context is too long.', 422);
+		}
+		if (!$this->begin_transaction()) {
+			return Npcink_Device_Inventory_V3_Response::error('transaction_start_failed', 'Failed to start batch transaction.', 500);
+		}
+
+		$updated_items = array();
+		foreach ($uuids as $uuid) {
+			$asset = $this->assets->find_by_uuid($uuid);
+			if (!$asset) {
+				return $this->rollback_error('asset_not_found', 'Batch asset not found: ' . $uuid, 404);
+			}
+			$updated = $this->assets->update($uuid, $changes);
+			if (!$updated) {
+				return $this->rollback_error('asset_update_failed', 'Failed to update batch asset: ' . $uuid);
+			}
+			$event_type = $operation === 'archive' ? 'bulk_archived' : 'bulk_updated';
+			$message = $context_message !== ''
+				? $context_message
+				: ($operation === 'archive' ? 'Asset archived in admin batch.' : 'Asset updated in admin batch.');
+			if (!$this->event_service->record(
+				intval($asset['id']),
+				'manual',
+				$event_type,
+				$message,
+				array(
+					'source' => $context_source,
+					'changedFields' => $this->batch_changed_fields($asset, $changes),
+					'batchSize' => count($uuids),
+				)
+			)) {
+				return $this->rollback_error('event_create_failed', 'Failed to record batch asset event.');
+			}
+			$updated_items[] = $this->format_asset($updated);
+		}
+
+		if (!$this->commit_transaction()) {
+			return $this->rollback_error('transaction_commit_failed', 'Failed to commit batch transaction.');
+		}
+		return rest_ensure_response(
+			array(
+				'data' => array(
+					'operation' => $operation,
+					'updated' => count($updated_items),
+					'items' => $updated_items,
+				),
+			)
+		);
 	}
 
 	public function get_identities($request)
@@ -331,20 +415,53 @@ class Npcink_Device_Inventory_Assets_Controller
 			return $asset;
 		}
 		$params = $request->get_json_params();
-		if (!is_array($params) || empty($params['type']) || empty($params['value'])) {
+		if (!is_array($params) || !isset($params['type'], $params['value']) || !is_scalar($params['type']) || !is_scalar($params['value'])) {
 			return Npcink_Device_Inventory_V3_Response::error('invalid_identity', 'Identity type and value are required.', 422);
 		}
-		$this->identities->add(
+		$type = sanitize_key((string) $params['type']);
+		$value = sanitize_text_field((string) $params['value']);
+		$confidence = isset($params['confidence']) && is_numeric($params['confidence']) ? floatval($params['confidence']) : 100;
+		if ($type === '' || $value === '' || $this->text_length($type) > 64 || $this->text_length($value) > 191 || $confidence < 0 || $confidence > 100) {
+			return Npcink_Device_Inventory_V3_Response::error('invalid_identity', 'Identity fields are invalid.', 422);
+		}
+		if (!$this->begin_transaction()) {
+			return Npcink_Device_Inventory_V3_Response::error('transaction_start_failed', 'Failed to start identity transaction.', 500);
+		}
+		$claim = $this->identities->claim(
 			intval($asset['id']),
 			array(
-				'type' => $params['type'],
-				'value' => $params['value'],
-				'confidence' => isset($params['confidence']) ? $params['confidence'] : 100,
+				'type' => $type,
+				'value' => $value,
+				'confidence' => $confidence,
 				'source' => 'manual',
 			),
 			!empty($params['isPrimary'])
 		);
-		$this->event_service->record(intval($asset['id']), 'manual', 'identity_added', 'Asset identity added in admin.');
+		if ($claim['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_CONFLICT) {
+			$this->rollback_transaction();
+			return Npcink_Device_Inventory_V3_Response::error(
+				'identity_conflict',
+				'Identity is already owned by another asset.',
+				409,
+				array('ownerAssetId' => $claim['ownerAssetId'])
+			);
+		}
+		if ($claim['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_INVALID) {
+			$this->rollback_transaction();
+			return Npcink_Device_Inventory_V3_Response::error('invalid_identity', 'Identity type and value are required.', 422);
+		}
+		if ($claim['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_ERROR) {
+			$this->rollback_transaction();
+			return Npcink_Device_Inventory_V3_Response::error('identity_claim_failed', 'Failed to claim identity.', 500);
+		}
+		if ($claim['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_INSERTED) {
+			if (!$this->event_service->record(intval($asset['id']), 'manual', 'identity_added', 'Asset identity added in admin.')) {
+				return $this->rollback_error('event_create_failed', 'Failed to record identity claim.');
+			}
+		}
+		if (!$this->commit_transaction()) {
+			return $this->rollback_error('transaction_commit_failed', 'Failed to commit identity transaction.');
+		}
 		$items = $this->identities->list_for_asset(intval($asset['id']));
 		return rest_ensure_response(array('data' => array_map(array($this, 'format_identity'), $items)));
 	}
@@ -580,14 +697,158 @@ class Npcink_Device_Inventory_Assets_Controller
 		if (!is_array($params) || !isset($params['message']) || !is_scalar($params['message']) || trim((string) $params['message']) === '') {
 			return Npcink_Device_Inventory_V3_Response::error('invalid_event', 'Event message is required.', 422);
 		}
-		$this->event_service->record(
+		$result = $this->event_service->record(
 			intval($asset['id']),
 			'manual',
 			isset($params['eventType']) ? sanitize_key($params['eventType']) : 'note',
 			sanitize_textarea_field((string) $params['message']),
 			isset($params['payload']) && is_array($params['payload']) ? $params['payload'] : array()
 		);
+		if (!$result) {
+			return Npcink_Device_Inventory_V3_Response::error('event_create_failed', 'Failed to create asset event.', 500);
+		}
 		return rest_ensure_response(array('data' => array('success' => true)));
+	}
+
+	private function validate_asset_input($params, $creating)
+	{
+		$data = array();
+		if ($creating) {
+			$uuid = isset($params['uuid']) && is_scalar($params['uuid']) ? sanitize_text_field((string) $params['uuid']) : '';
+			if ($uuid !== '' && !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $uuid)) {
+				return Npcink_Device_Inventory_V3_Response::error('invalid_asset_uuid', 'Asset UUID must be a valid UUID v4.', 422);
+			}
+			$data['uuid'] = $uuid;
+		}
+
+		if ($creating || array_key_exists('assetType', $params)) {
+			$asset_type = isset($params['assetType']) && is_scalar($params['assetType']) ? sanitize_key((string) $params['assetType']) : 'custom';
+			if (!in_array($asset_type, self::ASSET_TYPES, true)) {
+				return Npcink_Device_Inventory_V3_Response::error('invalid_asset_type', 'Asset type is not supported.', 422);
+			}
+			$data['asset_type'] = $asset_type;
+		}
+
+		if ($creating || array_key_exists('status', $params)) {
+			$status = isset($params['status']) && is_scalar($params['status']) ? sanitize_key((string) $params['status']) : 'active';
+			if (!in_array($status, self::ASSET_STATUSES, true)) {
+				return Npcink_Device_Inventory_V3_Response::error('invalid_asset_status', 'Asset status is not supported.', 422);
+			}
+			$data['status'] = $status;
+		}
+
+		$text_fields = array(
+			'assetNumber' => array('asset_number', 64),
+			'name' => array('name', 191),
+			'ownerName' => array('owner_name', 191),
+			'department' => array('department', 80),
+			'category' => array('category', 191),
+		);
+		foreach ($text_fields as $input_key => $definition) {
+			if (!$creating && !array_key_exists($input_key, $params)) {
+				continue;
+			}
+			$value = isset($params[$input_key]) && is_scalar($params[$input_key]) ? sanitize_text_field((string) $params[$input_key]) : '';
+			if ($this->text_length($value) > $definition[1]) {
+				return Npcink_Device_Inventory_V3_Response::error('asset_field_too_long', 'Asset field is too long: ' . $input_key, 422);
+			}
+			if (!$creating && $input_key === 'assetNumber' && $value === '') {
+				return Npcink_Device_Inventory_V3_Response::error('invalid_asset_number', 'Asset number cannot be empty.', 422);
+			}
+			if ($input_key === 'department') {
+				$department_check = $this->validate_department($value);
+				if (is_wp_error($department_check)) {
+					return $department_check;
+				}
+			}
+			$data[$definition[0]] = $value;
+		}
+
+		$number_fields = array('purchasePrice' => 'purchase_price', 'residualValue' => 'residual_value');
+		foreach ($number_fields as $input_key => $storage_key) {
+			if (!$creating && !array_key_exists($input_key, $params)) {
+				continue;
+			}
+			$value = isset($params[$input_key]) ? $params[$input_key] : 0;
+			if (!is_numeric($value) || !is_finite(floatval($value)) || floatval($value) < 0 || floatval($value) > 9999999999.99) {
+				return Npcink_Device_Inventory_V3_Response::error('invalid_asset_value', 'Asset financial values must be finite non-negative numbers.', 422);
+			}
+			$data[$storage_key] = floatval($value);
+		}
+
+		if ($creating || array_key_exists('metadata', $params)) {
+			if (isset($params['metadata']) && !is_array($params['metadata'])) {
+				return Npcink_Device_Inventory_V3_Response::error('invalid_asset_metadata', 'Asset metadata must be a JSON object.', 422);
+			}
+			$data[$creating ? 'metadata' : 'metadata_json'] = isset($params['metadata']) ? $params['metadata'] : array();
+		}
+		return $data;
+	}
+
+	private function validate_batch_uuids($input)
+	{
+		if (!is_array($input) || empty($input) || count($input) > self::MAX_BATCH_SIZE) {
+			return Npcink_Device_Inventory_V3_Response::error('invalid_batch_assets', 'Batch must contain 1 to 100 asset UUIDs.', 422);
+		}
+		$uuids = array();
+		foreach ($input as $value) {
+			$uuid = is_scalar($value) ? sanitize_text_field((string) $value) : '';
+			if ($uuid === '' || !preg_match('/^[A-Za-z0-9_-]+$/', $uuid)) {
+				return Npcink_Device_Inventory_V3_Response::error('invalid_batch_assets', 'Batch contains an invalid asset UUID.', 422);
+			}
+			$uuids[$uuid] = true;
+		}
+		return array_keys($uuids);
+	}
+
+	private function batch_changed_fields($asset, $changes)
+	{
+		$fields = array();
+		foreach ($changes as $field => $new_value) {
+			$old_value = array_key_exists($field, $asset) ? $asset[$field] : null;
+			if ($field === 'metadata_json') {
+				$old_value = $this->decode_json(isset($asset['metadata_json']) ? $asset['metadata_json'] : '', array());
+			}
+			$fields[] = array(
+				'field' => $field,
+				'oldValue' => $old_value,
+				'newValue' => $new_value,
+			);
+		}
+		return $fields;
+	}
+
+	private function text_length($value)
+	{
+		return function_exists('mb_strlen') ? mb_strlen((string) $value, 'UTF-8') : strlen((string) $value);
+	}
+
+	private function begin_transaction()
+	{
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Asset mutations and audit events must commit together.
+		return $wpdb->query('START TRANSACTION') !== false;
+	}
+
+	private function commit_transaction()
+	{
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Asset mutations and audit events must commit together.
+		return $wpdb->query('COMMIT') !== false;
+	}
+
+	private function rollback_transaction()
+	{
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Roll back every partial asset mutation.
+		$wpdb->query('ROLLBACK');
+		$this->assets->invalidate_cache();
+	}
+
+	private function rollback_error($code, $message, $status = 500)
+	{
+		$this->rollback_transaction();
+		return Npcink_Device_Inventory_V3_Response::error($code, $message, $status);
 	}
 
 	private function validate_department($department)

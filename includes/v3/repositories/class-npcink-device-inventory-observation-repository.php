@@ -37,6 +37,14 @@ class Npcink_Device_Inventory_Observation_Repository
 		return $this->find_by_id($wpdb->insert_id);
 	}
 
+	/**
+	 * Move subsequent reads past observations cached by a rolled-back ingest.
+	 */
+	public function invalidate_cache()
+	{
+		$this->bump_list_cache_version();
+	}
+
 	private function update_asset_latest_observation($asset_id, $observation_id, $observed_at)
 	{
 		global $wpdb;

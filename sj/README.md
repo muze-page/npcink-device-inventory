@@ -25,7 +25,7 @@
 - `new-user-quick-start.md`：新用户安装、设置、录入、上传、公共查询快速开始。
 - `desktop-uploader-release-notes.md`：桌面上传软件单独发布说明。
 - `npcink-device-inventory.zip`：准备上传的插件 zip，只在运行 `npm run build:submission` 时生成或刷新。
-- `assets/`：WordPress.org 插件目录展示用 banner、icon、screenshots，审核通过后放到 SVN 顶层 `assets/` 目录。
+- `assets/`：WordPress.org 插件目录展示素材；当前只发布 banner 和 icon，目录中的旧截图已明确标记为不得发布。
 - `listing-copy.md`：英文插件目录描述、FAQ、隐私说明主文案。
 - `listing-copy-zh_CN.md`：简体中文描述、FAQ、隐私说明主文案。
 - `i18n/`：英文和简体中文文案，供后续 translate.wordpress.org 使用。
@@ -61,18 +61,13 @@ en_US, zh_CN
 
 ## 审核通过后的展示图上传
 
-审核通过并拿到 WordPress.org SVN 仓库后，将 `sj/assets/` 下的四个 PNG 放到 SVN 顶层 `assets/`：
+审核通过并拿到 WordPress.org SVN 仓库后，将 `sj/assets/` 下的四个当前 PNG 放到 SVN 顶层 `assets/`：
 
 ```text
 assets/banner-772x250.png
 assets/banner-1544x500.png
 assets/icon-128x128.png
 assets/icon-256x256.png
-assets/screenshot-1.png
-assets/screenshot-2.png
-assets/screenshot-3.png
-assets/screenshot-4.png
-assets/screenshot-5.png
 ```
 
-这些展示图片不要放进插件 zip，也不要放到 `trunk/assets/`。
+这些展示图片不要放进插件 zip，也不要放到 `trunk/assets/`。现存 `screenshot-1.png` 到 `screenshot-5.png` 仅作历史对照；在 3.0 界面冻结并重新采集前不要上传。

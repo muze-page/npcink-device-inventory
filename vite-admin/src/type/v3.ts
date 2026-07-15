@@ -38,6 +38,17 @@ export interface AssetInput {
   metadata?: JsonRecord;
 }
 
+export interface BatchAssetResult {
+  operation: "archive" | "update";
+  updated: number;
+  items: Asset[];
+}
+
+export interface BatchAssetContext {
+  source?: string;
+  message?: string;
+}
+
 export interface AssetEventInput {
   eventType?: string;
   message: string;
@@ -189,6 +200,7 @@ export interface DeviceIdentityReconciliationApplyResult {
   already: number;
   collisions: number;
   insufficient: number;
+  failed: number;
 }
 
 export interface Pagination {
@@ -242,19 +254,6 @@ export interface ClientToken {
 
 export interface CreatedClientToken extends ClientToken {
   secret: string;
-}
-
-export interface ClientTokenPackageConfig {
-  appName: string;
-  siteUrl: string;
-  uploadEndpoint: string;
-  tokenId: string;
-  tokenSecret: string;
-  tokenValue: string;
-  tokenName: string;
-  remarkOnly: boolean;
-  targets: string[];
-  generatedAt: string;
 }
 
 export interface PublicQueryPageState {
@@ -327,4 +326,22 @@ export interface BackupRestoreSummary {
 export interface BackupRestoreResult {
   dryRun: boolean;
   summary: BackupRestoreSummary;
+}
+
+export type BackupExportSection = "settings" | "assets" | "identities" | "events" | "observations";
+
+export interface BackupExportResult {
+  backup: JsonRecord & {
+    schema: string;
+    exportedAt: string;
+    sections: BackupExportSection[];
+  };
+  meta: {
+    bytes: number;
+    counts: Partial<Record<BackupExportSection, number>>;
+    limits: {
+      bytes: number;
+      rowsPerSection: number;
+    };
+  };
 }
