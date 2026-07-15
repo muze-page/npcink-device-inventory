@@ -79,13 +79,21 @@ fn send_json(site: &str, body_json: String, headers: Vec<(&'static str, String)>
 
     let status = response.status();
     let text = response.text().context("failed to read submit response")?;
-    let parsed = serde_json::from_str::<Value>(&text).unwrap_or(Value::String(text));
 
+    parse_submit_response(status, text)
+}
+
+fn parse_submit_response(status: reqwest::StatusCode, text: String) -> Result<Value> {
     if !status.is_success() {
-        bail!("submit failed with status {status}: {parsed}");
+        let detail = serde_json::from_str::<Value>(&text)
+            .map(|value| value.to_string())
+            .unwrap_or(text);
+        bail!("submit failed with status {status}: {detail}");
     }
 
-    Ok(parsed)
+    serde_json::from_str::<Value>(&text).with_context(|| {
+        format!("submit succeeded with status {status}, but response was not JSON")
+    })
 }
 
 fn build_observation_v3(upload_note: &str, data: &Value) -> Result<Value> {
@@ -165,7 +173,7 @@ fn resolve_observation_endpoint(site: &str) -> String {
     if site.ends_with("/wp-json") {
         return format!("{site}/npcink-device-inventory/v1/device-observations");
     }
-    format!("{site}/wp-json/npcink-device-inventory/v1/device-observations")
+    format!("{site}/?rest_route=/npcink-device-inventory/v1/device-observations")
 }
 
 fn value_at(data: &Value, pointer: &str) -> Value {
@@ -350,12 +358,45 @@ mod tests {
     fn resolves_common_site_inputs_to_v3_observation_endpoint() {
         assert_eq!(
             resolve_observation_endpoint("https://example.com"),
+            "https://example.com/?rest_route=/npcink-device-inventory/v1/device-observations"
+        );
+        assert_eq!(
+            resolve_observation_endpoint("https://example.com/wordpress/"),
+            "https://example.com/wordpress/?rest_route=/npcink-device-inventory/v1/device-observations"
+        );
+        assert_eq!(
+            resolve_observation_endpoint("https://example.com/wp-json"),
             "https://example.com/wp-json/npcink-device-inventory/v1/device-observations"
         );
         assert_eq!(
             resolve_observation_endpoint("https://example.com/wp-json/npcink-device-inventory/v1"),
             "https://example.com/wp-json/npcink-device-inventory/v1/device-observations"
         );
+        assert_eq!(
+            resolve_observation_endpoint(
+                "https://example.com/wp-json/npcink-device-inventory/v1/device-observations/"
+            ),
+            "https://example.com/wp-json/npcink-device-inventory/v1/device-observations"
+        );
+        assert_eq!(
+            resolve_observation_endpoint(
+                "https://example.com/index.php?rest_route=/npcink-device-inventory/v1/device-observations"
+            ),
+            "https://example.com/index.php?rest_route=/npcink-device-inventory/v1/device-observations"
+        );
+    }
+
+    #[test]
+    fn rejects_successful_non_json_response() {
+        let result = parse_submit_response(
+            reqwest::StatusCode::OK,
+            "<!doctype html><title>WordPress</title>".to_string(),
+        );
+
+        let error = result.expect_err("HTML must not be accepted as a successful upload response");
+        assert!(error
+            .to_string()
+            .contains("submit succeeded with status 200 OK, but response was not JSON"));
     }
 
     #[test]
