@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::fs;
 use std::io::{Read, Seek, SeekFrom, Write};
+#[cfg(unix)]
+use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::thread;
@@ -47,6 +49,12 @@ struct AppLogInput {
 struct DiagnosticsPackage {
     directory_path: String,
     zip_path: String,
+}
+
+#[derive(Debug, Serialize)]
+struct HardwareFeedbackExport {
+    directory_path: String,
+    file_path: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -244,6 +252,32 @@ async fn generate_diagnostics_package(app: tauri::AppHandle) -> Result<Diagnosti
 }
 
 #[tauri::command]
+async fn export_hardware_feedback() -> Result<HardwareFeedbackExport, String> {
+    write_app_log("info", "hardware_feedback.export_started", "");
+    let result = tauri::async_runtime::spawn_blocking(create_hardware_feedback_export).await;
+    match result {
+        Ok(Ok(export)) => {
+            write_app_log(
+                "info",
+                "hardware_feedback.exported",
+                "file=device-hardware-feedback.json",
+            );
+            Ok(export)
+        }
+        Ok(Err(error)) => {
+            let message = error.to_string();
+            write_app_log("error", "hardware_feedback.export_failed", &message);
+            Err(message)
+        }
+        Err(error) => {
+            let message = error.to_string();
+            write_app_log("error", "hardware_feedback.export_failed", &message);
+            Err(message)
+        }
+    }
+}
+
+#[tauri::command]
 fn open_path(app: tauri::AppHandle, path: String) -> Result<(), String> {
     let path = validate_diagnostics_directory(&path)?;
     app.opener()
@@ -282,6 +316,7 @@ pub fn run() {
             collect_runtime_status,
             get_runtime_history,
             submit_device_data,
+            export_hardware_feedback,
             generate_diagnostics_package,
             open_path,
             open_url,
@@ -442,6 +477,69 @@ fn diagnostics_base_dir() -> Result<PathBuf> {
         .or_else(dirs::document_dir)
         .or_else(dirs::home_dir)
         .context("failed to resolve diagnostics output dir")
+}
+
+fn create_hardware_feedback_export() -> Result<HardwareFeedbackExport> {
+    let snapshot = collect_device_snapshot_inner().map_err(anyhow::Error::msg)?;
+    let now = Local::now();
+    let stamp = now.format("%Y%m%d-%H%M%S-%3f").to_string();
+    write_hardware_feedback_export(
+        &diagnostics_base_dir()?,
+        &snapshot,
+        &now.to_rfc3339(),
+        &stamp,
+    )
+}
+
+fn write_hardware_feedback_export(
+    base_dir: &Path,
+    snapshot: &DeviceSnapshot,
+    exported_at: &str,
+    stamp: &str,
+) -> Result<HardwareFeedbackExport> {
+    let directory_path = base_dir.join(format!("NpcinkDiagnostics-{stamp}-Hardware"));
+    let mut directory = fs::DirBuilder::new();
+    #[cfg(unix)]
+    directory.mode(0o700);
+    directory.create(&directory_path).with_context(|| {
+        format!(
+            "failed to create hardware feedback dir {}",
+            directory_path.display()
+        )
+    })?;
+
+    let file_path = directory_path.join("device-hardware-feedback.json");
+    let payload = hardware_feedback_payload(snapshot, exported_at);
+    write_private_json(&file_path, &payload)?;
+
+    Ok(HardwareFeedbackExport {
+        directory_path: directory_path.to_string_lossy().to_string(),
+        file_path: file_path.to_string_lossy().to_string(),
+    })
+}
+
+fn hardware_feedback_payload(snapshot: &DeviceSnapshot, exported_at: &str) -> Value {
+    json!({
+        "schema": "npcink-device-hardware-feedback-v1",
+        "exported_at": exported_at,
+        "agent": {
+            "name": APP_NAME,
+            "version": env!("CARGO_PKG_VERSION"),
+            "platform": std::env::consts::OS,
+            "architecture": std::env::consts::ARCH,
+        },
+        "device_identity": {
+            "type": snapshot.device_identity_type,
+            "value": snapshot.device_identity,
+        },
+        "hardware": snapshot.data,
+        "privacy": {
+            "contains_upload_configuration": false,
+            "contains_upload_token": false,
+            "contains_device_identifiers": true,
+            "notice": "文件包含主机名、硬件序列号、UUID、IP 和 MAC 等设备标识，仅保存在本机；发送前请确认接收方。",
+        },
+    })
 }
 
 fn create_diagnostics_package(app: tauri::AppHandle) -> Result<DiagnosticsPackage> {
@@ -1226,6 +1324,19 @@ fn write_json(path: &Path, value: &Value) -> Result<()> {
     write_text(path, &raw)
 }
 
+fn write_private_json(path: &Path, value: &Value) -> Result<()> {
+    let raw = serde_json::to_string_pretty(value).context("failed to encode json")?;
+    let mut options = fs::OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    options.mode(0o600);
+    let mut file = options
+        .open(path)
+        .with_context(|| format!("failed to create {}", path.display()))?;
+    file.write_all(raw.as_bytes())
+        .with_context(|| format!("failed to write {}", path.display()))
+}
+
 fn write_app_log(level: &str, event: &str, message: &str) {
     let path = match app_log_path() {
         Ok(path) => path,
@@ -1863,6 +1974,76 @@ mod tests {
 
         assert_eq!(redacted["network"]["mac"], "[redacted]");
         assert_eq!(redacted["network"]["iface"], "以太网");
+    }
+
+    #[test]
+    fn hardware_feedback_export_writes_private_parseable_json_without_upload_credentials() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let base = std::env::temp_dir().join(format!(
+            "npcink-hardware-feedback-test-{}-{unique}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&base).unwrap();
+        let snapshot = DeviceSnapshot {
+            data: json!({
+                "baseboard": {
+                    "manufacturer": "Example",
+                    "product": "Board-1",
+                    "serial": "BOARD-SERIAL-1"
+                },
+                "uuid": {
+                    "hardware": "HARDWARE-UUID-1",
+                    "macs": ["aa:bb:cc:dd:ee:ff"]
+                }
+            }),
+            device_identity_type: "device_uuid_v1".to_string(),
+            device_identity: "device_uuid_v1_example".to_string(),
+        };
+
+        let export = write_hardware_feedback_export(
+            &base,
+            &snapshot,
+            "2026-07-15T12:00:00+08:00",
+            "20260715-120000-000",
+        )
+        .unwrap();
+        let directory_path = PathBuf::from(export.directory_path);
+        let file_path = PathBuf::from(export.file_path);
+        let payload: Value =
+            serde_json::from_str(&fs::read_to_string(&file_path).unwrap()).unwrap();
+
+        assert_eq!(directory_path.parent(), Some(base.as_path()));
+        assert_eq!(file_path.parent(), Some(directory_path.as_path()));
+        assert_eq!(
+            file_path.file_name().unwrap(),
+            "device-hardware-feedback.json"
+        );
+        assert_eq!(payload["schema"], "npcink-device-hardware-feedback-v1");
+        assert_eq!(payload["device_identity"]["type"], "device_uuid_v1");
+        assert_eq!(payload["hardware"]["baseboard"]["serial"], "BOARD-SERIAL-1");
+        assert_eq!(payload["hardware"]["uuid"]["hardware"], "HARDWARE-UUID-1");
+        assert_eq!(payload["privacy"]["contains_upload_configuration"], false);
+        assert_eq!(payload["privacy"]["contains_upload_token"], false);
+        assert!(payload.get("upload_configuration").is_none());
+        assert!(payload.get("upload_token").is_none());
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt as _;
+            assert_eq!(
+                fs::metadata(&directory_path).unwrap().permissions().mode() & 0o777,
+                0o700
+            );
+            assert_eq!(
+                fs::metadata(&file_path).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+        }
+
+        fs::remove_dir_all(base).unwrap();
     }
 
     #[test]

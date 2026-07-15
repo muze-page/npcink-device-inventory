@@ -147,6 +147,11 @@ type DiagnosticsPackage = {
   zip_path: string;
 };
 
+type HardwareFeedbackExport = {
+  directory_path: string;
+  file_path: string;
+};
+
 type DiagnosticsProgress = {
   current?: number;
   total?: number;
@@ -309,11 +314,12 @@ app.innerHTML = `
       <section class="tab-page" id="diagnosticsPage">
         <div class="diagnostics-layout">
           <section class="diagnostics-panel">
-            <span class="panel-kicker">本地排障</span>
-            <h2>深度排障包</h2>
-            <p>设备频繁蓝屏、异常重启、上传失败或硬件信息异常时，生成深度排障包并发送给管理员。</p>
+            <span class="panel-kicker">本地反馈与排障</span>
+            <h2>导出设备信息</h2>
+            <p>硬件显示或设备识别异常时，先导出本次采集的硬件 JSON；蓝屏、异常重启或上传失败时再生成深度排障包。</p>
             <div class="diagnostics-actions">
-              <button class="button primary diagnostics-button" id="generateDiagnosticsButton" type="button">生成深度排障包</button>
+              <button class="button primary diagnostics-button" id="exportHardwareButton" type="button">导出硬件信息</button>
+              <button class="button secondary diagnostics-button" id="generateDiagnosticsButton" type="button">生成深度排障包</button>
               <button class="button secondary diagnostics-button" id="openDiagnosticsFolderButton" type="button" hidden>打开文件夹</button>
               <button class="button secondary diagnostics-button" id="copyDiagnosticsPathButton" type="button" hidden>复制文件位置</button>
             </div>
@@ -321,8 +327,9 @@ app.innerHTML = `
           </section>
           <section class="diagnostics-note">
             <strong>隐私提示</strong>
+            <p>硬件 JSON 不包含站点地址、上传配置或授权码，但会保留主机名、硬件序列号、UUID、IP 和 MAC，便于排查设备识别问题。</p>
             <p>深度排障包会收集硬件、事件、驱动、磁盘、网络、进程、dump 与运行监控，只保存在本机，不会自动上传。</p>
-            <p>如需更完整的蓝屏和异常重启信息，请右键软件并选择“以管理员身份运行”后重新生成。</p>
+            <p>文件不会自动上传，发送前请确认接收方；如需完整蓝屏信息，请以管理员身份运行后重新生成深度排障包。</p>
           </section>
         </div>
       </section>
@@ -424,6 +431,7 @@ const runtimeCollectedAt = document.querySelector<HTMLElement>("#runtimeCollecte
 const runtimeGrid = document.querySelector<HTMLElement>("#runtimeGrid")!;
 const runtimeHistorySummary = document.querySelector<HTMLElement>("#runtimeHistorySummary")!;
 const runtimeRangeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>(".runtime-range-button"));
+const exportHardwareButton = document.querySelector<HTMLButtonElement>("#exportHardwareButton")!;
 const generateDiagnosticsButton = document.querySelector<HTMLButtonElement>("#generateDiagnosticsButton")!;
 const openDiagnosticsFolderButton = document.querySelector<HTMLButtonElement>("#openDiagnosticsFolderButton")!;
 const copyDiagnosticsPathButton = document.querySelector<HTMLButtonElement>("#copyDiagnosticsPathButton")!;
@@ -439,6 +447,7 @@ let activeConfig: AgentConfig = { site: "", name: "", token: "" };
 let manualConfigDraft: { site: string; token: string; presetLabel: string } | null = null;
 let isCollecting = false;
 let isSubmitting = false;
+let isExportingHardware = false;
 let isGeneratingDiagnostics = false;
 let isCheckingUpdate = false;
 let isInstallingUpdate = false;
@@ -454,6 +463,7 @@ let lastTrendMetrics: TrendMetric[] = [];
 let lastSubmittedAt: Date | null = null;
 let lastSubmittedConfigLabel = "";
 let diagnosticsDirectoryPath = "";
+let diagnosticsOutputPath = "";
 let currentAppVersion = "";
 let latestDesktopManifest: DesktopUpdateManifest | null = null;
 let pendingAutoUpdate: Update | null = null;
@@ -999,17 +1009,19 @@ const hasUploadConfig = (config: AgentConfig = getConfig()) =>
   Boolean(config.site && config.token);
 
 const updateInteractiveState = () => {
+  const diagnosticsBusy = isExportingHardware || isGeneratingDiagnostics;
   nameInput.disabled = isSubmitting;
   siteInput.disabled = isSubmitting;
   tokenInput.disabled = isSubmitting;
-  collectButton.disabled = isCollecting || isSubmitting;
-  submitButton.disabled = isCollecting || isSubmitting;
+  collectButton.disabled = isCollecting || isSubmitting || diagnosticsBusy;
+  submitButton.disabled = isCollecting || isSubmitting || diagnosticsBusy;
   importConfigButton.disabled = isSubmitting;
   manualConfigButton.disabled = isSubmitting;
   saveManualConfigButton.disabled = isSubmitting;
-  generateDiagnosticsButton.disabled = isGeneratingDiagnostics;
-  openDiagnosticsFolderButton.disabled = isGeneratingDiagnostics;
-  copyDiagnosticsPathButton.disabled = isGeneratingDiagnostics;
+  exportHardwareButton.disabled = diagnosticsBusy || isCollecting || isSubmitting;
+  generateDiagnosticsButton.disabled = diagnosticsBusy || isCollecting || isSubmitting;
+  openDiagnosticsFolderButton.disabled = diagnosticsBusy;
+  copyDiagnosticsPathButton.disabled = diagnosticsBusy;
 };
 
 const setCollecting = (collecting: boolean) => {
@@ -1029,6 +1041,12 @@ const setSubmitting = (submitting: boolean) => {
 const setGeneratingDiagnostics = (generating: boolean) => {
   isGeneratingDiagnostics = generating;
   generateDiagnosticsButton.textContent = generating ? "生成中..." : "生成深度排障包";
+  updateInteractiveState();
+};
+
+const setExportingHardware = (exporting: boolean) => {
+  isExportingHardware = exporting;
+  exportHardwareButton.textContent = exporting ? "导出中..." : "导出硬件信息";
   updateInteractiveState();
 };
 
@@ -2067,14 +2085,19 @@ const openDesktopUpdateDownload = async () => {
 };
 
 const generateDiagnostics = async () => {
+  if (isGeneratingDiagnostics || isExportingHardware || isCollecting || isSubmitting) {
+    return;
+  }
   setGeneratingDiagnostics(true);
   renderDiagnosticsProgress({ current: 0, total: 1, stage: "正在生成深度排障包...", detail: "后台正在收集系统信息。" });
   openDiagnosticsFolderButton.hidden = true;
   copyDiagnosticsPathButton.hidden = true;
   diagnosticsDirectoryPath = "";
+  diagnosticsOutputPath = "";
   try {
     const result = await invoke<DiagnosticsPackage>("generate_diagnostics_package");
     diagnosticsDirectoryPath = result.directory_path;
+    diagnosticsOutputPath = result.zip_path;
     openDiagnosticsFolderButton.hidden = false;
     copyDiagnosticsPathButton.hidden = false;
     diagnosticsResult.className = "diagnostics-result ok";
@@ -2094,6 +2117,48 @@ const generateDiagnostics = async () => {
   }
 };
 
+const exportHardwareFeedback = async () => {
+  if (isExportingHardware || isGeneratingDiagnostics || isCollecting || isSubmitting) {
+    return;
+  }
+  setExportingHardware(true);
+  openDiagnosticsFolderButton.hidden = true;
+  copyDiagnosticsPathButton.hidden = true;
+  diagnosticsDirectoryPath = "";
+  diagnosticsOutputPath = "";
+  diagnosticsResult.className = "diagnostics-result";
+  diagnosticsResult.innerHTML = `
+    <strong>正在重新采集硬件信息...</strong>
+    <span>文件只保存在本机，不会自动上传。</span>
+  `;
+  try {
+    const result = await invoke<HardwareFeedbackExport>("export_hardware_feedback");
+    diagnosticsDirectoryPath = result.directory_path;
+    diagnosticsOutputPath = result.file_path;
+    openDiagnosticsFolderButton.hidden = false;
+    copyDiagnosticsPathButton.hidden = false;
+    diagnosticsResult.className = "diagnostics-result ok";
+    diagnosticsResult.innerHTML = `
+      <strong>硬件信息已导出</strong>
+      <span>请将这个 JSON 文件作为问题反馈附件。</span>
+      <span class="diagnostics-path">${escapeHtml(result.file_path)}</span>
+    `;
+    try {
+      await invoke("open_path", { path: result.directory_path });
+    } catch (error) {
+      logAppEvent("warn", "ui.open_hardware_export_folder_failed", errorMessage(error));
+    }
+  } catch (error) {
+    diagnosticsResult.className = "diagnostics-result error";
+    diagnosticsResult.innerHTML = `
+      <strong>导出失败</strong>
+      <span>${escapeHtml(errorMessage(error))}</span>
+    `;
+  } finally {
+    setExportingHardware(false);
+  }
+};
+
 const renderDiagnosticsProgress = (progress: DiagnosticsProgress) => {
   const total = Math.max(1, Math.round(finiteNumber(progress.total) ?? 1));
   const current = Math.min(total, Math.max(0, Math.round(finiteNumber(progress.current) ?? 0)));
@@ -2110,16 +2175,16 @@ const renderDiagnosticsProgress = (progress: DiagnosticsProgress) => {
 };
 
 const copyDiagnosticsPath = async () => {
-  if (!diagnosticsDirectoryPath) {
+  if (!diagnosticsOutputPath) {
     return;
   }
   try {
-    await navigator.clipboard.writeText(diagnosticsDirectoryPath);
+    await navigator.clipboard.writeText(diagnosticsOutputPath);
     diagnosticsResult.className = "diagnostics-result ok";
     diagnosticsResult.innerHTML = `
-      <strong>文件夹位置已复制</strong>
-      <span>请将排障包 zip 文件发送给管理员。</span>
-      <span class="diagnostics-path">${escapeHtml(diagnosticsDirectoryPath)}</span>
+      <strong>文件位置已复制</strong>
+      <span>可以将对应文件作为问题反馈附件。</span>
+      <span class="diagnostics-path">${escapeHtml(diagnosticsOutputPath)}</span>
     `;
   } catch (error) {
     diagnosticsResult.className = "diagnostics-result error";
@@ -2152,6 +2217,9 @@ manualConfigDialog.addEventListener("cancel", (event) => {
 });
 generateDiagnosticsButton.addEventListener("click", () => {
   void generateDiagnostics();
+});
+exportHardwareButton.addEventListener("click", () => {
+  void exportHardwareFeedback();
 });
 openDiagnosticsFolderButton.addEventListener("click", () => {
   if (diagnosticsDirectoryPath) {
