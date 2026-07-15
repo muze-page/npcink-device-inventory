@@ -466,6 +466,38 @@ $response = npcink_restore($duplicate_identity, true);
 $summary = npcink_data($response)['data']['summary'];
 npcink_assert($summary['planned']['identitiesCreated'] === 1, 'duplicate identity should only plan one insert');
 npcink_assert($summary['skipped']['identities'] === 1, 'duplicate identity should skip duplicate row');
+npcink_assert($summary['conflicts'] === array(), 'duplicate identity on one asset must not be a conflict');
+
+$cross_asset_identity = $base_backup;
+$cross_asset_identity['assets'][] = array(
+	'id' => 11,
+	'uuid' => 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+	'assetNumber' => 'RESTORE-FIXTURE-002',
+	'name' => 'Second Restore Fixture Asset',
+);
+$cross_asset_identity['identities'] = array(
+	array(
+		'assetNumber' => 'RESTORE-FIXTURE-001',
+		'identities' => array(
+			array('identityType' => 'device_uuid_v1', 'identityValue' => 'CROSS-ASSET-IDENTITY'),
+		),
+	),
+	array(
+		'assetNumber' => 'RESTORE-FIXTURE-002',
+		'identities' => array(
+			array('identityType' => 'device_uuid_v1', 'identityValue' => 'CROSS-ASSET-IDENTITY'),
+		),
+	),
+);
+$response = npcink_restore($cross_asset_identity, true);
+$summary = npcink_data($response)['data']['summary'];
+npcink_assert(count($summary['conflicts']) === 1, 'an identity assigned to two backup assets must be a conflict');
+npcink_assert($summary['planned']['identitiesCreated'] === 1, 'cross-asset identity conflict should only plan the first insert');
+npcink_assert($summary['skipped']['identities'] === 1, 'cross-asset identity conflict should skip the conflicting row');
+
+$response = npcink_restore($cross_asset_identity, false);
+npcink_assert($response instanceof WP_Error, 'real import with a cross-asset identity conflict should fail');
+npcink_assert($response->get_error_code() === 'backup_conflicts', 'cross-asset identity conflict should use backup_conflicts');
 
 $obsolete_identity = $base_backup;
 $obsolete_identity['identities'] = array(

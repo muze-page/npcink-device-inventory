@@ -144,11 +144,21 @@ $backup = array(
 			'assetNumber' => $asset_number,
 			'source' => 'restore_e2e',
 			'schemaVersion' => 3,
+			'observedAt' => '2026-07-06T00:20:00+00:00',
+			'receivedAt' => '2026-07-06T00:21:00+00:00',
+			'summary' => array('deviceName' => 'restore-e2e-latest'),
+			'hardware' => array('cpu' => array('model' => 'fixture-latest')),
+			'raw' => array('restoreRehearsal' => true, 'sequence' => 2),
+		),
+		array(
+			'assetNumber' => $asset_number,
+			'source' => 'restore_e2e',
+			'schemaVersion' => 3,
 			'observedAt' => '2026-07-06T00:10:00+00:00',
 			'receivedAt' => '2026-07-06T00:11:00+00:00',
 			'summary' => array('deviceName' => 'restore-e2e'),
 			'hardware' => array('cpu' => array('model' => 'fixture')),
-			'raw' => array('restoreRehearsal' => true),
+			'raw' => array('restoreRehearsal' => true, 'sequence' => 1),
 		),
 	),
 	'events' => array(
@@ -171,8 +181,42 @@ $assert((int) $preview['data']['summary']['planned']['identitiesCreated'] === 1,
 $import = $request_restore($backup, false);
 $assert(is_array($import) && (int) $import['data']['summary']['imported']['assetsCreated'] === 1, 'import should create one asset');
 $assert((int) $import['data']['summary']['imported']['identitiesCreated'] === 1, 'import should create one identity');
-$assert((int) $import['data']['summary']['imported']['observationsCreated'] === 1, 'import should create one observation');
+$assert((int) $import['data']['summary']['imported']['observationsCreated'] === 2, 'import should create both observations');
 $assert((int) $import['data']['summary']['imported']['eventsCreated'] === 1, 'import should create one event');
+
+$assets_table = Npcink_Device_Inventory_V3_Tables::assets();
+$observations_table = Npcink_Device_Inventory_V3_Tables::observations();
+$restored_asset = $wpdb->get_row(
+	$wpdb->prepare("SELECT id, latest_observation_id, latest_observed_at FROM {$assets_table} WHERE asset_number = %s LIMIT 1", $asset_number),
+	ARRAY_A
+);
+$restored_observation = $wpdb->get_row(
+	$wpdb->prepare(
+		"SELECT id, observed_at FROM {$observations_table} WHERE asset_id = %d ORDER BY observed_at DESC, id DESC LIMIT 1",
+		(int) $restored_asset['id']
+	),
+	ARRAY_A
+);
+$assert((int) $restored_asset['latest_observation_id'] === (int) $restored_observation['id'], 'import should point the asset to its latest observation');
+$assert((string) $restored_asset['latest_observed_at'] === (string) $restored_observation['observed_at'], 'import should preserve the latest observation timestamp');
+$assert((string) $restored_observation['observed_at'] === '2026-07-06 00:20:00', 'out-of-order import should select the chronologically latest observation');
+
+$cleared = $wpdb->query(
+	$wpdb->prepare(
+		"UPDATE {$assets_table} SET latest_observation_id = NULL, latest_observed_at = NULL WHERE id = %d",
+		(int) $restored_asset['id']
+	)
+);
+$assert($cleared === 1, 'test setup should clear the latest observation pointer');
+
+$repair_import = $request_restore($backup, false);
+$assert(is_array($repair_import) && (int) $repair_import['data']['summary']['imported']['observationsCreated'] === 0, 'repeat import should not duplicate observations');
+$repaired_asset = $wpdb->get_row(
+	$wpdb->prepare("SELECT latest_observation_id, latest_observed_at FROM {$assets_table} WHERE id = %d", (int) $restored_asset['id']),
+	ARRAY_A
+);
+$assert((int) $repaired_asset['latest_observation_id'] === (int) $restored_observation['id'], 'repeat import should repair a missing latest observation pointer');
+$assert((string) $repaired_asset['latest_observed_at'] === (string) $restored_observation['observed_at'], 'repeat import should repair the latest observation timestamp');
 
 $second_preview = $request_restore($backup, true);
 $assert(is_array($second_preview) && (int) $second_preview['data']['summary']['planned']['assetsUpdated'] === 1, 'second dry-run should plan asset update');

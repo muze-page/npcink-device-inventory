@@ -457,10 +457,14 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 				$identity_key = $type . "\0" . $value;
 				if (isset($seen_identities[$identity_key])) {
 					$summary['skipped']['identities']++;
-					$this->add_warning($summary, '备份内设备匹配标识重复：' . $type . '=' . $value . '，重复项已跳过。');
+					if (intval($seen_identities[$identity_key]) !== intval($current_asset_id)) {
+						$summary['conflicts'][] = '备份内设备匹配标识冲突：' . $type . '=' . $value . ' 指向多个资产。';
+					} else {
+						$this->add_warning($summary, '备份内设备匹配标识重复：' . $type . '=' . $value . '，重复项已跳过。');
+					}
 					continue;
 				}
-				$seen_identities[$identity_key] = true;
+				$seen_identities[$identity_key] = intval($current_asset_id);
 
 				$existing_asset_id = $this->identity_asset_id($type, $value);
 				if ($existing_asset_id) {
@@ -508,6 +512,7 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 	private function process_observations($observations, $summary, $asset_map, $mutate)
 	{
 		global $wpdb;
+		$should_sync_latest = false;
 		foreach ($observations as $observation) {
 			if (!is_array($observation)) {
 				$summary['skipped']['observations']++;
@@ -522,6 +527,9 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 				$summary['skipped']['observations']++;
 				$this->add_warning($summary, '电脑采集快照缺少资产或有效采集时间，已跳过。');
 				continue;
+			}
+			if ($mutate && $asset_id > 0) {
+				$should_sync_latest = true;
 			}
 			if ($asset_id > 0 && $this->observation_exists($asset_id, $source, $schema_version, $observed_at)) {
 				if (!$mutate) {
@@ -559,6 +567,9 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 			} else {
 				$summary['planned']['observationsCreated']++;
 			}
+		}
+		if ($mutate && $should_sync_latest) {
+			$this->sync_latest_observation_columns();
 		}
 		return $summary;
 	}
@@ -795,6 +806,40 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		return !empty($found);
+	}
+
+	private function sync_latest_observation_columns()
+	{
+		global $wpdb;
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Restore rebuilds denormalized latest observation metadata inside the same transaction.
+		$result = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i a
+				SET
+					a.updated_at = a.updated_at,
+					a.latest_observation_id = (
+						SELECT o.id
+						FROM %i o
+						WHERE o.asset_id = a.id
+						ORDER BY o.observed_at DESC, o.id DESC
+						LIMIT 1
+					),
+					a.latest_observed_at = (
+						SELECT o.observed_at
+						FROM %i o
+						WHERE o.asset_id = a.id
+						ORDER BY o.observed_at DESC, o.id DESC
+						LIMIT 1
+					)",
+				Npcink_Device_Inventory_V3_Tables::assets(),
+				Npcink_Device_Inventory_V3_Tables::observations(),
+				Npcink_Device_Inventory_V3_Tables::observations()
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ($result === false) {
+			throw new Exception('Failed to rebuild latest observation metadata during backup restore.');
+		}
 	}
 
 	private function event_exists($asset_id, $source, $type, $message, $created_at)

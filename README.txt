@@ -4,7 +4,7 @@ Tags: inventory, assets, device management, rest api, admin
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 3.0.0
+Stable tag: 3.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -70,6 +70,10 @@ Npcink Device Inventory stores device asset data in the local WordPress database
 The plugin does not transmit this data to Npcink or any third-party server during normal plugin operation. Site administrators are responsible for informing users and employees about their own device inventory policies.
 
 == Changelog ==
+
+= 3.0.1 =
+* Rebuild each asset's latest observation pointer after JSON restore, including repeat imports that repair a prior incomplete pointer.
+* Reject backups that assign the same current device identity to more than one asset.
 
 = 3.0.0 =
 * Remove the public asset query page, shortcode, REST route, and related access-code settings.
@@ -139,6 +143,9 @@ The plugin does not transmit this data to Npcink or any third-party server durin
 * Moved desktop uploads to signed v3 device observations.
 
 == Upgrade Notice ==
+
+= 3.0.1 =
+Use this release for JSON restores. Re-importing a backup safely repairs missing latest-observation pointers left by 3.0.0 without duplicating observations.
 
 = 3.0.0 =
 This development reset changes identity, backup, batch-write, desktop token, and migration contracts. Recreate desktop client import configurations from a newly generated token.

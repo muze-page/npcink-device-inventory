@@ -4,7 +4,7 @@
   "plugin": {
     "name": "Npcink Device Inventory",
     "slug": "npcink-device-inventory",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "requires_at_least": "6.5",
     "tested_up_to": "7.0",
     "requires_php": "7.4",
@@ -14,14 +14,14 @@
     "upload_file": "sj/npcink-device-inventory.zip",
     "source_file": "release/npcink-device-inventory.zip",
     "zip_root": "npcink-device-inventory/",
-    "sha256": "844a416963c1e457e7f283b3bacc298756f2093bc2727770b49b5b0c52df7d6d",
+    "sha256": "76052aea719df0c5ed3589947636ab79971f574370d1871013df6c5b75897ddf",
     "entry_count": 79,
     "file_count": 61,
-    "uncompressed_bytes": 1951220,
-    "compressed_bytes": 573480
+    "uncompressed_bytes": 1953171,
+    "compressed_bytes": 573897
   },
   "verification": {
-    "plugin_check": "pending_github_action_for_3.0.0",
+    "plugin_check": "passed_local_pending_github_action_for_3.0.1",
     "phpcs": "passed",
     "phpstan": "passed",
     "vite_admin_build": "passed",
@@ -30,7 +30,7 @@
     "version_contract": "passed",
     "release_package_check": "passed",
     "wordpress_org_review_rules": "passed",
-    "activation_smoke": "not_run_for_3.0.0",
+    "activation_smoke": "passed_wordpress_7_0_php_8_3_mariadb_11",
     "unsigned_upload_fixture_status": 403,
     "screenshots": "stale_do_not_publish_until_recaptured",
     "i18n_pot": "updated"

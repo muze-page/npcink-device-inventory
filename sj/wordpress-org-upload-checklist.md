@@ -19,7 +19,7 @@
 - [x] 包内不包含 `.DS_Store`。
 - [x] 包内不包含旧平台、支付、OS 图片素材。
 - [x] 包内不包含旧版本号 `2601083`。
-- [ ] 3.0.0 候选包在 GitHub `wordpress/plugin-check-action` 中通过；本地总门不伪造该结果。
+- [ ] 3.0.1 候选包在 GitHub `wordpress/plugin-check-action` 中通过；本地总门不伪造该结果。
 - [x] `README.txt` 暂不声明 Screenshots，避免 WordPress.org 使用重构前旧图。
 - [x] `sj/assets/` manifest 只把 banner 和 icon 标为可发布，旧截图标为 `stale_do_not_publish`。
 - [ ] 3.0 管理界面冻结后重新采集截图，再恢复 `README.txt` Screenshots 区段。
