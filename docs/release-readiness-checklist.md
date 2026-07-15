@@ -33,14 +33,16 @@ npm run build:release
 
 再重新执行 `npm run check:release`。
 
-如果本次要提交 WordPress.org，再显式运行：
+如果本次要提交 WordPress.org，并且开发机可用 Docker，按以下顺序运行：
 
 ```bash
-npm run build:submission
+npm run check:docker
 npm run check:submission
 ```
 
-submission 检查会同时验证 `release/npcink-device-inventory.zip` 和 `sj/npcink-device-inventory.zip`，并对比两个 zip 的 SHA-256，确认提交包和 release 包一致。
+Docker 门禁会构建本次最终的 release/submission ZIP；随后 submission 检查会验证这两个不再重建的制品，并对比 SHA-256，确认提交包和 Docker 实测通过的 release 包完全一致。
+
+其中 `check:docker` 是每个发布候选的独立真实环境门。它先构建并核对字节一致的 release/submission ZIP 与 submission manifest，再使用一次性 MariaDB 11、WordPress PHP 8.3 和 WP-CLI 环境安装当前 release ZIP，运行固定版本的官方 Plugin Check，并执行真实备份恢复演练。它没有并入 `check:release`，以免无 Docker 环境的日常检查或 CI 被基础设施条件误伤；发布候选记录中应单独保存其结果。
 
 ## Eval Lab 对抗式质量门
 
@@ -135,6 +137,7 @@ POST /wp-json/npcink-device-inventory/v1/device-observations    -> 401
 
 当前开发站点通常是源码软链接挂载。正式提交前仍应额外准备一个干净 WordPress，上传 `release/npcink-device-inventory.zip`，确认：
 
+- `npm run check:docker` 已通过，证明 ZIP 可在一次性环境安装、启用，并通过官方 Plugin Check 和真实恢复演练。
 - 插件可启用，无 fatal error。
 - 后台菜单出现。
 - 首次进入后台页面无 JS 错误。

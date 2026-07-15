@@ -209,6 +209,7 @@ class Npcink_Device_Inventory_Settings_Controller
 	{
 		global $wpdb;
 		$table = Npcink_Device_Inventory_V3_Tables::assets();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- One-time fallback reads current departments from the plugin-owned assets table when no department setting exists; caching would require invalidation on every asset write.
 		$rows = $wpdb->get_col(
 			$wpdb->prepare('SELECT DISTINCT department FROM %i WHERE department <> %s ORDER BY department ASC', $table, '')
 		);

@@ -19,6 +19,7 @@
     "check:desktop-update-transition": "node scripts/check-desktop-update-transition.mjs",
     "check:wporg-review": "node scripts/check-wordpress-org-review-rules.mjs release/npcink-device-inventory.zip",
     "check:package": "node scripts/check-release-package.mjs release/npcink-device-inventory.zip && npm run check:wporg-review",
+    "check:docker": "bash scripts/check-docker.sh",
     "check:release": "node scripts/check-release-readiness.mjs",
     "check:submission": "node scripts/check-release-readiness.mjs --submission"
   }

@@ -7,12 +7,13 @@ if (!defined('ABSPATH')) {
 
 global $wpdb;
 
-$prefix = 'RESTORE-E2E-' . gmdate('YmdHis');
+$run_id = substr(str_replace('-', '', wp_generate_uuid4()), 0, 12);
+$prefix = 'RESTORE-E2E-' . gmdate('YmdHis') . '-' . $run_id;
 $asset_number = $prefix . '-001';
 $conflict_asset_number = $prefix . '-002';
 $asset_uuid = wp_generate_uuid4();
 $conflict_uuid = wp_generate_uuid4();
-$identity_value = $prefix . '-SERIAL';
+$identity_value = 'device-v1-' . substr(hash('sha256', $prefix), 0, 29);
 $root_dir = getenv('NPCINK_RESTORE_REHEARSAL_ROOT');
 
 if (!$root_dir || !is_dir($root_dir)) {
@@ -40,28 +41,50 @@ if (!class_exists('Npcink_Device_Inventory_V3_Tables')) {
 
 $previous_options = get_option(Npcink_Device_Inventory_V3_Tables::OPTION, array());
 
-$cleanup = function () use ($wpdb, $previous_options) {
+$cleanup_complete = false;
+$cleanup = function () use ($wpdb, $previous_options, $asset_number, $conflict_asset_number, &$cleanup_complete) {
+	if ($cleanup_complete) {
+		return;
+	}
+
 	$assets_table = Npcink_Device_Inventory_V3_Tables::assets();
 	$identities_table = Npcink_Device_Inventory_V3_Tables::identities();
 	$observations_table = Npcink_Device_Inventory_V3_Tables::observations();
 	$events_table = Npcink_Device_Inventory_V3_Tables::events();
+	$wpdb->last_error = '';
 	$asset_ids = $wpdb->get_col(
-		$wpdb->prepare("SELECT id FROM {$assets_table} WHERE asset_number LIKE %s", 'RESTORE-E2E-%')
+		$wpdb->prepare(
+			"SELECT id FROM {$assets_table} WHERE asset_number IN (%s, %s)",
+			$asset_number,
+			$conflict_asset_number
+		)
 	);
+	if ($wpdb->last_error !== '') {
+		throw new RuntimeException('Failed to locate backup restore rehearsal assets during cleanup.');
+	}
 	if (!empty($asset_ids)) {
-		$id_placeholders = implode(',', array_fill(0, count($asset_ids), '%d'));
 		$asset_ids = array_map('intval', $asset_ids);
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Local rehearsal cleanup for plugin-owned tables.
-		$wpdb->query($wpdb->prepare("DELETE FROM {$events_table} WHERE asset_id IN ({$id_placeholders})", $asset_ids));
-		$wpdb->query($wpdb->prepare("DELETE FROM {$observations_table} WHERE asset_id IN ({$id_placeholders})", $asset_ids));
-		$wpdb->query($wpdb->prepare("DELETE FROM {$identities_table} WHERE asset_id IN ({$id_placeholders})", $asset_ids));
-		$wpdb->query($wpdb->prepare("DELETE FROM {$assets_table} WHERE id IN ({$id_placeholders})", $asset_ids));
-		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		foreach ($asset_ids as $asset_id) {
+			foreach (array($events_table, $observations_table, $identities_table) as $table) {
+				if ($wpdb->delete($table, array('asset_id' => $asset_id), array('%d')) === false) {
+					throw new RuntimeException('Failed to delete backup restore rehearsal child rows.');
+				}
+			}
+			if ($wpdb->delete($assets_table, array('id' => $asset_id), array('%d')) !== 1) {
+				throw new RuntimeException('Failed to delete a backup restore rehearsal asset.');
+			}
+		}
 	}
-	if (is_array($previous_options)) {
-		update_option(Npcink_Device_Inventory_V3_Tables::OPTION, $previous_options);
+	if (is_array($previous_options) && get_option(Npcink_Device_Inventory_V3_Tables::OPTION, array()) !== $previous_options) {
+		$restored = update_option(Npcink_Device_Inventory_V3_Tables::OPTION, $previous_options);
+		if (!$restored && get_option(Npcink_Device_Inventory_V3_Tables::OPTION, array()) !== $previous_options) {
+			throw new RuntimeException('Failed to restore plugin options after backup restore rehearsal.');
+		}
 	}
+
+	$cleanup_complete = true;
 };
+register_shutdown_function($cleanup);
 
 $request_restore = function ($backup, $dry_run) {
 	$request = new WP_REST_Request('POST', '/npcink-device-inventory/v1/backup-restore');
@@ -76,12 +99,9 @@ $request_restore = function ($backup, $dry_run) {
 
 $assert = function ($condition, $message) {
 	if (!$condition) {
-		fwrite(STDERR, "Backup restore rehearsal failed: {$message}\n");
-		exit(1);
+		throw new RuntimeException("Backup restore rehearsal failed: {$message}");
 	}
 };
-
-$cleanup();
 
 $backup = array(
 	'schema' => 'npcink-device-inventory/v3-admin-export',
@@ -115,7 +135,7 @@ $backup = array(
 		array(
 			'assetNumber' => $asset_number,
 			'identities' => array(
-				array('identityType' => 'serial', 'identityValue' => $identity_value, 'confidence' => 100, 'isPrimary' => true),
+				array('identityType' => 'device_uuid_v1', 'identityValue' => $identity_value, 'confidence' => 100, 'isPrimary' => true),
 			),
 		),
 	),
@@ -171,7 +191,7 @@ $conflict_backup['identities'] = array(
 	array(
 		'assetNumber' => $conflict_asset_number,
 		'identities' => array(
-			array('identityType' => 'serial', 'identityValue' => $identity_value),
+			array('identityType' => 'device_uuid_v1', 'identityValue' => $identity_value),
 		),
 	),
 );

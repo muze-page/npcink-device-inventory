@@ -101,6 +101,24 @@ WP_PATH="/path/to/wordpress" \
 bash scripts/verify-local-backup-restore.sh
 ```
 
+也可以用一次性 Docker 环境完成发布包验收：
+
+```bash
+npm run check:docker
+```
+
+该命令构建并核对字节一致的 release/submission ZIP 与 submission manifest，在独立 Compose project 中启动 MariaDB 11、WordPress PHP 8.3 和 WP-CLI，安装 release ZIP，运行固定版本的官方 Plugin Check 与真实备份恢复演练。默认不暴露宿主端口；成功或失败都会删除本次容器、网络和数据卷，不会复用或清理其他 Docker 项目。首次运行需要联网拉取镜像和 Plugin Check。
+
+需要验证其他兼容组合时可覆盖镜像或 Plugin Check 版本：
+
+```bash
+NPCINK_DOCKER_WORDPRESS_IMAGE="wordpress:php8.3-apache" \
+NPCINK_DOCKER_DB_IMAGE="mariadb:11" \
+NPCINK_DOCKER_CLI_IMAGE="wordpress:cli-php8.3" \
+NPCINK_PLUGIN_CHECK_VERSION="2.0.0" \
+npm run check:docker
+```
+
 Rust/Tauri 上传器：
 
 ```bash
@@ -118,6 +136,8 @@ SITE_URL="https://example.local" \
 DEVICE_NOTE="验收设备" \
 bash .github/scripts/verify-local-e2e.sh
 ```
+
+HMAC 验收会先拒绝覆盖身份相同的已有资产；对于本次明确创建的数据，退出时会清理临时授权码、资产、身份、快照和事件，避免默认保留本机硬件信息。终端只显示最小验收摘要，不输出完整硬件响应。
 
 ## 发布打包
 

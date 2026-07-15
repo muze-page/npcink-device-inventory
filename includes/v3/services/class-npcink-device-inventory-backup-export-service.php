@@ -167,43 +167,65 @@ class Npcink_Device_Inventory_Backup_Export_Service
 
 	private function asset_rows()
 	{
-		return $this->rows(
-			' SELECT id, uuid, asset_type, asset_number, name, owner_name, department, status, category, purchase_price, residual_value, metadata_json, created_at, updated_at FROM %i ORDER BY id ASC',
-			array(Npcink_Device_Inventory_V3_Tables::assets())
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Backup reads plugin-owned tables inside one consistent snapshot.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT id, uuid, asset_type, asset_number, name, owner_name, department, status, category, purchase_price, residual_value, metadata_json, created_at, updated_at FROM %i ORDER BY id ASC',
+				Npcink_Device_Inventory_V3_Tables::assets()
+			),
+			ARRAY_A
 		);
+		return $this->validated_rows($rows);
 	}
 
 	private function identity_rows()
 	{
-		return $this->rows(
-			' SELECT i.*, a.uuid AS asset_uuid, a.asset_number FROM %i i INNER JOIN %i a ON a.id = i.asset_id ORDER BY i.asset_id ASC, i.is_primary DESC, i.id ASC',
-			array(Npcink_Device_Inventory_V3_Tables::identities(), Npcink_Device_Inventory_V3_Tables::assets())
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Backup reads plugin-owned tables inside one consistent snapshot.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT i.*, a.uuid AS asset_uuid, a.asset_number FROM %i i INNER JOIN %i a ON a.id = i.asset_id ORDER BY i.asset_id ASC, i.is_primary DESC, i.id ASC',
+				Npcink_Device_Inventory_V3_Tables::identities(),
+				Npcink_Device_Inventory_V3_Tables::assets()
+			),
+			ARRAY_A
 		);
+		return $this->validated_rows($rows);
 	}
 
 	private function event_rows()
 	{
-		return $this->rows(
-			' SELECT e.*, a.uuid AS asset_uuid, a.asset_number FROM %i e LEFT JOIN %i a ON a.id = e.asset_id ORDER BY e.id ASC',
-			array(Npcink_Device_Inventory_V3_Tables::events(), Npcink_Device_Inventory_V3_Tables::assets())
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Backup reads plugin-owned tables inside one consistent snapshot.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT e.*, a.uuid AS asset_uuid, a.asset_number FROM %i e LEFT JOIN %i a ON a.id = e.asset_id ORDER BY e.id ASC',
+				Npcink_Device_Inventory_V3_Tables::events(),
+				Npcink_Device_Inventory_V3_Tables::assets()
+			),
+			ARRAY_A
 		);
+		return $this->validated_rows($rows);
 	}
 
 	private function observation_rows()
 	{
-		return $this->rows(
-			' SELECT o.*, a.uuid AS asset_uuid, a.asset_number FROM %i o INNER JOIN %i a ON a.id = o.asset_id ORDER BY o.id ASC',
-			array(Npcink_Device_Inventory_V3_Tables::observations(), Npcink_Device_Inventory_V3_Tables::assets())
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Backup reads plugin-owned tables inside one consistent snapshot.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT o.*, a.uuid AS asset_uuid, a.asset_number FROM %i o INNER JOIN %i a ON a.id = o.asset_id ORDER BY o.id ASC',
+				Npcink_Device_Inventory_V3_Tables::observations(),
+				Npcink_Device_Inventory_V3_Tables::assets()
+			),
+			ARRAY_A
 		);
+		return $this->validated_rows($rows);
 	}
 
-	private function rows($query, $args)
+	private function validated_rows($rows)
 	{
-		global $wpdb;
-		$prepared = call_user_func_array(array($wpdb, 'prepare'), array_merge(array(trim($query)), $args));
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Backup reads plugin-owned tables inside one consistent snapshot.
-		$rows = $wpdb->get_results($prepared, ARRAY_A);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		if (!is_array($rows)) {
 			throw new Exception('Failed to read backup rows.');
 		}
