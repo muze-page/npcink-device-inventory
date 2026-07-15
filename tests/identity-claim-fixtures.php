@@ -46,6 +46,7 @@ class Npcink_Identity_Claim_Fake_Wpdb
 {
 	public $rows = array();
 	public $fail_next_query = false;
+	public $found_rows = false;
 	public $last_insert_sql = '';
 
 	public function prepare($query, ...$args)
@@ -65,7 +66,7 @@ class Npcink_Identity_Claim_Fake_Wpdb
 			$this->last_insert_sql = $query;
 			$key = $args[2] . ':' . $args[3];
 			if (isset($this->rows[$key])) {
-				return 0;
+				return $this->found_rows ? 1 : 0;
 			}
 			$this->rows[$key] = array(
 				'asset_id' => intval($args[1]),
@@ -113,6 +114,8 @@ $identity = array(
 
 $invalid = $repository->claim(0, $identity);
 npcink_claim_assert($invalid['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_INVALID, 'invalid asset IDs must be rejected');
+$legacy = $repository->claim(11, array('type' => 'stable_device_id_v3', 'value' => 'legacy-value'));
+npcink_claim_assert($legacy['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_INVALID, 'removed identity types must be rejected');
 
 $inserted = $repository->claim(11, $identity);
 npcink_claim_assert($inserted['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_INSERTED, 'the first claim must insert the identity');
@@ -127,10 +130,16 @@ $conflict = $repository->claim(22, $identity);
 npcink_claim_assert($conflict['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_CONFLICT, 'another asset must receive an explicit conflict');
 npcink_claim_assert($conflict['ownerAssetId'] === 11, 'a conflict must identify the current owner');
 
+$wpdb->found_rows = true;
+$found_rows_conflict = $repository->claim(22, $identity);
+npcink_claim_assert($found_rows_conflict['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_CONFLICT, 'CLIENT_FOUND_ROWS must not turn another asset claim into an insert');
+npcink_claim_assert($found_rows_conflict['ownerAssetId'] === 11, 'CLIENT_FOUND_ROWS conflicts must still report the actual owner');
+$wpdb->found_rows = false;
+
 $many = $repository->claim_many(
 	22,
 	array(
-		array('type' => 'stable_device_id_v3', 'value' => 'stable-v3-example'),
+		array('type' => 'fallback_device_v1', 'value' => 'fallback-v1-example'),
 		$identity,
 	)
 );

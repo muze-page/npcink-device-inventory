@@ -2,7 +2,7 @@
   {
     "id": 1,
     "uuid": "fixture-missing-hardware",
-    "assetType": "pc",
+    "assetType": "computer",
     "assetNumber": "DUP-001",
     "name": "缺失硬件样本",
     "ownerName": "",
@@ -38,7 +38,7 @@
   {
     "id": 2,
     "uuid": "fixture-duplicate-hardware",
-    "assetType": "pc",
+    "assetType": "computer",
     "assetNumber": "DUP-001",
     "name": "重复硬件样本",
     "ownerName": "张三",
@@ -92,7 +92,7 @@
   {
     "id": 3,
     "uuid": "fixture-imported-only",
-    "assetType": "pc",
+    "assetType": "computer",
     "assetNumber": "IMP-001",
     "name": "仅导入样本",
     "ownerName": "李四",
@@ -117,7 +117,7 @@
   {
     "id": 4,
     "uuid": "fixture-maintenance",
-    "assetType": "pc",
+    "assetType": "computer",
     "assetNumber": "MNT-001",
     "name": "维护状态样本",
     "ownerName": "王五",
@@ -171,7 +171,7 @@
   {
     "id": 5,
     "uuid": "fixture-inactive-unassigned",
-    "assetType": "pc",
+    "assetType": "computer",
     "assetNumber": "IDLE-001",
     "name": "闲置待分配样本",
     "ownerName": "",

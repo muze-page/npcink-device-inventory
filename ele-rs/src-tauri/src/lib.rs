@@ -32,7 +32,8 @@ const MENU_OPEN_PROJECT: &str = "open_project_url";
 #[derive(Debug, Serialize)]
 struct DeviceSnapshot {
     data: Value,
-    stable_device_id_v2: String,
+    device_identity_type: String,
+    device_identity: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -111,11 +112,19 @@ async fn collect_device_snapshot() -> Result<DeviceSnapshot, String> {
 fn collect_device_snapshot_inner() -> Result<DeviceSnapshot, String> {
     match collector::collect_static_data() {
         Ok(data) => {
-            let stable_device_id_v2 = collector::stable_device_id_v2(&data).unwrap_or_default();
+            let (device_identity_type, device_identity) =
+                if let Some(value) = collector::device_uuid_v1(&data) {
+                    ("device_uuid_v1", value)
+                } else if let Some(value) = collector::fallback_device_v1(&data) {
+                    ("fallback_device_v1", value)
+                } else {
+                    ("", String::new())
+                };
             write_app_log("info", "device.collect_static_succeeded", "");
             Ok(DeviceSnapshot {
                 data,
-                stable_device_id_v2,
+                device_identity_type: device_identity_type.to_string(),
+                device_identity,
             })
         }
         Err(error) => {

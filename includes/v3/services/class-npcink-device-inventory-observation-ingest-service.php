@@ -10,7 +10,6 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 	private $identities;
 	private $observations;
 	private $events;
-	private $extractor;
 	private $device_identity;
 
 	public function __construct(
@@ -18,14 +17,12 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 		Npcink_Device_Inventory_Identity_Repository $identities,
 		Npcink_Device_Inventory_Observation_Repository $observations,
 		Npcink_Device_Inventory_Event_Service $events,
-		Npcink_Device_Inventory_Identity_Extractor $extractor,
 		Npcink_Device_Inventory_Device_Identity_Service $device_identity
 	) {
 		$this->assets = $assets;
 		$this->identities = $identities;
 		$this->observations = $observations;
 		$this->events = $events;
-		$this->extractor = $extractor;
 		$this->device_identity = $device_identity;
 	}
 
@@ -38,18 +35,20 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 		$observation_payload = isset($payload['observation']) && is_array($payload['observation'])
 			? $payload['observation']
 			: $payload;
-		$identities = $this->extractor->extract($observation_payload);
-		$canonical_device = $this->device_identity->from_observation($observation_payload);
-		$identities = $this->with_canonical_device_identity($identities, $canonical_device);
-		if (empty($identities)) {
-			return Npcink_Device_Inventory_V3_Response::error('missing_identity', 'No stable identity was found in the observation.', 422);
+		$primary_identity = $this->device_identity->primary_identity($observation_payload);
+		if (empty($primary_identity['type']) || empty($primary_identity['value'])) {
+			return Npcink_Device_Inventory_V3_Response::error(
+				'missing_identity',
+				'Observation cannot produce a device identity.',
+				422,
+				array('reason' => isset($primary_identity['reason']) ? $primary_identity['reason'] : 'insufficient_hardware_facts')
+			);
 		}
+		$identities = array($primary_identity);
 
-		$legacy_conflict = $canonical_device['value'] !== '' ? null : $this->identity_conflict($identities);
-		$asset_id = $legacy_conflict ? null : $this->matching_asset_id($identities);
+		$asset_id = $this->matching_asset_id($primary_identity);
 		$mode = 'matched';
 		$asset = $asset_id ? $this->assets->find_by_id($asset_id) : null;
-		$stored_identities = $legacy_conflict ? $this->without_conflicting_legacy_claims($identities) : $identities;
 
 		if (!$this->begin_transaction()) {
 			return Npcink_Device_Inventory_V3_Response::error('transaction_start_failed', 'Failed to start observation transaction.', 500);
@@ -62,10 +61,10 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 				return $this->rollback_error('asset_create_failed', 'Failed to create asset.');
 			}
 			$created = true;
-			$mode = $legacy_conflict ? 'created_with_identity_conflict' : 'created';
+			$mode = 'created';
 		}
 
-		$claim_results = $this->identities->claim_many(intval($asset['id']), $stored_identities);
+		$claim_results = $this->identities->claim_many(intval($asset['id']), $identities);
 		$claim_error = $this->claim_error($claim_results);
 		if ($claim_error) {
 			$this->rollback_transaction();
@@ -81,7 +80,7 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 			}
 			$created = false;
 			$mode = 'matched_after_concurrent_claim';
-			$claim_results = $this->identities->claim_many(intval($asset['id']), $stored_identities);
+			$claim_results = $this->identities->claim_many(intval($asset['id']), $identities);
 			$claim_error = $this->claim_error($claim_results);
 			if ($claim_error) {
 				$this->rollback_transaction();
@@ -93,27 +92,8 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 			}
 		}
 
-		$claim_conflicts = array_values(
-			array_filter(
-				$claim_results,
-				function ($claim) {
-					return $claim['status'] === Npcink_Device_Inventory_Identity_Repository::CLAIM_CONFLICT;
-				}
-			)
-		);
-
-		if ($created && !$this->events->record(intval($asset['id']), 'upload', 'created', 'Asset created from first observation.', array('identities' => $stored_identities))) {
+		if ($created && !$this->events->record(intval($asset['id']), 'upload', 'created', 'Asset created from first observation.', array('identity' => $primary_identity))) {
 			return $this->rollback_error('event_create_failed', 'Failed to record asset creation.');
-		}
-
-		if ($legacy_conflict || !empty($claim_conflicts)) {
-			$conflict_payload = array(
-				'legacyConflict' => $legacy_conflict,
-				'claimConflicts' => $claim_conflicts,
-			);
-			if (!$this->events->record(intval($asset['id']), 'upload', 'identity_conflict', 'Conflicting secondary identities were not attached.', $conflict_payload)) {
-				return $this->rollback_error('event_create_failed', 'Failed to record identity conflict.');
-			}
 		}
 
 		$uploaded_owner = $this->uploaded_owner_name($observation_payload);
@@ -156,10 +136,6 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 		return array(
 			'data' => array(
 				'mode' => $mode,
-				'identityConflicts' => array(
-					'legacy' => $legacy_conflict,
-					'claims' => $claim_conflicts,
-				),
 				'asset' => $this->format_asset($asset),
 				'observation' => $this->format_observation($observation),
 				'identities' => array_map(array($this, 'format_identity'), $this->identities->list_for_asset(intval($asset['id']))),
@@ -209,106 +185,9 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 		return Npcink_Device_Inventory_V3_Response::error($code, $message, $status);
 	}
 
-	private function matching_asset_id($identities)
+	private function matching_asset_id($identity)
 	{
-		foreach ($identities as $identity) {
-			if (isset($identity['type'], $identity['value']) && $identity['type'] === Npcink_Device_Inventory_Device_Identity_Service::TYPE) {
-				// A canonical motherboard identity must never fall through to a
-				// historic single-signal match: a board replacement is a new computer.
-				return $this->identities->find_asset_id_by_identity($identity['type'], $identity['value']);
-			}
-		}
-		foreach ($identities as $identity) {
-			if (isset($identity['type'], $identity['value']) && $identity['type'] === 'stable_device_id_v3') {
-				$asset_id = $this->identities->find_asset_id_by_identity($identity['type'], $identity['value']);
-				if ($asset_id) {
-					return $asset_id;
-				}
-			}
-		}
-		return $this->identities->find_asset_id_by_identities($identities);
-	}
-
-	private function with_canonical_device_identity($identities, $candidate)
-	{
-		$identities = array_values(
-			array_filter(
-				$identities,
-				function ($identity) {
-					return !isset($identity['type']) || $identity['type'] !== Npcink_Device_Inventory_Device_Identity_Service::TYPE;
-				}
-			)
-		);
-		if (!empty($candidate['value'])) {
-			array_unshift(
-				$identities,
-				array(
-					'type' => Npcink_Device_Inventory_Device_Identity_Service::TYPE,
-					'value' => $candidate['value'],
-					'confidence' => 100,
-					'source' => 'server_recomputed',
-				)
-			);
-		}
-		return $identities;
-	}
-
-	private function identity_conflict($identities)
-	{
-		$has_v3 = false;
-		$incoming_macs = array();
-		$uuid_claims = array();
-		foreach ($identities as $identity) {
-			if (!isset($identity['type'], $identity['value'])) {
-				continue;
-			}
-			if ($identity['type'] === 'stable_device_id_v3') {
-				$has_v3 = true;
-			}
-			if ($identity['type'] === 'mac_address') {
-				$incoming_macs[] = (string) $identity['value'];
-			}
-			if (in_array($identity['type'], array('hardware_uuid', 'system_uuid'), true)) {
-				$uuid_claims[] = $identity;
-			}
-		}
-		if (!$has_v3 || empty($incoming_macs)) {
-			return null;
-		}
-
-		foreach ($uuid_claims as $claim) {
-			$asset_id = $this->identities->find_asset_id_by_identity($claim['type'], $claim['value']);
-			if (!$asset_id) {
-				continue;
-			}
-			$existing_macs = array();
-			foreach ($this->identities->list_for_asset($asset_id) as $existing_identity) {
-				if (isset($existing_identity['identity_type'], $existing_identity['identity_value']) && $existing_identity['identity_type'] === 'mac_address') {
-					$existing_macs[] = (string) $existing_identity['identity_value'];
-				}
-			}
-			if (empty(array_intersect($incoming_macs, $existing_macs))) {
-				return array(
-					'kind' => 'uuid_mac_mismatch',
-					'identityType' => (string) $claim['type'],
-					'identityValue' => (string) $claim['value'],
-					'existingAssetId' => intval($asset_id),
-				);
-			}
-		}
-		return null;
-	}
-
-	private function without_conflicting_legacy_claims($identities)
-	{
-		return array_values(
-			array_filter(
-				$identities,
-				function ($identity) {
-					return !isset($identity['type']) || !in_array($identity['type'], array('stable_device_id_v2', 'hardware_uuid', 'system_uuid'), true);
-				}
-			)
-		);
+		return $this->identities->find_asset_id_by_identity($identity['type'], $identity['value']);
 	}
 
 	private function build_asset_input($payload)
@@ -320,7 +199,7 @@ class Npcink_Device_Inventory_Observation_Ingest_Service
 		$owner = $this->uploaded_owner_name($payload);
 
 		return array(
-			'asset_type' => 'pc',
+			'asset_type' => 'computer',
 			'asset_number' => '',
 			'name' => $name,
 			'owner_name' => $owner,

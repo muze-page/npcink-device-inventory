@@ -155,7 +155,6 @@ class Npcink_Device_Inventory_Backup_Export_Service
 	{
 		$options = Npcink_Device_Inventory_V3_Tables::options();
 		return array(
-			'publicQueryPageSlug' => (string) $options['public_query_page_slug'],
 			'observationRetentionDays' => intval($options['observation_retention_days']),
 			'assetNumberPrefix' => (string) $options['asset_number_prefix'],
 			'depreciationPeriodMonths' => intval($options['depreciation_period_months']),

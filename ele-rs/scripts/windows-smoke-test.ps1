@@ -185,16 +185,16 @@ try {
     Invoke-CargoJson -Name "hardware.inspect" -Arguments @("run", "--quiet", "--", "inspect", "--pretty") -JsonName "inspect.json"
     Invoke-CargoJson -Name "runtime.monitor" -Arguments @("run", "--quiet", "--", "runtime", "--pretty") -JsonName "runtime.json"
 
-    $stablePath = Join-Path $script:ReportDir "stable-id.txt"
-    $stableErrPath = Join-Path $script:ReportDir "stable-id.stderr.txt"
-    & cargo run --quiet -- stable-id 1> $stablePath 2> $stableErrPath
-    $stableExit = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
-    $stableId = if (Test-Path $stablePath) { (Get-Content -Raw -Path $stablePath).Trim() } else { "" }
-    if ($stableExit -ne 0 -or $stableId -notmatch "^v2-[0-9a-f]{29}$") {
-        $script:Steps.Add((New-StepResult -Name "stable-id" -Status "failed" -ExitCode $stableExit -Log $stablePath -Message "Stable id missing or invalid"))
-        throw "Stable id check failed. See $stablePath and $stableErrPath"
+    $deviceIdPath = Join-Path $script:ReportDir "device-id.txt"
+    $deviceIdErrPath = Join-Path $script:ReportDir "device-id.stderr.txt"
+    & cargo run --quiet -- device-id 1> $deviceIdPath 2> $deviceIdErrPath
+    $deviceIdExit = if ($null -eq $LASTEXITCODE) { 0 } else { $LASTEXITCODE }
+    $deviceId = if (Test-Path $deviceIdPath) { (Get-Content -Raw -Path $deviceIdPath).Trim() } else { "" }
+    if ($deviceIdExit -ne 0 -or $deviceId -notmatch "^(device|fallback)-v1-[0-9a-f]{29}$") {
+        $script:Steps.Add((New-StepResult -Name "device-id" -Status "failed" -ExitCode $deviceIdExit -Log $deviceIdPath -Message "Device identity missing or invalid"))
+        throw "Device identity check failed. See $deviceIdPath and $deviceIdErrPath"
     }
-    $script:Steps.Add((New-StepResult -Name "stable-id" -Status "passed" -Log $stablePath))
+    $script:Steps.Add((New-StepResult -Name "device-id" -Status "passed" -Log $deviceIdPath))
 
     if (-not $SkipSubmit -and -not [string]::IsNullOrWhiteSpace($Site) -and -not [string]::IsNullOrWhiteSpace($Token)) {
         $submitJson = Join-Path $script:ReportDir "submit-response.json"

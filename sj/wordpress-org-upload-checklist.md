@@ -32,7 +32,7 @@
 - 插件使用自定义数据库表，因为它是设备资产台账系统，需要分页、筛选、导入导出、变更记录和设备上报数据存储。
 - 自定义表 SQL 已用插件内部表名、字段白名单、`$wpdb->prepare()` 和 scoped PHPCS 注释处理。
 - 插件正常运行不调用第三方服务。
-- 公开查询 REST endpoint 需要独立访问码并受短窗口限流保护；设备上传 endpoint 需要 client token + HMAC 签名。
+- 设备上传 endpoint 需要 client token + HMAC 签名。
 - 管理端 REST endpoint 需要 WordPress 用户具备 `manage_options`。
 - 前端 React/TypeScript 源码随包提供，不依赖不可访问的外部仓库说明源码。
 

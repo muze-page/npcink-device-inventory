@@ -170,7 +170,7 @@ sj/submission-form-copy.md
 如表单要求 Additional Information，可说明：
 
 ```text
-Npcink Device Inventory stores device inventory data in the site's own WordPress database. It does not contact a third-party service during normal plugin operation. Public query and upload endpoints require a client authorization token and HMAC signature. Admin endpoints require a WordPress user with manage_options. The package includes bundled React build files together with the corresponding TypeScript/React source and build configuration. Optional desktop upload tooling is documented separately and is not included in the WordPress plugin package.
+Npcink Device Inventory stores device inventory data in the site's own WordPress database. It does not contact a third-party service during normal plugin operation. Device upload requires a client authorization token and HMAC signature. Admin endpoints require a WordPress user with manage_options. The package includes bundled React build files together with the corresponding TypeScript/React source and build configuration. Optional desktop upload tooling is documented separately and is not included in the WordPress plugin package.
 ```
 
 审核追问时优先参考：

@@ -13,6 +13,7 @@ class Npcink_Device_Inventory_Identity_Repository
 	const CLAIM_CONFLICT = 'conflict';
 	const CLAIM_INVALID = 'invalid';
 	const CLAIM_ERROR = 'error';
+	const ALLOWED_TYPES = array('device_uuid_v1', 'fallback_device_v1');
 
 	public function find_asset_id_by_identities($identities)
 	{
@@ -75,29 +76,6 @@ class Npcink_Device_Inventory_Identity_Repository
 		);
 	}
 
-	public function find_asset_ids_by_identity_values($type, $values)
-	{
-		global $wpdb;
-		$type = sanitize_key($type);
-		$values = array_values(array_unique(array_filter(array_map('sanitize_text_field', is_array($values) ? $values : array()))));
-		if ($type === '' || empty($values)) {
-			return array();
-		}
-
-		$placeholders = implode(', ', array_fill(0, count($values), '%s'));
-		$sql = "SELECT identity_value, asset_id FROM %i WHERE identity_type = %s AND identity_value IN ({$placeholders})";
-		$args = array_merge(array($sql, Npcink_Device_Inventory_V3_Tables::identities(), $type), $values);
-		$prepared = call_user_func_array(array($wpdb, 'prepare'), $args);
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Reconciliation performs one bounded lookup for explicitly supplied identity values.
-		$rows = $wpdb->get_results($prepared, ARRAY_A);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$result = array();
-		foreach ($rows ?: array() as $row) {
-			$result[(string) $row['identity_value']] = intval($row['asset_id']);
-		}
-		return $result;
-	}
-
 	public function list_for_asset($asset_id)
 	{
 		global $wpdb;
@@ -141,7 +119,7 @@ class Npcink_Device_Inventory_Identity_Repository
 		$asset_id = intval($asset_id);
 		$type = isset($identity['type']) ? sanitize_key($identity['type']) : '';
 		$value = isset($identity['value']) ? sanitize_text_field($identity['value']) : '';
-		if ($asset_id <= 0 || $type === '' || $value === '') {
+		if ($asset_id <= 0 || !in_array($type, self::ALLOWED_TYPES, true) || $value === '') {
 			return $this->claim_result(self::CLAIM_INVALID, null, $type, $value);
 		}
 
@@ -166,15 +144,17 @@ class Npcink_Device_Inventory_Identity_Repository
 		if ($result === false) {
 			return $this->claim_result(self::CLAIM_ERROR, null, $type, $value);
 		}
-		if ($result === 1) {
-			$this->bump_list_cache_version();
-			return $this->claim_result(self::CLAIM_INSERTED, $asset_id, $type, $value);
-		}
 
+		// Affected-row counts change when the connection enables CLIENT_FOUND_ROWS,
+		// so ownership must always be verified from the unique row itself.
 		$owner_asset_id = $this->find_owner_uncached($type, $value);
 		if ($owner_asset_id === $asset_id) {
 			if ($is_primary) {
 				$this->mark_primary($asset_id, $type, $value);
+			}
+			if ($result === 1) {
+				$this->bump_list_cache_version();
+				return $this->claim_result(self::CLAIM_INSERTED, $owner_asset_id, $type, $value);
 			}
 			return $this->claim_result(self::CLAIM_OWNED, $owner_asset_id, $type, $value);
 		}

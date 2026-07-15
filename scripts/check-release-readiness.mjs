@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,6 +8,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 const viteAdminDir = path.join(repoRoot, "vite-admin");
 const releaseZip = path.join(repoRoot, "release/npcink-device-inventory.zip");
 const submissionZip = path.join(repoRoot, "sj/npcink-device-inventory.zip");
+const submissionManifest = path.join(repoRoot, "sj/package-manifest.json");
 const shouldCheckSubmissionPackage = process.argv.includes("--submission");
 const slug = "npcink-device-inventory";
 const builtAssetFiles = [
@@ -130,6 +131,7 @@ if (shouldCheckSubmissionPackage) {
     console.error(`sj:      ${submissionHash}`);
     process.exit(1);
   }
+  await verifySubmissionManifest(submissionZip, submissionHash);
 }
 
 console.log("");
@@ -172,4 +174,31 @@ async function compareBuiltAssets(zipPath) {
       process.exit(1);
     }
   }
+}
+
+async function verifySubmissionManifest(zipPath, zipHash) {
+  const manifest = JSON.parse(await readFile(submissionManifest, "utf8"));
+  const expected = manifest.package || {};
+  const entries = execFileSync("unzip", ["-Z1", zipPath], { encoding: "utf8" })
+    .split(/\r?\n/)
+    .filter(Boolean);
+  const listing = execFileSync("unzip", ["-l", zipPath], { encoding: "utf8" });
+  const listedEntries = Array.from(
+    listing.matchAll(/^\s*(\d+)\s+\d{2}-\d{2}-\d{4}\s+\d{2}:\d{2}\s+(.+)$/gm)
+  );
+  const actual = {
+    sha256: zipHash,
+    entry_count: entries.length,
+    file_count: entries.filter((entry) => !entry.endsWith("/")).length,
+    uncompressed_bytes: listedEntries.reduce((total, match) => total + Number(match[1]), 0),
+    compressed_bytes: statSync(zipPath).size,
+  };
+
+  for (const [field, value] of Object.entries(actual)) {
+    if (expected[field] !== value) {
+      console.error(`Submission manifest mismatch for ${field}: expected=${expected[field]} actual=${value}`);
+      process.exit(1);
+    }
+  }
+  console.log("Submission package manifest matches the built zip.");
 }

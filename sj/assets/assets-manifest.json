@@ -65,7 +65,7 @@
     {
       "file": "sj/assets/screenshot-5.png",
       "status": "stale_do_not_publish",
-      "reason": "shows an obsolete public-query authentication description"
+      "reason": "captures a removed pre-3.0 product surface"
     }
   ],
   "svn_assets_directory": "assets/"

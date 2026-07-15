@@ -26,8 +26,7 @@ Canonical asset row.
 Important fields:
 
 - `uuid`: public asset identifier.
-- `asset_type`: asset family, for example `pc`, `monitor`, `peripheral`, or
-  `custom`.
+- `asset_type`: closed top-level family: `computer` or `custom`.
 - `asset_number`: human-facing asset number, unique across all assets.
 - `name`, `owner_name`, `department`, `status`, `category`: normal list and
   filter fields.
@@ -39,18 +38,14 @@ Important fields:
 
 Identity claims for matching uploads and imports to assets.
 
-Examples:
+Allowed automatic identity types:
 
 - `device_uuid_v1` (canonical motherboard-backed computer identity)
-- `stable_device_id_v3`
-- `stable_device_id_v2`
-- `legacy_device_id_v1`
-- `hardware_uuid`
-- `system_serial`
-- `baseboard_serial`
-- `bios_serial`
-- `mac_address`
-- `manual_asset_number`
+- `fallback_device_v1` (one hardware/serial fact plus one physical MAC)
+
+An upload claims only the one identity selected by the server. Hardware UUIDs,
+serial numbers, and MAC addresses are observation facts, not global identity
+claims.
 
 `identity_type + identity_value` is globally unique so one physical identity
 cannot silently point to two different assets.
@@ -88,7 +83,8 @@ records. Use:
 
 ## Extension Rule
 
-Do not add a new asset category by creating another asset table. Add an
-`asset_type`, identities, observations, and events instead.
+Do not add a new asset category by creating another asset table or extending
+`asset_type`. Use `category` on a `custom` asset, plus observations and events
+where needed.
 
 Old data should be converted into this model before import.

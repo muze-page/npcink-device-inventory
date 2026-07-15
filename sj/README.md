@@ -22,7 +22,7 @@
 - `wordpress-org-submission-history.md`：提交审核前的历史决策、改名过程、验证结果和当前状态归档。
 - `technical-verification-record.md`：本地构建、PCP、包扫描、REST 冒烟验证记录。
 - `package-manifest.json`：包名、版本、hash、验证摘要的机器可读记录。
-- `new-user-quick-start.md`：新用户安装、设置、录入、上传、公共查询快速开始。
+- `new-user-quick-start.md`：新用户安装、设置、录入、上传和备份快速开始。
 - `desktop-uploader-release-notes.md`：桌面上传软件单独发布说明。
 - `npcink-device-inventory.zip`：准备上传的插件 zip，只在运行 `npm run build:submission` 时生成或刷新。
 - `assets/`：WordPress.org 插件目录展示素材；当前只发布 banner 和 icon，目录中的旧截图已明确标记为不得发布。

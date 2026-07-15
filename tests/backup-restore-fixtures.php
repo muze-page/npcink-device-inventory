@@ -108,6 +108,7 @@ class Npcink_Test_Wpdb
 	public $export_rows = array();
 	public $count_overrides = array();
 	public $commands = array();
+	public $inserts = array();
 	public $fail_command = '';
 	private $last_query = '';
 	private $last_args = array();
@@ -156,6 +157,7 @@ class Npcink_Test_Wpdb
 	public function insert($table, $data, $formats = array())
 	{
 		$this->insert_id++;
+		$this->inserts[] = array('table' => $table, 'data' => $data);
 		return 1;
 	}
 
@@ -301,7 +303,7 @@ $wpdb->export_rows = array(
 		array(
 			'id' => 10,
 			'uuid' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-			'asset_type' => 'pc',
+			'asset_type' => 'computer',
 			'asset_number' => 'RESTORE-FIXTURE-001',
 			'name' => 'Restore Fixture Asset',
 			'owner_name' => 'Fixture Owner',
@@ -405,6 +407,15 @@ $base_backup = array(
 	),
 );
 
+$legacy_type_backup = $base_backup;
+$legacy_type_backup['assets'][0]['assetType'] = 'network';
+$wpdb->inserts = array();
+$response = npcink_restore($legacy_type_backup, false);
+npcink_assert($response instanceof WP_REST_Response, 'legacy asset type restore should succeed');
+$asset_insert = end($wpdb->inserts);
+npcink_assert($asset_insert['data']['asset_type'] === 'custom', 'legacy non-computer asset type should restore as custom');
+npcink_assert($asset_insert['data']['category'] === 'network', 'legacy non-computer asset type should be preserved as category');
+
 $wpdb->commands = array();
 $wpdb->fail_command = 'COMMIT';
 $commit_failed_restore = npcink_restore($base_backup, false);
@@ -434,7 +445,7 @@ $oversized_identities = $base_backup;
 $oversized_identities['identities'] = array(
 	array(
 		'assetNumber' => 'RESTORE-FIXTURE-001',
-		'identities' => array_fill(0, 10001, array('identityType' => 'serial', 'identityValue' => 'SERIAL')),
+		'identities' => array_fill(0, 10001, array('identityType' => 'fallback_device_v1', 'identityValue' => 'FALLBACK')),
 	),
 );
 $response = npcink_restore($oversized_identities, true);
@@ -446,8 +457,8 @@ $duplicate_identity['identities'] = array(
 	array(
 		'assetNumber' => 'RESTORE-FIXTURE-001',
 		'identities' => array(
-			array('identityType' => 'serial', 'identityValue' => 'DUPLICATE-SERIAL'),
-			array('identityType' => 'serial', 'identityValue' => 'DUPLICATE-SERIAL'),
+			array('identityType' => 'fallback_device_v1', 'identityValue' => 'DUPLICATE-FALLBACK'),
+			array('identityType' => 'fallback_device_v1', 'identityValue' => 'DUPLICATE-FALLBACK'),
 		),
 	),
 );
@@ -456,13 +467,42 @@ $summary = npcink_data($response)['data']['summary'];
 npcink_assert($summary['planned']['identitiesCreated'] === 1, 'duplicate identity should only plan one insert');
 npcink_assert($summary['skipped']['identities'] === 1, 'duplicate identity should skip duplicate row');
 
+$obsolete_identity = $base_backup;
+$obsolete_identity['identities'] = array(
+	array(
+		'assetNumber' => 'RESTORE-FIXTURE-001',
+		'identities' => array(
+			array('identityType' => 'stable_device_id_v3', 'identityValue' => 'REMOVED-IDENTITY'),
+		),
+	),
+);
+$response = npcink_restore($obsolete_identity, true);
+$summary = npcink_data($response)['data']['summary'];
+npcink_assert($summary['planned']['identitiesCreated'] === 0, 'removed identity types must not be restored');
+npcink_assert($summary['skipped']['identities'] === 1, 'removed identity types must be counted as skipped');
+
+$obsolete_event = $base_backup;
+$obsolete_event['events'] = array(
+	array(
+		'assetNumber' => 'RESTORE-FIXTURE-001',
+		'eventSource' => 'system',
+		'eventType' => 'issue_handled',
+		'message' => 'Removed analysis state',
+		'createdAt' => '2026-07-15 12:00:00',
+	),
+);
+$response = npcink_restore($obsolete_event, true);
+$summary = npcink_data($response)['data']['summary'];
+npcink_assert($summary['planned']['eventsCreated'] === 0, 'removed workflow events must not be restored');
+npcink_assert($summary['skipped']['events'] === 1, 'removed workflow events must be counted as skipped');
+
 $missing_uuid = $base_backup;
 unset($missing_uuid['assets'][0]['uuid']);
 $missing_uuid['identities'] = array(
 	array(
 		'assetNumber' => 'RESTORE-FIXTURE-001',
 		'identities' => array(
-			array('identityType' => 'serial', 'identityValue' => 'MISSING-UUID-SERIAL'),
+			array('identityType' => 'fallback_device_v1', 'identityValue' => 'MISSING-UUID-FALLBACK'),
 		),
 	),
 );

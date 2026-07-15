@@ -14,8 +14,7 @@ POST /wp-json/npcink-device-inventory/v1/device-observations
 {
   "observation": {
     "_npcink_device": {
-      "schema_version": 3,
-      "stable_device_id_v2": "...",
+      "schema_version": 4,
       "collector": {}
     },
     "asset": {
@@ -28,6 +27,8 @@ POST /wp-json/npcink-device-inventory/v1/device-observations
   }
 }
 ```
+
+客户端只上传硬件事实。服务端从快照重新计算 `device_uuid_v1`，无法生成时再计算 `fallback_device_v1`；不会信任客户端声明的身份哈希。
 
 请求必须携带后台生成的完整授权码对应的 HMAC 头。完整授权码形如：
 
@@ -69,7 +70,7 @@ src-tauri/target/release/bundle/dmg/*.dmg
 ```bash
 cargo run -- inspect --pretty
 cargo run -- runtime --pretty
-cargo run -- stable-id
+cargo run -- device-id
 cargo run -- submit --site "https://example.com" --token "后台生成的完整授权码" --note "张三"
 ```
 
@@ -82,7 +83,7 @@ scripts\windows-smoke-test.bat -SkipSubmit
 scripts\windows-smoke-test.bat -Site "https://example.com/wp-json/npcink-device-inventory/v1/device-observations" -Token "后台生成的完整授权码" -Note "Windows开发测试"
 ```
 
-脚本会运行前端构建、Rust 测试、硬件采集、运行监控、stable id 检查、可选上传，以及 Windows 诊断探针。BAT 会请求管理员权限，以便读取更完整的事件日志和 dump 信息。报告输出到 `smoke-reports\windows-<时间>\windows-smoke-report.json`。
+脚本会运行前端构建、Rust 测试、硬件采集、运行监控、device id 检查、可选上传，以及 Windows 诊断探针。BAT 会请求管理员权限，以便读取更完整的事件日志和 dump 信息。报告输出到 `smoke-reports\windows-<时间>\windows-smoke-report.json`。
 
 排障包会检测 WinDbg/cdb 是否已安装。已安装时会尝试分析 `C:\Windows\Minidump\*.dmp`；未安装时会生成 `DumpAnalysis\debugger-not-found.txt` 和 WinDbg 安装提示，不会自动安装系统组件。
 
@@ -100,7 +101,7 @@ ele-rs/
 
 - 运行时导入或手动填写站点地址、完整授权码和上传备注
 - 本机硬件采集预览
-- stable device id 展示
+- 当前设备身份类型和值展示
 - 提交到 `/device-observations`
 
 ## 本地环境

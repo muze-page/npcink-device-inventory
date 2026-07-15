@@ -1,7 +1,7 @@
 # Desktop Uploader Release Notes
 
 日期：2026-06-21
-同步更新：2026-07-01
+同步更新：2026-07-15
 
 本文档单独说明 `Npcink Device Agent` 桌面上传软件，供 WordPress.org 审核问询、官网发布页、客户交付说明使用。桌面软件不是 WordPress 插件 zip 的一部分。
 
@@ -12,7 +12,7 @@
 桌面软件负责：
 
 - 采集本机硬件摘要和设备身份信号。
-- 生成 `stable_device_id_v2`，帮助服务端识别同一台设备。
+- 本地显示当前设备身份；服务端从上传快照重新计算身份，识别同一台设备。
 - 使用管理员在 WordPress 后台生成的上传授权码发送 HMAC 签名请求。
 - 将采集结果提交到 `/wp-json/npcink-device-inventory/v1/device-observations`。
 
@@ -29,7 +29,7 @@
 - 技术栈：Rust + Tauri
 - 上传接口：`/wp-json/npcink-device-inventory/v1/device-observations`
 - 授权方式：WordPress 后台生成的客户端授权码 + HMAC 请求签名
-- 数据契约：v3 observation 资产快照；资产模型见 `docs/asset-data-model.md`，稳定设备 ID 规则见 `docs/device-data-v2-contract.md`
+- 数据契约：v3 observation 资产快照；资产模型见 `docs/asset-data-model.md`，身份规则见 `docs/identity-contract.md`
 
 当前阶段是 Rust/Tauri 版本的第一阶段发布资料，重点验证 Windows 和 macOS 的采集字段、设备合并逻辑、授权上传流程。
 
@@ -89,7 +89,7 @@ CLI 验证：
 ```bash
 cd ele-rs
 cargo run -- inspect --pretty
-cargo run -- stable-id
+cargo run -- device-id
 cargo run -- submit --site "https://example.com/wp-json/npcink-device-inventory/v1/device-observations" --token "后台生成的上传授权码" --note "张三"
 ```
 

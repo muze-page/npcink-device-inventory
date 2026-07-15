@@ -22,6 +22,9 @@ class Npcink_Device_Inventory_Backup_Restore_Conflict_Exception extends Exceptio
 
 class Npcink_Device_Inventory_Backup_Restore_Controller
 {
+	const IDENTITY_TYPES = array('device_uuid_v1', 'fallback_device_v1');
+	const REMOVED_EVENT_TYPES = array('issue_handled', 'issue_reopened', 'identity_reconciled');
+
 	private $exporter;
 
 	public function __construct(?Npcink_Device_Inventory_Backup_Export_Service $exporter = null)
@@ -238,7 +241,7 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 			),
 			'conflicts' => array(),
 			'warnings' => array(
-				'上传授权码、公开查询访问码明文、公开查询启用状态、客户端上传基础 URL 不会从备份恢复，请在正式站点重新配置。',
+				'上传授权码和客户端上传基础 URL 不会从备份恢复，请在正式站点重新配置。',
 				'导入采用合并/更新策略，不会清空正式站点现有数据。',
 			),
 		);
@@ -309,10 +312,6 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 	private function import_settings($settings, $summary)
 	{
 		$options = Npcink_Device_Inventory_V3_Tables::options();
-		if (array_key_exists('publicQueryPageSlug', $settings)) {
-			$slug = sanitize_title((string) $settings['publicQueryPageSlug']);
-			$options['public_query_page_slug'] = $slug ? $slug : 'public-search-page';
-		}
 		if (array_key_exists('observationRetentionDays', $settings)) {
 			$options['observation_retention_days'] = max(0, intval($settings['observationRetentionDays']));
 		}
@@ -450,9 +449,9 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 				$current_asset_id = $asset_id ? $asset_id : $this->asset_id_from_backup_reference($identity, $asset_map);
 				$type = $this->backup_text($identity, array('identityType', 'type'), 'key');
 				$value = $this->backup_text($identity, array('identityValue', 'value'), 'text');
-				if (!$current_asset_id || $type === '' || $value === '') {
+				if (!$current_asset_id || !in_array($type, self::IDENTITY_TYPES, true) || $value === '') {
 					$summary['skipped']['identities']++;
-					$this->add_warning($summary, '设备匹配标识缺少资产、类型或值，已跳过。');
+					$this->add_warning($summary, '设备匹配标识缺少资产、使用旧类型或缺少值，已跳过。');
 					continue;
 				}
 				$identity_key = $type . "\0" . $value;
@@ -578,6 +577,11 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 			$event_source = $this->backup_text($event, array('eventSource'), 'key', 'import');
 			$event_type = $this->backup_text($event, array('eventType'), 'key', 'restored');
 			$message = $this->backup_text($event, array('message'), 'textarea');
+			if (in_array($event_type, self::REMOVED_EVENT_TYPES, true)) {
+				$summary['skipped']['events']++;
+				$this->add_warning($summary, '备份包含已删除工作流的变更记录，已跳过。');
+				continue;
+			}
 			if ($created_at === '') {
 				$summary['skipped']['events']++;
 				$this->add_warning($summary, '变更记录缺少有效创建时间，已跳过。');
@@ -624,15 +628,22 @@ class Npcink_Device_Inventory_Backup_Restore_Controller
 
 	private function asset_row_from_backup($asset)
 	{
+		$legacy_asset_type = $this->backup_text($asset, array('assetType'), 'key', 'custom');
+		$asset_type = in_array($legacy_asset_type, array('pc', 'computer'), true) ? 'computer' : 'custom';
+		$category = $this->backup_text($asset, array('category'), 'text');
+		if ($asset_type === 'custom' && $category === '' && $legacy_asset_type !== 'custom') {
+			$category = $legacy_asset_type;
+		}
+
 		return array(
 			'uuid' => $this->backup_text($asset, array('uuid'), 'text'),
-			'asset_type' => $this->backup_text($asset, array('assetType'), 'key', 'custom'),
+			'asset_type' => $asset_type,
 			'asset_number' => $this->backup_text($asset, array('assetNumber'), 'text'),
 			'name' => $this->backup_text($asset, array('name'), 'text'),
 			'owner_name' => $this->backup_text($asset, array('ownerName'), 'text'),
 			'department' => Npcink_Device_Inventory_V3_Tables::normalize_department($this->backup_text($asset, array('department'), 'text')),
 			'status' => $this->backup_text($asset, array('status'), 'key', 'active'),
-			'category' => $this->backup_text($asset, array('category'), 'text'),
+			'category' => $category,
 			'purchase_price' => isset($asset['purchasePrice']) ? floatval($asset['purchasePrice']) : 0,
 			'residual_value' => isset($asset['residualValue']) ? floatval($asset['residualValue']) : 0,
 			'metadata_json' => $this->safe_json_field($asset, 'metadata'),

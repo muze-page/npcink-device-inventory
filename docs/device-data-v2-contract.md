@@ -2,10 +2,10 @@
 
 ## Status
 
-Accepted baseline for the modernization work.
+Deprecated by ADR-003 on 2026-07-15. Retained only as a historical contract.
 
-This document defines the current data contract for the Rust/Tauri uploader and
-the WordPress plugin. New uploads and admin surfaces use this v2 shape only.
+Do not use this document for current uploader or server behavior. The active
+contracts are `identity-contract.md` and `asset-data-model.md`.
 
 ## Goals
 

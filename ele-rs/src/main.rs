@@ -9,7 +9,7 @@ fn main() -> Result<()> {
     match command {
         "inspect" => inspect(&args[1..]),
         "runtime" => runtime(&args[1..]),
-        "stable-id" => stable_id(),
+        "device-id" => device_id(),
         "submit" => submit(&args[1..]),
         "help" | "--help" | "-h" => {
             print_help();
@@ -41,9 +41,11 @@ fn inspect(args: &[String]) -> Result<()> {
     Ok(())
 }
 
-fn stable_id() -> Result<()> {
+fn device_id() -> Result<()> {
     let data = collector::collect_static_data()?;
-    let id = collector::stable_device_id_v2(&data).context("missing stable device identity")?;
+    let id = collector::device_uuid_v1(&data)
+        .or_else(|| collector::fallback_device_v1(&data))
+        .context("missing device identity")?;
     println!("{id}");
     Ok(())
 }
@@ -81,7 +83,7 @@ fn print_help() {
 Commands:\n\
   inspect [--pretty]    Print compatible hardware JSON\n\
   runtime [--pretty]    Print runtime monitor JSON\n\
-  stable-id             Print v2 stable device id\n\
+  device-id             Print the canonical or fallback device identity\n\
   submit --site URL --token TOKEN [--note NOTE]            Submit to device observation endpoint\n"
     );
 }

@@ -19,7 +19,7 @@ npm run check:release
 - `npm run check:release-scope`，验证插件与桌面发布范围判定规则。
 - 后台硬件盘点 fixture、ESLint 和生产构建。
 - WordPress.org 人工审核规则检查。
-- `npm run check:fixtures`，集中执行备份恢复、问题状态、趋势、公开查询、搜索、资产写入、上传边界、迁移、身份占用和采集事务等 PHP 回归夹具。
+- `npm run check:fixtures`，集中执行备份恢复、搜索、资产写入、上传边界、迁移、当前身份契约、身份占用和采集事务等 PHP 回归夹具。
 - PHPStan 与 PHPCS。
 - `npm run check:desktop-quality`，执行桌面前端构建、两个 Rust crate 的 fmt、Clippy、测试和 Cargo lockfile 漏洞审计。
 - `git diff --check`，检查空白字符问题。

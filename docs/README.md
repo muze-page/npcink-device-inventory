@@ -5,7 +5,8 @@ This folder keeps product contracts, release procedures, verification records, a
 ## Start Here
 
 - `asset-data-model.md`: v3 asset, identity, observation, and event model contract.
-- `device-data-v2-contract.md`: legacy device data contract reference.
+- `identity-contract.md`: current `device_uuid_v1` / `fallback_device_v1` upload identity contract.
+- `decisions/ADR-003-pre-ga-scope-reset.md`: current pre-GA product scope and compatibility decision.
 - `release-readiness-checklist.md`: release gate and manual smoke-test checklist.
 - `github-release.md`: GitHub release workflow notes.
 
@@ -31,8 +32,9 @@ This folder keeps product contracts, release procedures, verification records, a
 
 ## Product And Implementation History
 
-- `simple-device-management-analysis-boundary-2026-07-10.md`: current product positioning, analysis scope, and explicit stop-expansion boundary for simple device management.
-- `analysis-remediation-development-notes-2026-07-10.md`: analysis remediation decisions, business semantics, implementation boundaries, and next-stage guidance after v2.8.0.
+- `simple-device-management-analysis-boundary-2026-07-10.md`: superseded product-boundary history from before ADR-003.
+- `analysis-remediation-development-notes-2026-07-10.md`: superseded writable-analysis history from before ADR-003.
+- `device-data-v2-contract.md`: deprecated uploader identity contract retained for history.
 - `project-history-summary-2026-06-30.md`: project-level history summary.
 - `device-inventory-product-and-release-history-2026-07-04.md`: product and release history.
 - `v3-rebuild-release-summary.md`: v3 rebuild summary.

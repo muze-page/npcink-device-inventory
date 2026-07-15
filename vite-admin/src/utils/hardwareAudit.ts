@@ -1,4 +1,4 @@
-import type { Asset, AssetObservation, JsonRecord } from "@/type/v3";
+import type { Asset, JsonRecord } from "@/type/v3";
 
 const DEFAULT_DEPARTMENT = "未分配";
 
@@ -199,57 +199,6 @@ const hardwareStrongIdentityKeys = (asset: Asset) => {
     }
   });
   return Array.from(keys);
-};
-
-export const observationSnapshot = (observation?: AssetObservation) => {
-  const summary = getRecord(observation?.summary);
-  const hardware = getRecord(observation?.hardware);
-  const extracted = hardwareSummary(summary, hardware);
-  return {
-    cpu: extracted.cpu,
-    memory_bytes: formatBytes(summary.memory_bytes),
-    disk_bytes: formatBytes(summary.disk_bytes),
-    graphics: extracted.graphics,
-    primary_ip: extracted.primaryIp,
-    baseboard: extracted.baseboard,
-  };
-};
-
-export const observationChanges = (observations: AssetObservation[]) => {
-  const auditFields = [
-    { label: "CPU", value: "cpu" },
-    { label: "内存", value: "memory_bytes" },
-    { label: "硬盘", value: "disk_bytes" },
-    { label: "显卡", value: "graphics" },
-    { label: "IP", value: "primary_ip" },
-    { label: "主板", value: "baseboard" },
-  ] as const;
-  const changes: Array<{
-    key: string;
-    label: string;
-    observedAt: string;
-    oldValue: string;
-    newValue: string;
-  }> = [];
-  for (let index = 0; index < observations.length - 1; index += 1) {
-    const current = observationSnapshot(observations[index]);
-    const previous = observationSnapshot(observations[index + 1]);
-    auditFields.forEach((field) => {
-      const key = field.value as keyof typeof current;
-      const oldValue = previous[key] || "-";
-      const newValue = current[key] || "-";
-      if (oldValue !== "-" && newValue !== "-" && oldValue !== newValue) {
-        changes.push({
-          key: `${observations[index].id}-${field.value}`,
-          label: field.label,
-          observedAt: observations[index].observedAt,
-          oldValue,
-          newValue,
-        });
-      }
-    });
-  }
-  return changes;
 };
 
 const latestObservationTime = (asset: Asset) => asset.latestObservation?.observedAt || "";

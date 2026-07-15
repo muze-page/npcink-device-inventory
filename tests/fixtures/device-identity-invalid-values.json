@@ -1,0 +1,30 @@
+{
+  "invalidValues": [
+    "0",
+    "00000000",
+    "00000000-0000-0000-0000-000000000000",
+    "03000200-0400-0500-0006-000700080009",
+    "ffffffff",
+    "ffffffff-ffff-ffff-ffff-ffffffffffff",
+    "xxxxxxxx",
+    "default string",
+    "none",
+    "null",
+    "n/a",
+    "na",
+    "invalid",
+    "undefined",
+    "not applicable",
+    "not available",
+    "not present",
+    "not provided",
+    "not set",
+    "not specified",
+    "unknown",
+    "to be filled by o.e.m.",
+    "to be filled by oem",
+    "not filled by o.e.m.",
+    "system serial number",
+    "-"
+  ]
+}

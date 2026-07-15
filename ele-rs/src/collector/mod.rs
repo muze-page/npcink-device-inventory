@@ -26,7 +26,7 @@ pub fn collect_static_data() -> Result<Value> {
     let networks = Networks::new_with_refreshed_list();
     let network_ips = network_ip_map();
     let macs = collect_macs(&networks, &network_ips);
-    let hardware_uuid = platform::hardware_uuid().unwrap_or_else(|| fallback_hardware_uuid(&macs));
+    let hardware_uuid = platform::hardware_uuid().unwrap_or_default();
 
     let mut root = Map::new();
     root.insert("os".to_string(), collect_os());
@@ -598,56 +598,9 @@ fn runtime_disk_usage(disks: &Disks) -> (u64, u64, String) {
     (total, available, "all".to_string())
 }
 
-pub fn stable_device_id_v2(data: &Value) -> Option<String> {
-    let candidates = [
-        (
-            "hardware_uuid",
-            data.pointer("/uuid/hardware").and_then(Value::as_str),
-        ),
-        (
-            "system_uuid",
-            data.pointer("/system/uuid").and_then(Value::as_str),
-        ),
-        (
-            "system_serial",
-            data.pointer("/system/serial").and_then(Value::as_str),
-        ),
-        (
-            "baseboard_serial",
-            data.pointer("/baseboard/serial").and_then(Value::as_str),
-        ),
-        (
-            "bios_serial",
-            data.pointer("/bios/serial").and_then(Value::as_str),
-        ),
-    ];
-
-    for (kind, value) in candidates {
-        if let Some(value) = value.and_then(normalize_identity_value) {
-            return Some(stable_id_from_source(kind, &value));
-        }
-    }
-
-    let mac = data
-        .pointer("/uuid/macs")
-        .and_then(Value::as_array)
-        .and_then(|items| {
-            items
-                .iter()
-                .filter_map(Value::as_str)
-                .find_map(normalize_identity_mac)
-        });
-    if let Some(mac) = mac {
-        return Some(stable_id_from_source("primary_mac", &mac));
-    }
-
-    None
-}
-
-/// Versioned composite identity for the v3 asset registry. Unlike the legacy
-/// single-signal rule, a usable physical MAC is required to prevent a reused
-/// SMBIOS UUID from merging unrelated machines.
-pub fn stable_device_id_v3(data: &Value) -> Option<String> {
+/// Fallback identity used only when the canonical motherboard identity cannot
+/// be computed. It combines one stable hardware fact with one physical MAC.
+pub fn fallback_device_v1(data: &Value) -> Option<String> {
     let mac = data
         .pointer("/uuid/macs")
         .and_then(Value::as_array)
@@ -684,7 +637,7 @@ pub fn stable_device_id_v3(data: &Value) -> Option<String> {
             let source = format!("{kind}:{value}|primary_mac:{mac}");
             let digest = Sha256::digest(source.as_bytes());
             let full = format!("{:x}", digest);
-            return Some(format!("v3-{}", &full[..29]));
+            return Some(format!("fallback-v1-{}", &full[..29]));
         }
     }
     None
@@ -699,21 +652,21 @@ pub fn device_uuid_v1(data: &Value) -> Option<String> {
         .get("serial")
         .or_else(|| baseboard.get("serialNumber"))
         .and_then(Value::as_str)
-        .and_then(normalize_device_identity_value)?;
+        .and_then(normalize_identity_value)?;
     let manufacturer = baseboard
         .get("manufacturer")
         .and_then(Value::as_str)
-        .and_then(normalize_device_identity_value);
+        .and_then(normalize_identity_value);
     let model = baseboard
         .get("product")
         .or_else(|| baseboard.get("model"))
         .and_then(Value::as_str)
-        .and_then(normalize_device_identity_value);
+        .and_then(normalize_identity_value);
     let hardware_uuid = data
         .pointer("/uuid/hardware")
         .and_then(Value::as_str)
         .or_else(|| data.pointer("/system/uuid").and_then(Value::as_str))
-        .and_then(normalize_device_identity_value);
+        .and_then(normalize_identity_value);
     if hardware_uuid.is_none() && (manufacturer.is_none() || model.is_none()) {
         return None;
     }
@@ -728,65 +681,7 @@ pub fn device_uuid_v1(data: &Value) -> Option<String> {
     Some(format!("device-v1-{}", &full[..29]))
 }
 
-/// Preserves the V1 UUID calculation as a migration-only compatibility signal.
-pub fn legacy_device_id_v1(data: &Value) -> Option<String> {
-    let hardware_uuid = data
-        .pointer("/uuid/hardware")
-        .and_then(Value::as_str)?
-        .trim();
-    let primary_mac = data
-        .pointer("/uuid/macs")
-        .and_then(Value::as_array)
-        .and_then(|items| items.first())
-        .and_then(Value::as_str)?
-        .trim();
-    if hardware_uuid.is_empty() || primary_mac.is_empty() {
-        return None;
-    }
-    Some(format!(
-        "{:x}",
-        md5::compute(format!("{hardware_uuid}{primary_mac}"))
-    ))
-}
-
-fn stable_id_from_source(kind: &str, value: &str) -> String {
-    let source = format!("{kind}:{value}");
-    let digest = Sha256::digest(source.as_bytes());
-    let full = format!("{:x}", digest);
-    format!("v2-{}", &full[..29])
-}
-
 fn normalize_identity_value(value: &str) -> Option<String> {
-    let value = value.trim().to_lowercase();
-    if value.is_empty() {
-        return None;
-    }
-    let invalid = [
-        "0",
-        "00000000",
-        "00000000-0000-0000-0000-000000000000",
-        "03000200-0400-0500-0006-000700080009",
-        "default string",
-        "none",
-        "null",
-        "not specified",
-        "not available",
-        "not present",
-        "unknown",
-        "to be filled by o.e.m.",
-        "not filled by o.e.m.",
-        "system serial number",
-    ];
-    if invalid.contains(&value.as_str()) {
-        return None;
-    }
-    Some(value)
-}
-
-/// Normalization for the cross-end `device_uuid_v1` contract. This deliberately
-/// collapses whitespace so Windows, macOS and the PHP ingest service hash the
-/// same motherboard facts.
-fn normalize_device_identity_value(value: &str) -> Option<String> {
     let value = value
         .split_whitespace()
         .collect::<Vec<_>>()
@@ -796,28 +691,55 @@ fn normalize_device_identity_value(value: &str) -> Option<String> {
         return None;
     }
     let invalid = [
+        "0",
+        "00000000",
+        "00000000-0000-0000-0000-000000000000",
+        "03000200-0400-0500-0006-000700080009",
+        "ffffffff",
+        "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        "xxxxxxxx",
         "default string",
-        "to be filled by o.e.m.",
-        "to be filled by oem",
+        "n/a",
+        "na",
+        "invalid",
+        "undefined",
+        "not applicable",
         "none",
         "null",
         "not specified",
         "not available",
         "not present",
+        "not provided",
+        "not set",
         "unknown",
+        "to be filled by o.e.m.",
+        "to be filled by oem",
+        "not filled by o.e.m.",
         "system serial number",
-        "00000000-0000-0000-0000-000000000000",
-        "03000200-0400-0500-0006-000700080009",
+        "-",
     ];
-    if invalid.contains(&value.as_str()) || value.chars().all(|character| character == '0') {
+    let compact = value
+        .chars()
+        .filter(|character| character.is_ascii_alphanumeric())
+        .collect::<String>();
+    if invalid.contains(&value.as_str())
+        || compact.is_empty()
+        || compact.chars().all(|character| character == '0')
+        || compact.chars().all(|character| character == 'x')
+        || (compact.len() >= 8 && compact.chars().all(|character| character == 'f'))
+    {
         return None;
     }
     Some(value)
 }
 
 fn normalize_identity_mac(value: &str) -> Option<String> {
-    let value = value.trim().to_lowercase();
-    if value.is_empty() || value == "00:00:00:00:00:00" || value == "ff:ff:ff:ff:ff:ff" {
+    let value = value.trim().to_lowercase().replace('-', ":");
+    let valid = value.split(':').count() == 6
+        && value.split(':').all(|part| {
+            part.len() == 2 && part.chars().all(|character| character.is_ascii_hexdigit())
+        });
+    if !valid || value == "00:00:00:00:00:00" || value == "ff:ff:ff:ff:ff:ff" {
         return None;
     }
     Some(value)
@@ -976,9 +898,10 @@ fn collect_macs(networks: &Networks, ips: &BTreeMap<String, Vec<IpAddr>>) -> Vec
         let mac = data.mac_address().to_string().to_lowercase();
         if mac != "00:00:00:00:00:00" && mac != "ff:ff:ff:ff:ff:ff" {
             let (ip4, ip6) = iface_ips(iface, ips);
-            let active = has_routable_ip(&ip4, &ip6)
-                && !is_internal_iface(iface, &ip4, &ip6)
-                && !is_virtual_iface(iface);
+            if is_internal_iface(iface, &ip4, &ip6) || is_virtual_iface(iface) {
+                continue;
+            }
+            let active = has_routable_ip(&ip4, &ip6);
             if active {
                 primary.push(mac);
             } else {
@@ -1029,13 +952,6 @@ fn network_ip_map() -> BTreeMap<String, Vec<IpAddr>> {
     map
 }
 
-fn fallback_hardware_uuid(macs: &[String]) -> String {
-    let host = System::host_name().unwrap_or_default();
-    let first_mac = macs.first().cloned().unwrap_or_default();
-    let digest = Sha256::digest(format!("{host}|{first_mac}").as_bytes());
-    format!("{digest:x}")
-}
-
 fn is_internal_iface(iface: &str, ip4: &str, ip6: &str) -> bool {
     let lower = iface.to_ascii_lowercase();
     lower == "lo" || lower == "lo0" || ip4.starts_with("127.") || ip6 == "::1"
@@ -1064,22 +980,24 @@ fn is_virtual_iface(iface: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{device_uuid_v1, legacy_device_id_v1, stable_device_id_v2, stable_device_id_v3};
-    use serde_json::json;
+    use super::{device_uuid_v1, fallback_device_v1};
+    use serde_json::{json, Value};
 
     #[test]
-    fn v3_identity_keeps_shared_uuid_devices_separate_by_mac() {
+    fn fallback_identity_keeps_shared_uuid_devices_separate_by_mac() {
         let first = json!({"uuid": {"hardware": "HW-SHARED", "macs": ["aa:bb:cc:dd:ee:01"]}});
         let second = json!({"uuid": {"hardware": "HW-SHARED", "macs": ["aa:bb:cc:dd:ee:02"]}});
-        assert_eq!(stable_device_id_v2(&first), stable_device_id_v2(&second));
-        assert_ne!(stable_device_id_v3(&first), stable_device_id_v3(&second));
-        assert_ne!(legacy_device_id_v1(&first), legacy_device_id_v1(&second));
+        assert_eq!(
+            fallback_device_v1(&first).as_deref(),
+            Some("fallback-v1-a6987ef89bdc403942b084ff7ba72")
+        );
+        assert_ne!(fallback_device_v1(&first), fallback_device_v1(&second));
     }
 
     #[test]
-    fn v3_identity_requires_a_usable_mac() {
+    fn fallback_identity_requires_a_usable_mac() {
         let data = json!({"uuid": {"hardware": "HW-ONLY", "macs": ["00:00:00:00:00:00"]}});
-        assert_eq!(stable_device_id_v3(&data), None);
+        assert_eq!(fallback_device_v1(&data), None);
     }
 
     #[test]
@@ -1112,5 +1030,39 @@ mod tests {
             device_uuid_v1(&data).as_deref(),
             Some("device-v1-8c8a3dad23be3fc4e958ca4c94cea")
         );
+    }
+
+    #[test]
+    fn current_identities_reject_the_shared_invalid_value_matrix() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../../../tests/fixtures/device-identity-invalid-values.json"
+        ))
+        .expect("shared invalid identity fixture must be valid JSON");
+        let invalid_values = fixture["invalidValues"]
+            .as_array()
+            .expect("invalidValues must be an array");
+
+        for invalid_value in invalid_values {
+            let invalid_value = invalid_value
+                .as_str()
+                .expect("invalid identity fixture values must be strings");
+            let canonical = json!({
+                "uuid": {"hardware": "HW-VALID"},
+                "baseboard": {"manufacturer": "Npcink", "product": "Board", "serial": invalid_value},
+            });
+            let fallback = json!({
+                "uuid": {"hardware": invalid_value, "macs": ["aa:bb:cc:dd:ee:01"]},
+            });
+            assert_eq!(
+                device_uuid_v1(&canonical),
+                None,
+                "canonical identity accepted invalid value: {invalid_value}"
+            );
+            assert_eq!(
+                fallback_device_v1(&fallback),
+                None,
+                "fallback identity accepted invalid value: {invalid_value}"
+            );
+        }
     }
 }

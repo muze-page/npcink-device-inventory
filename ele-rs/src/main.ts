@@ -25,7 +25,8 @@ type ImportedUploadConfig = {
 
 type DeviceSnapshot = {
   data: Record<string, unknown>;
-  stable_device_id_v2: string;
+  device_identity_type: string;
+  device_identity: string;
 };
 
 type RuntimeStatus = {
@@ -861,7 +862,8 @@ const renderHumanDetail = (key: string, data: Record<string, unknown>) => {
       const macs = uniqueTexts(asArray(uuid.macs));
       return section("唯一标识", [
         row("硬件 UUID", uuid.hardware),
-        row("设备编号", snapshot?.stable_device_id_v2),
+		row("设备身份", snapshot?.device_identity),
+		row("身份类型", snapshot?.device_identity_type),
         row("主 MAC 地址", macs[0]),
         listRow("其他 MAC 地址", macs.slice(1)),
       ]);

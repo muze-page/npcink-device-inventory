@@ -10,7 +10,7 @@ Npcink Device Inventory
 
 ### Short Description
 
-Manage device assets in WordPress with an admin inventory, signed client uploads, change records, import/export, and an authorized public search page.
+Manage device assets in WordPress with an admin inventory, signed client uploads, change records, and import/export.
 
 ### Long Description
 
@@ -22,7 +22,6 @@ The plugin provides:
 - Device numbers, departments, status fields, purchase values, and depreciation values.
 - Manual and automatic change records.
 - Import and export tools for plugin-owned data tables.
-- A public search page protected by a client authorization token and HMAC signature.
 - A signed REST upload endpoint for an optional desktop collection client.
 
 The WordPress plugin does not load JavaScript or CSS from third-party CDNs. Built React assets are bundled locally in the plugin package, with the corresponding React/TypeScript source and build configuration included under `vite-admin`.
@@ -32,7 +31,7 @@ The WordPress plugin does not load JavaScript or CSS from third-party CDNs. Buil
 1. Upload the `npcink-device-inventory` folder to `/wp-content/plugins/`.
 2. Activate the plugin from the WordPress Plugins screen.
 3. Open Plugins > Device Inventory.
-4. Review plugin settings and generate a client authorization token before using upload or public query workflows.
+4. Generate a client authorization token before using the optional desktop uploader.
 
 ### FAQ
 
@@ -44,9 +43,9 @@ No. The WordPress plugin stores device asset data in the site's own WordPress da
 
 The plugin can store device asset fields such as device name, number, department, status, IP address, hardware details submitted by the optional client, change records, and plugin settings.
 
-#### Are public query and upload endpoints open to anonymous users?
+#### Are device upload endpoints open to anonymous users?
 
-They are not unrestricted. Public query requires the site-specific access code and is rate limited. Device upload requires a client authorization token and HMAC signature. Admin endpoints require a WordPress user with `manage_options`.
+No. Device upload requires a client authorization token and HMAC signature. Admin endpoints require a WordPress user with `manage_options`.
 
 #### What happens on uninstall?
 

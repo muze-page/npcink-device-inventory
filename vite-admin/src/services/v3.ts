@@ -9,20 +9,13 @@ import type {
   AssetObservation,
   BatchAssetContext,
   BatchAssetResult,
-  AnalysisTrends,
   BackupExportResult,
   BackupExportSection,
   BackupRestoreResult,
   ClientToken,
   CreatedClientToken,
-  CreatedPublicQueryPage,
   EventListParams,
   InventorySettings,
-  IdentityAudit,
-  DeviceIdentityReconciliation,
-  DeviceIdentityReconciliationApplyResult,
-  IssueStates,
-  ObservationListParams,
   PaginatedResult,
 } from "@/type/v3";
 
@@ -151,66 +144,6 @@ export const getEvents = async (
   return response.data;
 };
 
-export const getIssueStates = async (): Promise<IssueStates> => {
-  const response = await restInstance.get<DataEnvelope<IssueStates>>(
-    "/analysis/issue-states",
-    { showSuccessMessage: false } as RequestConfig
-  );
-  return unwrapData(response.data);
-};
-
-export const getAnalysisTrends = async (): Promise<AnalysisTrends> => {
-  const response = await restInstance.get<DataEnvelope<AnalysisTrends>>(
-    "/analysis/trends",
-    { showSuccessMessage: false } as RequestConfig
-  );
-  return unwrapData(response.data);
-};
-
-export const getIdentityAudit = async (): Promise<IdentityAudit> => {
-  const response = await restInstance.get<{
-    data: Omit<IdentityAudit, "pagination">;
-    pagination: IdentityAudit["pagination"];
-  }>("/analysis/identity-audit", { showSuccessMessage: false } as RequestConfig);
-  return { ...response.data.data, pagination: response.data.pagination };
-};
-
-export const getDeviceIdentityReconciliation = async (
-  page = 1,
-  pageSize = 50
-): Promise<DeviceIdentityReconciliation> => {
-  const response = await restInstance.get<{
-    data: Omit<DeviceIdentityReconciliation, "pagination">;
-    pagination: DeviceIdentityReconciliation["pagination"];
-  }>("/analysis/device-identity-reconciliation", {
-    params: { page, pageSize },
-    showSuccessMessage: false,
-  } as RequestConfig);
-  return { ...response.data.data, pagination: response.data.pagination };
-};
-
-export const applyDeviceIdentityReconciliation = async (): Promise<DeviceIdentityReconciliationApplyResult> => {
-  const response = await restInstance.post<DataEnvelope<DeviceIdentityReconciliationApplyResult>>(
-    "/analysis/device-identity-reconciliation",
-    { confirm: true },
-    { showSuccessMessage: false } as RequestConfig
-  );
-  return unwrapData(response.data);
-};
-
-export const getObservations = async (
-  params: ObservationListParams
-): Promise<PaginatedResult<AssetObservation>> => {
-  const response = await restInstance.get<PaginatedResult<AssetObservation>>(
-    "/observations",
-    {
-      params,
-      showSuccessMessage: false,
-    } as RequestConfig
-  );
-  return response.data;
-};
-
 export const getSettings = async (): Promise<InventorySettings> => {
   const response = await restInstance.get<DataEnvelope<InventorySettings>>(
     "/settings",
@@ -225,17 +158,6 @@ export const updateSettings = async (
   const response = await restInstance.patch<DataEnvelope<InventorySettings>>(
     "/settings",
     input,
-    { showSuccessMessage: false } as RequestConfig
-  );
-  return unwrapData(response.data);
-};
-
-export const createPublicQueryPage = async (
-  input?: Pick<InventorySettings, "publicQueryPageSlug">
-): Promise<CreatedPublicQueryPage> => {
-  const response = await restInstance.post<DataEnvelope<CreatedPublicQueryPage>>(
-    "/settings/public-query-page",
-    input ?? {},
     { showSuccessMessage: false } as RequestConfig
   );
   return unwrapData(response.data);

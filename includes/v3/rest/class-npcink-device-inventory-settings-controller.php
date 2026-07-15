@@ -52,15 +52,6 @@ class Npcink_Device_Inventory_Settings_Controller
 			)
 		);
 
-		register_rest_route(
-			'npcink-device-inventory/v1',
-			'/settings/public-query-page',
-			array(
-				'methods' => WP_REST_Server::CREATABLE,
-				'callback' => array($this, 'create_public_query_page'),
-				'permission_callback' => array($this, 'admin_permissions_check'),
-			)
-		);
 	}
 
 	public function admin_permissions_check()
@@ -87,22 +78,6 @@ class Npcink_Device_Inventory_Settings_Controller
 		if (array_key_exists('clientUploadBaseUrl', $params)) {
 			$options['client_upload_base_url'] = esc_url_raw((string) $params['clientUploadBaseUrl']);
 		}
-		if (array_key_exists('publicQueryEnabled', $params)) {
-			$options['public_query_enabled'] = (bool) $params['publicQueryEnabled'];
-		}
-		if (array_key_exists('publicQueryPageSlug', $params)) {
-			$slug = sanitize_title((string) $params['publicQueryPageSlug']);
-			$options['public_query_page_slug'] = $slug ? $slug : 'public-search-page';
-		}
-		if (array_key_exists('publicQueryAccessCode', $params)) {
-			$access_code = trim((string) $params['publicQueryAccessCode']);
-			if ($access_code !== '') {
-				$options['public_query_access_code_hash'] = wp_hash_password($access_code);
-			}
-		}
-		if (!empty($options['public_query_enabled']) && empty($options['public_query_access_code_hash'])) {
-			return Npcink_Device_Inventory_V3_Response::error('public_query_access_code_required', '启用公开查询前必须先设置访问码。', 400);
-		}
 		if (array_key_exists('observationRetentionDays', $params)) {
 			$options['observation_retention_days'] = max(0, intval($params['observationRetentionDays']));
 		}
@@ -127,45 +102,6 @@ class Npcink_Device_Inventory_Settings_Controller
 
 		update_option(Npcink_Device_Inventory_V3_Tables::OPTION, $options);
 		return rest_ensure_response(array('data' => $this->public_options($options)));
-	}
-
-	public function create_public_query_page($request)
-	{
-		$options = Npcink_Device_Inventory_V3_Tables::options();
-		$params = $request instanceof WP_REST_Request ? $request->get_json_params() : array();
-		if (is_array($params) && array_key_exists('publicQueryPageSlug', $params)) {
-			$requested_slug = sanitize_title((string) $params['publicQueryPageSlug']);
-			$options['public_query_page_slug'] = $requested_slug ? $requested_slug : 'public-search-page';
-			update_option(Npcink_Device_Inventory_V3_Tables::OPTION, $options);
-		}
-
-		$slug = !empty($options['public_query_page_slug']) ? sanitize_title((string) $options['public_query_page_slug']) : 'public-search-page';
-		$content = '[npcink_device_inventory_public_search]';
-		$page = get_page_by_path($slug, OBJECT, 'page');
-		$data = array(
-			'post_title' => '资产公开查询',
-			'post_name' => $slug,
-			'post_type' => 'page',
-			'post_status' => 'publish',
-			'post_content' => $content,
-		);
-
-		if ($page instanceof WP_Post) {
-			$data['ID'] = $page->ID;
-			$page_id = wp_update_post($data, true);
-		} else {
-			$page_id = wp_insert_post($data, true);
-		}
-
-		if (is_wp_error($page_id)) {
-			return Npcink_Device_Inventory_V3_Response::error('page_create_failed', $page_id->get_error_message(), 500);
-		}
-
-		return rest_ensure_response(
-			array(
-				'data' => $this->public_query_page_state($options, intval($page_id)),
-			)
-		);
 	}
 
 	public function create_token($request)
@@ -249,10 +185,6 @@ class Npcink_Device_Inventory_Settings_Controller
 
 		return array(
 			'clientUploadBaseUrl' => (string) $options['client_upload_base_url'],
-			'publicQueryEnabled' => (bool) $options['public_query_enabled'],
-			'publicQueryPageSlug' => (string) $options['public_query_page_slug'],
-			'publicQueryAccessCodeSet' => !empty($options['public_query_access_code_hash']),
-			'publicQueryPage' => $this->public_query_page_state($options),
 			'observationRetentionDays' => intval($options['observation_retention_days']),
 			'assetNumberPrefix' => (string) $options['asset_number_prefix'],
 			'depreciationPeriodMonths' => intval($options['depreciation_period_months']),
@@ -284,44 +216,6 @@ class Npcink_Device_Inventory_Settings_Controller
 			return array();
 		}
 		return Npcink_Device_Inventory_V3_Tables::normalize_departments($rows);
-	}
-
-	private function public_query_page_state($options, $known_page_id = 0)
-	{
-		$slug = !empty($options['public_query_page_slug']) ? sanitize_title((string) $options['public_query_page_slug']) : 'public-search-page';
-		$page = null;
-		if ($known_page_id > 0) {
-			$post = get_post($known_page_id);
-			if ($post instanceof WP_Post && $post->post_type === 'page') {
-				$page = $post;
-			}
-		}
-		if (!$page) {
-			$found = get_page_by_path($slug, OBJECT, 'page');
-			if ($found instanceof WP_Post) {
-				$page = $found;
-			}
-		}
-
-		if (!$page || $page->post_status === 'trash') {
-			return array(
-				'exists' => false,
-				'id' => 0,
-				'url' => '',
-				'editUrl' => '',
-				'slug' => $slug,
-				'status' => '',
-			);
-		}
-
-		return array(
-			'exists' => true,
-			'id' => intval($page->ID),
-			'url' => get_permalink($page),
-			'editUrl' => admin_url('post.php?post=' . intval($page->ID) . '&action=edit'),
-			'slug' => $slug,
-			'status' => (string) $page->post_status,
-		);
 	}
 
 	private function public_token($token)

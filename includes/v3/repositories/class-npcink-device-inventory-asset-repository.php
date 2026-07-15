@@ -142,7 +142,7 @@ class Npcink_Device_Inventory_Asset_Repository
 				AND (%s = '1' OR a.status <> 'deleted')
 				AND (%s = '' OR a.department = %s)
 				AND (%s = '' OR a.category = %s)
-				AND (%s = '' OR (%s = 'computer' AND a.asset_type IN ('pc', 'computer')) OR (%s = 'other' AND a.asset_type NOT IN ('pc', 'computer')))
+				AND (%s = '' OR (%s = 'computer' AND a.asset_type = 'computer') OR (%s = 'other' AND a.asset_type = 'custom'))
 				AND (
 					%s = ''
 					OR a.asset_number LIKE %s
@@ -154,7 +154,7 @@ class Npcink_Device_Inventory_Asset_Repository
 						SELECT 1
 						FROM %i si
 						WHERE si.asset_id = a.id
-						AND si.identity_type IN ('mac_address', 'hardware_uuid', 'system_uuid', 'system_serial', 'bios_serial', 'baseboard_serial')
+						AND si.identity_type IN ('device_uuid_v1', 'fallback_device_v1')
 						AND si.identity_value LIKE %s
 					))
 					OR (%s = '1' AND EXISTS (
@@ -210,7 +210,7 @@ class Npcink_Device_Inventory_Asset_Repository
 			AND (%s = '1' OR a.status <> 'deleted')
 			AND (%s = '' OR a.department = %s)
 			AND (%s = '' OR a.category = %s)
-			AND (%s = '' OR (%s = 'computer' AND a.asset_type IN ('pc', 'computer')) OR (%s = 'other' AND a.asset_type NOT IN ('pc', 'computer')))
+			AND (%s = '' OR (%s = 'computer' AND a.asset_type = 'computer') OR (%s = 'other' AND a.asset_type = 'custom'))
 			AND (
 				%s = ''
 				OR a.asset_number LIKE %s
@@ -222,7 +222,7 @@ class Npcink_Device_Inventory_Asset_Repository
 					SELECT 1
 					FROM %i si
 					WHERE si.asset_id = a.id
-					AND si.identity_type IN ('mac_address', 'hardware_uuid', 'system_uuid', 'system_serial', 'bios_serial', 'baseboard_serial')
+					AND si.identity_type IN ('device_uuid_v1', 'fallback_device_v1')
 					AND si.identity_value LIKE %s
 				))
 				OR (%s = '1' AND EXISTS (
@@ -244,7 +244,7 @@ class Npcink_Device_Inventory_Asset_Repository
 						SELECT 1
 						FROM %i oi
 						WHERE oi.asset_id = a.id
-						AND oi.identity_type IN ('mac_address', 'hardware_uuid', 'system_uuid', 'system_serial', 'bios_serial', 'baseboard_serial')
+						AND oi.identity_type IN ('device_uuid_v1', 'fallback_device_v1')
 						AND oi.identity_value = %s
 					) THEN 4
 					WHEN %s = '1' AND lo.summary_json LIKE %s THEN 5
@@ -256,7 +256,7 @@ class Npcink_Device_Inventory_Asset_Repository
 						SELECT 1
 						FROM %i pi
 						WHERE pi.asset_id = a.id
-						AND pi.identity_type IN ('mac_address', 'hardware_uuid', 'system_uuid', 'system_serial', 'bios_serial', 'baseboard_serial')
+						AND pi.identity_type IN ('device_uuid_v1', 'fallback_device_v1')
 						AND pi.identity_value LIKE %s
 					) THEN 10
 					WHEN %s = '1' AND lo.summary_json LIKE %s THEN 11

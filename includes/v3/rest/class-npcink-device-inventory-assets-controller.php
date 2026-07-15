@@ -6,7 +6,8 @@ if (!defined('ABSPATH')) {
 
 class Npcink_Device_Inventory_Assets_Controller
 {
-	const ASSET_TYPES = array('pc', 'computer', 'network', 'office', 'custom');
+	const ASSET_TYPES = array('computer', 'custom');
+	const IDENTITY_TYPES = array('device_uuid_v1', 'fallback_device_v1');
 	const ASSET_STATUSES = array('active', 'inactive', 'maintenance', 'retired', 'deleted');
 	const MAX_BATCH_SIZE = 100;
 
@@ -15,56 +16,23 @@ class Npcink_Device_Inventory_Assets_Controller
 	private $observations;
 	private $events;
 	private $event_service;
-	private $identity_audit;
-	private $identity_reconciliation;
 
 	public function __construct(
 		Npcink_Device_Inventory_Asset_Repository $assets,
 		Npcink_Device_Inventory_Identity_Repository $identities,
 		Npcink_Device_Inventory_Observation_Repository $observations,
 		Npcink_Device_Inventory_Event_Repository $events,
-		Npcink_Device_Inventory_Event_Service $event_service,
-		?Npcink_Device_Inventory_Identity_Audit_Service $identity_audit = null,
-		?Npcink_Device_Inventory_Device_Identity_Reconciliation_Service $identity_reconciliation = null
+		Npcink_Device_Inventory_Event_Service $event_service
 	) {
 		$this->assets = $assets;
 		$this->identities = $identities;
 		$this->observations = $observations;
 		$this->events = $events;
 		$this->event_service = $event_service;
-		$this->identity_audit = $identity_audit;
-		$this->identity_reconciliation = $identity_reconciliation;
 	}
 
 	public function register_routes()
 	{
-		register_rest_route(
-			'npcink-device-inventory/v1',
-			'/analysis/identity-audit',
-			array(
-				'methods' => WP_REST_Server::READABLE,
-				'callback' => array($this, 'get_identity_audit'),
-				'permission_callback' => array($this, 'admin_permissions_check'),
-			)
-		);
-
-		register_rest_route(
-			'npcink-device-inventory/v1',
-			'/analysis/device-identity-reconciliation',
-			array(
-				array(
-					'methods' => WP_REST_Server::READABLE,
-					'callback' => array($this, 'get_device_identity_reconciliation'),
-					'permission_callback' => array($this, 'admin_permissions_check'),
-				),
-				array(
-					'methods' => WP_REST_Server::CREATABLE,
-					'callback' => array($this, 'apply_device_identity_reconciliation'),
-					'permission_callback' => array($this, 'admin_permissions_check'),
-				),
-			)
-		);
-
 		register_rest_route(
 			'npcink-device-inventory/v1',
 			'/assets',
@@ -164,26 +132,6 @@ class Npcink_Device_Inventory_Assets_Controller
 			array(
 				'methods' => WP_REST_Server::READABLE,
 				'callback' => array($this, 'get_all_events'),
-				'permission_callback' => array($this, 'admin_permissions_check'),
-			)
-		);
-
-		register_rest_route(
-			'npcink-device-inventory/v1',
-			'/analysis/issue-states',
-			array(
-				'methods' => WP_REST_Server::READABLE,
-				'callback' => array($this, 'get_issue_states'),
-				'permission_callback' => array($this, 'admin_permissions_check'),
-			)
-		);
-
-		register_rest_route(
-			'npcink-device-inventory/v1',
-			'/analysis/trends',
-			array(
-				'methods' => WP_REST_Server::READABLE,
-				'callback' => array($this, 'get_analysis_trends'),
 				'permission_callback' => array($this, 'admin_permissions_check'),
 			)
 		);
@@ -421,7 +369,7 @@ class Npcink_Device_Inventory_Assets_Controller
 		$type = sanitize_key((string) $params['type']);
 		$value = sanitize_text_field((string) $params['value']);
 		$confidence = isset($params['confidence']) && is_numeric($params['confidence']) ? floatval($params['confidence']) : 100;
-		if ($type === '' || $value === '' || $this->text_length($type) > 64 || $this->text_length($value) > 191 || $confidence < 0 || $confidence > 100) {
+		if (!in_array($type, self::IDENTITY_TYPES, true) || $value === '' || $this->text_length($value) > 191 || $confidence < 0 || $confidence > 100) {
 			return Npcink_Device_Inventory_V3_Response::error('invalid_identity', 'Identity fields are invalid.', 422);
 		}
 		if (!$this->begin_transaction()) {
@@ -510,167 +458,6 @@ class Npcink_Device_Inventory_Assets_Controller
 		);
 	}
 
-	public function get_issue_states($request)
-	{
-		$rows = $this->events->list_issue_state_events();
-		$items_by_key = array();
-		foreach ($rows as $row) {
-			$event = $this->format_event($row);
-			$payload = isset($event['payload']) && is_array($event['payload']) ? $event['payload'] : array();
-			$issue_key = isset($payload['issueKey']) ? sanitize_text_field((string) $payload['issueKey']) : '';
-			if ($issue_key === '' || isset($items_by_key[$issue_key])) {
-				continue;
-			}
-			$event_type = isset($event['eventType']) ? (string) $event['eventType'] : '';
-			$items_by_key[$issue_key] = array(
-				'issueKey' => $issue_key,
-				'state' => $event_type === 'issue_handled' ? 'handled' : 'open',
-				'eventType' => $event_type,
-				'message' => isset($event['message']) ? (string) $event['message'] : '',
-				'createdAt' => isset($event['createdAt']) ? (string) $event['createdAt'] : '',
-				'asset' => isset($event['asset']) ? $event['asset'] : null,
-			);
-		}
-
-		$items = array_values($items_by_key);
-		$handled_issue_keys = array_values(
-			array_map(
-				function ($item) {
-					return $item['issueKey'];
-				},
-				array_filter(
-					$items,
-					function ($item) {
-						return isset($item['state']) && $item['state'] === 'handled';
-					}
-				)
-			)
-		);
-
-		return rest_ensure_response(
-			array(
-				'data' => array(
-					'handledIssueKeys' => $handled_issue_keys,
-					'items' => $items,
-				),
-			)
-		);
-	}
-
-	public function get_analysis_trends($request)
-	{
-		$days = 30;
-		$today = current_time('Y-m-d');
-		$start_date = date('Y-m-d', strtotime($today . ' -' . ($days - 1) . ' days'));
-		$end_date = date('Y-m-d', strtotime($today . ' +1 day'));
-		$start_at = $start_date . ' 00:00:00';
-		$end_at = $end_date . ' 00:00:00';
-		$collection_by_day = array();
-		foreach ($this->observations->daily_counts_between($start_at, $end_at) as $row) {
-			$day = isset($row['day']) ? sanitize_text_field((string) $row['day']) : '';
-			if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $day)) {
-				continue;
-			}
-			$collection_by_day[$day] = intval(isset($row['count']) ? $row['count'] : 0);
-		}
-
-		$issue_states_by_day = array();
-		foreach ($this->events->daily_issue_state_counts_between($start_at, $end_at) as $row) {
-			$day = isset($row['day']) ? sanitize_text_field((string) $row['day']) : '';
-			$event_type = isset($row['event_type']) ? sanitize_key((string) $row['event_type']) : '';
-			if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $day) || !in_array($event_type, array('issue_handled', 'issue_reopened'), true)) {
-				continue;
-			}
-			if (!isset($issue_states_by_day[$day])) {
-				$issue_states_by_day[$day] = array('handled' => 0, 'reopened' => 0);
-			}
-			$issue_states_by_day[$day][$event_type === 'issue_handled' ? 'handled' : 'reopened'] += intval(isset($row['count']) ? $row['count'] : 0);
-		}
-
-		$collection = array();
-		$issue_states = array();
-		for ($offset = 0; $offset < $days; $offset++) {
-			$day = date('Y-m-d', strtotime($start_date . ' +' . $offset . ' days'));
-			$handled = isset($issue_states_by_day[$day]['handled']) ? intval($issue_states_by_day[$day]['handled']) : 0;
-			$reopened = isset($issue_states_by_day[$day]['reopened']) ? intval($issue_states_by_day[$day]['reopened']) : 0;
-			$collection[] = array(
-				'date' => $day,
-				'count' => isset($collection_by_day[$day]) ? intval($collection_by_day[$day]) : 0,
-			);
-			$issue_states[] = array(
-				'date' => $day,
-				'handled' => $handled,
-				'reopened' => $reopened,
-				'net' => $handled - $reopened,
-			);
-		}
-
-		return rest_ensure_response(
-			array(
-				'data' => array(
-					'days' => $days,
-					'startDate' => $start_date,
-					'endDate' => date('Y-m-d', strtotime($end_date . ' -1 day')),
-					'collection' => $collection,
-					'issueStates' => $issue_states,
-				),
-			)
-		);
-	}
-
-	public function get_identity_audit($request)
-	{
-		if (!$this->identity_audit) {
-			return Npcink_Device_Inventory_V3_Response::error('identity_audit_unavailable', 'Identity audit is unavailable.', 503);
-		}
-		$result = $this->identity_audit->report($request->get_param('page') ?: 1, $request->get_param('pageSize') ?: 20);
-		return rest_ensure_response(
-			array(
-				'data' => array(
-					'summary' => $result['summary'],
-					'groups' => $result['groups'],
-				),
-				'pagination' => array(
-					'page' => $result['page'],
-					'pageSize' => $result['pageSize'],
-					'totalItems' => $result['total'],
-					'totalPages' => max(1, intval(ceil($result['total'] / $result['pageSize']))),
-				),
-			)
-		);
-	}
-
-	public function get_device_identity_reconciliation($request)
-	{
-		if (!$this->identity_reconciliation) {
-			return Npcink_Device_Inventory_V3_Response::error('identity_reconciliation_unavailable', 'Device identity reconciliation is unavailable.', 503);
-		}
-		$result = $this->identity_reconciliation->preview($request->get_param('page') ?: 1, $request->get_param('pageSize') ?: 50);
-		return rest_ensure_response(
-			array(
-				'data' => array('summary' => $result['summary'], 'items' => $result['items']),
-				'pagination' => array(
-					'page' => $result['page'],
-					'pageSize' => $result['pageSize'],
-					'totalItems' => $result['total'],
-					'totalPages' => max(1, intval(ceil($result['total'] / $result['pageSize']))),
-				),
-			)
-		);
-	}
-
-	public function apply_device_identity_reconciliation($request)
-	{
-		if (!$this->identity_reconciliation) {
-			return Npcink_Device_Inventory_V3_Response::error('identity_reconciliation_unavailable', 'Device identity reconciliation is unavailable.', 503);
-		}
-		$params = $request->get_json_params();
-		if (!is_array($params) || empty($params['confirm'])) {
-			return Npcink_Device_Inventory_V3_Response::error('confirmation_required', 'Explicit confirmation is required before writing device identities.', 422);
-		}
-		return rest_ensure_response(array('data' => $this->identity_reconciliation->apply()));
-	}
-
 	public function get_all_observations($request)
 	{
 		$result = $this->observations->list_all(
@@ -697,10 +484,17 @@ class Npcink_Device_Inventory_Assets_Controller
 		if (!is_array($params) || !isset($params['message']) || !is_scalar($params['message']) || trim((string) $params['message']) === '') {
 			return Npcink_Device_Inventory_V3_Response::error('invalid_event', 'Event message is required.', 422);
 		}
+		if (isset($params['eventType']) && !is_scalar($params['eventType'])) {
+			return Npcink_Device_Inventory_V3_Response::error('invalid_event_type', 'Event type is invalid.', 422);
+		}
+		$event_type = isset($params['eventType']) ? sanitize_key($params['eventType']) : 'note';
+		if (in_array($event_type, array('issue_handled', 'issue_reopened', 'identity_reconciled'), true)) {
+			return Npcink_Device_Inventory_V3_Response::error('invalid_event_type', 'This event workflow is no longer supported.', 422);
+		}
 		$result = $this->event_service->record(
 			intval($asset['id']),
 			'manual',
-			isset($params['eventType']) ? sanitize_key($params['eventType']) : 'note',
+			$event_type,
 			sanitize_textarea_field((string) $params['message']),
 			isset($params['payload']) && is_array($params['payload']) ? $params['payload'] : array()
 		);

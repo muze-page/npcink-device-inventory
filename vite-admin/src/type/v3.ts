@@ -1,11 +1,12 @@
 export type JsonRecord = Record<string, unknown>;
 
 export type AssetStatus = "active" | "inactive" | "maintenance" | "retired" | "deleted" | string;
+export type AssetType = "computer" | "custom";
 
 export interface Asset {
   id: number;
   uuid: string;
-  assetType: string;
+  assetType: AssetType;
   assetNumber: string;
   name: string;
   ownerName: string;
@@ -26,7 +27,7 @@ export interface Asset {
 }
 
 export interface AssetInput {
-  assetType?: string;
+  assetType?: AssetType;
   assetNumber?: string;
   name?: string;
   ownerName?: string;
@@ -59,7 +60,7 @@ export interface AssetReference {
   uuid: string;
   assetNumber: string;
   name: string;
-  assetType: string;
+  assetType: AssetType;
   status: string;
   department: string;
   ownerName: string;
@@ -105,104 +106,6 @@ export interface AssetEvent {
   asset?: AssetReference;
 }
 
-export interface IssueState {
-  issueKey: string;
-  state: "handled" | "open";
-  eventType: string;
-  message: string;
-  createdAt: string;
-  asset?: AssetReference | null;
-}
-
-export interface IssueStates {
-  handledIssueKeys: string[];
-  items: IssueState[];
-}
-
-export interface AnalysisTrends {
-  days: number;
-  startDate: string;
-  endDate: string;
-  collection: Array<{
-    date: string;
-    count: number;
-  }>;
-  issueStates: Array<{
-    date: string;
-    handled: number;
-    reopened: number;
-    net: number;
-  }>;
-}
-
-export interface IdentityAuditAsset {
-  uuid: string;
-  assetNumber: string;
-  name: string;
-  department: string;
-  ownerName: string;
-  primaryMac: string;
-  stableDeviceIdV3: string;
-  legacyDeviceIdV1: string;
-  observedAt: string;
-  source: string;
-  schemaVersion: number;
-}
-
-export interface IdentityAuditGroup {
-  groupKey: string;
-  hardwareUuid: string;
-  classification: "uuid_mac_conflict" | "same_composite_identity";
-  assetCount: number;
-  distinctMacCount: number;
-  assets: IdentityAuditAsset[];
-}
-
-export interface IdentityAudit {
-  summary: {
-    auditedAssets: number;
-    uuidMacConflictGroups: number;
-    sameCompositeGroups: number;
-    insufficientIdentityAssets: number;
-  };
-  groups: IdentityAuditGroup[];
-  pagination: Pagination;
-}
-
-export type DeviceIdentityReconciliationStatus = "ready" | "already" | "collision" | "insufficient";
-
-export interface DeviceIdentityReconciliationItem {
-  assetId: number;
-  assetUuid: string;
-  assetNumber: string;
-  name: string;
-  department: string;
-  observedAt: string;
-  deviceUuid: string;
-  status: DeviceIdentityReconciliationStatus;
-  reason: string;
-}
-
-export interface DeviceIdentityReconciliation {
-  summary: {
-    auditedAssets: number;
-    ready: number;
-    already: number;
-    collisions: number;
-    insufficient: number;
-  };
-  items: DeviceIdentityReconciliationItem[];
-  pagination: Pagination;
-}
-
-export interface DeviceIdentityReconciliationApplyResult {
-  written: number;
-  already: number;
-  collisions: number;
-  insufficient: number;
-  failed: number;
-}
-
 export interface Pagination {
   page: number;
   pageSize: number;
@@ -219,7 +122,7 @@ export interface AssetListParams {
   page?: number;
   pageSize?: number;
   search?: string;
-  assetType?: string;
+  assetType?: AssetType;
   assetScope?: "computer" | "other" | "all";
   status?: string;
   department?: string;
@@ -238,13 +141,6 @@ export interface EventListParams {
   eventType?: string;
 }
 
-export interface ObservationListParams {
-  page?: number;
-  pageSize?: number;
-  search?: string;
-  source?: string;
-}
-
 export interface ClientToken {
   id: string;
   name: string;
@@ -256,22 +152,8 @@ export interface CreatedClientToken extends ClientToken {
   secret: string;
 }
 
-export interface PublicQueryPageState {
-  exists: boolean;
-  id: number;
-  url: string;
-  editUrl: string;
-  slug: string;
-  status: string;
-}
-
 export interface InventorySettings {
   clientUploadBaseUrl: string;
-  publicQueryEnabled: boolean;
-  publicQueryPageSlug: string;
-  publicQueryAccessCode?: string;
-  publicQueryAccessCodeSet: boolean;
-  publicQueryPage?: PublicQueryPageState;
   observationRetentionDays: number;
   assetNumberPrefix: string;
   depreciationPeriodMonths: number;
@@ -281,8 +163,6 @@ export interface InventorySettings {
   deleteDataOnUninstall: boolean;
   clientTokens: ClientToken[];
 }
-
-export type CreatedPublicQueryPage = PublicQueryPageState;
 
 export interface BackupRestoreSummary {
   schema: string;

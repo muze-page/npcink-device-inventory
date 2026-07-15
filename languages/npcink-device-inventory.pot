@@ -26,7 +26,7 @@ msgstr ""
 
 #. Description of the plugin
 #: npcink-device-inventory.php
-msgid "设备资产管理插件，提供设备录入、客户端上报、后台台账、变更记录和授权查询。"
+msgid "设备资产管理插件，提供设备录入、客户端上报、后台台账和变更记录。"
 msgstr ""
 
 #. Author of the plugin

@@ -182,14 +182,6 @@ class Npcink_Device_Inventory_Event_Service
 	}
 }
 
-class Npcink_Device_Inventory_Identity_Audit_Service
-{
-}
-
-class Npcink_Device_Inventory_Device_Identity_Reconciliation_Service
-{
-}
-
 function sanitize_text_field($value)
 {
 	return trim((string) $value);
@@ -285,11 +277,35 @@ list($controller) = npcink_asset_write_controller(array());
 $invalid = $controller->create_item(new Npcink_Asset_Write_Request(array('status' => 'unknown')));
 npcink_asset_write_assert(is_wp_error($invalid) && $invalid->get_error_code() === 'invalid_asset_status', 'invalid status must fail validation');
 npcink_asset_write_assert($wpdb->commands === array(), 'validation failure must not start a transaction');
+$legacy_type = $controller->create_item(new Npcink_Asset_Write_Request(array('assetType' => 'pc')));
+npcink_asset_write_assert(is_wp_error($legacy_type) && $legacy_type->get_error_code() === 'invalid_asset_type', 'legacy asset types must fail validation');
+npcink_asset_write_assert($wpdb->commands === array(), 'legacy asset type failure must not start a transaction');
 
 $first_uuid = '11111111-1111-4111-8111-111111111111';
 $second_uuid = '22222222-2222-4222-8222-222222222222';
 $rows = array($first_uuid => npcink_asset_row(1, $first_uuid), $second_uuid => npcink_asset_row(2, $second_uuid));
 list($controller, $assets, $events) = npcink_asset_write_controller($rows);
+$legacy_identity = $controller->create_identity(
+	new Npcink_Asset_Write_Request(
+		array(
+			'uuid' => $first_uuid,
+			'type' => 'stable_device_id_v3',
+			'value' => 'legacy-identity',
+		)
+	)
+);
+npcink_asset_write_assert(is_wp_error($legacy_identity) && $legacy_identity->get_error_code() === 'invalid_identity', 'manual identity writes must use the current two-type contract');
+$obsolete_issue_event = $controller->create_event(
+	new Npcink_Asset_Write_Request(
+		array(
+			'uuid' => $first_uuid,
+			'eventType' => 'issue_handled',
+			'message' => 'obsolete state write',
+		)
+	)
+);
+npcink_asset_write_assert(is_wp_error($obsolete_issue_event) && $obsolete_issue_event->get_error_code() === 'invalid_event_type', 'removed analysis state events must not be persisted through the generic event route');
+npcink_asset_write_assert($wpdb->commands === array(), 'obsolete event rejection must not start a transaction');
 $response = $controller->batch_items(
 	new Npcink_Asset_Write_Request(
 		array(

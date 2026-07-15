@@ -87,6 +87,7 @@ class Npcink_Device_Inventory_Identity_Repository
 
 	public $claim_batches = array();
 	public $claimed_asset_ids = array();
+	public $claimed_identities = array();
 	public $matched_asset_id;
 
 	public function find_asset_id_by_identity()
@@ -102,6 +103,7 @@ class Npcink_Device_Inventory_Identity_Repository
 	public function claim_many($asset_id, $identities)
 	{
 		$this->claimed_asset_ids[] = intval($asset_id);
+		$this->claimed_identities[] = $identities;
 		if (!empty($this->claim_batches)) {
 			return array_shift($this->claim_batches);
 		}
@@ -164,28 +166,27 @@ class Npcink_Device_Inventory_Event_Service
 	}
 }
 
-class Npcink_Device_Inventory_Identity_Extractor
+class Npcink_Device_Inventory_Device_Identity_Service
 {
-	public function extract()
+	const TYPE = 'device_uuid_v1';
+	const FALLBACK_TYPE = 'fallback_device_v1';
+
+	public function primary_identity()
 	{
 		return array(
-			array(
-				'type' => 'device_uuid_v1',
-				'value' => 'client-supplied-value-is-replaced',
-				'confidence' => 100,
-				'source' => 'fixture',
-			),
+			'type' => self::TYPE,
+			'value' => 'device-v1-fixture',
+			'confidence' => 100,
+			'source' => 'server_recomputed',
 		);
 	}
 }
 
-class Npcink_Device_Inventory_Device_Identity_Service
+class Npcink_Missing_Device_Identity_Service extends Npcink_Device_Inventory_Device_Identity_Service
 {
-	const TYPE = 'device_uuid_v1';
-
-	public function from_observation()
+	public function primary_identity()
 	{
-		return array('value' => 'device-v1-fixture', 'reason' => 'fixture');
+		return array('type' => '', 'value' => '', 'reason' => 'fixture_missing');
 	}
 }
 
@@ -205,7 +206,7 @@ function npcink_ingest_asset_row($id, $uuid)
 	return array(
 		'id' => intval($id),
 		'uuid' => $uuid,
-		'asset_type' => 'pc',
+		'asset_type' => 'computer',
 		'asset_number' => 'A' . $id,
 		'name' => 'Fixture asset',
 		'owner_name' => '',
@@ -269,13 +270,14 @@ $service = new Npcink_Device_Inventory_Observation_Ingest_Service(
 	$identities,
 	$observations,
 	$events,
-	new Npcink_Device_Inventory_Identity_Extractor(),
 	new Npcink_Device_Inventory_Device_Identity_Service()
 );
 $result = $service->ingest(npcink_ingest_payload());
 npcink_ingest_assert(is_array($result), 'a concurrent claim must recover successfully');
 npcink_ingest_assert($result['data']['mode'] === 'matched_after_concurrent_claim', 'a concurrent first upload must resolve to the identity owner');
 npcink_ingest_assert($identities->claimed_asset_ids === array(99, 11), 'the duplicate asset claim must roll back and retry against the winner');
+npcink_ingest_assert(count($identities->claimed_identities[0]) === 1, 'an upload must claim exactly one server-derived identity');
+npcink_ingest_assert($identities->claimed_identities[0][0]['source'] === 'server_recomputed', 'client-declared identities must not be persisted');
 npcink_ingest_assert($observations->created_asset_ids === array(11), 'the observation must only be stored on the winning asset');
 npcink_ingest_assert($wpdb->commands === array('START TRANSACTION', 'ROLLBACK', 'START TRANSACTION', 'COMMIT'), 'the losing asset write set must be rolled back before retry');
 npcink_ingest_assert($assets->cache_invalidations === 1 && $observations->cache_invalidations === 1, 'the losing transaction must invalidate rows read before rollback');
@@ -291,12 +293,23 @@ $service = new Npcink_Device_Inventory_Observation_Ingest_Service(
 	$identities,
 	$observations,
 	$events,
-	new Npcink_Device_Inventory_Identity_Extractor(),
 	new Npcink_Device_Inventory_Device_Identity_Service()
 );
 $result = $service->ingest(npcink_ingest_payload());
 npcink_ingest_assert($result instanceof WP_Error && $result->code === 'event_create_failed', 'audit failures must fail the ingest');
 npcink_ingest_assert($wpdb->commands === array('START TRANSACTION', 'ROLLBACK'), 'audit failures must roll back every ingest write');
 npcink_ingest_assert($assets->cache_invalidations === 1 && $observations->cache_invalidations === 1, 'failed ingests must invalidate transactional cache entries');
+
+$wpdb = new Npcink_Ingest_Transaction_Fake_Wpdb();
+$service = new Npcink_Device_Inventory_Observation_Ingest_Service(
+	new Npcink_Device_Inventory_Asset_Repository(array()),
+	new Npcink_Device_Inventory_Identity_Repository(),
+	new Npcink_Device_Inventory_Observation_Repository(),
+	new Npcink_Device_Inventory_Event_Service(),
+	new Npcink_Missing_Device_Identity_Service()
+);
+$result = $service->ingest(npcink_ingest_payload());
+npcink_ingest_assert($result instanceof WP_Error && $result->code === 'missing_identity', 'uploads without a server-computable identity must return 422 missing_identity');
+npcink_ingest_assert($wpdb->commands === array(), 'missing identities must fail before starting a transaction');
 
 echo "Observation ingest fixture checks passed.\n";

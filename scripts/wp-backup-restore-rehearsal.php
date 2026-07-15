@@ -87,7 +87,6 @@ $backup = array(
 	'schema' => 'npcink-device-inventory/v3-admin-export',
 	'exportedAt' => gmdate('c'),
 	'settings' => array(
-		'publicQueryPageSlug' => 'restore-e2e-public-search',
 		'observationRetentionDays' => 30,
 		'assetNumberPrefix' => 'E2E',
 		'depreciationPeriodMonths' => 24,

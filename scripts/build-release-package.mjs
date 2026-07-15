@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
-import { cp, mkdir, readFile, readdir, rm } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { cp, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -13,6 +14,7 @@ const stagingPlugin = path.join(stagingRoot, slug);
 const output = path.join(releaseDir, `${slug}.zip`);
 const packageDir = path.join(releaseDir, slug);
 const submissionZip = path.join(submissionDir, `${slug}.zip`);
+const submissionManifest = path.join(submissionDir, "package-manifest.json");
 const shouldBuildSubmissionPackage = process.argv.includes("--submission");
 
 const rootFiles = [
@@ -25,11 +27,24 @@ const rootFiles = [
   "LICENSE.txt",
 ];
 
+const adminSourceFiles = [
+  "vite-admin/eslint.config.js",
+  "vite-admin/index.html",
+  "vite-admin/package-lock.json",
+  "vite-admin/package.json",
+  "vite-admin/postcss.config.js",
+  "vite-admin/tailwind.config.js",
+  "vite-admin/tsconfig.json",
+  "vite-admin/tsconfig.node.json",
+  "vite-admin/vite.config.ts",
+];
+
 const runtimeDirs = [
   "admin",
   "includes",
   "languages",
   "vite-admin/dist",
+  "vite-admin/src",
 ];
 
 await rm(stagingRoot, { recursive: true, force: true });
@@ -40,6 +55,12 @@ execFileSync("npm", ["run", "build"], { cwd: viteAdminDir, stdio: "inherit" });
 
 for (const file of rootFiles) {
   await cp(path.join(repoRoot, file), path.join(stagingPlugin, file));
+}
+
+for (const file of adminSourceFiles) {
+  const destination = path.join(stagingPlugin, file);
+  await mkdir(path.dirname(destination), { recursive: true });
+  await cp(path.join(repoRoot, file), destination);
 }
 
 for (const dir of runtimeDirs) {
@@ -55,6 +76,7 @@ await rm(packageDir, { recursive: true, force: true });
 if (shouldBuildSubmissionPackage) {
   await mkdir(submissionDir, { recursive: true });
   await cp(output, submissionZip);
+  await updateSubmissionManifest(output);
 } else {
   await rm(submissionZip, { force: true });
 }
@@ -98,4 +120,36 @@ async function removeReleaseJunk(dir) {
       await removeReleaseJunk(entryPath);
     }
   }
+}
+
+async function updateSubmissionManifest(zipPath) {
+  const manifest = JSON.parse(await readFile(submissionManifest, "utf8"));
+  const metadata = await zipMetadata(zipPath);
+  manifest.package = {
+    ...manifest.package,
+    sha256: metadata.sha256,
+    entry_count: metadata.entryCount,
+    file_count: metadata.fileCount,
+    uncompressed_bytes: metadata.uncompressedBytes,
+    compressed_bytes: metadata.compressedBytes,
+  };
+  await writeFile(submissionManifest, `${JSON.stringify(manifest, null, 2)}\n`);
+}
+
+async function zipMetadata(zipPath) {
+  const buffer = await readFile(zipPath);
+  const entries = execFileSync("unzip", ["-Z1", zipPath], { encoding: "utf8" })
+    .split(/\r?\n/)
+    .filter(Boolean);
+  const listing = execFileSync("unzip", ["-l", zipPath], { encoding: "utf8" });
+  const listedEntries = Array.from(
+    listing.matchAll(/^\s*(\d+)\s+\d{2}-\d{2}-\d{4}\s+\d{2}:\d{2}\s+(.+)$/gm)
+  );
+  return {
+    sha256: createHash("sha256").update(buffer).digest("hex"),
+    entryCount: entries.length,
+    fileCount: entries.filter((entry) => !entry.endsWith("/")).length,
+    uncompressedBytes: listedEntries.reduce((total, match) => total + Number(match[1]), 0),
+    compressedBytes: (await stat(zipPath)).size,
+  };
 }

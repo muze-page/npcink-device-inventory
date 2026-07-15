@@ -10,8 +10,7 @@ Slug: npcink-device-inventory
 
 Npcink Device Inventory is a device asset management plugin. It stores device
 inventory data in WordPress, supports signed device upload workflows, provides
-admin inventory screens, tracks manual and automatic changes, and exposes an
-authorized public search page.
+admin inventory screens, and tracks manual and automatic changes.
 
 ## Data and Privacy
 
@@ -25,9 +24,8 @@ identifiers, hardware details, and change history.
 
 ## REST Authorization
 
-The public query endpoint requires the site-specific access code and applies a
-short-window rate limit. The device upload endpoint requires a client token id,
-timestamp, nonce, and HMAC signature.
+The device upload endpoint requires a client token id, timestamp, nonce, and
+HMAC signature.
 
 Admin REST endpoints require a logged-in WordPress user with `manage_options`.
 

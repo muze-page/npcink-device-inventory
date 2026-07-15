@@ -29,9 +29,10 @@ if (!defined('ABSPATH')) {
  */
 class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_Interface
 {
-	const SCHEMA_REVISION = '20260715_atomic_identity';
+	const SCHEMA_REVISION = '20260715_scope_reset';
 	const SCHEMA_REVISIONS = array(
 		'20260706_latest_observed',
+		'20260715_atomic_identity',
 		self::SCHEMA_REVISION,
 	);
 
@@ -97,13 +98,68 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 			return self::sync_latest_observation_columns();
 		}
 
-		if ($revision === self::SCHEMA_REVISION) {
+		if ($revision === '20260715_atomic_identity') {
 			// Atomic identity claims depend on the unique identity key. dbDelta repairs it if needed.
 			self::create_table_asset_identities();
 			return self::identity_unique_key_ready();
 		}
 
+		if ($revision === self::SCHEMA_REVISION) {
+			return self::reset_pre_ga_scope();
+		}
+
 		return false;
+	}
+
+	/**
+	 * Apply the destructive pre-GA contract reset to development data.
+	 */
+	private static function reset_pre_ga_scope()
+	{
+		global $wpdb;
+		$assets = self::quote_internal_table_name($wpdb->prefix . self::$table_assets_name);
+		$identities = self::quote_internal_table_name($wpdb->prefix . self::$table_asset_identities_name);
+		$events = self::quote_internal_table_name($wpdb->prefix . self::$table_asset_events_name);
+		if (!$assets || !$identities || !$events) {
+			return false;
+		}
+
+		$assets_updated = $wpdb->query(
+			"UPDATE $assets
+			SET category = CASE
+				WHEN asset_type NOT IN ('pc', 'computer', 'custom') AND TRIM(category) = '' THEN asset_type
+				ELSE category
+			END,
+			asset_type = CASE WHEN asset_type IN ('pc', 'computer') THEN 'computer' ELSE 'custom' END"
+		);
+		if ($assets_updated === false) {
+			return false;
+		}
+
+		$identities_deleted = $wpdb->query(
+			"DELETE FROM $identities WHERE identity_type NOT IN ('device_uuid_v1', 'fallback_device_v1')"
+		);
+		if ($identities_deleted === false) {
+			return false;
+		}
+
+		$events_deleted = $wpdb->query(
+			"DELETE FROM $events WHERE event_type IN ('issue_handled', 'issue_reopened', 'identity_reconciled')"
+		);
+		if ($events_deleted === false) {
+			return false;
+		}
+
+		$options = get_option('npcink_device_inventory_v3_options');
+		if (is_array($options)) {
+			unset(
+				$options['public_query_enabled'],
+				$options['public_query_page_slug'],
+				$options['public_query_access_code_hash']
+			);
+			update_option('npcink_device_inventory_v3_options', $options);
+		}
+		return true;
 	}
 
 	/**
@@ -159,9 +215,6 @@ class Npcink_Device_Inventory_Activator extends Npcink_Device_Inventory_Admin_In
 			array(
 				'client_tokens' => array(),
 				'client_upload_base_url' => '',
-				'public_query_enabled' => false,
-				'public_query_page_slug' => 'public-search-page',
-				'public_query_access_code_hash' => '',
 				'observation_retention_days' => 0,
 				'asset_number_prefix' => 'A',
 				'depreciation_period_months' => 36,

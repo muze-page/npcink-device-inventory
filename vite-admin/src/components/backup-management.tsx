@@ -67,7 +67,7 @@ export const BackupManagementPanels = ({ onOpenImport }: { onOpenImport: () => v
       <div className="npcink-v3-tool-panel">
         <div>
           <Title level={4}>JSON 备份导出</Title>
-          <Text type="secondary">给管理员完整迁移或归档，默认导出全部业务数据；不会导出令牌密钥或访问码明文。</Text>
+          <Text type="secondary">给管理员完整迁移或归档，默认导出全部业务数据；不会导出客户端令牌密钥。</Text>
           <Text type="secondary" className="npcink-v3-export-range-note">
             电脑采集快照用于保留客户端上报的硬件历史；日常台账表格导出不需要。
           </Text>
@@ -85,7 +85,7 @@ export const BackupManagementPanels = ({ onOpenImport }: { onOpenImport: () => v
           <Title level={4}>JSON 备份导入</Title>
           <Text type="secondary">将本插件备份恢复到当前站点；导入前会校验文件并展示各区段数量。</Text>
           <Text type="secondary" className="npcink-v3-export-range-note">
-            适合本地整理后迁移到正式站点；令牌、访问码和站点 URL 相关设置需重新配置。
+            适合本地整理后迁移到正式站点；客户端令牌和站点 URL 相关设置需重新配置。
           </Text>
         </div>
         <Button danger onClick={onOpenImport}>导入 JSON 备份</Button>
@@ -224,7 +224,7 @@ export const BackupRestoreModal = ({ open, onClose, onImported }: BackupRestoreM
           type="warning"
           showIcon
           message="导入采用合并/更新策略"
-          description="会按资产 UUID 或资产编号更新/新增插件业务数据，不会清空正式站点现有数据。上传授权码、公开查询访问码、公开查询启用状态和客户端上传基础 URL 不会恢复。"
+          description="会按资产 UUID 或资产编号更新/新增插件业务数据，不会清空正式站点现有数据。客户端令牌和上传基础 URL 不会恢复。"
         />
         <input
           type="file"

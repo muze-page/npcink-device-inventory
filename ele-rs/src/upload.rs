@@ -89,12 +89,9 @@ fn send_json(site: &str, body_json: String, headers: Vec<(&'static str, String)>
 }
 
 fn build_observation_v3(upload_note: &str, data: &Value) -> Result<Value> {
-    let stable_id = crate::collector::stable_device_id_v2(data).context(
-        "missing stable device identity; check hardware UUID, serial number, or MAC data",
-    )?;
-    let stable_id_v3 = crate::collector::stable_device_id_v3(data);
-    let legacy_id_v1 = crate::collector::legacy_device_id_v1(data);
-    let device_uuid_v1 = crate::collector::device_uuid_v1(data);
+    crate::collector::device_uuid_v1(data)
+		.or_else(|| crate::collector::fallback_device_v1(data))
+		.context("missing device identity; check motherboard facts, serial number, and physical MAC data")?;
     let collector = object_at(data, "/collector");
     let collected_at = string_at(data, "/collector/collected_at");
     let system = value_at(data, "/system");
@@ -102,15 +99,10 @@ fn build_observation_v3(upload_note: &str, data: &Value) -> Result<Value> {
     let bios = value_at(data, "/bios");
     let networks = array_at(data, "/net");
     let primary_network = pick_primary_network(&networks);
-    let macs = collect_macs(data, &primary_network);
-    let primary_mac = macs.first().cloned().unwrap_or_default();
 
     Ok(json!({
         "_npcink_device": {
-            "schema_version": 3,
-            "stable_device_id_v2": stable_id,
-            "stable_device_id_v3": stable_id_v3,
-            "device_uuid_v1": device_uuid_v1,
+            "schema_version": 4,
             "collector": {
                 "name": collector_string(&collector, "name", env!("CARGO_PKG_NAME")),
                 "version": collector_string(&collector, "version", env!("CARGO_PKG_VERSION")),
@@ -120,15 +112,6 @@ fn build_observation_v3(upload_note: &str, data: &Value) -> Result<Value> {
             },
         },
         "asset": {
-            "identity": {
-                "stable_device_id_v2": stable_id,
-                "stable_device_id_v3": stable_id_v3,
-                "legacy_device_id_v1": legacy_id_v1,
-                "device_uuid_v1": device_uuid_v1,
-                "hardware_uuid": string_at(data, "/uuid/hardware"),
-                "primary_mac": primary_mac,
-                "macs": macs,
-            },
             "upload": {
                 "note": upload_note,
                 "reported_user": upload_note,
@@ -145,6 +128,7 @@ fn build_observation_v3(upload_note: &str, data: &Value) -> Result<Value> {
                 "primary_ip": primary_ip(&primary_network),
             },
             "hardware": {
+                "hardwareUuid": string_at(data, "/uuid/hardware"),
                 "cpu": value_at(data, "/cpu"),
                 "memory": {
                     "system": value_at(data, "/mem"),
@@ -162,7 +146,7 @@ fn build_observation_v3(upload_note: &str, data: &Value) -> Result<Value> {
             },
         },
         "raw": {
-            "source": "npcink-device-agent-v3",
+            "source": "npcink-device-agent-v4",
             "static_data": data,
             "filesystems": value_at(data, "/fsSize"),
             "platform": value_at(data, "/platformData"),
@@ -243,31 +227,6 @@ fn pick_primary_network(networks: &[Value]) -> Value {
         .or_else(|| networks.first());
 
     best.cloned().unwrap_or_else(|| json!({}))
-}
-
-fn collect_macs(data: &Value, primary_network: &Value) -> Vec<String> {
-    let mut result = Vec::new();
-    push_mac(&mut result, &string_field(primary_network, "mac"));
-    if let Some(items) = data.pointer("/uuid/macs").and_then(Value::as_array) {
-        for item in items {
-            if let Some(mac) = item.as_str() {
-                push_mac(&mut result, mac);
-            }
-        }
-    }
-    result
-}
-
-fn push_mac(result: &mut Vec<String>, mac: &str) {
-    let mac = mac.trim().to_lowercase();
-    if mac.is_empty()
-        || mac == "00:00:00:00:00:00"
-        || mac == "ff:ff:ff:ff:ff:ff"
-        || result.contains(&mac)
-    {
-        return;
-    }
-    result.push(mac);
 }
 
 fn string_field(value: &Value, key: &str) -> String {
@@ -418,7 +377,12 @@ mod tests {
         let observation = build_observation_v3("Alice", &data).unwrap();
         assert_eq!(
             observation.pointer("/_npcink_device/schema_version"),
-            Some(&json!(3))
+            Some(&json!(4))
+        );
+        assert!(observation.pointer("/asset/identity").is_none());
+        assert_eq!(
+            observation.pointer("/asset/hardware/hardwareUuid"),
+            Some(&json!("HW-1"))
         );
         assert_eq!(
             observation.pointer("/asset/upload/reported_user"),

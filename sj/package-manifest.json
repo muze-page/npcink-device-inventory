@@ -1,6 +1,6 @@
 {
   "record_type": "wordpress_org_submission_package_manifest",
-  "note": "This manifest tracks the current release package metadata. Generate sj/npcink-device-inventory.zip with npm run build:submission before an actual WordPress.org upload. Verification fields are recorded package evidence and must be refreshed by rerunning check:submission for a new upload.",
+  "note": "This manifest tracks the current release package metadata. npm run build:submission refreshes the package evidence, and npm run check:submission verifies it against the generated zip before an actual WordPress.org upload.",
   "plugin": {
     "name": "Npcink Device Inventory",
     "slug": "npcink-device-inventory",
@@ -14,11 +14,11 @@
     "upload_file": "sj/npcink-device-inventory.zip",
     "source_file": "release/npcink-device-inventory.zip",
     "zip_root": "npcink-device-inventory/",
-    "sha256": "741d2ac7e6aed53297db8790259ca87bb87bfeee8fbb5b16e694aaaf67cab6f1",
-    "entry_count": 56,
-    "file_count": 44,
-    "uncompressed_bytes": 1651295,
-    "compressed_bytes": 497497
+    "sha256": "6a863d3ef65aef592a6ae80e6207dff2f6d08d5eeb118b7898710cd9deb2857c",
+    "entry_count": 79,
+    "file_count": 61,
+    "uncompressed_bytes": 1948910,
+    "compressed_bytes": 572764
   },
   "verification": {
     "plugin_check": "pending_github_action_for_3.0.0",
@@ -31,7 +31,6 @@
     "release_package_check": "passed",
     "wordpress_org_review_rules": "passed",
     "activation_smoke": "not_run_for_3.0.0",
-    "public_query_access_and_rate_limit_fixture": "passed",
     "unsigned_upload_fixture_status": 403,
     "screenshots": "stale_do_not_publish_until_recaptured",
     "i18n_pot": "updated"

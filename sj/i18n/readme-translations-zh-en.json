@@ -4,7 +4,7 @@
   "locales": {
     "en_US": {
       "language": "English",
-      "short_description": "Manage device assets in WordPress with an admin inventory, signed client uploads, change records, import/export, and an authorized public search page.",
+      "short_description": "Manage device assets in WordPress with an admin inventory, signed client uploads, change records, and import/export.",
       "faq": [
         {
           "question": "Does this plugin send data to a third-party service?",
@@ -15,8 +15,8 @@
           "answer": "The plugin can store device asset fields such as device name, number, department, status, IP address, hardware details submitted by the optional client, change records, and plugin settings."
         },
         {
-          "question": "Are public query and upload endpoints open to anonymous users?",
-          "answer": "They are not unrestricted. Public query requires the site-specific access code and is rate limited. Device upload requires a client authorization token and HMAC signature. Admin endpoints require a WordPress user with manage_options."
+          "question": "Are device upload endpoints open to anonymous users?",
+          "answer": "No. Device upload requires a client authorization token and HMAC signature. Admin endpoints require a WordPress user with manage_options."
         },
         {
           "question": "What happens on uninstall?",
@@ -30,7 +30,7 @@
     },
     "zh_CN": {
       "language": "简体中文",
-      "short_description": "在 WordPress 中管理设备资产：后台台账、签名客户端上报、变更记录、导入导出和授权公开查询。",
+      "short_description": "在 WordPress 中管理设备资产：后台台账、签名客户端上报、变更记录和导入导出。",
       "faq": [
         {
           "question": "插件会把数据发送到第三方服务吗？",
@@ -41,8 +41,8 @@
           "answer": "插件可存储设备名称、编号、部门、状态、IP 地址、可选客户端提交的硬件详情、变更记录和插件设置。"
         },
         {
-          "question": "公开查询和上传接口是否允许匿名访问？",
-          "answer": "它们不是无限制开放的。公开查询需要站点专用访问码并受限流保护；设备上传需要客户端授权码和 HMAC 签名。管理端接口需要具备 manage_options 权限的 WordPress 用户。"
+          "question": "设备上传接口是否允许匿名访问？",
+          "answer": "不允许。设备上传需要客户端授权码和 HMAC 签名。管理端接口需要具备 manage_options 权限的 WordPress 用户。"
         },
         {
           "question": "卸载时会发生什么？",

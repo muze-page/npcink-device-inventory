@@ -48,12 +48,10 @@ identifiers, hardware details, and change history. This is disclosed in the
 README privacy section.
 ```
 
-## 4. 如果审核询问公开 REST endpoint
+## 4. 如果审核询问设备上传 REST endpoint
 
 ```text
-The public query and upload REST endpoints are not unrestricted endpoints.
-Public query requires the site-specific access code and applies a short-window
-rate limit. Device upload requires a client token id, timestamp, nonce, and HMAC
+The device upload endpoint requires a client token id, timestamp, nonce, and HMAC
 signature. Admin endpoints require a logged-in WordPress user with manage_options.
 ```
 
